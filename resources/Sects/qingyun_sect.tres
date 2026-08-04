@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="SectData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/Resources/sect_data.gd" id="1_sect"]
+
+[resource]
+script = ExtResource("1_sect")
+sect_name = "청운검파"
+leader_name = "청운검선"
+gold = 500
+food = 300
+reputation = 50
+research_points = 0
+disciple_count = 12
+max_disciples = 30
+library_level = 1
+training_ground_level = 1
+treasury_level = 1

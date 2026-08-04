@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="MartialArtData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/Resources/martial_art_data.gd" id="1_art"]
+
+[resource]
+script = ExtResource("1_art")
+id = "preset_earth_life_palm"
+display_name = "대지생명장"
+category = 1
+element = 3
+yin_yang = 1
+special_effects = Array[int]([4, 7])
+research_cost = 40
+complexity = 4
+internal_cost = 20
+action_cost = 2
+damage = 0
+range = 1
+heal_amount = 20
+move_bonus = 0
+description = "대지의 생명력을 끌어올려 아군을 치유하는 양의 장법."

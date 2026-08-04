@@ -1,0 +1,125 @@
+[gd_scene load_steps=2 format=3 uid="uid://main_menu_scene"]
+
+[ext_resource type="Script" path="res://scripts/UI/main_menu.gd" id="1_main"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_main")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.1, 0.14, 1)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="CenterContainer"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "강호제패"
+horizontal_alignment = 1
+
+[node name="SubtitleLabel" type="Label" parent="CenterContainer/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "무협 전략 시뮬레이션 RPG"
+horizontal_alignment = 1
+
+[node name="StatusLabel" type="Label" parent="CenterContainer/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "상태"
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="CenterContainer/VBox"]
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+
+[node name="ManagementButton" type="Button" parent="CenterContainer/VBox"]
+custom_minimum_size = Vector2(320, 48)
+layout_mode = 2
+text = "문파 경영 (내정)"
+
+[node name="MartialArtButton" type="Button" parent="CenterContainer/VBox"]
+custom_minimum_size = Vector2(320, 48)
+layout_mode = 2
+text = "무공 창조 / 연구"
+
+[node name="CombatButton" type="Button" parent="CenterContainer/VBox"]
+custom_minimum_size = Vector2(320, 48)
+layout_mode = 2
+text = "전술 전투 (1:1 결투)"
+
+[node name="SectWarButton" type="Button" parent="CenterContainer/VBox"]
+custom_minimum_size = Vector2(320, 48)
+layout_mode = 2
+text = "문파전 지휘"
+
+[node name="EndingButton" type="Button" parent="CenterContainer/VBox"]
+custom_minimum_size = Vector2(320, 48)
+layout_mode = 2
+text = "엔딩 / 레거시"
+
+[node name="HelpButton" type="Button" parent="CenterContainer/VBox"]
+custom_minimum_size = Vector2(320, 48)
+layout_mode = 2
+text = "플레이 가이드"
+
+[node name="SaveHBox" type="HBoxContainer" parent="CenterContainer/VBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="SaveButton" type="Button" parent="CenterContainer/VBox/SaveHBox"]
+custom_minimum_size = Vector2(154, 40)
+layout_mode = 2
+text = "저장"
+
+[node name="LoadButton" type="Button" parent="CenterContainer/VBox/SaveHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(154, 40)
+layout_mode = 2
+text = "불러오기"
+
+[node name="GridButton" type="Button" parent="CenterContainer/VBox"]
+custom_minimum_size = Vector2(320, 48)
+layout_mode = 2
+text = "그리드 이동 데모"
+
+[node name="QuitButton" type="Button" parent="CenterContainer/VBox"]
+custom_minimum_size = Vector2(320, 48)
+layout_mode = 2
+text = "종료"
+
+[connection signal="pressed" from="CenterContainer/VBox/ManagementButton" to="." method="_on_management_pressed"]
+[connection signal="pressed" from="CenterContainer/VBox/MartialArtButton" to="." method="_on_martial_art_pressed"]
+[connection signal="pressed" from="CenterContainer/VBox/CombatButton" to="." method="_on_combat_pressed"]
+[connection signal="pressed" from="CenterContainer/VBox/SectWarButton" to="." method="_on_sect_war_pressed"]
+[connection signal="pressed" from="CenterContainer/VBox/EndingButton" to="." method="_on_ending_pressed"]
+[connection signal="pressed" from="CenterContainer/VBox/HelpButton" to="." method="_on_help_pressed"]
+[connection signal="pressed" from="CenterContainer/VBox/SaveHBox/SaveButton" to="." method="_on_save_pressed"]
+[connection signal="pressed" from="CenterContainer/VBox/SaveHBox/LoadButton" to="." method="_on_load_pressed"]
+[connection signal="pressed" from="CenterContainer/VBox/GridButton" to="." method="_on_grid_demo_pressed"]
+[connection signal="pressed" from="CenterContainer/VBox/QuitButton" to="." method="_on_quit_pressed"]

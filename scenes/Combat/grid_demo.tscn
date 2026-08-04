@@ -1,0 +1,77 @@
+[gd_scene load_steps=2 format=3 uid="uid://grid_demo_scene"]
+
+[ext_resource type="Script" path="res://scripts/Combat/grid_demo.gd" id="1_grid"]
+
+[node name="GridDemo" type="Node2D"]
+script = ExtResource("1_grid")
+
+[node name="Background" type="ColorRect" parent="."]
+offset_right = 768.0
+offset_bottom = 480.0
+color = Color(0.05, 0.08, 0.05, 1)
+
+[node name="GridOverlay" type="Node2D" parent="."]
+
+[node name="Player" type="Sprite2D" parent="."]
+modulate = Color(0.3, 0.7, 1, 1)
+position = Vector2(120, 264)
+scale = Vector2(0.75, 0.75)
+
+[node name="PlayerRect" type="ColorRect" parent="Player"]
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+color = Color(0.3, 0.7, 1, 1)
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Panel" type="PanelContainer" parent="HUD"]
+offset_left = 800.0
+offset_top = 16.0
+offset_right = 1264.0
+offset_bottom = 300.0
+
+[node name="VBox" type="VBoxContainer" parent="HUD/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="HUD/Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "그리드 이동 데모"
+
+[node name="APLabel" type="Label" parent="HUD/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "행동력: 4 / 4"
+
+[node name="PosLabel" type="Label" parent="HUD/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "위치: (2, 5)"
+
+[node name="HelpLabel" type="Label" parent="HUD/Panel/VBox"]
+layout_mode = 2
+text = "인접 타일을 클릭해 이동합니다.\n붉은 타일은 장애물입니다."
+autowrap_mode = 3
+
+[node name="EndTurnButton" type="Button" parent="HUD/Panel/VBox"]
+custom_minimum_size = Vector2(200, 40)
+layout_mode = 2
+text = "턴 종료 (행동력 회복)"
+
+[node name="BackButton" type="Button" parent="HUD/Panel/VBox"]
+custom_minimum_size = Vector2(200, 40)
+layout_mode = 2
+text = "메인으로"
+
+[node name="LogLabel" type="Label" parent="HUD/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+text = "준비 완료"
+autowrap_mode = 3
+
+[connection signal="pressed" from="HUD/Panel/VBox/EndTurnButton" to="." method="_on_end_turn_pressed"]
+[connection signal="pressed" from="HUD/Panel/VBox/BackButton" to="." method="_on_back_pressed"]

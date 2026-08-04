@@ -1,0 +1,95 @@
+[gd_scene load_steps=2 format=3 uid="uid://combat_scene"]
+
+[ext_resource type="Script" path="res://scripts/Combat/combat_controller.gd" id="1_combat"]
+
+[node name="CombatScene" type="Node2D"]
+script = ExtResource("1_combat")
+
+[node name="Background" type="ColorRect" parent="."]
+offset_right = 768.0
+offset_bottom = 480.0
+color = Color(0.05, 0.07, 0.05, 1)
+
+[node name="GridOverlay" type="Node2D" parent="."]
+
+[node name="UnitsLayer" type="Node2D" parent="."]
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Panel" type="PanelContainer" parent="HUD"]
+offset_left = 790.0
+offset_top = 16.0
+offset_right = 1264.0
+offset_bottom = 680.0
+
+[node name="VBox" type="VBoxContainer" parent="HUD/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="HUD/Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "전술 전투 — 남궁휘"
+
+[node name="RoundLabel" type="Label" parent="HUD/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "라운드 1"
+
+[node name="TurnLabel" type="Label" parent="HUD/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "현재 턴"
+
+[node name="PlayerHPLabel" type="Label" parent="HUD/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "이청풍 HP"
+
+[node name="EnemyHPLabel" type="Label" parent="HUD/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "남궁휘 HP"
+
+[node name="APLabel" type="Label" parent="HUD/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "행동력"
+
+[node name="MartialLabel" type="Label" parent="HUD/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "무공"
+
+[node name="ModeMoveButton" type="Button" parent="HUD/Panel/VBox"]
+layout_mode = 2
+text = "이동 모드"
+
+[node name="ModeAttackButton" type="Button" parent="HUD/Panel/VBox"]
+layout_mode = 2
+text = "공격 모드"
+
+[node name="ModeMartialButton" type="Button" parent="HUD/Panel/VBox"]
+layout_mode = 2
+text = "무공 모드"
+
+[node name="EndTurnButton" type="Button" parent="HUD/Panel/VBox"]
+layout_mode = 2
+text = "턴 종료"
+
+[node name="BackButton" type="Button" parent="HUD/Panel/VBox"]
+layout_mode = 2
+text = "메인으로"
+
+[node name="LogLabel" type="Label" parent="HUD/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+text = "전투 로그"
+autowrap_mode = 3
+
+[connection signal="pressed" from="HUD/Panel/VBox/ModeMoveButton" to="." method="_on_mode_move_pressed"]
+[connection signal="pressed" from="HUD/Panel/VBox/ModeAttackButton" to="." method="_on_mode_attack_pressed"]
+[connection signal="pressed" from="HUD/Panel/VBox/ModeMartialButton" to="." method="_on_mode_martial_pressed"]
+[connection signal="pressed" from="HUD/Panel/VBox/EndTurnButton" to="." method="_on_end_turn_pressed"]
+[connection signal="pressed" from="HUD/Panel/VBox/BackButton" to="." method="_on_back_pressed"]

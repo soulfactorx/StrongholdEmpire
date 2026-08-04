@@ -1,0 +1,15 @@
+extends Node
+
+signal turn_advanced(year: int, season: String)
+signal resources_changed(sect: SectData)
+signal character_updated(character: CharacterData)
+signal relationships_changed(relationships: Array[RelationshipData])
+signal grid_position_changed(grid_pos: Vector2i)
+signal action_message(message: String)
+signal event_triggered(event_data: Dictionary)
+signal event_resolved(result: Dictionary)
+signal martial_art_learned(art: MartialArtData)
+signal role_changed(new_role: CharacterData.Role)
+signal role_transitions_available(options: Array[Dictionary])
+signal legacy_succession(legacy: LegacyData)
+signal ending_reached(ending_id: String)

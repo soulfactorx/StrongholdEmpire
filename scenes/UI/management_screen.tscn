@@ -1,0 +1,368 @@
+[gd_scene load_steps=4 format=3 uid="uid://management_screen"]
+
+[ext_resource type="Script" path="res://scripts/UI/management_screen.gd" id="1_mgmt"]
+[ext_resource type="Script" path="res://scripts/UI/event_popup.gd" id="2_event"]
+[ext_resource type="Script" path="res://scripts/UI/role_transition_popup.gd" id="3_role"]
+
+[node name="ManagementScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_mgmt")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.12, 0.16, 1)
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="RootHBox" type="HBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="LeftPanel" type="VBoxContainer" parent="Margin/RootHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="TimePanel" type="PanelContainer" parent="Margin/RootHBox/LeftPanel"]
+layout_mode = 2
+
+[node name="TimeVBox" type="VBoxContainer" parent="Margin/RootHBox/LeftPanel/TimePanel"]
+layout_mode = 2
+
+[node name="YearLabel" type="Label" parent="Margin/RootHBox/LeftPanel/TimePanel/TimeVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "천하대란 1년"
+
+[node name="SeasonLabel" type="Label" parent="Margin/RootHBox/LeftPanel/TimePanel/TimeVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "봄"
+
+[node name="GenerationLabel" type="Label" parent="Margin/RootHBox/LeftPanel/TimePanel/TimeVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "제1세대"
+
+[node name="SectPanel" type="PanelContainer" parent="Margin/RootHBox/LeftPanel"]
+layout_mode = 2
+
+[node name="SectVBox" type="VBoxContainer" parent="Margin/RootHBox/LeftPanel/SectPanel"]
+layout_mode = 2
+
+[node name="SectNameLabel" type="Label" parent="Margin/RootHBox/LeftPanel/SectPanel/SectVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "청운검파"
+
+[node name="GoldLabel" type="Label" parent="Margin/RootHBox/LeftPanel/SectPanel/SectVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "금화: 0"
+
+[node name="FoodLabel" type="Label" parent="Margin/RootHBox/LeftPanel/SectPanel/SectVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "식량: 0"
+
+[node name="ReputationLabel" type="Label" parent="Margin/RootHBox/LeftPanel/SectPanel/SectVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "명성: 0"
+
+[node name="ResearchLabel" type="Label" parent="Margin/RootHBox/LeftPanel/SectPanel/SectVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "연구점: 0"
+
+[node name="DiscipleLabel" type="Label" parent="Margin/RootHBox/LeftPanel/SectPanel/SectVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "제자: 0 / 0"
+
+[node name="FacilityPanel" type="PanelContainer" parent="Margin/RootHBox/LeftPanel"]
+layout_mode = 2
+
+[node name="FacilityVBox" type="VBoxContainer" parent="Margin/RootHBox/LeftPanel/FacilityPanel"]
+layout_mode = 2
+
+[node name="LibraryLabel" type="Label" parent="Margin/RootHBox/LeftPanel/FacilityPanel/FacilityVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "서고 Lv.1"
+
+[node name="TrainingLabel" type="Label" parent="Margin/RootHBox/LeftPanel/FacilityPanel/FacilityVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "무술장 Lv.1"
+
+[node name="TreasuryLabel" type="Label" parent="Margin/RootHBox/LeftPanel/FacilityPanel/FacilityVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "금고 Lv.1"
+
+[node name="RightPanel" type="VBoxContainer" parent="Margin/RootHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="CharacterPanel" type="PanelContainer" parent="Margin/RootHBox/RightPanel"]
+layout_mode = 2
+
+[node name="CharacterVBox" type="VBoxContainer" parent="Margin/RootHBox/RightPanel/CharacterPanel"]
+layout_mode = 2
+
+[node name="CharacterNameLabel" type="Label" parent="Margin/RootHBox/RightPanel/CharacterPanel/CharacterVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "이청풍"
+
+[node name="CharacterRoleLabel" type="Label" parent="Margin/RootHBox/RightPanel/CharacterPanel/CharacterVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "막내 제자"
+
+[node name="CharacterStatsLabel" type="Label" parent="Margin/RootHBox/RightPanel/CharacterPanel/CharacterVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "스탯"
+
+[node name="MartialArtsLabel" type="Label" parent="Margin/RootHBox/RightPanel/CharacterPanel/CharacterVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "무공: 없음"
+autowrap_mode = 3
+
+[node name="RelationshipPanel" type="PanelContainer" parent="Margin/RootHBox/RightPanel"]
+layout_mode = 2
+
+[node name="RelationshipVBox" type="VBoxContainer" parent="Margin/RootHBox/RightPanel/RelationshipPanel"]
+layout_mode = 2
+
+[node name="RelationshipTitle" type="Label" parent="Margin/RootHBox/RightPanel/RelationshipPanel/RelationshipVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "관계"
+
+[node name="RelationshipLabel" type="Label" parent="Margin/RootHBox/RightPanel/RelationshipPanel/RelationshipVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "관계 없음"
+autowrap_mode = 3
+
+[node name="ActionPanel" type="PanelContainer" parent="Margin/RootHBox/RightPanel"]
+layout_mode = 2
+
+[node name="ActionGrid" type="GridContainer" parent="Margin/RootHBox/RightPanel/ActionPanel"]
+layout_mode = 2
+columns = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+
+[node name="AdvanceTurnButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
+custom_minimum_size = Vector2(200, 40)
+layout_mode = 2
+text = "계절 진행"
+
+[node name="TrainButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
+custom_minimum_size = Vector2(200, 40)
+layout_mode = 2
+text = "제자 훈련"
+
+[node name="UpgradeLibraryButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
+custom_minimum_size = Vector2(200, 40)
+layout_mode = 2
+text = "서고 확장"
+
+[node name="UpgradeTrainingButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
+custom_minimum_size = Vector2(200, 40)
+layout_mode = 2
+text = "무술장 확장"
+
+[node name="UpgradeTreasuryButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
+custom_minimum_size = Vector2(200, 40)
+layout_mode = 2
+text = "금고 확장"
+
+[node name="MartialArtButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
+custom_minimum_size = Vector2(200, 40)
+layout_mode = 2
+text = "무공 연구소"
+
+[node name="RoleButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
+custom_minimum_size = Vector2(200, 40)
+layout_mode = 2
+text = "역할 전환"
+
+[node name="BackButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
+custom_minimum_size = Vector2(200, 40)
+layout_mode = 2
+text = "메인으로"
+
+[node name="LogPanel" type="PanelContainer" parent="Margin/RootHBox/RightPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="LogLabel" type="Label" parent="Margin/RootHBox/RightPanel/LogPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "행동을 선택하세요."
+autowrap_mode = 3
+
+[connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/AdvanceTurnButton" to="." method="_on_advance_turn_pressed"]
+[connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/TrainButton" to="." method="_on_train_pressed"]
+[connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/UpgradeLibraryButton" to="." method="_on_upgrade_library_pressed"]
+[connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/UpgradeTrainingButton" to="." method="_on_upgrade_training_pressed"]
+[connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/UpgradeTreasuryButton" to="." method="_on_upgrade_treasury_pressed"]
+[connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/MartialArtButton" to="." method="_on_martial_art_pressed"]
+[connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/RoleButton" to="." method="_on_role_pressed"]
+[connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/BackButton" to="." method="_on_back_pressed"]
+
+[node name="EventPopup" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_event")
+
+[node name="Dimmer" type="ColorRect" parent="EventPopup"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="Center" type="CenterContainer" parent="EventPopup"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="EventPopup/Center"]
+custom_minimum_size = Vector2(500, 280)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="EventPopup/Center/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="EventTitleLabel" type="Label" parent="EventPopup/Center/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "기연"
+
+[node name="EventDescLabel" type="Label" parent="EventPopup/Center/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "설명"
+autowrap_mode = 3
+
+[node name="Choice1Button" type="Button" parent="EventPopup/Center/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "선택 1"
+
+[node name="Choice2Button" type="Button" parent="EventPopup/Center/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "선택 2"
+
+[connection signal="pressed" from="EventPopup/Center/Panel/VBox/Choice1Button" to="EventPopup" method="_on_choice1_pressed"]
+[connection signal="pressed" from="EventPopup/Center/Panel/VBox/Choice2Button" to="EventPopup" method="_on_choice2_pressed"]
+
+[node name="RolePopup" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("3_role")
+
+[node name="Dimmer" type="ColorRect" parent="RolePopup"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="Center" type="CenterContainer" parent="RolePopup"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="RolePopup/Center"]
+custom_minimum_size = Vector2(520, 360)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="RolePopup/Center/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="RoleTitleLabel" type="Label" parent="RolePopup/Center/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "역할 전환"
+
+[node name="RoleDescLabel" type="Label" parent="RolePopup/Center/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "새로운 역할을 선택하세요."
+autowrap_mode = 3
+
+[node name="RoleOptionList" type="ItemList" parent="RolePopup/Center/Panel/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 160)
+layout_mode = 2
+
+[node name="ConfirmButton" type="Button" parent="RolePopup/Center/Panel/VBox"]
+layout_mode = 2
+text = "전환 확정"
+
+[node name="CloseButton" type="Button" parent="RolePopup/Center/Panel/VBox"]
+layout_mode = 2
+text = "닫기"
+
+[connection signal="pressed" from="RolePopup/Center/Panel/VBox/ConfirmButton" to="RolePopup" method="_on_confirm_pressed"]
+[connection signal="pressed" from="RolePopup/Center/Panel/VBox/CloseButton" to="RolePopup" method="_on_close_pressed"]

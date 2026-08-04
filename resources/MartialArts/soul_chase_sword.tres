@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="MartialArtData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/Resources/martial_art_data.gd" id="1_art"]
+
+[resource]
+script = ExtResource("1_art")
+id = "preset_soul_chase_sword"
+display_name = "유혼쾌영검"
+category = 0
+element = 5
+yin_yang = 0
+special_effects = Array[int]([2, 6])
+research_cost = 35
+complexity = 3
+internal_cost = 18
+action_cost = 2
+damage = 18
+range = 1
+heal_amount = 0
+move_bonus = 2
+description = "음기 어린 검법. 기습 후 그림자처럼 이동한다."
