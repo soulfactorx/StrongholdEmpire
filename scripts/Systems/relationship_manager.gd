@@ -1,25 +1,20 @@
 class_name RelationshipManager
 extends RefCounted
 
+## 새 게임 시작 관계. NPC 명부에서 initial_bond가 있는 인물로 만든다.
 static func create_default_relationships() -> Array[RelationshipData]:
 	var relationships: Array[RelationshipData] = []
-
-	var master := RelationshipData.new()
-	master.target_id = "npc_master"
-	master.target_name = "청운검선"
-	master.bond_type = RelationshipData.BondType.MASTER_DISCIPLE
-	master.bond_strength = 35
-	master.stage = 1
-	relationships.append(master)
-
-	var rival := RelationshipData.new()
-	rival.target_id = "npc_rival"
-	rival.target_name = "남궁휘"
-	rival.bond_type = RelationshipData.BondType.RIVALRY
-	rival.bond_strength = 15
-	rival.stage = 0
-	relationships.append(rival)
-
+	for npc in NpcRoster.get_all():
+		var bond: Dictionary = npc.get("initial_bond", {})
+		if bond.is_empty():
+			continue
+		var rel := RelationshipData.new()
+		rel.target_id = npc["id"]
+		rel.target_name = npc["display_name"]
+		rel.bond_type = RelationshipData.BondType.get(bond["type"])
+		rel.bond_strength = int(bond.get("strength", 0))
+		rel.stage = int(bond.get("stage", 0))
+		relationships.append(rel)
 	return relationships
 
 

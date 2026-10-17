@@ -1,0 +1,12 @@
+{
+  "id": "cheonma",
+  "sect_name": "천마신교",
+  "alignment": "DEMONIC",
+  "leader_id": "npc_cheonma",
+  "description": "서역에서 세를 불린 마교. 중원 정복을 꿈꾸는 최강의 세력이다.",
+  "reputation": 90,
+  "disciple_count": 40,
+  "max_disciples": 60,
+  "training_ground_level": 4,
+  "attitude": -60
+}

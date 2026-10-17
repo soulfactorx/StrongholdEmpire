@@ -7,6 +7,28 @@ const MOD_DIRS: Array[String] = [
 ]
 
 
+## 폴더의 JSON 파일을 이름순으로 읽어 객체 목록으로 돌려준다.
+## 파싱에 실패한 파일은 경고를 남기고 건너뛴다. 각 객체에 "_path"로 원본 경로를 넣는다.
+static func load_json_dir(dir_path: String) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if not DirAccess.dir_exists_absolute(dir_path):
+		push_warning("데이터 폴더가 없습니다: %s" % dir_path)
+		return result
+	var files: PackedStringArray = DirAccess.get_files_at(dir_path)
+	files.sort()
+	for file_name in files:
+		if not file_name.ends_with(".json"):
+			continue
+		var path: String = dir_path.path_join(file_name)
+		var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+		if not data is Dictionary:
+			push_warning("JSON 파싱 실패: %s" % path)
+			continue
+		data["_path"] = path
+		result.append(data)
+	return result
+
+
 static func load_martial_arts_from_json() -> Array[MartialArtData]:
 	var arts: Array[MartialArtData] = []
 	var dir := DirAccess.open("res://data/martial_arts/")

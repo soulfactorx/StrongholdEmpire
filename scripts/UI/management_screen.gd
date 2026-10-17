@@ -202,6 +202,11 @@ func _on_sect_war_pressed() -> void:
 	SceneRouter.goto(get_tree(), SceneRouter.SECT_WAR)
 
 
+func _on_world_pressed() -> void:
+	AudioManager.play_click()
+	SceneRouter.goto(get_tree(), SceneRouter.WORLD)
+
+
 func _on_ending_pressed() -> void:
 	AudioManager.play_click()
 	SceneRouter.goto(get_tree(), SceneRouter.ENDING)

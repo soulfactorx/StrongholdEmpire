@@ -250,6 +250,11 @@ custom_minimum_size = Vector2(170, 40)
 layout_mode = 2
 text = "엔딩 / 레거시"
 
+[node name="WorldButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
+custom_minimum_size = Vector2(170, 40)
+layout_mode = 2
+text = "강호 정세"
+
 [node name="LogPanel" type="PanelContainer" parent="Margin/RootHBox/RightPanel"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -270,6 +275,7 @@ autowrap_mode = 3
 [connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/CombatButton" to="." method="_on_combat_pressed"]
 [connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/SectWarButton" to="." method="_on_sect_war_pressed"]
 [connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/EndingButton" to="." method="_on_ending_pressed"]
+[connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/WorldButton" to="." method="_on_world_pressed"]
 
 [connection signal="pressed" from="Margin/RootHBox/LeftPanel/SystemPanel/SystemVBox/SaveButton" to="." method="_on_save_pressed"]
 [connection signal="pressed" from="Margin/RootHBox/LeftPanel/SystemPanel/SystemVBox/HelpButton" to="." method="_on_help_pressed"]

@@ -1,0 +1,12 @@
+{
+  "id": "namgung",
+  "sect_name": "남궁세가",
+  "alignment": "RIGHTEOUS",
+  "leader_id": "npc_namgung_lord",
+  "description": "검으로 이름난 정파의 명문세가. 정파 맹주 자리를 두고 청운검파와 경쟁한다.",
+  "reputation": 70,
+  "disciple_count": 24,
+  "max_disciples": 40,
+  "training_ground_level": 2,
+  "attitude": 0
+}

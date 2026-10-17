@@ -19,6 +19,8 @@
 - 밸런스 수치는 `GameBalance`에 모은다.
 - 기연은 `data/events/*.json` 데이터로 정의한다. 형식은 `docs/기연_데이터_형식.md` 참고.
   새 기연은 코드가 아니라 JSON으로 추가한다.
+- 인물은 `data/npcs/*.json`, 문파는 `data/sects/*.json`으로 정의한다.
+  형식은 `docs/NPC_문파_데이터_형식.md` 참고.
 
 ## 테스트
 

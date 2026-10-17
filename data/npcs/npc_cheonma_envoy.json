@@ -1,0 +1,18 @@
+{
+  "id": "npc_cheonma_envoy",
+  "display_name": "혈영",
+  "title": "천마신교 혈영대주",
+  "sect_id": "cheonma",
+  "role": "ASSASSIN",
+  "description": "교주의 명을 받아 정파 문파들을 은밀히 흔드는 암살자.",
+  "level": 7,
+  "stats": {
+    "strength": 15,
+    "agility": 21,
+    "wisdom": 13,
+    "charisma": 8,
+    "internal_energy_max": 160,
+    "age": 29,
+    "morality": 15
+  }
+}

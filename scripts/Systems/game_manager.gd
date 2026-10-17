@@ -11,6 +11,8 @@ var current_season_index: int = 0
 var generation: int = 1
 var player_character: CharacterData
 var player_sect: SectData
+## 플레이어 문파를 제외한 강호의 세력들
+var world_sects: Array[SectData] = []
 var player_relationships: Array[RelationshipData] = []
 var triggered_event_ids: Array[String] = []
 var pending_event: Dictionary = {}
@@ -48,7 +50,9 @@ func _initialize_new_game(
 	display_name: String = ""
 ) -> void:
 	_set_player_character(StartingRoles.create_character(role_id, display_name))
-	player_sect = _create_default_sect()
+	player_sect = SectRegistry.create_player_sect()
+	world_sects = SectRegistry.create_rival_sects()
+	EventManager.world_sects = world_sects
 	StartingRoles.apply_sect_setup(role_id, player_sect, player_character)
 	player_relationships = RelationshipManager.create_default_relationships()
 	triggered_event_ids.clear()
@@ -63,13 +67,6 @@ func _initialize_new_game(
 	generation = 1
 	current_year = 1
 	current_season_index = 0
-
-
-func _create_default_sect() -> SectData:
-	var sect := SectData.new()
-	sect.sect_name = "청운검파"
-	sect.leader_name = "청운검선"
-	return sect
 
 
 func _set_player_character(character: CharacterData) -> void:
@@ -141,6 +138,7 @@ func _process_yearly_events() -> void:
 	player_character.age += 1
 	player_character.restore_internal_energy()
 	player_character.gain_experience(_Balance.YEARLY_TRAINING_EXP)
+	SectWarManager.grow_world_sects(world_sects)
 	EventBus.character_updated.emit(player_character)
 
 
@@ -274,15 +272,54 @@ func start_legacy_succession() -> Dictionary:
 	}
 
 
-func resolve_sect_war(commands: Array) -> Dictionary:
+func get_world_sect(sect_id: String) -> SectData:
+	for sect in world_sects:
+		if sect.id == sect_id:
+			return sect
+	return null
+
+
+## 강호 세력을 약한 순서로 정렬해 돌려준다.
+func get_world_sects_by_power() -> Array[SectData]:
+	var result: Array[SectData] = world_sects.duplicate()
+	result.sort_custom(func(a: SectData, b: SectData) -> bool:
+		return SectWarManager.get_sect_power(a) < SectWarManager.get_sect_power(b)
+	)
+	return result
+
+
+## 문파전을 걸 수 있는 세력 (굴복하지 않은 세력, 약한 순서)
+func get_war_targets() -> Array[SectData]:
+	var result: Array[SectData] = []
+	for sect in get_world_sects_by_power():
+		if not sect.subjugated:
+			result.append(sect)
+	return result
+
+
+func can_wage_war() -> bool:
+	return story_flags.get("last_war_turn", -1) != _get_turn_index()
+
+
+## 문파전. 계절마다 한 번, 굴복하지 않은 세력을 상대로만 할 수 있다.
+func resolve_sect_war(target_id: String, commands: Array) -> Dictionary:
+	if not can_wage_war():
+		return {"success": false, "victory": false, "message": "이번 계절에는 이미 문파전을 치렀습니다."}
+	var enemy: SectData = get_world_sect(target_id)
+	if enemy == null or enemy.subjugated:
+		return {"success": false, "victory": false, "message": "공격할 수 없는 상대입니다."}
 	var typed_commands: Array[SectWarManager.Command] = []
 	for cmd in commands:
 		typed_commands.append(cmd as SectWarManager.Command)
+	story_flags["last_war_turn"] = _get_turn_index()
 	var result: Dictionary = SectWarManager.resolve_battle(
-		player_sect, player_character, typed_commands
+		player_sect, player_character, enemy, typed_commands
 	)
 	if result.get("victory", false):
 		story_flags["won_sect_war"] = true
+		story_flags["defeated_%s" % enemy.id] = true
+	if result.get("subjugated", false):
+		story_flags["subjugated_%s" % enemy.id] = true
 	EventBus.character_updated.emit(player_character)
 	EventBus.resources_changed.emit(player_sect)
 	_check_end_states()
@@ -361,6 +398,7 @@ func save_game() -> Dictionary:
 		"game_over_id": game_over_id,
 		"character": _SaveManager.serialize_character(player_character),
 		"sect": _SaveManager.serialize_sect(player_sect),
+		"world_sects": _SaveManager.serialize_sects(world_sects),
 		"relationships": _SaveManager.serialize_relationships(player_relationships),
 		"legacy_records": _SaveManager.serialize_legacy(legacy_records),
 	}
@@ -392,6 +430,12 @@ func _apply_save_data(data: Dictionary) -> void:
 	pending_event.clear()
 	_set_player_character(_SaveManager.deserialize_character(data.get("character", {})))
 	player_sect = _SaveManager.deserialize_sect(data.get("sect", {}))
+	# 강호 세력이 없는 구버전 세이브는 데이터 초기값으로 채운다.
+	if data.has("world_sects"):
+		world_sects = _SaveManager.deserialize_sects(data["world_sects"])
+	else:
+		world_sects = SectRegistry.create_rival_sects()
+	EventManager.world_sects = world_sects
 	player_relationships = _SaveManager.deserialize_relationships(data.get("relationships", []))
 	legacy_records = _SaveManager.deserialize_legacy(data.get("legacy_records", []))
 	refresh_role_transitions()

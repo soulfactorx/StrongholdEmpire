@@ -1,0 +1,23 @@
+{
+  "id": "npc_master",
+  "display_name": "청운검선",
+  "title": "청운검파 장문인",
+  "sect_id": "qingyun",
+  "role": "LEADER",
+  "description": "청운검파를 일으킨 노검객. 엄하지만 제자를 아끼며, 무에서 창조하는 무공을 강조한다.",
+  "level": 8,
+  "stats": {
+    "strength": 18,
+    "agility": 16,
+    "wisdom": 22,
+    "charisma": 17,
+    "internal_energy_max": 220,
+    "age": 62,
+    "morality": 75
+  },
+  "initial_bond": {
+    "type": "MASTER_DISCIPLE",
+    "strength": 35,
+    "stage": 1
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "id": "cheonma_letter",
+  "title": "혈영의 밀서",
+  "description": "천마신교 혈영대주가 보낸 밀서가 도착했습니다.\n「강호가 무너질 때 우리 편에 서는 자만이 살아남을 것이다.」",
+  "can_repeat": false,
+  "conditions": [
+    {
+      "type": "season",
+      "in": [
+        "겨울"
+      ]
+    },
+    {
+      "type": "sect",
+      "field": "reputation",
+      "op": ">=",
+      "value": 60
+    }
+  ],
+  "choices": [
+    {
+      "label": "밀약을 맺는다",
+      "message": "천마신교와 은밀한 밀약을 맺었습니다. 도덕 -10, 천마신교 태도 +30.",
+      "effects": [
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -10
+        },
+        {
+          "type": "world_sect",
+          "sect": "cheonma",
+          "field": "attitude",
+          "add": 30
+        },
+        {
+          "type": "flag",
+          "flag": "cheonma_pact",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "밀서를 불태운다",
+      "message": "마교의 회유를 단호히 거절했습니다. 명성 +3, 천마신교 태도 -10.",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 3
+        },
+        {
+          "type": "world_sect",
+          "sect": "cheonma",
+          "field": "attitude",
+          "add": -10
+        }
+      ]
+    },
+    {
+      "label": "정파에 알린다",
+      "message": "밀서를 남궁세가에 전했습니다. 남궁세가 태도 +15, 천마신교 태도 -20.",
+      "effects": [
+        {
+          "type": "world_sect",
+          "sect": "namgung",
+          "field": "attitude",
+          "add": 15
+        },
+        {
+          "type": "world_sect",
+          "sect": "cheonma",
+          "field": "attitude",
+          "add": -20
+        }
+      ]
+    }
+  ]
+}

@@ -19,6 +19,7 @@ extends RefCounted
 ##   role       in: [역할 이름]     — CharacterData.Role 이름 (예: "SPY")
 ##   season     in: [계절]          — "봄" "여름" "가을" "겨울"
 ##   flag       flag, value        — 스토리 플래그 값 비교 (없으면 false로 간주)
+##   world_sect sect, field, op, value — 강호 세력 수치 비교 (WORLD_SECT_FIELDS)
 ##   op: ">=" "<=" ">" "<" "==" "!="
 ##
 ## ■ 효과 (type별 필드)
@@ -28,6 +29,7 @@ extends RefCounted
 ##   bond        target, add       — 유대 증감
 ##   flag        flag, value       — 스토리 플래그 설정
 ##   combat      combat            — 전투 시작 (CombatManager.create_by_id)
+##   world_sect  sect, field, add  — 강호 세력 수치 증감 (태도는 -100~100)
 
 const EVENTS_DIR := "res://data/events/"
 
@@ -40,11 +42,16 @@ const SECT_FIELDS: PackedStringArray = [
 	"gold", "food", "reputation", "research_points", "disciple_count", "max_disciples",
 	"library_level", "training_ground_level", "treasury_level",
 ]
+const WORLD_SECT_FIELDS: PackedStringArray = ["attitude", "reputation", "disciple_count"]
 const OPERATORS: PackedStringArray = [">=", "<=", ">", "<", "==", "!="]
 const SEASON_NAMES: PackedStringArray = ["봄", "여름", "가을", "겨울"]
 
 static var _definitions: Array[EventData] = []
 static var _loaded: bool = false
+
+
+## 조건·효과에서 강호 세력을 찾을 때 쓰는 목록. GameManager가 새 게임·불러오기 때 지정한다.
+static var world_sects: Array[SectData] = []
 
 
 static func check_turn_events(
@@ -202,6 +209,9 @@ static func _validate_condition(condition: Variant, errors: PackedStringArray) -
 		"flag":
 			if not c.get("flag") is String:
 				errors.append("flag 조건에 flag 필요")
+		"world_sect":
+			_validate_world_sect(c, errors)
+			_validate_compare(c, errors)
 		_:
 			errors.append("알 수 없는 조건 type: %s" % c.get("type"))
 
@@ -237,8 +247,25 @@ static func _validate_effect(effect: Variant, errors: PackedStringArray) -> void
 		"combat":
 			if not CombatManager.has_combat(e.get("combat", "")):
 				errors.append("알 수 없는 전투: %s" % e.get("combat"))
+		"world_sect":
+			_validate_world_sect(e, errors)
 		_:
 			errors.append("알 수 없는 효과 type: %s" % e.get("type"))
+
+
+static func _validate_world_sect(entry: Dictionary, errors: PackedStringArray) -> void:
+	var sect_id: String = str(entry.get("sect", ""))
+	if not SectRegistry.has_sect(sect_id) or SectRegistry.get_sect_info(sect_id).get("is_player_sect", false):
+		errors.append("알 수 없는 강호 세력: %s" % sect_id)
+	if not entry.get("field") in WORLD_SECT_FIELDS:
+		errors.append("알 수 없는 세력 필드: %s" % entry.get("field"))
+
+
+static func _find_world_sect(sect_id: String) -> SectData:
+	for sect in world_sects:
+		if sect.id == sect_id:
+			return sect
+	return null
 
 
 static func _to_event_data(data: Dictionary) -> EventData:
@@ -295,6 +322,9 @@ static func _condition_met(
 			return season in c["in"]
 		"flag":
 			return story_flags.get(c["flag"], false) == c.get("value", true)
+		"world_sect":
+			var world_sect: SectData = _find_world_sect(c["sect"])
+			return world_sect != null and _compare(world_sect.get(c["field"]), c["op"], c["value"])
 	return false
 
 
@@ -343,3 +373,12 @@ static func _apply_effect(
 			story_flags[e["flag"]] = e.get("value", true)
 		"combat":
 			result["combat"] = CombatManager.create_by_id(e["combat"], character)
+		"world_sect":
+			var world_sect: SectData = _find_world_sect(e["sect"])
+			if world_sect:
+				var value: int = int(world_sect.get(e["field"])) + int(e.get("add", 0))
+				if e["field"] == "attitude":
+					value = clampi(value, -100, 100)
+				else:
+					value = maxi(0, value)
+				world_sect.set(e["field"], value)

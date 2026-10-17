@@ -28,11 +28,11 @@ static func create_by_id(combat_id: String, player: CharacterData) -> CombatSetu
 			return create_sparring(player)
 
 
-## 경영 화면에서 언제든 할 수 있는 남궁휘와의 비무. 계절당 한 번.
+## 경영 화면에서 할 수 있는 라이벌과의 비무. 계절당 한 번.
 static func create_sparring(player: CharacterData) -> CombatSetup:
 	var setup := CombatSetup.new()
 	setup.id = "sparring"
-	setup.title = "비무 — 남궁휘"
+	setup.title = "비무 — %s" % NpcRoster.get_display_name(RIVAL_ID)
 	setup.relationship_target_id = RIVAL_ID
 	setup.blocked_tiles = _central_wall()
 	setup.add_enemy(_create_rival(player), Vector2i(13, 5))
@@ -45,7 +45,7 @@ static func create_sparring(player: CharacterData) -> CombatSetup:
 static func create_rival_duel(player: CharacterData) -> CombatSetup:
 	var setup := CombatSetup.new()
 	setup.id = "rival_duel"
-	setup.title = "결투 — 남궁휘의 도전"
+	setup.title = "결투 — %s의 도전" % NpcRoster.get_display_name(RIVAL_ID)
 	setup.relationship_target_id = RIVAL_ID
 	setup.blocked_tiles = _central_wall()
 	var rival: CharacterData = _create_rival(player)
@@ -162,33 +162,13 @@ static func _central_wall() -> Array[Vector2i]:
 	]
 
 
-## 남궁휘는 플레이어 레벨에 맞춰 함께 성장하는 라이벌이다.
+## 남궁휘는 플레이어 레벨에 맞춰 함께 성장하는 라이벌이다. (명부의 scaling)
 static func _create_rival(player: CharacterData) -> CharacterData:
-	var rival := CharacterData.new()
-	rival.id = RIVAL_ID
-	rival.display_name = "남궁휘"
-	rival.role = CharacterData.Role.YOUNG_DISCIPLE
-	rival.level = maxi(2, player.level)
-	var growth: int = rival.level - 2
-	rival.strength = 14 + growth
-	rival.agility = 13 + growth
-	rival.wisdom = 10 + growth
-	rival.charisma = 9
-	rival.internal_energy_max = 100 + growth * 10
-	rival.restore_internal_energy()
-	return rival
+	return NpcRoster.create_character(RIVAL_ID, player)
 
 
 static func _create_bandit(player: CharacterData, index: int) -> CharacterData:
-	var bandit := CharacterData.new()
+	var bandit: CharacterData = NpcRoster.create_character("npc_bandit", player)
 	bandit.id = "npc_bandit_%d" % index
-	bandit.display_name = "도적 %s" % ["갑", "을", "병"][index % 3]
-	bandit.role = CharacterData.Role.WANDERER
-	bandit.level = maxi(1, player.level - 1)
-	bandit.strength = 7 + bandit.level
-	bandit.agility = 9 + bandit.level
-	bandit.wisdom = 5
-	bandit.charisma = 5
-	bandit.internal_energy_max = 60
-	bandit.restore_internal_energy()
+	bandit.display_name = "%s %s" % [bandit.display_name, ["갑", "을", "병"][index % 3]]
 	return bandit

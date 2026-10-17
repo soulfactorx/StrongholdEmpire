@@ -38,6 +38,9 @@ func _initialize() -> void:
 	_test_event_mod_folder()
 	_test_upkeep()
 	_test_game_over_conditions()
+	_test_npc_roster()
+	_test_sect_registry()
+	_test_world_sect_events()
 	# 오토로드의 _ready()는 첫 프레임에 실행되므로 런타임 검사는 그 뒤로 미룬다.
 	process_frame.connect(_run_runtime_tests, CONNECT_ONE_SHOT)
 
@@ -49,6 +52,7 @@ func _run_runtime_tests() -> void:
 	await _test_combat_flow()
 	await _test_event_popup_choices()
 	await _test_game_over_flow()
+	_test_world_state_and_war()
 
 	print("스모크 테스트: %d개 검사, %d개 실패" % [_checks, _failures])
 	quit(1 if _failures > 0 else 0)
@@ -199,7 +203,7 @@ func _test_scene_navigation() -> void:
 	for path in [
 		SceneRouter.MAIN_MENU, SceneRouter.NEW_GAME, SceneRouter.HUB,
 		SceneRouter.MARTIAL_ART, SceneRouter.SECT_WAR, SceneRouter.ENDING,
-		SceneRouter.HELP, SceneRouter.COMBAT,
+		SceneRouter.HELP, SceneRouter.WORLD, SceneRouter.COMBAT,
 	]:
 		SceneRouter.goto(self, path)
 		await process_frame
@@ -624,3 +628,168 @@ func _test_game_over_flow() -> void:
 
 	gm.start_new_game("재시작", "young_disciple")
 	_check(not gm.is_game_over() and gm.is_game_active, "새 게임으로 게임오버 해제")
+
+
+func _count_json(dir_path: String) -> int:
+	var count: int = 0
+	for file_name in DirAccess.get_files_at(dir_path):
+		if file_name.ends_with(".json"):
+			count += 1
+	return count
+
+
+func _test_npc_roster() -> void:
+	var npcs: Array[Dictionary] = NpcRoster.get_all()
+	_check(
+		npcs.size() > 0 and npcs.size() == _count_json(NpcRoster.NPC_DIR),
+		"NPC JSON %d개 모두 검증 통과" % npcs.size()
+	)
+	var bad_sect_refs: PackedStringArray = []
+	for npc in npcs:
+		if not SectRegistry.has_sect(npc["sect_id"]):
+			bad_sect_refs.append(npc["id"])
+	_check(bad_sect_refs.is_empty(), "모든 NPC의 소속 문파가 존재 %s" % bad_sect_refs)
+
+	# 라이벌은 플레이어 레벨에 맞춰 성장한다 (기존 하드코딩 값과 동일)
+	var player := CharacterData.new()
+	var rival: CharacterData = NpcRoster.create_character("npc_rival", player)
+	_check(rival.level == 2 and rival.strength == 14 and rival.internal_energy_max == 100, "라이벌 기본 능력치")
+	player.level = 5
+	rival = NpcRoster.create_character("npc_rival", player)
+	_check(
+		rival.level == 5 and rival.strength == 17 and rival.agility == 16
+		and rival.internal_energy_max == 130 and rival.internal_energy_current == 130,
+		"라이벌 레벨 5 성장"
+	)
+	var bandit: CharacterData = NpcRoster.create_character("npc_bandit", player)
+	_check(bandit.level == 4 and bandit.strength == 11 and bandit.wisdom == 5, "도적은 플레이어보다 1레벨 낮게")
+	var master: CharacterData = NpcRoster.create_character("npc_master")
+	_check(master.display_name == "청운검선" and master.role == CharacterData.Role.LEADER, "스승 데이터 로드")
+
+	var relationships: Array[RelationshipData] = RelationshipManager.create_default_relationships()
+	var master_bond: RelationshipData = RelationshipManager.get_bond_with(relationships, "npc_master")
+	var rival_bond: RelationshipData = RelationshipManager.get_bond_with(relationships, "npc_rival")
+	_check(
+		relationships.size() == 2 and master_bond.bond_strength == 35 and master_bond.stage == 1
+		and rival_bond.bond_type == RelationshipData.BondType.RIVALRY and rival_bond.bond_strength == 15,
+		"명부의 initial_bond로 시작 관계 생성"
+	)
+
+	_check(not NpcRoster.validate_npc_dict({"id": "x", "display_name": "x", "sect_id": "s", "role": "KING"}).is_empty(), "잘못된 NPC 역할 검출")
+	_check(
+		not NpcRoster.validate_npc_dict({
+			"id": "x", "display_name": "x", "sect_id": "s", "role": "LEADER", "stats": {"luck": 3},
+		}).is_empty(),
+		"잘못된 NPC 능력치 검출"
+	)
+
+
+func _test_sect_registry() -> void:
+	var player_sect: SectData = SectRegistry.create_player_sect()
+	_check(player_sect.id == "qingyun" and player_sect.sect_name == "청운검파" and player_sect.gold == 500, "플레이어 문파 데이터 로드")
+	_check(player_sect.leader_name == "청운검선", "문주 이름을 명부에서 가져옴")
+	var rivals: Array[SectData] = SectRegistry.create_rival_sects()
+	_check(rivals.size() == _count_json(SectRegistry.SECT_DIR) - 1, "플레이어 문파 외 세력 %d개 생성" % rivals.size())
+	var alignments: Dictionary = {}
+	for sect in rivals:
+		alignments[sect.alignment] = true
+		_check(NpcRoster.has_npc(sect.leader_id), "%s 문주가 명부에 있음" % sect.sect_name)
+	_check(alignments.size() == 3, "정파·사파·마교 세력이 모두 존재")
+	_check(
+		not SectRegistry.validate_sect_dict({"id": "x", "sect_name": "x", "alignment": "RIGHTEOUS", "leader_id": "nobody"}).is_empty(),
+		"없는 문주를 가리키는 문파 검출"
+	)
+	_check(
+		not SectRegistry.validate_sect_dict({
+			"id": "x", "sect_name": "x", "alignment": "NEUTRAL", "leader_id": "npc_master",
+		}).is_empty(),
+		"잘못된 성향 검출"
+	)
+
+
+func _test_world_sect_events() -> void:
+	var st: Dictionary = _make_combat_state()
+	var world: Array[SectData] = SectRegistry.create_rival_sects()
+	EventManager.world_sects = world
+	var heukpung: SectData = null
+	for sect in world:
+		if sect.id == "heukpung":
+			heukpung = sect
+	var toll: EventData = EventManager.get_event("heukpung_toll")
+	_check(
+		EventManager._conditions_met(toll, st["character"], st["sect"], st["relationships"], "봄", st["flags"]),
+		"흑풍채 통행세: 적대적일 때 발생"
+	)
+	st["flags"]["subjugated_heukpung"] = true
+	_check(
+		not EventManager._conditions_met(toll, st["character"], st["sect"], st["relationships"], "봄", st["flags"]),
+		"흑풍채 통행세: 굴복시킨 뒤에는 발생하지 않음"
+	)
+	var gold_before: int = st["sect"].gold
+	var attitude_before: int = heukpung.attitude
+	EventManager.resolve_choice("heukpung_toll", 0, st["character"], st["sect"], st["relationships"], st["flags"])
+	_check(st["sect"].gold == gold_before - 50 and heukpung.attitude == attitude_before + 15, "통행세 납부: 금화 -50, 태도 +15")
+
+	heukpung.attitude = 95
+	EventManager.resolve_choice("heukpung_toll", 0, st["character"], st["sect"], st["relationships"], st["flags"])
+	_check(heukpung.attitude == 100, "태도는 100을 넘지 않음")
+
+	var bad: Dictionary = {
+		"id": "t", "title": "t", "description": "t",
+		"choices": [{"label": "a", "effects": [{"type": "world_sect", "sect": "qingyun", "field": "attitude", "add": 1}]}],
+	}
+	_check(not EventManager.validate_event_dict(bad).is_empty(), "플레이어 문파를 강호 세력으로 지정하면 오류")
+	EventManager.world_sects = root.get_node("GameManager").world_sects
+
+
+func _test_world_state_and_war() -> void:
+	var gm: Node = root.get_node("GameManager")
+	gm.start_new_game("정벌", "leader")
+	_check(gm.player_sect.id == "qingyun" and gm.world_sects.size() == 3, "새 게임: 플레이어 문파와 강호 세력 3개")
+	_check(gm.get_war_targets().size() == 3, "처음에는 세 세력 모두 공격 가능")
+
+	# 강한 아군 대 약해진 흑풍채: 승리하면 굴복
+	var heukpung: SectData = gm.get_world_sect("heukpung")
+	heukpung.disciple_count = 6
+	gm.player_sect.disciple_count = 30
+	gm.player_sect.training_ground_level = 5
+	var rep_before: int = gm.player_sect.reputation
+	var commands: Array = [
+		SectWarManager.Command.FLANK, SectWarManager.Command.DEFEND, SectWarManager.Command.FLANK,
+	]
+	var result: Dictionary = gm.resolve_sect_war("heukpung", commands)
+	_check(result["victory"] and result["subjugated"] and heukpung.subjugated, "흑풍채 굴복")
+	_check(gm.story_flags.get("subjugated_heukpung", false), "굴복 스토리 플래그 설정")
+	_check(gm.player_sect.reputation > rep_before + _Balance.SUBJUGATE_REPUTATION_BONUS, "굴복 보너스 명성")
+	_check(gm.get_war_targets().size() == 2, "굴복한 세력은 공격 대상에서 제외")
+	_check(not gm.resolve_sect_war("namgung", commands)["success"], "문파전은 계절당 한 번")
+
+	# 해가 바뀌면 굴복하지 않은 세력만 성장
+	var namgung: SectData = gm.get_world_sect("namgung")
+	var namgung_before: int = namgung.disciple_count
+	var heukpung_before: int = heukpung.disciple_count
+	for i in 4:
+		gm.advance_turn()
+		gm.pending_event.clear()
+		gm.pending_combat = null
+	_check(namgung.disciple_count == namgung_before + _Balance.WORLD_SECT_YEARLY_GROWTH, "강호 세력 연간 성장")
+	_check(heukpung.disciple_count == heukpung_before, "굴복한 세력은 성장하지 않음")
+	_check(gm.can_wage_war(), "다음 계절에는 다시 문파전 가능")
+
+	# 저장/불러오기
+	var state: Dictionary = JSON.parse_string(JSON.stringify({
+		"character": _SaveManager.serialize_character(gm.player_character),
+		"sect": _SaveManager.serialize_sect(gm.player_sect),
+		"world_sects": _SaveManager.serialize_sects(gm.world_sects),
+	}))
+	gm._apply_save_data(state)
+	var restored: SectData = gm.get_world_sect("heukpung")
+	_check(
+		gm.world_sects.size() == 3 and restored.subjugated and restored.alignment == SectData.Alignment.UNORTHODOX
+		and restored.leader_id == "npc_heukpung_chief",
+		"강호 세력 저장/복원"
+	)
+	_check(gm.player_sect.id == "qingyun", "플레이어 문파 id 저장/복원")
+	state.erase("world_sects")
+	gm._apply_save_data(state)
+	_check(gm.world_sects.size() == 3 and not gm.get_world_sect("heukpung").subjugated, "구버전 세이브는 강호 세력 초기값 사용")

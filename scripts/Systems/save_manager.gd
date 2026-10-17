@@ -2,7 +2,7 @@ class_name SaveManager
 extends RefCounted
 
 const SAVE_PATH := "user://save_slot_1.json"
-const SAVE_VERSION := 2
+const SAVE_VERSION := 3
 
 
 static func save_game(state: Dictionary) -> Dictionary:
@@ -74,6 +74,11 @@ static func serialize_martial_arts(arts: Array[MartialArtData]) -> Array:
 
 static func serialize_sect(sect: SectData) -> Dictionary:
 	return {
+		"id": sect.id,
+		"alignment": sect.alignment,
+		"leader_id": sect.leader_id,
+		"attitude": sect.attitude,
+		"subjugated": sect.subjugated,
 		"sect_name": sect.sect_name,
 		"leader_name": sect.leader_name,
 		"gold": sect.gold,
@@ -87,6 +92,20 @@ static func serialize_sect(sect: SectData) -> Dictionary:
 		"treasury_level": sect.treasury_level,
 		"shortage_seasons": sect.shortage_seasons,
 	}
+
+
+static func serialize_sects(sects: Array[SectData]) -> Array:
+	var result: Array = []
+	for sect in sects:
+		result.append(serialize_sect(sect))
+	return result
+
+
+static func deserialize_sects(data: Array) -> Array[SectData]:
+	var result: Array[SectData] = []
+	for entry in data:
+		result.append(deserialize_sect(entry))
+	return result
 
 
 static func serialize_relationships(relationships: Array[RelationshipData]) -> Array:
@@ -172,6 +191,11 @@ static func deserialize_sect(data: Dictionary) -> SectData:
 	sect.training_ground_level = data.get("training_ground_level", 1)
 	sect.treasury_level = data.get("treasury_level", 1)
 	sect.shortage_seasons = data.get("shortage_seasons", 0)
+	sect.id = data.get("id", "")
+	sect.alignment = int(data.get("alignment", SectData.Alignment.RIGHTEOUS))
+	sect.leader_id = data.get("leader_id", "")
+	sect.attitude = int(data.get("attitude", 0))
+	sect.subjugated = data.get("subjugated", false)
 	return sect
 
 
