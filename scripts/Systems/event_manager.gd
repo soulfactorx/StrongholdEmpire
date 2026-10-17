@@ -183,16 +183,13 @@ static func _resolve_master_trial(
 static func _resolve_night_bandits(
 	choice_index: int,
 	character: CharacterData,
-	sect: SectData
+	_sect: SectData
 ) -> Dictionary:
 	if choice_index == 0:
-		character.strength += 1
-		character.gain_experience(20)
-		sect.reputation += 3
-		character.internal_energy_current = maxi(0, character.internal_energy_current - 15)
 		return {
 			"success": true,
-			"message": "도적을 물리쳤습니다! 무력 +1, 명성 +3 (내공 -15)",
+			"message": "도적 무리를 막아서기 위해 검을 뽑습니다!",
+			"combat": CombatManager.create_night_bandits(character),
 		}
 	character.agility += 1
 	return {"success": true, "message": "은밀히 피해 신법 +1."}
@@ -299,11 +296,11 @@ static func _resolve_rival_duel(
 ) -> Dictionary:
 	var rival: RelationshipData = RelationshipManager.get_bond_with(relationships, "npc_rival")
 	if choice_index == 0:
-		character.strength += 1
-		character.gain_experience(20)
-		if rival:
-			rival.increase_bond(10)
-		return {"success": true, "message": "결투에서 승리! 무력 +1, 라이벌 유대 +10"}
+		return {
+			"success": true,
+			"message": "남궁휘의 도전을 받아들입니다.",
+			"combat": CombatManager.create_rival_duel(character),
+		}
 	if rival:
 		rival.decrease_bond(5)
 	return {"success": true, "message": "결투를 피했습니다. 라이벌 유대 -5"}

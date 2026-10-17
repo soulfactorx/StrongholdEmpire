@@ -29,6 +29,8 @@ func _initialize() -> void:
 	_test_martial_art_round_trip()
 	_test_old_save_without_martial_arts()
 	_test_starting_roles()
+	_test_combat_outcomes()
+	_test_combat_events()
 	# 오토로드의 _ready()는 첫 프레임에 실행되므로 런타임 검사는 그 뒤로 미룬다.
 	process_frame.connect(_run_runtime_tests, CONNECT_ONE_SHOT)
 
@@ -37,6 +39,7 @@ func _run_runtime_tests() -> void:
 	_test_turn_loop()
 	_test_start_new_game()
 	await _test_scene_navigation()
+	await _test_combat_flow()
 
 	print("스모크 테스트: %d개 검사, %d개 실패" % [_checks, _failures])
 	quit(1 if _failures > 0 else 0)
@@ -205,3 +208,144 @@ func _test_scene_navigation() -> void:
 	await process_frame
 	await process_frame
 	_check(current_scene.scene_file_path == SceneRouter.HUB, "도움말에서 직전 화면(경영)으로 복귀")
+
+
+func _make_combat_state() -> Dictionary:
+	var character := CharacterData.new()
+	character.internal_energy_max = 100
+	character.restore_internal_energy()
+	var sect := SectData.new()
+	var relationships: Array[RelationshipData] = RelationshipManager.create_default_relationships()
+	return {"character": character, "sect": sect, "relationships": relationships, "flags": {}}
+
+
+func _apply(setup: CombatSetup, outcome: CombatManager.Outcome, st: Dictionary) -> Dictionary:
+	return CombatManager.apply_outcome(
+		setup, outcome, st["character"], st["sect"], st["relationships"], st["flags"]
+	)
+
+
+func _test_combat_outcomes() -> void:
+	# 비무 승리: 경험치와 라이벌 유대
+	var st: Dictionary = _make_combat_state()
+	var rival_bond: RelationshipData = RelationshipManager.get_bond_with(st["relationships"], "npc_rival")
+	var bond_before: int = rival_bond.bond_strength
+	var spar: CombatSetup = CombatManager.create_sparring(st["character"])
+	var result: Dictionary = _apply(spar, CombatManager.Outcome.VICTORY, st)
+	_check(
+		result["success"] and st["character"].experience == _Balance.SPAR_EXP
+		and rival_bond.bond_strength == bond_before + 5,
+		"비무 승리: 경험치와 라이벌 유대 상승"
+	)
+
+	# 결투 패배: 명성 감소, 부상, 유대 감소
+	st = _make_combat_state()
+	rival_bond = RelationshipManager.get_bond_with(st["relationships"], "npc_rival")
+	bond_before = rival_bond.bond_strength
+	var rep_before: int = st["sect"].reputation
+	var duel: CombatSetup = CombatManager.create_rival_duel(st["character"])
+	result = _apply(duel, CombatManager.Outcome.DEFEAT, st)
+	_check(
+		not result["success"] and st["sect"].reputation == rep_before - 5
+		and st["character"].internal_energy_current == 30
+		and rival_bond.bond_strength == bond_before - 5,
+		"결투 패배: 명성 -5, 내공 30%로 감소, 유대 -5"
+	)
+	_check(not st["flags"].has("won_rival_duel"), "패배 시 승리 플래그 없음")
+
+	st = _make_combat_state()
+	_apply(CombatManager.create_rival_duel(st["character"]), CombatManager.Outcome.VICTORY, st)
+	_check(st["flags"].get("won_rival_duel", false), "결투 승리 시 스토리 플래그 설정")
+
+	# 도적 전투 후퇴: 손실 절반, 부상 완화
+	st = _make_combat_state()
+	var gold_before: int = st["sect"].gold
+	var bandits: CombatSetup = CombatManager.create_night_bandits(st["character"])
+	result = _apply(bandits, CombatManager.Outcome.RETREAT, st)
+	_check(
+		st["sect"].gold == gold_before - 20 and st["character"].internal_energy_current == 65,
+		"후퇴: 금화 손실 절반, 내공 65%"
+	)
+
+	# 금화가 모자라도 음수가 되지 않는다
+	st = _make_combat_state()
+	st["sect"].gold = 10
+	_apply(bandits, CombatManager.Outcome.DEFEAT, st)
+	_check(st["sect"].gold == 0, "패배 손실이 보유 금화를 넘지 않음")
+
+
+func _test_combat_events() -> void:
+	var st: Dictionary = _make_combat_state()
+	var result: Dictionary = EventManager.resolve_choice(
+		"night_bandits", 0, st["character"], st["sect"], st["relationships"], st["flags"]
+	)
+	var setup: CombatSetup = result.get("combat")
+	_check(setup != null and setup.enemies.size() == 3, "야습 도적: 싸우기 선택 시 3인 전투 예약")
+	result = EventManager.resolve_choice(
+		"night_bandits", 1, st["character"], st["sect"], st["relationships"], st["flags"]
+	)
+	_check(not result.has("combat"), "야습 도적: 피하기 선택 시 전투 없음")
+	result = EventManager.resolve_choice(
+		"rival_duel", 0, st["character"], st["sect"], st["relationships"], st["flags"]
+	)
+	_check(result.has("combat") and result["combat"].id == "rival_duel", "라이벌의 도전: 결투 예약")
+
+
+func _test_combat_flow() -> void:
+	var gm: Node = root.get_node("GameManager")
+	gm.start_new_game("시험", "young_disciple")
+
+	# 비무: 계절당 한 번
+	_check(gm.can_spar(), "새 게임에서 비무 가능")
+	var spar_result: Dictionary = gm.start_sparring()
+	await process_frame
+	await process_frame
+	_check(
+		spar_result["success"] and current_scene.scene_file_path == SceneRouter.COMBAT,
+		"비무 시작 시 전투 화면으로 이동"
+	)
+	_check(not gm.start_sparring()["success"], "같은 계절 두 번째 비무 거부")
+
+	# 적을 모두 쓰러뜨리면 승리 처리
+	var controller: Node = current_scene
+	var exp_before: int = gm.player_character.experience
+	for unit in controller._get_alive_enemies():
+		unit.take_damage(99999)
+	controller._check_victory()
+	_check(gm.pending_combat == null, "승리 후 예약 전투 해제")
+	_check(gm.player_character.experience == exp_before + _Balance.SPAR_EXP, "비무 승리 경험치 반영")
+
+	# 도적 전투: 적 3명, 배율 적용, 적 AI 공격, 후퇴
+	gm.start_combat(CombatManager.create_night_bandits(gm.player_character))
+	await process_frame
+	await process_frame
+	controller = current_scene
+	var enemies: Array = controller._get_alive_enemies()
+	_check(enemies.size() == 3, "도적 전투: 적 3명 배치")
+	var full_hp: int = CombatUnit.new(enemies[0].character).max_hp
+	_check(enemies[0].max_hp == int(full_hp * 0.5), "도적 체력 배율 적용")
+
+	var player: CombatUnit = controller._get_player()
+	var attacker: CombatUnit = enemies[0]
+	player.grid_pos = attacker.grid_pos + Vector2i(-1, 0)
+	var hp_before: int = player.hp
+	controller._run_enemy_ai(attacker)
+	_check(player.hp < hp_before, "인접한 적이 플레이어를 공격")
+
+	var gold_before: int = gm.player_sect.gold
+	controller._on_back_pressed()
+	await process_frame
+	await process_frame
+	_check(gm.player_sect.gold == gold_before - 20, "전투 중 후퇴: 손실 절반 반영")
+	_check(current_scene.scene_file_path == SceneRouter.HUB, "후퇴 후 경영 화면으로 복귀")
+
+	# 기연 선택지에서 전투로 이어지는 흐름
+	gm.pending_event = {"id": "rival_duel"}
+	gm.resolve_pending_event(0)
+	await process_frame
+	await process_frame
+	_check(
+		current_scene.scene_file_path == SceneRouter.COMBAT
+		and gm.pending_combat != null and gm.pending_combat.id == "rival_duel",
+		"기연 선택으로 결투 시작"
+	)

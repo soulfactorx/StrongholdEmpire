@@ -174,7 +174,9 @@ func _on_role_pressed() -> void:
 
 func _on_combat_pressed() -> void:
 	AudioManager.play_click()
-	SceneRouter.goto(get_tree(), SceneRouter.COMBAT)
+	var result: Dictionary = GameManager.start_sparring()
+	if not result["success"]:
+		_on_action_message(result["message"])
 
 
 func _on_sect_war_pressed() -> void:

@@ -21,6 +21,8 @@ var pending_role_transitions: Array[Dictionary] = []
 var mod_martial_arts: Array[MartialArtData] = []
 ## 새 게임을 시작했거나 세이브를 불러와 진행 중인 게임이 있는지 여부
 var is_game_active: bool = false
+## 전투 씬이 읽어 갈 전투 구성. 전투가 끝나면 비운다.
+var pending_combat: CombatSetup = null
 
 
 func _ready() -> void:
@@ -51,6 +53,7 @@ func _initialize_new_game(
 	legacy_records.clear()
 	current_ending_id = ""
 	pending_role_transitions.clear()
+	pending_combat = null
 	generation = 1
 	current_year = 1
 	current_season_index = 0
@@ -252,6 +255,62 @@ func resolve_sect_war(commands: Array) -> Dictionary:
 	return result
 
 
+## 전투를 시작한다. 전투 씬으로 이동하고, 결과는 finish_combat으로 받는다.
+func start_combat(setup: CombatSetup) -> void:
+	pending_combat = setup
+	SceneRouter.goto(get_tree(), SceneRouter.COMBAT)
+
+
+## 전투 씬이 사용할 구성을 돌려준다. 예약된 전투가 없으면(개발자 메뉴 등) 비무를 만든다.
+func get_or_create_combat_setup() -> CombatSetup:
+	if pending_combat == null:
+		pending_combat = CombatManager.create_sparring(player_character)
+	return pending_combat
+
+
+func can_spar() -> bool:
+	return story_flags.get("last_spar_turn", -1) != _get_turn_index()
+
+
+## 경영 화면의 비무. 계절마다 한 번만 할 수 있다.
+func start_sparring() -> Dictionary:
+	if not can_spar():
+		return {"success": false, "message": "이번 계절에는 이미 비무를 했습니다."}
+	story_flags["last_spar_turn"] = _get_turn_index()
+	start_combat(CombatManager.create_sparring(player_character))
+	return {"success": true, "message": "남궁휘에게 비무를 청합니다."}
+
+
+## 전투 결과를 반영하고 결과(message, outcome 포함)를 돌려준다.
+func finish_combat(outcome: CombatManager.Outcome) -> Dictionary:
+	if pending_combat == null:
+		return {"success": false, "message": "진행 중인 전투가 없습니다."}
+	var result: Dictionary = CombatManager.apply_outcome(
+		pending_combat,
+		outcome,
+		player_character,
+		player_sect,
+		player_relationships,
+		story_flags
+	)
+	pending_combat = null
+	EventBus.combat_finished.emit(result)
+	EventBus.character_updated.emit(player_character)
+	EventBus.resources_changed.emit(player_sect)
+	EventBus.relationships_changed.emit(player_relationships)
+	refresh_role_transitions()
+	_check_ending()
+	if result["success"]:
+		AudioManager.play_success()
+	else:
+		AudioManager.play_failure()
+	return result
+
+
+func _get_turn_index() -> int:
+	return current_year * SEASONS.size() + current_season_index
+
+
 func _load_mod_data() -> void:
 	mod_martial_arts = _ModLoader.load_martial_arts_from_json()
 
@@ -318,3 +377,6 @@ func _apply_event_result(result: Dictionary) -> void:
 		AudioManager.play_success()
 	else:
 		AudioManager.play_failure()
+	# 전투로 이어지는 선택지는 결과를 반영한 뒤 전투 씬으로 넘어간다.
+	if result.has("combat"):
+		start_combat(result["combat"])

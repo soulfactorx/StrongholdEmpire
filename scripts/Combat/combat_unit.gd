@@ -11,6 +11,7 @@ var action_points: int = 4
 var max_action_points: int = 4
 var active_martial_art: MartialArtData = null
 var target_id: String = ""
+var damage_scale: float = 1.0
 
 
 func _init(char: CharacterData, player: bool = false) -> void:
@@ -27,6 +28,16 @@ func _init(char: CharacterData, player: bool = false) -> void:
 
 func get_speed() -> int:
 	return character.agility + (active_martial_art.move_bonus if active_martial_art else 0)
+
+
+func scale_stats(hp_scale: float, new_damage_scale: float) -> void:
+	max_hp = maxi(1, int(max_hp * hp_scale))
+	hp = max_hp
+	damage_scale = new_damage_scale
+
+
+func get_attack_damage(base_damage: int) -> int:
+	return maxi(1, int((base_damage + character.strength) * damage_scale))
 
 
 func restore_action_points() -> void:

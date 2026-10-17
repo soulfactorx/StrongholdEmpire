@@ -26,10 +26,11 @@ offset_bottom = 680.0
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Title" type="Label" parent="HUD/Panel/VBox"]
+[node name="TitleLabel" type="Label" parent="HUD/Panel/VBox"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "전술 전투 — 남궁휘"
+text = "전술 전투"
 
 [node name="RoundLabel" type="Label" parent="HUD/Panel/VBox"]
 unique_name_in_owner = true
@@ -44,12 +45,12 @@ text = "현재 턴"
 [node name="PlayerHPLabel" type="Label" parent="HUD/Panel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "이청풍 HP"
+text = "HP"
 
 [node name="EnemyHPLabel" type="Label" parent="HUD/Panel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "남궁휘 HP"
+text = "적 HP"
 
 [node name="APLabel" type="Label" parent="HUD/Panel/VBox"]
 unique_name_in_owner = true
@@ -78,6 +79,7 @@ layout_mode = 2
 text = "턴 종료"
 
 [node name="BackButton" type="Button" parent="HUD/Panel/VBox"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "문파로 돌아가기"
 

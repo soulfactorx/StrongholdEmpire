@@ -240,7 +240,7 @@ text = "역할 전환"
 [node name="CombatButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
 custom_minimum_size = Vector2(170, 40)
 layout_mode = 2
-text = "결투"
+text = "비무 (남궁휘)"
 [node name="SectWarButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
 custom_minimum_size = Vector2(170, 40)
 layout_mode = 2

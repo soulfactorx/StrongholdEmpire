@@ -33,6 +33,11 @@ const YEARLY_TRAINING_EXP := 40
 const LEVEL_UP_STAT_GAIN := 1
 const LEVEL_UP_INTERNAL_GAIN := 10
 
+# 전투
+const SPAR_EXP := 30
+const BASE_ATTACK_DAMAGE := 8
+const ENEMY_BASE_ATTACK_DAMAGE := 10
+
 # 레거시
 const RETIRE_AGE := 55
 const RETIRE_LEVEL := 10
