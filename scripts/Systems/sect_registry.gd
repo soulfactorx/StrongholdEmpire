@@ -6,6 +6,8 @@ extends RefCounted
 ##
 ## 필드: id, sect_name, alignment(SectData.Alignment 이름), leader_id(NPC id), description,
 ##       is_player_sect(선택), 그리고 SectData의 수치 필드(reputation, disciple_count 등)
+##       war_tactics(선택) { 명령: 가중치 }, war_formation(선택) CRANE/FISH/CIRCLE/NONE
+##       — 없으면 성향별 기본값(GameBalance.WAR_TACTICS, WAR_FORMATIONS)
 
 const SECT_DIR := "res://data/sects/"
 const NUMERIC_FIELDS: PackedStringArray = [
@@ -96,8 +98,20 @@ static func validate_sect_dict(data: Dictionary) -> PackedStringArray:
 	for key in data:
 		if not (key in NUMERIC_FIELDS or key in [
 			"id", "sect_name", "alignment", "leader_id", "description", "is_player_sect", "_path",
+			"war_tactics", "war_formation",
 		]):
 			errors.append("알 수 없는 필드: %s" % key)
+	var tactics: Variant = data.get("war_tactics", {})
+	if not tactics is Dictionary:
+		errors.append("war_tactics는 { 명령: 가중치 } 형식이어야 함")
+	else:
+		for command in tactics:
+			if not command in ["CHARGE", "DEFEND", "FLANK", "RETREAT"]:
+				errors.append("알 수 없는 문파전 명령: %s" % command)
+			elif not ((tactics[command] is float or tactics[command] is int) and tactics[command] >= 0):
+				errors.append("war_tactics 가중치는 0 이상의 숫자여야 함")
+	if data.has("war_formation") and not data["war_formation"] in ["NONE", "CRANE", "FISH", "CIRCLE"]:
+		errors.append("알 수 없는 진형: %s" % data["war_formation"])
 	return errors
 
 

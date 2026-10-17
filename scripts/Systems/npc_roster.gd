@@ -9,6 +9,7 @@ extends RefCounted
 ##   → 레벨 = max(base_level, 플레이어 레벨 + level_offset), 능력치는 base_level 대비 증가
 ## initial_bond: { type(RelationshipData.BondType 이름), strength, stage } — 새 게임 시작 관계
 ## martial_arts: [{ id(MartialArtLibrary), min_level }] — 해당 레벨 이상이면 그 무공을 쓴다
+## war_specialty: 문파전 장수로 참전할 때 보너스를 주는 명령 (CHARGE, DEFEND, FLANK)
 
 const NPC_DIR := "res://data/npcs/"
 const STAT_FIELDS: PackedStringArray = [
@@ -93,6 +94,8 @@ static func validate_npc_dict(data: Dictionary) -> PackedStringArray:
 	for entry in data.get("martial_arts", []):
 		if not entry is Dictionary or not MartialArtLibrary.has_art(str(entry.get("id", ""))):
 			errors.append("알 수 없는 무공: %s" % entry)
+	if data.has("war_specialty") and not data["war_specialty"] in ["CHARGE", "DEFEND", "FLANK"]:
+		errors.append("알 수 없는 장수 특기: %s" % data["war_specialty"])
 	var bond: Variant = data.get("initial_bond")
 	if bond != null and not RelationshipData.BondType.has(bond.get("type", "")):
 		errors.append("알 수 없는 관계 유형: %s" % bond.get("type"))

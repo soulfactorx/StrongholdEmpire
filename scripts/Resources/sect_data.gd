@@ -17,6 +17,8 @@ enum Alignment { RIGHTEOUS, UNORTHODOX, DEMONIC }
 @export var attitude: int = 0
 ## 문파전에서 굴복시킨 세력인지 여부
 @export var subjugated: bool = false
+## 지난 문파전에서 플레이어가 쓴 명령 (SectWarManager.Command). 다음 작전 계획에 반영한다
+@export var observed_commands: Array[int] = []
 
 @export_group("자원")
 @export var gold: int = 500

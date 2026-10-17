@@ -114,6 +114,12 @@ func _run_runtime_tests() -> void:
 	_check(_completed.has("_test_every_ending_reachable"), "_test_every_ending_reachable 끝까지 실행")
 	await _test_final_ending_flow()
 	_check(_completed.has("_test_final_ending_flow"), "_test_final_ending_flow 끝까지 실행")
+	_test_war_rules()
+	_check(_completed.has("_test_war_rules"), "_test_war_rules 끝까지 실행")
+	_test_war_balance()
+	_check(_completed.has("_test_war_balance"), "_test_war_balance 끝까지 실행")
+	await _test_war_flow()
+	_check(_completed.has("_test_war_flow"), "_test_war_flow 끝까지 실행")
 
 	print("스모크 테스트: %d개 검사, %d개 실패" % [_checks, _failures])
 	quit(1 if _failures > 0 else 0)
@@ -1855,3 +1861,222 @@ func _test_final_ending_flow() -> void:
 	SceneRouter.goto(self, SceneRouter.MAIN_MENU)
 	await process_frame
 	_completed["_test_final_ending_flow"] = true
+
+
+func _test_war_rules() -> void:
+	var C := SectWarManager.Command
+	var F := SectWarManager.Formation
+	_check(
+		is_equal_approx(SectWarManager.matchup_multiplier(C.CHARGE, C.FLANK), _Balance.WAR_ADVANTAGE)
+		and is_equal_approx(SectWarManager.matchup_multiplier(C.FLANK, C.DEFEND), _Balance.WAR_ADVANTAGE)
+		and is_equal_approx(SectWarManager.matchup_multiplier(C.DEFEND, C.CHARGE), _Balance.WAR_ADVANTAGE),
+		"상성: 돌격 > 측면 > 방어 > 돌격"
+	)
+	_check(is_equal_approx(SectWarManager.matchup_multiplier(C.FLANK, C.CHARGE), _Balance.WAR_DISADVANTAGE), "지는 상성 배율")
+	_check(is_equal_approx(SectWarManager.matchup_multiplier(C.CHARGE, C.CHARGE), 1.0), "같은 명령은 보정 없음")
+	_check(is_equal_approx(SectWarManager.matchup_multiplier(C.RETREAT, C.CHARGE), _Balance.WAR_RETREAT_POWER), "후퇴는 전력 감소")
+	_check(
+		is_equal_approx(SectWarManager.formation_multiplier(F.CRANE, C.FLANK), _Balance.WAR_FORMATION_BONUS)
+		and is_equal_approx(SectWarManager.formation_multiplier(F.CRANE, C.CHARGE), _Balance.WAR_FORMATION_PENALTY)
+		and is_equal_approx(SectWarManager.formation_multiplier(F.CRANE, C.DEFEND), 1.0)
+		and is_equal_approx(SectWarManager.formation_multiplier(F.NONE, C.CHARGE), 1.0),
+		"진형 배율: 학익진은 측면 강화, 측면을 이기는 돌격 약화"
+	)
+
+	var sects: Array[SectData] = SectRegistry.create_rival_sects()
+	var heukpung: SectData = sects.filter(func(x: SectData) -> bool: return x.id == "heukpung")[0]
+	_check(SectWarManager.get_formation(heukpung) == F.FISH, "사파 기본 진형: 어린진")
+	var tactics: Dictionary = SectWarManager.get_tactics(heukpung)
+	_check(tactics[C.CHARGE] >= tactics[C.DEFEND] and tactics[C.FLANK] >= tactics[C.DEFEND], "사파는 돌격·측면을 즐겨 씀")
+	var plan: Dictionary = SectWarManager.plan_battle(heukpung)
+	_check(plan["enemy_commands"].size() == _Balance.WAR_ROUNDS and not plan["revealed"].has(true), "작전 계획: 3라운드, 모두 미공개")
+
+	# 전술 가중치대로 명령을 고르는지
+	seed(11)
+	var charges: int = 0
+	for i in 1000:
+		if SectWarManager.plan_battle(heukpung)["enemy_commands"][0] == C.CHARGE:
+			charges += 1
+	randomize()
+	var expected_charges: float = tactics[C.CHARGE] / tactics.values().reduce(func(a, b): return a + b) * 1000
+	_check(absf(charges - expected_charges) < 60, "전술 가중치 반영 (돌격 %d/1000, 기대 %d)" % [charges, expected_charges])
+
+	# 문파 데이터의 전술·진형 검증
+	var base: Dictionary = {"id": "x", "sect_name": "x", "alignment": "RIGHTEOUS", "leader_id": "npc_master"}
+	var custom: Dictionary = base.duplicate()
+	custom["war_tactics"] = {"CHARGE": 1, "DEFEND": 0}
+	custom["war_formation"] = "CRANE"
+	_check(SectRegistry.validate_sect_dict(custom).is_empty(), "문파 데이터 전술·진형 지정 통과")
+	custom["war_tactics"] = {"SNEAK": 1}
+	_check(not SectRegistry.validate_sect_dict(custom).is_empty(), "알 수 없는 문파전 명령 검출")
+	custom = base.duplicate()
+	custom["war_formation"] = "SQUARE"
+	_check(not SectRegistry.validate_sect_dict(custom).is_empty(), "알 수 없는 진형 검출")
+	_check(
+		not NpcRoster.validate_npc_dict({"id": "x", "display_name": "x", "sect_id": "s", "role": "LEADER", "war_specialty": "MAGIC"}).is_empty(),
+		"알 수 없는 장수 특기 검출"
+	)
+
+	# 정찰
+	var character := CharacterData.new()
+	_check(SectWarManager.get_scout_cost(plan, character) == _Balance.WAR_SCOUT_COST, "정찰 비용")
+	_check(SectWarManager.reveal_next(plan) == 0 and SectWarManager.reveal_next(plan) == 1, "정찰은 앞 라운드부터 공개")
+	_check(SectWarManager.get_scout_cost(plan, character) == _Balance.WAR_SCOUT_COST + 2 * _Balance.WAR_SCOUT_COST_STEP, "정찰할수록 비싸짐")
+	character.role = CharacterData.Role.SPY
+	_check(SectWarManager.get_scout_cost(plan, character) == (_Balance.WAR_SCOUT_COST + 2 * _Balance.WAR_SCOUT_COST_STEP) / 2, "스파이는 정찰 비용 절반")
+	SectWarManager.reveal_next(plan)
+	_check(SectWarManager.reveal_next(plan) == -1, "모두 공개되면 더 정찰할 것 없음")
+
+	# 장수 특기
+	var general: Dictionary = SectWarManager.describe_general("npc_master")
+	_check(general["specialty"] == C.DEFEND and general["power"] > 0, "청운검선: 방어 특기 장수")
+	var plain: Dictionary = SectWarManager.resolve_round(100, C.DEFEND, F.NONE, {}, 100, C.DEFEND, F.NONE, 0, -1, -1, 0.0)
+	var boosted: Dictionary = SectWarManager.resolve_round(100, C.DEFEND, F.NONE, general, 100, C.DEFEND, F.NONE, 0, -1, -1, 0.0)
+	_check(plain["outcome"] == 0 and boosted["outcome"] == 1, "장수 특기 명령이면 같은 전력에서 우세")
+	var repeated: Dictionary = SectWarManager.resolve_round(100, C.DEFEND, F.NONE, {}, 100, C.DEFEND, F.NONE, 1, C.DEFEND, -1, 0.0)
+	_check(repeated["outcome"] == -1, "같은 명령을 연달아 쓰면 약해짐")
+
+	# 적의 학습: 지난 전투에서 본 명령을 맞받아치는 수
+	heukpung.observed_commands.assign([C.CHARGE, C.CHARGE, C.CHARGE])
+	seed(5)
+	var counters: int = 0
+	for i in 1000:
+		if SectWarManager.plan_battle(heukpung)["enemy_commands"][0] == C.DEFEND:
+			counters += 1
+	randomize()
+	var defend_share: float = tactics[C.DEFEND] / tactics.values().reduce(func(a, b): return a + b)
+	var expected: float = (_Balance.WAR_ADAPT_CHANCE + (1.0 - _Balance.WAR_ADAPT_CHANCE) * defend_share) * 1000
+	_check(absf(counters - expected) < 60, "적이 지난 전투의 돌격을 방어로 대비 (%d/1000, 기대 %d)" % [counters, expected])
+	heukpung.observed_commands.clear()
+	_completed["_test_war_rules"] = true
+
+
+## 같은 전력에서 고정 명령 조합의 승률을 본다.
+## 1) 처음 맞붙을 때(진형 없음) 어떤 조합도 60% 이하
+## 2) 같은 조합을 되풀이하면 적이 기억해 대비하므로, 진형을 맞춰도 60% 이하
+func _test_war_balance() -> void:
+	var C := SectWarManager.Command
+	var all_commands: Array = [C.CHARGE, C.DEFEND, C.FLANK, C.RETREAT]
+	var combos: Array = []
+	for a in all_commands:
+		for b in all_commands:
+			for c in all_commands:
+				combos.append([a, b, c])
+	var formations: Array = [
+		SectWarManager.Formation.NONE, SectWarManager.Formation.CRANE,
+		SectWarManager.Formation.FISH, SectWarManager.Formation.CIRCLE,
+	]
+	var win_rate := func(sect: SectData, combo: Array, formation: int, trials: int) -> float:
+		var wins: int = 0
+		for t in trials:
+			var plan: Dictionary = SectWarManager.plan_battle(sect)
+			var enemy: Array = plan["enemy_commands"]
+			var score: int = 0
+			for r in 3:
+				score += SectWarManager.resolve_round(
+					100, combo[r], formation, {}, 100, enemy[r], plan["enemy_formation"], r,
+					combo[r - 1] if r > 0 else -1, enemy[r - 1] if r > 0 else -1
+				)["outcome"]
+			if score > 0:
+				wins += 1
+		return float(wins) / trials
+
+	# 표본 오차 때문에 최댓값이 부풀지 않도록, 200판으로 후보를 고른 뒤 상위 5개를 2000판으로 다시 잰다.
+	var best_of := func(sect: SectData, candidates: Array, observe: bool) -> float:
+		var scored: Array = []
+		for candidate in candidates:
+			sect.observed_commands.assign(candidate[0] if observe else [])
+			scored.append([win_rate.call(sect, candidate[0], candidate[1], 200), candidate])
+		scored.sort_custom(func(a: Array, b: Array) -> bool: return a[0] > b[0])
+		var best: float = 0.0
+		for entry in scored.slice(0, 5):
+			sect.observed_commands.assign(entry[1][0] if observe else [])
+			best = maxf(best, win_rate.call(sect, entry[1][0], entry[1][1], 2000))
+		sect.observed_commands.clear()
+		return best
+
+	seed(21)
+	for sect in SectRegistry.create_rival_sects():
+		var first_candidates: Array = combos.map(func(combo: Array) -> Array: return [combo, SectWarManager.Formation.NONE])
+		var repeat_candidates: Array = []
+		for combo in combos:
+			for formation in formations:
+				repeat_candidates.append([combo, formation])
+		var first_best: float = best_of.call(sect, first_candidates, false)
+		var repeat_best: float = best_of.call(sect, repeat_candidates, true)
+		_check(first_best <= 0.6, "%s: 첫 대결 최선의 고정 조합 승률 %d%% (60%% 이하)" % [sect.sect_name, roundi(first_best * 100)])
+		_check(repeat_best <= 0.6, "%s: 같은 조합을 되풀이할 때 최선 승률 %d%% (60%% 이하)" % [sect.sect_name, roundi(repeat_best * 100)])
+	randomize()
+	_completed["_test_war_balance"] = true
+
+
+func _test_war_flow() -> void:
+	var gm: Node = root.get_node("GameManager")
+	var C := SectWarManager.Command
+	gm.start_new_game("전략", "leader", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
+
+	# 장수 후보: 유대가 깊은 사제·혈맹만
+	_check(gm.get_war_generals().is_empty(), "유대가 얕으면 장수 없음")
+	RelationshipManager.get_bond_with(gm.player_relationships, "npc_master").bond_strength = 60
+	var rival: RelationshipData = RelationshipManager.get_bond_with(gm.player_relationships, "npc_rival")
+	rival.bond_type = RelationshipData.BondType.BLOOD_OATH
+	rival.bond_strength = 60
+	_check(gm.get_war_generals("heukpung").size() == 2, "사제·혈맹 인물이 장수 후보")
+	_check(gm.get_war_generals("namgung").size() == 1, "상대 세력 소속 인물은 장수 제외")
+
+	# 작전 계획은 같은 계절 동안 유지되고, 정찰한 명령이 실제 명령과 같다
+	var plan: Dictionary = gm.prepare_war("heukpung")
+	_check(gm.prepare_war("heukpung") == plan, "같은 계절·같은 상대면 계획 유지")
+	var gold_before: int = gm.player_sect.gold
+	var scout: Dictionary = gm.scout_war("heukpung")
+	_check(scout["success"] and gm.player_sect.gold == gold_before - _Balance.WAR_SCOUT_COST and plan["revealed"][0], "정찰: 금화 소모, 1라운드 공개")
+	gm.player_sect.gold = 0
+	_check(not gm.scout_war("heukpung")["success"], "금화가 없으면 정찰 불가")
+	gm.player_sect.gold = 500
+
+	var expected_first: int = plan["enemy_commands"][0]
+	var result: Dictionary = gm.resolve_sect_war(
+		"heukpung", [C.CHARGE, C.DEFEND, C.FLANK], SectWarManager.Formation.CIRCLE, "npc_master"
+	)
+	_check(result["rounds"].size() == 3 and result["rounds"][0]["enemy_command"] == expected_first, "정찰한 명령대로 적이 움직임")
+	_check(gm.pending_war_plan.is_empty(), "문파전 뒤 계획 초기화")
+	_check(gm.get_world_sect("heukpung").observed_commands == [C.CHARGE, C.DEFEND, C.FLANK], "적이 아군 명령을 기억")
+	var saved: SectData = _SaveManager.deserialize_sect(JSON.parse_string(JSON.stringify(_SaveManager.serialize_sect(gm.get_world_sect("heukpung")))))
+	_check(saved.observed_commands == [C.CHARGE, C.DEFEND, C.FLANK], "기억한 명령 저장/복원")
+
+	gm.advance_turn()
+	var new_plan: Dictionary = gm.prepare_war("heukpung")
+	_check(not new_plan["revealed"].has(true), "계절이 바뀌면 새 계획")
+
+	# 패배 손실: 후퇴·방원진이면 줄어든다
+	var weak := SectData.new()
+	weak.disciple_count = 20
+	var weak_char := CharacterData.new()
+	var strong: SectData = SectRegistry.create_rival_sects(["cheonma"])[0]
+	var all_lose_plan: Dictionary = SectWarManager.plan_battle(strong)
+	var lost_plain: Dictionary = SectWarManager.resolve_battle(weak, weak_char, strong, [C.CHARGE, C.CHARGE, C.CHARGE] as Array[SectWarManager.Command], all_lose_plan)
+	var plain_loss: int = 20 - weak.disciple_count
+	weak.disciple_count = 20
+	SectWarManager.resolve_battle(weak, weak_char, strong, [C.RETREAT, C.RETREAT, C.CHARGE] as Array[SectWarManager.Command], all_lose_plan, SectWarManager.Formation.CIRCLE)
+	var careful_loss: int = 20 - weak.disciple_count
+	_check(not lost_plain["victory"] and careful_loss < plain_loss, "후퇴·방원진으로 패배 손실 감소 (%d → %d)" % [plain_loss, careful_loss])
+
+	# 화면
+	gm.start_new_game("화면", "leader", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
+	SceneRouter.goto(self, SceneRouter.SECT_WAR)
+	await process_frame
+	await process_frame
+	var screen: Node = current_scene
+	_check(screen.target_option.item_count == 3 and screen.formation_option.item_count == 4, "문파전 화면: 대상·진형 선택지")
+	_check(screen.plan_label.text.contains("적 ?"), "정찰 전에는 적 명령을 모름")
+	screen._on_scout_pressed()
+	_check(not screen.plan_label.text.begins_with("1라운드: 아군 —  /  적 ?"), "정찰 후 1라운드 적 명령 표시")
+	for command in [C.FLANK, C.FLANK, C.CHARGE]:
+		screen._add_command(command)
+	_check(not screen.execute_button.disabled, "명령 3개를 고르면 전투 개시 가능")
+	screen._on_execute_pressed()
+	_check(screen.log_label.text.contains("라운드 3") and not gm.can_wage_war(), "전투 결과 표시와 계절당 1회 제한")
+	gm.start_new_game("정리", "young_disciple")
+	SceneRouter.goto(self, SceneRouter.MAIN_MENU)
+	await process_frame
+	_completed["_test_war_flow"] = true

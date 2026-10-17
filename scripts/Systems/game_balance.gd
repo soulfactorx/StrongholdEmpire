@@ -19,6 +19,50 @@ const DESERTION_FOOD_PER_DISCIPLE := 6
 const GOLD_SHORTAGE_REPUTATION_LOSS := 3
 
 # 문파전 / 강호 세력
+const WAR_ROUNDS := 3
+## 명령 상성: 이기는 명령·지는 명령의 전력 배율 (돌격 > 측면 > 방어 > 돌격)
+const WAR_ADVANTAGE := 1.3
+const WAR_DISADVANTAGE := 0.8
+## 후퇴한 라운드의 전력 배율. 대신 패배 시 제자 손실이 라운드당 1 줄어든다
+const WAR_RETREAT_POWER := 0.6
+## 진형이 강화하는 명령의 배율과, 그 명령을 이기는 명령(진형의 약점)의 배율
+const WAR_FORMATION_BONUS := 1.15
+const WAR_FORMATION_PENALTY := 0.95
+## 같은 명령을 연달아 쓰면 읽혀서 약해진다 ("같은 수는 두 번 통하지 않는다")
+const WAR_REPEAT_PENALTY := 0.85
+## 전장의 변수: 라운드마다 양측 전력에 ±이 비율만큼 운이 작용한다
+const WAR_LUCK := 0.1
+## 적은 지난 문파전에서 본 아군 명령을 기억하고, 라운드마다 이 확률로 그 명령을 이기는 수를 준비한다
+const WAR_ADAPT_CHANCE := 0.4
+## 정찰 비용 (한 번 할 때마다 STEP씩 비싸짐). 스파이·암살자는 절반
+const WAR_SCOUT_COST := 40
+const WAR_SCOUT_COST_STEP := 20
+## 장수: 유대가 이 이상인 사제·혈맹 인물이 참전. 전투력의 일부와 특기 명령 보너스
+const WAR_GENERAL_MIN_BOND := 50
+const WAR_GENERAL_POWER_RATIO := 0.5
+const WAR_GENERAL_SPECIALTY_BONUS := 1.1
+## 성향별 기본 전술(명령 선택 가중치)과 진형. 문파 데이터의 war_tactics·war_formation이 우선.
+## 진형의 약점(강화 명령을 이기는 명령)이 그 성향이 덜 쓰는 명령에 오도록 골랐다.
+## 바꾸면 스모크 테스트의 문파전 밸런스 검사(고정 조합 승률 60% 이하)로 확인한다.
+const WAR_TACTICS: Dictionary = {
+	"RIGHTEOUS": {"CHARGE": 0.25, "DEFEND": 0.4, "FLANK": 0.3, "RETREAT": 0.05},
+	"UNORTHODOX": {"CHARGE": 0.4, "DEFEND": 0.15, "FLANK": 0.4, "RETREAT": 0.05},
+	"DEMONIC": {"CHARGE": 0.35, "DEFEND": 0.2, "FLANK": 0.4, "RETREAT": 0.05},
+}
+const WAR_FORMATIONS: Dictionary = {
+	"RIGHTEOUS": "CRANE",
+	"UNORTHODOX": "FISH",
+	"DEMONIC": "FISH",
+}
+## 승리 보상과 패배 손실
+const WAR_WIN_REPUTATION := 8
+const WAR_WIN_REPUTATION_PER_ROUND := 3
+const WAR_WIN_GOLD := 40
+const WAR_WIN_GOLD_PER_ROUND := 15
+const WAR_WIN_EXP := 25
+const WAR_LOSS_DISCIPLES := 2
+const WAR_LOSS_REPUTATION := 5
+const WAR_LOSS_REPUTATION_PER_ROUND := 2
 const WAR_ENEMY_DISCIPLE_LOSS := 3
 const WAR_ENEMY_REPUTATION_LOSS := 5
 const WAR_ATTITUDE_LOSS := 10

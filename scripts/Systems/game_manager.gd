@@ -31,6 +31,8 @@ var pending_role_transitions: Array[Dictionary] = []
 var mod_martial_arts: Array[MartialArtData] = []
 ## 새 게임을 시작했거나 세이브를 불러와 진행 중인 게임이 있는지 여부
 var is_game_active: bool = false
+## 문파전 적 작전 계획 (SectWarManager.plan_battle). 계절이 바뀌거나 문파전을 치르면 비운다.
+var pending_war_plan: Dictionary = {}
 ## 전투 씬이 읽어 갈 전투 구성. 전투가 끝나면 비운다.
 var pending_combat: CombatSetup = null
 
@@ -78,6 +80,7 @@ func _initialize_new_game(
 	last_turn_report = ""
 	pending_role_transitions.clear()
 	pending_combat = null
+	pending_war_plan = {}
 	generation = 1
 	current_year = 1
 	current_season_index = 0
@@ -141,6 +144,7 @@ func advance_turn() -> void:
 		EventBus.turn_advanced.emit(current_year, get_current_season())
 		return
 	current_season_index = (current_season_index + 1) % SEASONS.size()
+	pending_war_plan = {}
 	if current_season_index == 0:
 		current_year += 1
 		_process_yearly_events()
@@ -438,8 +442,59 @@ func can_wage_war() -> bool:
 	return story_flags.get("last_war_turn", -1) != _get_turn_index()
 
 
+## 대상 세력의 작전 계획을 준비한다. 같은 계절에 같은 상대면 기존 계획을 그대로 쓴다.
+func prepare_war(target_id: String) -> Dictionary:
+	var enemy: SectData = get_world_sect(target_id)
+	if enemy == null:
+		return {}
+	if pending_war_plan.get("target") != target_id:
+		pending_war_plan = SectWarManager.plan_battle(enemy)
+	return pending_war_plan
+
+
+## 정찰: 금화를 내고 적 계획을 한 라운드 공개한다.
+func scout_war(target_id: String) -> Dictionary:
+	var plan: Dictionary = prepare_war(target_id)
+	if plan.is_empty():
+		return {"success": false, "message": "정찰할 대상이 없습니다."}
+	if not plan["revealed"].has(false):
+		return {"success": false, "message": "이미 적의 작전을 모두 알고 있습니다."}
+	var cost: int = SectWarManager.get_scout_cost(plan, player_character)
+	if not player_sect.spend_resources(cost):
+		return {"success": false, "message": "금화가 부족합니다. (%d 필요)" % cost}
+	var round_index: int = SectWarManager.reveal_next(plan)
+	var command: SectWarManager.Command = plan["enemy_commands"][round_index]
+	EventBus.resources_changed.emit(player_sect)
+	return {
+		"success": true,
+		"round": round_index,
+		"message": "정찰 성공 (금화 -%d): 적은 %d라운드에 [%s]을(를) 준비하고 있습니다." % [
+			cost, round_index + 1, SectWarManager.COMMAND_NAMES[command],
+		],
+	}
+
+
+## 문파전에 장수로 데려갈 수 있는 인물: 유대가 깊은 사제·혈맹 인물. 상대 세력 소속은 제외.
+func get_war_generals(target_id: String = "") -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for rel in player_relationships:
+		if not rel.bond_type in [RelationshipData.BondType.MASTER_DISCIPLE, RelationshipData.BondType.BLOOD_OATH]:
+			continue
+		if rel.bond_strength < _Balance.WAR_GENERAL_MIN_BOND or not NpcRoster.has_npc(rel.target_id):
+			continue
+		if NpcRoster.get_npc(rel.target_id).get("sect_id") == target_id:
+			continue
+		result.append(SectWarManager.describe_general(rel.target_id))
+	return result
+
+
 ## 문파전. 계절마다 한 번, 굴복하지 않은 세력을 상대로만 할 수 있다.
-func resolve_sect_war(target_id: String, commands: Array) -> Dictionary:
+func resolve_sect_war(
+	target_id: String,
+	commands: Array,
+	formation: SectWarManager.Formation = SectWarManager.Formation.NONE,
+	general_id: String = ""
+) -> Dictionary:
 	if not can_wage_war():
 		return {"success": false, "victory": false, "message": "이번 계절에는 이미 문파전을 치렀습니다."}
 	var enemy: SectData = get_world_sect(target_id)
@@ -448,10 +503,16 @@ func resolve_sect_war(target_id: String, commands: Array) -> Dictionary:
 	var typed_commands: Array[SectWarManager.Command] = []
 	for cmd in commands:
 		typed_commands.append(cmd as SectWarManager.Command)
+	var general: Dictionary = {}
+	for candidate in get_war_generals(target_id):
+		if candidate["id"] == general_id:
+			general = candidate
+	var plan: Dictionary = prepare_war(target_id)
 	EventManager.set_flag(story_flags, "last_war_turn", _get_turn_index())
 	var result: Dictionary = SectWarManager.resolve_battle(
-		player_sect, player_character, enemy, typed_commands
+		player_sect, player_character, enemy, typed_commands, plan, formation, general
 	)
+	pending_war_plan = {}
 	if result.get("victory", false):
 		EventManager.set_flag(story_flags, "won_sect_war")
 		EventManager.set_flag(story_flags, "defeated_%s" % enemy.id)
@@ -581,6 +642,7 @@ func _apply_save_data(data: Dictionary) -> void:
 	current_ending_id = data.get("current_ending_id", "")
 	game_over_id = data.get("game_over_id", "")
 	pending_event.clear()
+	pending_war_plan = {}
 	_set_player_character(_SaveManager.deserialize_character(data.get("character", {})))
 	player_sect = _SaveManager.deserialize_sect(data.get("sect", {}))
 	# 강호 세력이 없는 구버전 세이브는 데이터 초기값으로 채운다.

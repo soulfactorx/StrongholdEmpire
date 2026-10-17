@@ -19,5 +19,6 @@
     "type": "MASTER_DISCIPLE",
     "strength": 35,
     "stage": 1
-  }
+  },
+  "war_specialty": "DEFEND"
 }
