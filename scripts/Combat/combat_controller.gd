@@ -7,12 +7,18 @@ const GRID_SIZE := 48
 const GRID_WIDTH := 16
 const GRID_HEIGHT := 10
 
+## 지형 그림이 없을 때 쓰는 색
 const TERRAIN_COLORS: Dictionary = {
-	CombatRules.Terrain.PLAIN: Color(0.12, 0.15, 0.12),
-	CombatRules.Terrain.FOREST: Color(0.1, 0.3, 0.12),
-	CombatRules.Terrain.WATER: Color(0.12, 0.22, 0.4),
-	CombatRules.Terrain.HIGH: Color(0.35, 0.3, 0.18),
+	CombatRules.Terrain.PLAIN: Color("#e6dcc4"),
+	CombatRules.Terrain.FOREST: Color("#b9c7a8"),
+	CombatRules.Terrain.WATER: Color("#a9b8c4"),
+	CombatRules.Terrain.HIGH: Color("#d2b88c"),
 }
+## 이동할 수 있는 칸·무공 사거리 칸에 덧칠하는 색
+const REACHABLE_TINT := Color(0.18, 0.42, 0.37, 0.35)
+const ART_RANGE_TINT := Color(0.7, 0.23, 0.17, 0.32)
+## 장기말 크기와 칸 안 여백
+const TOKEN_SIZE := 44.0
 
 enum ActionMode { MOVE, ATTACK, MARTIAL_ART }
 
@@ -50,6 +56,9 @@ var confirm_popup: Control
 
 
 func _ready() -> void:
+	ArtAssets.apply_background(self)
+	# HUD는 CanvasLayer 아래라 창 테마가 이어지지 않으므로 직접 준다.
+	$HUD/Panel.theme = get_tree().root.theme
 	_UiTheme.apply_to_control($HUD/Panel)
 	_setup = GameManager.get_or_create_combat_setup()
 	_setup_combat()
@@ -216,18 +225,39 @@ func _draw_grid() -> void:
 	for x in GRID_WIDTH:
 		for y in GRID_HEIGHT:
 			var coord := Vector2i(x, y)
-			var tile := ColorRect.new()
-			tile.size = Vector2(GRID_SIZE - 2, GRID_SIZE - 2)
-			tile.position = Vector2(x * GRID_SIZE + 1, y * GRID_SIZE + 1)
-			if _setup.blocked_tiles.has(coord):
-				tile.color = Color(0.35, 0.2, 0.2)
+			var rect := Rect2(x * GRID_SIZE + 1, y * GRID_SIZE + 1, GRID_SIZE - 2, GRID_SIZE - 2)
+			var blocked: bool = _setup.blocked_tiles.has(coord)
+			var terrain: int = _terrain_at(coord)
+			var tex: Texture2D = ArtAssets.tile("wall" if blocked else ArtAssets.TERRAIN_TILES.get(terrain, "plain"))
+			if tex:
+				var tile := TextureRect.new()
+				tile.texture = tex
+				tile.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+				tile.position = rect.position
+				tile.size = rect.size
+				tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				grid_overlay.add_child(tile)
 			else:
-				tile.color = TERRAIN_COLORS[_terrain_at(coord)]
-				if reachable.has(coord):
-					tile.color = tile.color.lerp(Color(0.4, 0.8, 0.4), 0.35)
-				elif art_range >= 0 and CombatRules.distance(coord, controlled.grid_pos) <= art_range:
-					tile.color = tile.color.lerp(Color(0.75, 0.3, 0.85), 0.45)
-			grid_overlay.add_child(tile)
+				var plain := ColorRect.new()
+				plain.position = rect.position
+				plain.size = rect.size
+				plain.color = Color("#3a332b") if blocked else TERRAIN_COLORS[terrain]
+				plain.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				grid_overlay.add_child(plain)
+			if blocked:
+				continue
+			var tint := Color.TRANSPARENT
+			if reachable.has(coord):
+				tint = REACHABLE_TINT
+			elif art_range >= 0 and CombatRules.distance(coord, controlled.grid_pos) <= art_range:
+				tint = ART_RANGE_TINT
+			if tint.a > 0.0:
+				var overlay := ColorRect.new()
+				overlay.position = rect.position
+				overlay.size = rect.size
+				overlay.color = tint
+				overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				grid_overlay.add_child(overlay)
 
 
 func _refresh_units_visual() -> void:
@@ -237,30 +267,59 @@ func _refresh_units_visual() -> void:
 	for unit in _units:
 		if not unit.is_alive():
 			continue
-		var marker := ColorRect.new()
-		marker.size = Vector2(28, 28)
-		marker.position = Vector2(unit.grid_pos.x * GRID_SIZE + 10, unit.grid_pos.y * GRID_SIZE + 10)
-		if unit.is_player:
-			marker.color = Color(0.3, 0.7, 1)
-		elif unit.is_ally:
-			marker.color = Color(0.35, 0.85, 0.65)
-		else:
-			marker.color = Color(0.9, 0.3, 0.2)
-		if unit == _get_controlled():
-			var outline := ColorRect.new()
-			outline.size = Vector2(36, 36)
-			outline.position = marker.position - Vector2(4, 4)
-			outline.color = _UiTheme.COLORS["accent_gold"]
-			units_layer.add_child(outline)
-		if unit.has_status("stunned"):
-			marker.color = marker.color.darkened(0.5)
-		units_layer.add_child(marker)
+		units_layer.add_child(_make_token(unit, unit == _get_controlled()))
 
-		var name_label := Label.new()
-		name_label.text = unit.display_name
-		name_label.position = marker.position + Vector2(-4, -18)
-		name_label.add_theme_font_size_override("font_size", 11)
-		units_layer.add_child(name_label)
+
+## 장기말: 아군은 둥근 말(주인공 금테·동료 옥색 테), 적은 팔각 말(주홍 테).
+## 가운데에 이름 첫 글자를 붓글씨로 쓰고, 말 아래에 이름을 단다.
+func _make_token(unit: CombatUnit, controlled: bool) -> Control:
+	var holder := Control.new()
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var inset: float = (GRID_SIZE - TOKEN_SIZE) / 2.0
+	holder.position = Vector2(unit.grid_pos.x * GRID_SIZE + inset, unit.grid_pos.y * GRID_SIZE + inset)
+	holder.size = Vector2(TOKEN_SIZE, TOKEN_SIZE)
+	var kind: String = "player" if unit.is_player else ("ally" if unit.is_ally else "enemy")
+	var body := TextureRect.new()
+	body.texture = ArtAssets.token(kind)
+	body.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	body.size = holder.size
+	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if unit.has_status("stunned"):
+		body.modulate = Color(0.55, 0.55, 0.55)
+	holder.add_child(body)
+	if controlled:
+		var ring := TextureRect.new()
+		ring.texture = ArtAssets.token("highlight")
+		ring.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		ring.position = Vector2(-5, -5)
+		ring.size = holder.size + Vector2(10, 10)
+		ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		holder.add_child(ring)
+
+	var glyph := Label.new()
+	glyph.text = unit.display_name.left(1)
+	glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	glyph.size = holder.size
+	glyph.add_theme_font_size_override("font_size", 26)
+	glyph.add_theme_color_override("font_color", _UiTheme.COLORS["accent_red"] if kind == "enemy" else _UiTheme.COLORS["text_primary"])
+	var brush: Font = ArtAssets.brush_font()
+	if brush:
+		glyph.add_theme_font_override("font", brush)
+		glyph.add_theme_font_size_override("font_size", 34)
+	holder.add_child(glyph)
+
+	var name_label := Label.new()
+	name_label.text = unit.display_name
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.position = Vector2(-18, TOKEN_SIZE - 8)
+	name_label.size = Vector2(TOKEN_SIZE + 36, 14)
+	name_label.add_theme_font_size_override("font_size", 11)
+	name_label.add_theme_color_override("font_color", _UiTheme.COLORS["text_on_ink"])
+	name_label.add_theme_color_override("font_outline_color", _UiTheme.COLORS["text_primary"])
+	name_label.add_theme_constant_override("outline_size", 4)
+	holder.add_child(name_label)
+	return holder
 
 
 func _update_hud() -> void:

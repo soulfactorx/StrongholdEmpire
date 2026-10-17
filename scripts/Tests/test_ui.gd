@@ -333,3 +333,50 @@ func _test_input_and_tips() -> void:
 	await process_frame
 	_clear_test_saves()
 	_completed["_test_input_and_tips"] = true
+
+
+## 그림 자원: 배경·타일·장기말·UI 텍스처와 글꼴이 모두 불러와지고 화면·전투에 깔린다.
+func _test_art_assets() -> void:
+	var gm: Node = root.get_node("GameManager")
+	var names: Dictionary = {}
+	for screen in ArtAssets.SCREEN_BACKGROUNDS:
+		names[ArtAssets.SCREEN_BACKGROUNDS[screen]] = true
+	for bg in names:
+		_check(ArtAssets.background(bg) != null, "배경 그림 %s" % bg)
+	for tile in ArtAssets.TERRAIN_TILES.values() + ["wall"]:
+		_check(ArtAssets.tile(tile) != null, "지형 타일 %s" % tile)
+	for token in ["player", "ally", "enemy", "highlight"]:
+		_check(ArtAssets.token(token) != null, "장기말 %s" % token)
+	for ui in ["panel", "button_normal", "button_hover", "button_pressed", "button_disabled"]:
+		_check(ArtAssets.ui(ui) != null, "UI 텍스처 %s" % ui)
+	_check(ArtAssets.body_font() != null and ArtAssets.brush_font() != null, "본문·붓글씨 글꼴")
+	_check(root.theme != null and root.theme.default_font == ArtAssets.body_font(), "창 테마의 기본 글꼴")
+
+	_new_quiet_game(gm, "leader")
+	SceneRouter.goto(tree, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	var art: TextureRect = current_scene.get_node_or_null("Background/Art") as TextureRect
+	_check(art != null and art.texture == ArtAssets.background("hub"), "문파 경영 화면에 배경 그림")
+
+	gm.pending_combat = CombatManager.create_sparring_with("npc_rival", gm.player_character)
+	SceneRouter.goto(tree, SceneRouter.COMBAT)
+	await process_frame
+	await process_frame
+	var combat: Node = current_scene
+	_check(combat.get_node_or_null("Background/Art") != null, "전투 화면에 배경 그림")
+	var tile_count: int = 0
+	for child in combat.grid_overlay.get_children():
+		if child is TextureRect and not child.is_queued_for_deletion():
+			tile_count += 1
+	_check(tile_count == combat.GRID_WIDTH * combat.GRID_HEIGHT, "전투 칸마다 지형 그림")
+	var token_count: int = 0
+	for child in combat.units_layer.get_children():
+		if not child.is_queued_for_deletion():
+			token_count += 1
+	_check(token_count == 2, "비무 양쪽 장기말")
+	gm.pending_combat = null
+	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
+	await process_frame
+	_clear_test_saves()
+	_completed["_test_art_assets"] = true

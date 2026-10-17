@@ -46,6 +46,7 @@ static func apply(tree: SceneTree = null) -> void:
 	if tree and tree.root:
 		if tree.root.theme == null:
 			tree.root.theme = Theme.new()
+			UiTheme.apply_root_theme(tree.root.theme)
 		tree.root.theme.default_font_size = UiTheme.font_size(UiTheme.BASE_FONT_SIZE)
 	# 헤드리스(테스트)에서는 창 모드를 바꾸지 않는다.
 	if DisplayServer.get_name() != "headless":
