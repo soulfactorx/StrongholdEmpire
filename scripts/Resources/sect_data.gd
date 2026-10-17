@@ -27,6 +27,8 @@ enum Alignment { RIGHTEOUS, UNORTHODOX, DEMONIC }
 @export var married: bool = false
 ## 마지막으로 외교 행동을 한 계절 (-1이면 없음)
 @export var last_diplomacy_turn: int = -1
+## 세력 AI: 마지막으로 플레이어를 침공한 계절 (-1이면 없음)
+@export var last_invasion_turn: int = -1
 
 @export_group("자원")
 @export var gold: int = 500

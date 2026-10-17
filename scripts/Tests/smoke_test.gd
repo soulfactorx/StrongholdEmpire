@@ -150,6 +150,10 @@ func _run_runtime_tests() -> void:
 	_check(_completed.has("_test_diplomacy"), "_test_diplomacy 끝까지 실행")
 	await _test_diplomacy_screen()
 	_check(_completed.has("_test_diplomacy_screen"), "_test_diplomacy_screen 끝까지 실행")
+	_test_sect_ai()
+	_check(_completed.has("_test_sect_ai"), "_test_sect_ai 끝까지 실행")
+	await _test_invasion_flow()
+	_check(_completed.has("_test_invasion_flow"), "_test_invasion_flow 끝까지 실행")
 
 	print("스모크 테스트: %d개 검사, %d개 실패" % [_checks, _failures])
 	# 재생 중인 효과음을 멈추고, 오디오 스레드가 재생 객체를 놓을 때까지 잠시 기다린다.
@@ -889,16 +893,16 @@ func _test_world_state_and_war() -> void:
 	_check(gm.get_war_targets().size() == 2, "굴복한 세력은 공격 대상에서 제외")
 	_check(not gm.resolve_sect_war("namgung", commands)["success"], "문파전은 계절당 한 번")
 
-	# 해가 바뀌면 굴복하지 않은 세력만 성장
+	# 해가 바뀌면 굴복하지 않은 세력만 성장 (연간 정산만 따로 본다. 계절마다의 세력 AI는 _test_sect_ai에서)
 	var namgung: SectData = gm.get_world_sect("namgung")
 	var namgung_before: int = namgung.disciple_count
 	var heukpung_before: int = heukpung.disciple_count
-	for i in 4:
-		gm.advance_turn()
-		gm.pending_event.clear()
-		gm.pending_combat = null
+	gm._process_yearly_events()
 	_check(namgung.disciple_count == namgung_before + _Balance.WORLD_SECT_YEARLY_GROWTH, "강호 세력 연간 성장")
 	_check(heukpung.disciple_count == heukpung_before, "굴복한 세력은 성장하지 않음")
+	gm.advance_turn()
+	gm.pending_event.clear()
+	gm.pending_combat = null
 	_check(gm.can_wage_war(), "다음 계절에는 다시 문파전 가능")
 
 	# 저장/불러오기
@@ -3442,3 +3446,166 @@ func _test_diplomacy_screen() -> void:
 	SceneRouter.goto(self, SceneRouter.MAIN_MENU)
 	await process_frame
 	_completed["_test_diplomacy_screen"] = true
+
+
+func _test_sect_ai() -> void:
+	var gm: Node = root.get_node("GameManager")
+	ScenarioManager.activate(ScenarioManager.DEFAULT_ID)
+	var sects: Array[SectData] = ScenarioManager.create_rival_sects()
+	var namgung: SectData = sects.filter(func(x: SectData) -> bool: return x.id == "namgung")[0]
+	var heukpung: SectData = sects.filter(func(x: SectData) -> bool: return x.id == "heukpung")[0]
+
+	# 침공 조건: 태도가 낮을수록, 첫해·동맹·우호·쿨다운이면 없음
+	namgung.attitude = 0
+	heukpung.attitude = -60
+	_check(SectAI.get_weights(namgung, sects, 10, 3, 1.0)[SectAI.Action.INVADE] == 0.0, "우호·중립 세력은 침공하지 않음")
+	_check(SectAI.get_weights(heukpung, sects, 10, 3, 1.0)[SectAI.Action.INVADE] > 0.0, "적대 세력은 침공할 수 있음")
+	_check(SectAI.get_weights(heukpung, sects, 2, 1, 1.0)[SectAI.Action.INVADE] == 0.0, "첫해에는 침공 없음")
+	_check(SectAI.get_weights(heukpung, sects, 10, 3, 0.0)[SectAI.Action.INVADE] == 0.0, "기연 빈도 0이면 침공 없음")
+	var hostile: float = SectAI.get_weights(heukpung, sects, 10, 3, 1.0)[SectAI.Action.INVADE]
+	heukpung.attitude = -100
+	_check(SectAI.get_weights(heukpung, sects, 10, 3, 1.0)[SectAI.Action.INVADE] > hostile, "태도가 낮을수록 침공이 잦음")
+	heukpung.last_invasion_turn = 9
+	_check(SectAI.get_weights(heukpung, sects, 10, 3, 1.0)[SectAI.Action.INVADE] == 0.0, "침공 뒤 %d계절은 쉼" % _Balance.AI_INVASION_COOLDOWN)
+	heukpung.last_invasion_turn = -1
+	heukpung.allied = true
+	_check(not SectAI.can_invade(heukpung, 10, 3), "동맹은 침공하지 않음")
+	heukpung.allied = false
+	ScenarioRules.apply({"ai_aggression": 0.0})
+	var calm: Array[float] = SectAI.get_weights(heukpung, sects, 10, 3, 1.0)
+	_check(calm[SectAI.Action.ATTACK] == 0.0 and calm[SectAI.Action.INVADE] == 0.0, "호전성 0이면 싸우지 않음")
+	ScenarioRules.reset()
+
+	# 계절마다 침공은 한 세력만
+	ScenarioRules.apply({"ai_aggression": 3.0})
+	for sect in sects:
+		sect.attitude = -100
+	seed(11)
+	var invasions: int = 0
+	var max_per_season: int = 0
+	for season in 40:
+		for sect in sects:
+			sect.last_invasion_turn = -1
+		var result: Dictionary = SectAI.run_season(sects, 10 + season, 3, 1.0)
+		var count: int = Array(result["news"]).filter(func(line: String) -> bool: return line.contains("침공")).size()
+		max_per_season = maxi(max_per_season, count)
+		if not result["invader"].is_empty():
+			invasions += 1
+	_check(invasions > 0 and max_per_season <= 1, "침공은 계절에 한 세력만 (40계절 중 %d번)" % invasions)
+	ScenarioRules.reset()
+
+	# 세력끼리의 전쟁: 제자는 최소치 아래로 줄지 않고, 몰락한 세력은 치지 않는다
+	sects = ScenarioManager.create_rival_sects()
+	for sect in sects:
+		sect.disciple_count = 12
+	var news: String = SectAI._attack(sects[0], sects)
+	_check(news.contains(sects[0].sect_name), "세력 전쟁 소식")
+	sects[1].disciple_count = _Balance.AI_ATTACK_MIN_TARGET_DISCIPLES - 1
+	_check(not SectAI._attack_targets(sects[0], sects).has(sects[1]), "제자가 적은 세력은 공격 대상에서 빠짐")
+	sects[2].subjugated = true
+	var frozen: int = sects[2].disciple_count
+	for season in 20:
+		SectAI.run_season(sects, season, 3, 0.0)
+	_check(sects[2].disciple_count == frozen, "굴복한 세력은 움직이지 않음")
+	_check(sects.all(func(x: SectData) -> bool: return x.disciple_count >= _Balance.AI_MIN_DISCIPLES), "세력 제자는 최소치 아래로 줄지 않음")
+
+	# 밸런스: 시뮬레이션 100판에서 세력 하나가 5년 안에 다른 세력을 모두 무너뜨리지 않는다
+	for scenario_id in ["cheonha", "heukpung_winter", "gangho_100"]:
+		ScenarioManager.activate(scenario_id)
+		seed(scenario_id.hash())
+		var dominated: int = 0
+		for run in 100:
+			var world: Array[SectData] = ScenarioManager.create_rival_sects()
+			for season in 20:
+				SectAI.run_season(world, 4 + season, 1 + (season + 1) / 4, 0.0)
+				if (season + 1) % 4 == 0:
+					SectWarManager.grow_world_sects(world)
+			var fallen: int = world.filter(func(x: SectData) -> bool: return x.disciple_count <= _Balance.SUBJUGATE_DISCIPLE_THRESHOLD).size()
+			if world.size() > 1 and fallen >= world.size() - 1:
+				dominated += 1
+		_check(dominated == 0, "세력 AI 밸런스 (%s): 100판 중 한 세력이 5년 안에 강호를 휩쓴 판 %d" % [scenario_id, dominated])
+	ScenarioManager.activate(ScenarioManager.DEFAULT_ID)
+
+	# 침공 대응
+	gm.start_new_game("침공", "leader", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
+	var invader: SectData = gm.get_world_sect("heukpung")
+	gm.pending_invasion = "heukpung"
+	var gold: int = gm.player_sect.gold
+	_check(gm.resolve_invasion("bribe")["success"] and gm.player_sect.gold == gold - _Balance.INVASION_BRIBE_GOLD and gm.pending_invasion == "", "침공: 금화로 물림")
+	gm.pending_invasion = "heukpung"
+	var disciples: int = gm.player_sect.disciple_count
+	var rep: int = gm.player_sect.reputation
+	gm.resolve_invasion("yield")
+	_check(gm.player_sect.disciple_count == disciples - _Balance.INVASION_YIELD_DISCIPLES and gm.player_sect.reputation == rep - _Balance.INVASION_YIELD_REPUTATION, "침공: 산문을 내줌")
+	_check(gm.player_sect.disciples.size() == gm.player_sect.disciple_count, "산문을 내주면 명단에서도 제자가 빠짐")
+	gm.pending_invasion = "heukpung"
+	disciples = gm.player_sect.disciple_count
+	gm.advance_turn()
+	_check(gm.pending_invasion == "" and gm.player_sect.disciple_count < disciples and gm.last_turn_report.contains("산문을 내주었습니다"), "대응하지 않고 계절을 넘기면 산문을 내준 것으로")
+	_check(gm.world_news.filter(func(line: String) -> bool: return line.contains("산문을 내주었습니다")).size() == 2, "침공 결과가 강호 소식에 남음")
+
+	# 방어전 구성
+	var setup: CombatSetup = CombatManager.create_invasion(invader, gm.player_character, gm.player_sect)
+	var enemy_ids: Array = setup.enemies.map(func(c: CharacterData) -> String: return c.id)
+	_check(setup.invader_id == "heukpung" and enemy_ids.has("npc_heukpung_second") and enemy_ids.has("npc_bandit_0"), "방어전: 흑풍채 졸개와 부채주")
+	_check(setup.allies_are_disciples and setup.allies.size() == _Balance.DEFENSE_ALLY_COUNT, "방어전: 문파 제자 합류")
+	var cheonma_setup: CombatSetup = CombatManager.create_invasion(gm.get_world_sect("cheonma"), gm.player_character)
+	_check(cheonma_setup.enemies.size() == 5 and cheonma_setup.enemies.any(func(c: CharacterData) -> bool: return c.id == "npc_cheonma_envoy"), "큰 세력은 졸개가 많음 (천마신교 4명 + 혈영)")
+
+	# 강호 소식은 최근 %d건까지
+	for i in 30:
+		gm.add_world_news("소식 %d" % i)
+	_check(gm.world_news.size() == _Balance.WORLD_NEWS_LIMIT and gm.world_news[-1].contains("소식 29"), "강호 소식 보관 개수 제한")
+
+	# 저장·복원
+	gm.pending_invasion = "cheonma"
+	invader.last_invasion_turn = 7
+	gm._apply_save_data(JSON.parse_string(JSON.stringify({
+		"character": _SaveManager.serialize_character(gm.player_character),
+		"sect": _SaveManager.serialize_sect(gm.player_sect),
+		"world_sects": _SaveManager.serialize_sects(gm.world_sects),
+		"pending_invasion": gm.pending_invasion,
+		"world_news": gm.world_news,
+	})))
+	_check(gm.pending_invasion == "cheonma" and gm.world_news.size() == _Balance.WORLD_NEWS_LIMIT and gm.get_world_sect("heukpung").last_invasion_turn == 7, "침공·강호 소식 저장·복원")
+
+	# 문파 데이터 검증: 졸개·우두머리
+	var bad: PackedStringArray = SectRegistry.validate_sect_dict({
+		"id": "x", "sect_name": "x", "leader_id": "npc_master", "alignment": "RIGHTEOUS", "soldier_npc": "no_such",
+	})
+	_check(Array(bad).any(func(e: String) -> bool: return e.contains("soldier_npc")), "없는 졸개 인물 검출")
+	_completed["_test_sect_ai"] = true
+
+
+func _test_invasion_flow() -> void:
+	var gm: Node = root.get_node("GameManager")
+	gm.start_new_game("침공", "leader", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
+	gm.pending_invasion = "heukpung"
+	SceneRouter.goto(self, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	var hub: Node = current_scene
+	_check(hub.invasion_popup.visible and hub.invasion_popup.get_option_count() == 3, "경영 화면: 침공 대응 팝업")
+	var heukpung: SectData = gm.get_world_sect("heukpung")
+	var before: int = heukpung.disciple_count
+	hub.invasion_popup._on_option_pressed("fight")
+	await process_frame
+	await process_frame
+	var controller: Node = current_scene
+	_check(controller.scene_file_path == SceneRouter.COMBAT and gm.pending_combat.invader_id == "heukpung", "맞서 싸우면 방어전")
+	for unit in controller._get_alive_enemies():
+		unit.take_damage(99999)
+	controller._check_victory()
+	_check(heukpung.disciple_count == before - _Balance.INVASION_REPEL_LOSS and gm.world_news[-1].contains("막아 냈습니다"), "침공을 막아 내면 침략 세력 제자 감소, 강호 소식")
+	SceneRouter.goto(self, SceneRouter.WORLD)
+	await process_frame
+	await process_frame
+	var texts: String = ""
+	for child in current_scene.npc_list.get_children():
+		if child is Label:
+			texts += child.text
+	_check(texts.contains("강호 소식") and texts.contains("막아 냈습니다"), "강호 정세 화면에 강호 소식")
+	gm.start_new_game("정리", "young_disciple")
+	SceneRouter.goto(self, SceneRouter.MAIN_MENU)
+	await process_frame
+	_completed["_test_invasion_flow"] = true

@@ -19,7 +19,27 @@ func _ready() -> void:
 	add_child(choice_popup)
 	choice_popup.chosen.connect(_on_diplomacy_chosen)
 	_build_sect_list()
+	_build_news()
 	_build_npc_list()
+
+
+## 강호 소식은 인물 목록 위에 최근 것부터 보여 준다.
+const NEWS_LINES := 8
+
+
+## 강호 소식: 세력 AI의 행동 (최근 것이 위)
+func _build_news() -> void:
+	_add_heading(npc_list, "강호 소식")
+	if GameManager.world_news.is_empty():
+		_add_entry(npc_list, "조용한 강호", "아직 들려온 소식이 없습니다.")
+		return
+	var lines: Array[String] = GameManager.world_news.duplicate()
+	lines.reverse()
+	var label := Label.new()
+	label.text = "\n".join(lines.slice(0, NEWS_LINES))
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.add_theme_font_size_override("font_size", 13)
+	npc_list.add_child(label)
 
 
 func _rebuild_sect_list() -> void:

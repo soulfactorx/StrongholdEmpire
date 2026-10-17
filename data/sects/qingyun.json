@@ -12,5 +12,7 @@
   "food": 300,
   "library_level": 1,
   "training_ground_level": 1,
-  "treasury_level": 1
+  "treasury_level": 1,
+  "soldier_npc": "npc_disciple",
+  "champion_npc": "npc_senior_brother"
 }

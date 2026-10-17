@@ -99,7 +99,7 @@ static func validate_sect_dict(data: Dictionary) -> PackedStringArray:
 	for key in data:
 		if not (key in NUMERIC_FIELDS or key in [
 			"id", "sect_name", "alignment", "leader_id", "description", "is_player_sect", "_path",
-			"war_tactics", "war_formation",
+			"war_tactics", "war_formation", "soldier_npc", "champion_npc",
 		]):
 			errors.append("알 수 없는 필드: %s" % key)
 	var tactics: Variant = data.get("war_tactics", {})
@@ -111,6 +111,9 @@ static func validate_sect_dict(data: Dictionary) -> PackedStringArray:
 				errors.append("알 수 없는 문파전 명령: %s" % command)
 			elif not ((tactics[command] is float or tactics[command] is int) and tactics[command] >= 0):
 				errors.append("war_tactics 가중치는 0 이상의 숫자여야 함")
+	for key in ["soldier_npc", "champion_npc"]:
+		if data.has(key) and not NpcRoster.has_npc(str(data[key])):
+			errors.append("명부에 없는 %s: %s" % [key, data[key]])
 	if data.has("war_formation") and not data["war_formation"] in ["NONE", "CRANE", "FISH", "CIRCLE"]:
 		errors.append("알 수 없는 진형: %s" % data["war_formation"])
 	return errors

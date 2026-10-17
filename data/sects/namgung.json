@@ -8,5 +8,7 @@
   "disciple_count": 24,
   "max_disciples": 40,
   "training_ground_level": 2,
-  "attitude": 0
+  "attitude": 0,
+  "soldier_npc": "npc_namgung_guard",
+  "champion_npc": "npc_namgung_enforcer"
 }

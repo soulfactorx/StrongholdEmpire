@@ -166,6 +166,45 @@ const COMPLEXITY_PENALTY := 8
 const MIN_SUCCESS_RATE := 10
 const MAX_SUCCESS_RATE := 95
 
+# 세력 AI (M6-2). 강호 세력이 계절마다 행동 하나를 고른다
+## 성향별 행동 가중치 [성장, 다른 세력 공격, 플레이어 침공, 외교]. 공격·침공은 시나리오 ai_aggression을 곱한다
+const AI_WEIGHTS: Dictionary = {
+	"RIGHTEOUS": [0.5, 0.15, 0.05, 0.3],
+	"UNORTHODOX": [0.4, 0.3, 0.2, 0.1],
+	"DEMONIC": [0.45, 0.3, 0.15, 0.1],
+}
+## 성장: 제자·명성. 정원의 절반이 안 되는 세력은 더 빨리 회복한다
+const AI_GROWTH_DISCIPLES := 1
+const AI_GROWTH_DISCIPLES_SMALL := 2
+const AI_GROWTH_REPUTATION := 1
+## 세력끼리의 전쟁: 전력에 ±운, 지키는 쪽에 보너스. 진 쪽은 제자를 잃고(최소 AI_MIN_DISCIPLES), 이긴 쪽은 일부를 흡수한다
+const AI_WAR_LUCK := 0.2
+const AI_WAR_DEFENDER_BONUS := 1.2
+const AI_WAR_LOSS := 2
+const AI_WAR_ABSORB := 1
+const AI_WAR_REPUTATION := 3
+const AI_MIN_DISCIPLES := 3
+## 제자가 이보다 적은 세력은 다른 세력이 치지 않는다 (몰락한 세력을 끝까지 짓밟지 않는다)
+const AI_ATTACK_MIN_TARGET_DISCIPLES := 10
+## 같은 성향 세력을 공격할 가중치 (다른 성향은 1)
+const AI_SAME_ALIGNMENT_ATTACK := 0.3
+## 침공: 태도가 이 값 미만인 세력만. 태도가 낮을수록 잦다 (−50이면 1배, −100이면 2배)
+const AI_INVASION_MAX_ATTITUDE := -20
+const AI_INVASION_COOLDOWN := 4
+## 첫해에는 침공하지 않는다
+const AI_INVASION_GRACE_YEARS := 1
+## 침공 대응: 금화로 물리기, 산문을 내주기 (방치하면 다음 계절에 산문을 내준 것으로 처리)
+const INVASION_BRIBE_GOLD := 120
+const INVASION_YIELD_DISCIPLES := 3
+const INVASION_YIELD_REPUTATION := 6
+## 침공을 막아 내면 침략 세력이 잃는 제자
+const INVASION_REPEL_LOSS := 4
+## 외교: 태도가 이 이상인 세력은 플레이어에게 사절을 보내 태도를 올린다
+const AI_DIPLOMACY_MIN_ATTITUDE := -50
+const AI_DIPLOMACY_ATTITUDE := 5
+## 강호 소식은 최근 이만큼 보관한다
+const WORLD_NEWS_LIMIT := 20
+
 # 외교 (M6-1). 세력마다 계절에 한 번
 const DIPLOMAT_ENVOY_GOLD := 60
 const DIPLOMAT_ENVOY_ATTITUDE := 10

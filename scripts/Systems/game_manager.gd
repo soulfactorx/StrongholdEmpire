@@ -26,6 +26,10 @@ var role_state: Dictionary = RoleActions.create_state()
 var legacy_records: Array[LegacyData] = []
 ## 전투에서 본 상대 무공 {무공 id: {id, name, element}} — 무공 연구소에서 분석한다. 세대를 넘어 남는다.
 var observed_arts: Dictionary = {}
+## 우리 문파를 침공해 온 세력 id (대응을 고르기 전까지). 없으면 ""
+var pending_invasion: String = ""
+## 강호 소식 (세력 AI의 행동, 최근 것이 뒤에)
+var world_news: Array[String] = []
 ## 도전장을 보낸 세력 id (문파전 승패에 명성이 더 걸린다). 없으면 ""
 var challenge_target: String = ""
 ## 분석을 마친 오행 속성 (MartialArtData.FiveElement). 상극 무공 창조 성공률이 오른다.
@@ -88,6 +92,8 @@ func _initialize_new_game(
 	observed_arts = {}
 	analyzed_elements = []
 	challenge_target = ""
+	pending_invasion = ""
+	world_news.clear()
 	current_ending_id = ""
 	game_over_id = ""
 	last_turn_report = ""
@@ -157,6 +163,10 @@ func advance_turn() -> void:
 		_force_end("era_end")
 		EventBus.turn_advanced.emit(current_year, get_current_season())
 		return
+	# 침공에 대응하지 않고 계절을 넘기면 산문을 내준 것으로 처리한다.
+	var ignored_invasion: String = ""
+	if not pending_invasion.is_empty():
+		ignored_invasion = resolve_invasion("yield")["message"]
 	current_season_index = (current_season_index + 1) % SEASONS.size()
 	pending_war_plan = {}
 	var yearly_report: String = ""
@@ -171,17 +181,70 @@ func advance_turn() -> void:
 	var disciple_report: String = DiscipleRoster.on_season(player_sect)
 	var tribute_report: String = DiplomacyManager.on_season(player_sect, world_sects)
 	var consequence: String = _apply_role_consequences()
+	var world_report: String = _run_sect_ai()
 	var report_parts: PackedStringArray = [income, upkeep["message"]]
-	for part in [facility_report, disciple_report, tribute_report, role_report, consequence, yearly_report]:
+	for part in [ignored_invasion, facility_report, disciple_report, tribute_report, role_report, consequence, yearly_report, world_report]:
 		if not part.is_empty():
 			report_parts.append(part)
 	last_turn_report = "%s — %s" % [get_date_text(), " | ".join(report_parts)]
 	refresh_role_transitions()
 	_check_end_states()
-	if not is_game_over():
+	# 침공을 받은 계절에는 기연 대신 침공에 대응한다.
+	if not is_game_over() and pending_invasion.is_empty():
 		_try_trigger_event()
 	EventBus.turn_advanced.emit(current_year, get_current_season())
 	EventBus.resources_changed.emit(player_sect)
+
+
+## 세력 AI의 한 계절. 강호 소식을 쌓고, 침공이 있으면 대응을 기다린다. 계절 보고 문구를 돌려준다.
+func _run_sect_ai() -> String:
+	# 침공 빈도는 기연 빈도를 따른다 (기연 빈도 0인 시험·시뮬레이션에서는 침공이 없다).
+	var result: Dictionary = SectAI.run_season(world_sects, _get_turn_index(), current_year, ScenarioRules.event_rate())
+	for line in result["news"]:
+		add_world_news(line)
+	pending_invasion = result["invader"]
+	if not pending_invasion.is_empty():
+		return "%s의 침공! 대응을 고르세요." % get_world_sect(pending_invasion).sect_name
+	if not result["news"].is_empty():
+		return "강호 소식 %d건" % result["news"].size()
+	return ""
+
+
+func add_world_news(line: String) -> void:
+	world_news.append("%s: %s" % [get_date_text(), line])
+	while world_news.size() > _Balance.WORLD_NEWS_LIMIT:
+		world_news.remove_at(0)
+
+
+## 침공 대응. choice: "fight"(방어전), "bribe"(금화로 물리기), "yield"(산문을 내주기)
+func resolve_invasion(choice: String) -> Dictionary:
+	var invader: SectData = get_world_sect(pending_invasion)
+	if invader == null:
+		pending_invasion = ""
+		return {"success": false, "message": "침공해 온 세력이 없습니다."}
+	var message: String
+	match choice:
+		"fight":
+			pending_invasion = ""
+			start_combat(CombatManager.create_invasion(invader, player_character, player_sect))
+			return {"success": true, "message": "%s의 침공에 맞섭니다!" % invader.sect_name}
+		"bribe":
+			if not player_sect.spend_resources(_Balance.INVASION_BRIBE_GOLD):
+				return {"success": false, "message": "금화가 부족합니다. (%d 필요)" % _Balance.INVASION_BRIBE_GOLD}
+			invader.attitude = mini(100, invader.attitude + _Balance.AI_DIPLOMACY_ATTITUDE)
+			message = "금화 %d를 내주고 %s을(를) 물렸습니다." % [_Balance.INVASION_BRIBE_GOLD, invader.sect_name]
+		_:
+			var lost: int = mini(_Balance.INVASION_YIELD_DISCIPLES, maxi(0, player_sect.disciple_count - 1))
+			player_sect.disciple_count -= lost
+			player_sect.reputation = maxi(0, player_sect.reputation - _Balance.INVASION_YIELD_REPUTATION)
+			invader.disciple_count = mini(invader.max_disciples, invader.disciple_count + 1)
+			invader.reputation += _Balance.INVASION_YIELD_REPUTATION
+			message = "%s에게 산문을 내주었습니다. 제자 -%d, 명성 -%d" % [invader.sect_name, lost, _Balance.INVASION_YIELD_REPUTATION]
+	pending_invasion = ""
+	add_world_news(message)
+	EventBus.resources_changed.emit(player_sect)
+	_check_end_states()
+	return {"success": true, "message": message}
 
 
 func _process_seasonal_income() -> String:
@@ -798,6 +861,15 @@ func finish_combat(outcome: CombatManager.Outcome, fallen_allies: int = 0, falle
 	if pending_combat == null:
 		return {"success": false, "message": "진행 중인 전투가 없습니다."}
 	_record_observed_arts(pending_combat)
+	# 침공 방어전: 막아 내면 침략 세력이 제자를 잃는다.
+	if not pending_combat.invader_id.is_empty():
+		var invader: SectData = get_world_sect(pending_combat.invader_id)
+		if invader:
+			if outcome == CombatManager.Outcome.VICTORY:
+				invader.disciple_count = maxi(_Balance.AI_MIN_DISCIPLES, invader.disciple_count - _Balance.INVASION_REPEL_LOSS)
+				add_world_news("%s의 침공을 막아 냈습니다. (%s 제자 -%d)" % [invader.sect_name, invader.sect_name, _Balance.INVASION_REPEL_LOSS])
+			else:
+				add_world_news("%s의 침공을 막지 못했습니다." % invader.sect_name)
 	var result: Dictionary = CombatManager.apply_outcome(
 		pending_combat,
 		outcome,
@@ -854,6 +926,8 @@ func save_game() -> Dictionary:
 		"role_state": role_state,
 		"observed_arts": observed_arts,
 		"challenge_target": challenge_target,
+		"pending_invasion": pending_invasion,
+		"world_news": world_news,
 		"analyzed_elements": analyzed_elements,
 		"triggered_event_ids": triggered_event_ids,
 		"current_ending_id": current_ending_id,
@@ -898,6 +972,10 @@ func _apply_save_data(data: Dictionary) -> void:
 	# 역할 자원이 없는 구버전 세이브는 기본값으로 시작한다.
 	role_state = RoleActions.restore_state(data.get("role_state", {}))
 	challenge_target = str(data.get("challenge_target", ""))
+	pending_invasion = str(data.get("pending_invasion", ""))
+	world_news.clear()
+	for line in data.get("world_news", []):
+		world_news.append(str(line))
 	observed_arts = {}
 	var saved_arts: Dictionary = data.get("observed_arts", {})
 	for art_id in saved_arts:

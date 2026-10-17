@@ -2,7 +2,7 @@ class_name SaveManager
 extends RefCounted
 
 const SAVE_PATH := "user://save_slot_1.json"
-const SAVE_VERSION := 11
+const SAVE_VERSION := 12
 
 
 static func save_game(state: Dictionary) -> Dictionary:
@@ -93,6 +93,7 @@ static func serialize_sect(sect: SectData) -> Dictionary:
 		"tribute": sect.tribute,
 		"married": sect.married,
 		"last_diplomacy_turn": sect.last_diplomacy_turn,
+		"last_invasion_turn": sect.last_invasion_turn,
 		"sect_name": sect.sect_name,
 		"leader_name": sect.leader_name,
 		"gold": sect.gold,
@@ -260,6 +261,7 @@ static func deserialize_sect(data: Dictionary) -> SectData:
 	sect.tribute = data.get("tribute", false)
 	sect.married = data.get("married", false)
 	sect.last_diplomacy_turn = int(data.get("last_diplomacy_turn", -1))
+	sect.last_invasion_turn = int(data.get("last_invasion_turn", -1))
 	for command in data.get("observed_commands", []):
 		sect.observed_commands.append(int(command))
 	var secret: Array[MartialArtData] = deserialize_martial_arts(data.get("secret_art", []))

@@ -1,6 +1,7 @@
 extends Control
 
 const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
+const _Balance = preload("res://scripts/Systems/game_balance.gd")
 const _FacilityPopup = preload("res://scripts/UI/facility_popup.gd")
 const _ChoicePopup = preload("res://scripts/UI/choice_popup.gd")
 const _DisciplePopup = preload("res://scripts/UI/disciple_popup.gd")
@@ -33,6 +34,8 @@ var choice_popup: Control
 var disciple_popup: Control
 ## 인연 팝업
 var bond_popup: Control
+## 침공 대응 팝업
+var invasion_popup: Control
 ## 대상을 고르는 중인 역할 행동 id
 var _pending_role_action: String = ""
 
@@ -51,6 +54,9 @@ func _ready() -> void:
 	bond_popup = _BondPopup.new()
 	add_child(bond_popup)
 	bond_popup.acted.connect(_on_bond_acted)
+	invasion_popup = _ChoicePopup.new()
+	add_child(invasion_popup)
+	invasion_popup.chosen.connect(_on_invasion_chosen)
 	_connect_bus(EventBus.turn_advanced, _on_turn_advanced)
 	_connect_bus(EventBus.resources_changed, _on_resources_changed)
 	_connect_bus(EventBus.character_updated, _on_character_updated)
@@ -67,6 +73,7 @@ func _ready() -> void:
 	_refresh_all()
 	if not GameManager.pending_event.is_empty():
 		event_popup.show_event(GameManager.pending_event)
+	_show_invasion()
 
 
 ## 전역 EventBus 연결. 화면이 트리를 떠나면 모두 끊어, 떠난 화면이 신호에 반응하지 않게 한다.
@@ -224,6 +231,40 @@ func _on_turn_advanced(_year: int, _season: String) -> void:
 	_update_time_display()
 	_update_role_actions()
 	_on_action_message(GameManager.last_turn_report)
+	_show_invasion()
+
+
+## 다른 세력이 침공해 왔으면 대응을 고르게 한다. 닫으면 다음 계절에 산문을 내준 것으로 처리된다.
+func _show_invasion() -> void:
+	if GameManager.pending_invasion.is_empty():
+		return
+	var invader: SectData = GameManager.get_world_sect(GameManager.pending_invasion)
+	if invader == null:
+		return
+	AudioManager.play_event()
+	var bribe_gold: int = _Balance.INVASION_BRIBE_GOLD
+	var options: Array[Dictionary] = [
+			{"id": "fight", "title": "맞서 싸운다", "description": "방어전: 제자와 인연이 함께 싸웁니다. 막아 내면 %s이(가) 제자를 잃습니다." % invader.sect_name},
+			{"id": "bribe", "title": "금화로 물린다 (금화 %d)" % bribe_gold, "description": "싸우지 않고 돌려보냅니다.",
+				"disabled": GameManager.player_sect.gold < bribe_gold},
+			{"id": "yield", "title": "산문을 내준다", "description": "제자 −%d, 명성 −%d" % [
+				_Balance.INVASION_YIELD_DISCIPLES, _Balance.INVASION_YIELD_REPUTATION,
+			]},
+	]
+	invasion_popup.open(
+		"%s의 침공" % invader.sect_name,
+		"%s의 무리가 산문 앞에 몰려왔습니다. (전력 %d)\n대응하지 않고 계절을 넘기면 산문을 내준 것으로 칩니다." % [
+			invader.sect_name, SectWarManager.get_sect_power(invader),
+		],
+		options
+	)
+
+
+func _on_invasion_chosen(choice: String) -> void:
+	var result: Dictionary = GameManager.resolve_invasion(choice)
+	if is_inside_tree():
+		_on_action_message(result["message"])
+		_refresh_all()
 
 
 func _on_resources_changed(sect: SectData) -> void:

@@ -72,6 +72,8 @@
 | 수치 필드 | `gold`, `food`, `reputation`, `research_points`, `disciple_count`, `max_disciples`, `library_level`, `training_ground_level`, `treasury_level`, `apothecary_level`, `meditation_hall_level` |
 | `war_tactics` | (선택) 문파전 명령 선택 가중치. 예: `{ "CHARGE": 0.4, "DEFEND": 0.15, "FLANK": 0.4, "RETREAT": 0.05 }`. 없으면 성향별 기본값 |
 | `war_formation` | (선택) 문파전 진형: `CRANE`(학익진) · `FISH`(어린진) · `CIRCLE`(방원진) · `NONE`. 없으면 성향별 기본값 |
+| `soldier_npc` | (선택) 이 세력이 침공할 때 오는 졸개 인물 id. 없으면 `npc_bandit` |
+| `champion_npc` | (선택) 침공을 이끄는 우두머리 인물 id. 없으면 졸개만 온다 |
 
 ## 문파전과의 관계
 

@@ -18,6 +18,8 @@ const DEFAULTS: Dictionary = {
 	"event_rate": 1.0,
 	"world_growth_scale": 1.0,
 	"enemy_strength_scale": 1.0,
+	## 세력 AI의 호전성: 세력끼리의 공격과 플레이어 침공 가중치에 곱한다. 0이면 싸우지 않는다
+	"ai_aggression": 1.0,
 	## 승리 엔딩에 도달하면 시나리오를 끝낸다 (단기 시나리오용)
 	"end_on_victory": false,
 }
@@ -32,6 +34,7 @@ const RANGES: Dictionary = {
 	"event_rate": [0.0, 1.0],
 	"world_growth_scale": [0.0, 5.0],
 	"enemy_strength_scale": [0.3, 3.0],
+	"ai_aggression": [0.0, 3.0],
 }
 
 ## 새 게임 화면 "세부 설정"에서 고를 수 있는 값. 첫 항목은 항상 "시나리오 기본"
@@ -133,6 +136,10 @@ static func world_growth_scale() -> float:
 
 static func enemy_strength_scale() -> float:
 	return params["enemy_strength_scale"]
+
+
+static func ai_aggression() -> float:
+	return params["ai_aggression"]
 
 
 static func end_on_victory() -> bool:

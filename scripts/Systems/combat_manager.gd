@@ -328,6 +328,39 @@ static func add_disciple_allies(
 	setup.allies_are_disciples = count > 0
 
 
+## 세력 AI의 침공을 막는 방어전. 침략 세력의 졸개(soldier_npc)와 우두머리(champion_npc)가 쳐들어온다.
+## 졸개 수는 침략 세력의 제자 10명당 1명(2~4명). 문파 제자가 함께 싸운다.
+static func create_invasion(invader: SectData, player: CharacterData, sect: SectData = null) -> CombatSetup:
+	var info: Dictionary = SectRegistry.get_sect_info(invader.id)
+	var setup := CombatSetup.new()
+	setup.id = "sect_invasion"
+	setup.invader_id = invader.id
+	setup.title = "방어전 — %s의 침공" % invader.sect_name
+	setup.player_position = Vector2i(3, 5)
+	setup.blocked_tiles = [Vector2i(6, 0), Vector2i(6, 1), Vector2i(6, 8), Vector2i(6, 9)]
+	setup.set_terrain([Vector2i(3, 2), Vector2i(4, 2), Vector2i(3, 8), Vector2i(4, 8)], CombatRules.Terrain.HIGH)
+	setup.set_terrain([Vector2i(10, 4), Vector2i(10, 5), Vector2i(11, 6)], CombatRules.Terrain.FOREST)
+	var soldier_id: String = info.get("soldier_npc", "npc_bandit")
+	var soldier_count: int = clampi(invader.disciple_count / 10, 2, 4)
+	var positions: Array[Vector2i] = [Vector2i(12, 2), Vector2i(12, 8), Vector2i(13, 4), Vector2i(13, 6)]
+	for i in soldier_count:
+		var soldier: CharacterData = NpcRoster.create_character(soldier_id, player)
+		soldier.id = "%s_%d" % [soldier_id, i]
+		soldier.display_name = "%s %s" % [soldier.display_name, ["갑", "을", "병", "정"][i]]
+		setup.add_enemy(soldier, positions[i])
+	var champion_id: String = info.get("champion_npc", "")
+	if NpcRoster.has_npc(champion_id):
+		setup.add_enemy(NpcRoster.create_character(champion_id, player), Vector2i(14, 5))
+	if sect:
+		add_disciple_allies(setup, sect, player, [Vector2i(2, 4), Vector2i(2, 6)])
+	setup.enemy_hp_scale = 0.7
+	setup.enemy_damage_scale = 0.8
+	setup.rewards = {"experience": 40, "gold": 50, "reputation": 5}
+	setup.defeat_penalty = {"gold": 80, "reputation": _Balance.INVASION_YIELD_REPUTATION, "injury_ratio": 0.3}
+	setup.victory_flag = "repelled_invasion"
+	return setup
+
+
 ## 방어전에 깊은 인연(사제·혈맹·연인)의 인물이 아군으로 합류한다. 합류한 인물 이름을 돌려준다.
 static func add_bond_allies(setup: CombatSetup, relationships: Array[RelationshipData], player: CharacterData) -> PackedStringArray:
 	var joined: PackedStringArray = []
