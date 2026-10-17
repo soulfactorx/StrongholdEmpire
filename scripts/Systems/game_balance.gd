@@ -149,6 +149,93 @@ const MANAGER_REPUTATION_REQ := 55
 const LEADER_LEVEL_REQ := 5
 const LEADER_REPUTATION_REQ := 75
 const LEADER_DISCIPLE_REQ := 18
+## 의뢰인으로 전환할 수 있는 낭인 레벨
+const MERCENARY_LEVEL_REQ := 3
+## 이적: 그 세력과의 신용도가 이 이상이면 객경으로 들어갈 수 있다
+const DEFECT_CREDIT_REQ := 40
+## 배신: 도덕이 이 이하이면 적대 세력으로 넘어갈 수 있다
+const BETRAY_MORALITY_REQ := 30
+const BETRAY_MORALITY_LOSS := 15
+## 떠나온 문파의 태도 (이적·배신)
+const DEFECT_OLD_SECT_ATTITUDE := -20
+const BETRAY_OLD_SECT_ATTITUDE := -70
+## 강등: 역할 행동 실패가 이만큼 쌓이면 중간관리자는 막내 제자로 내려간다
+const DEMOTION_FAILURES := 3
+
+# 역할 고유 행동 (계절마다 ROLE_ACTIONS_PER_SEASON번, 역할 행동끼리 공유)
+const ROLE_ACTIONS_PER_SEASON := 1
+## 문주: 내부 불만도. 계절마다 오르고, 회의·연회로 낮춘다. 100이면 축출
+const DISCONTENT_PER_SEASON := 3
+const DISCONTENT_SHORTAGE := 6
+const DISCONTENT_REBELLION := 70
+const DISCONTENT_OUSTED := 100
+const FEAST_DISCONTENT_RELIEF := 8
+const COUNCIL_GOLD := 40
+const COUNCIL_DISCONTENT_RELIEF := 20
+const ENVOY_GOLD := 60
+const ENVOY_ATTITUDE := 12
+## 중간관리자: 문주 신임도와 부서
+const MANAGER_START_TRUST := 50
+## 문주 승계에 필요한 신임도
+const MANAGER_TRUST_FOR_LEADER := 50
+const DEPT_TRUST_PER_SEASON := 2
+const DEPT_FINANCE_GOLD_BONUS := 0.2
+const DEPT_TRAINING_EXP := 25
+const DEPT_INTEL_SCOUT_SCALE := 0.5
+const PROPOSAL_REPUTATION := 5
+const PROPOSAL_TRUST_GAIN := 10
+const PROPOSAL_TRUST_LOSS := 15
+const PROPOSAL_MAX_CHANCE := 90
+## 막내 제자: 가르침 (유대가 높을수록 깨달음 확률 = 유대 / 2 %)
+const TEACH_EXP := 20
+const TEACH_BOND := 3
+## 막내 제자: 외출에서 기연이 없을 때 얻는 소득
+const OUTING_GOLD := 25
+const OUTING_EXP := 15
+## 낭인: 의뢰 게시판. 호위 성공률 = 기본 + (전투력 − 기준) × 배율, 타지에서는 보상 증가·성공률 감소
+const JOB_ESCORT_GOLD := 60
+const JOB_ESCORT_BASE_CHANCE := 60
+const JOB_ESCORT_POWER_BASE := 40
+const JOB_ESCORT_POWER_SCALE := 2
+const JOB_SEARCH_RESEARCH := 15
+const JOB_SEARCH_EXP := 30
+const JOB_HUNT_GOLD := 80
+const JOB_AWAY_REWARD_SCALE := 1.5
+const JOB_AWAY_RISK := 15
+const JOB_CREDIT_GAIN := 5
+## 스파이: 노출도. 100이면 정체가 드러난다
+const EXPOSURE_INTEL := 12
+const EXPOSURE_SABOTAGE := 25
+const EXPOSURE_DECAY := 5
+const EXPOSURE_MAX := 100
+const INTEL_RESEARCH := 10
+## 정보 수집을 이만큼 하면 스파이 임무 완료
+const SPY_MISSION_INTEL := 3
+const SABOTAGE_DISCIPLES := 3
+const SABOTAGE_GOLD := 60
+## 암살자: 현상금. 표적 의뢰마다 오르고 계절마다 조금씩 잊힌다
+const BOUNTY_PER_CONTRACT := 20
+const BOUNTY_DECAY := 2
+const BOUNTY_PURSUIT := 50
+const ASSASSINATION_GOLD := 120
+const ASSASSINATION_EXP := 40
+const LIE_LOW_GOLD := 50
+const LIE_LOW_BOUNTY := 20
+## 의뢰인: 세력별 계약. 선금을 받고 기한 안에 이행한다
+const CONTRACT_REWARD := 120
+const CONTRACT_ADVANCE_RATIO := 0.3
+const CONTRACT_SEASONS := 2
+const CONTRACT_BASE_CHANCE := 45
+const CONTRACT_LEVEL_CHANCE := 5
+const CONTRACT_MAX_CHANCE := 95
+const CONTRACT_CREDIT_GAIN := 15
+const CONTRACT_FAIL_CREDIT := 10
+const CONTRACT_BREACH_CREDIT := 30
+const CONTRACT_BREACH_GOLD := 100
+const CONTRACT_BREACH_ATTITUDE := 15
+## 신용도가 이 값 미만이면 그 세력이 계약을 주지 않는다
+const CONTRACT_MIN_CREDIT := -30
+const CREDIT_LIMIT := 100
 
 # 성장
 const EXP_PER_LEVEL_STEP := 25  # 누적 경험치 요구량: 25 * L * (L - 1)

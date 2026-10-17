@@ -28,6 +28,7 @@ extends RefCounted
 ##   years_left op, value          — 시나리오 제한까지 남은 연수 (제한 없으면 9999)
 ##   subjugated_count op, value    — 굴복시킨 강호 세력 수
 ##   generation op, value          — 현재 세대 (1세대부터)
+##   role_state field, op, value   — 역할 자원 비교 (RoleActions.NUMERIC_FIELDS: discontent, trust, exposure, bounty ...)
 ##   (world_sect의 field에는 subjugated(0/1)도 쓸 수 있다)
 ##   op: ">=" "<=" ">" "<" "==" "!="
 ##
@@ -43,6 +44,7 @@ extends RefCounted
 ##   add_relationship target, bond_type, strength — 명부 인물과 새 관계를 맺는다 (이미 있으면 무시)
 ##   learn_art   art               — 무공 습득 (MartialArtLibrary id)
 ##   end_game    ending            — 지정한 엔딩 또는 게임오버로 이야기를 끝낸다
+##   role_state  field, add        — 역할 자원 증감 (0~100으로 제한)
 ##
 ## ■ 가중치
 ##   최상위 "weight"(기본 1): 발생 후보 중에서 뽑힐 상대적 확률. 스토리 핵심 기연은 높게 준다.
@@ -79,6 +81,8 @@ static var current_generation: int = 1
 static var role_history: Array[String] = []
 ## 플래그 이름 → 켜진 계절(current_turn)
 static var flag_turns: Dictionary = {}
+## 역할 자원 (GameManager.role_state와 같은 객체)
+static var role_state: Dictionary = {}
 
 
 ## 스토리 플래그를 설정하고 켜진 계절을 기록한다. 플래그는 항상 이 함수로 설정한다.
@@ -277,6 +281,10 @@ static func _validate_condition(condition: Variant, errors: PackedStringArray) -
 				errors.append("scenario 조건에 in 목록 필요")
 		"years_left", "subjugated_count", "generation":
 			_validate_compare(c, errors)
+		"role_state":
+			if not c.get("field") in RoleActions.NUMERIC_FIELDS:
+				errors.append("알 수 없는 역할 자원: %s" % c.get("field"))
+			_validate_compare(c, errors)
 		_:
 			errors.append("알 수 없는 조건 type: %s" % c.get("type"))
 
@@ -325,6 +333,9 @@ static func _validate_effect(effect: Variant, errors: PackedStringArray) -> void
 		"learn_art":
 			if not MartialArtLibrary.has_art(str(e.get("art", ""))):
 				errors.append("알 수 없는 무공: %s" % e.get("art"))
+		"role_state":
+			if not e.get("field") in RoleActions.NUMERIC_FIELDS:
+				errors.append("알 수 없는 역할 자원: %s" % e.get("field"))
 		"end_game":
 			var ending: String = str(e.get("ending", ""))
 			if not (EndingManager.has_ending(ending) or EndingManager.GAME_OVERS.has(ending)):
@@ -458,6 +469,8 @@ static func _condition_met(
 			return _compare(count, c["op"], c["value"])
 		"generation":
 			return _compare(current_generation, c["op"], c["value"])
+		"role_state":
+			return _compare(int(role_state.get(c["field"], 0)), c["op"], c["value"])
 	return false
 
 
@@ -533,3 +546,6 @@ static func _apply_effect(
 				character.learn_martial_art(art)
 		"end_game":
 			result["end_game"] = e["ending"]
+		"role_state":
+			if role_state.has(e["field"]):
+				role_state[e["field"]] = clampi(int(role_state[e["field"]]) + int(e.get("add", 0)), 0, 100)

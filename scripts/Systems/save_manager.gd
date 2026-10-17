@@ -2,7 +2,7 @@ class_name SaveManager
 extends RefCounted
 
 const SAVE_PATH := "user://save_slot_1.json"
-const SAVE_VERSION := 7
+const SAVE_VERSION := 8
 
 
 static func save_game(state: Dictionary) -> Dictionary:

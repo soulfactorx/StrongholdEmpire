@@ -30,6 +30,18 @@ const ROLES: Array[Dictionary] = [
 		"experience": 50,
 	},
 	{
+		"id": "mercenary",
+		"title": "의뢰인",
+		"description": "세력들의 임무를 계약으로 맡는 청부업자. 청운검파에 거처를 두고 일감을 찾습니다.\n세력별 신용을 쌓아 객경으로 들어가거나, 계약을 깨고 한몫 챙길 수 있습니다.",
+		"role": CharacterData.Role.MERCENARY,
+		"default_name": "모용진",
+		"stats": {
+			"strength": 14, "agility": 13, "wisdom": 13, "charisma": 13,
+			"internal_energy_max": 120, "age": 27, "morality": 45,
+		},
+		"experience": 100,
+	},
+	{
 		"id": "leader",
 		"title": "문주",
 		"description": "몰락해 가는 청운검파를 물려받은 젊은 문주. 문파 경영과 전쟁 지휘가 중심입니다.\n명성과 덕망을 쌓아 정파를 통일하세요.",

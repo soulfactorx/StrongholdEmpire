@@ -11,7 +11,9 @@ const RIVAL_ID := "npc_rival"
 
 
 ## 기연 데이터 등에서 id로 전투를 만들 때 쓴다.
-const COMBAT_IDS: PackedStringArray = ["sparring", "rival_duel", "night_bandits"]
+const COMBAT_IDS: PackedStringArray = [
+	"sparring", "rival_duel", "night_bandits", "bandit_hunt", "assassination", "bounty_hunters",
+]
 
 
 static func has_combat(combat_id: String) -> bool:
@@ -25,6 +27,12 @@ static func create_by_id(combat_id: String, player: CharacterData, sect: SectDat
 			return create_rival_duel(player)
 		"night_bandits":
 			return create_night_bandits(player, sect)
+		"bandit_hunt":
+			return create_bandit_hunt(player)
+		"assassination":
+			return create_assassination(player)
+		"bounty_hunters":
+			return create_bounty_hunters(player)
 		_:
 			return create_sparring(player)
 
@@ -94,6 +102,71 @@ static func create_night_bandits(player: CharacterData, sect: SectData = null) -
 	setup.enemy_damage_scale = 0.7
 	setup.rewards = {"experience": 30, "gold": 30, "reputation": 3, "strength": 1}
 	setup.defeat_penalty = {"gold": 40, "reputation": 3, "injury_ratio": 0.3}
+	return setup
+
+
+## 낭인 의뢰 게시판의 토벌 의뢰: 관도의 도적 두 명. gold_reward는 지역에 따라 달라진다.
+static func create_bandit_hunt(player: CharacterData, gold_reward: int = _Balance.JOB_HUNT_GOLD) -> CombatSetup:
+	var setup := CombatSetup.new()
+	setup.id = "bandit_hunt"
+	setup.title = "토벌 의뢰 — 관도의 도적"
+	setup.blocked_tiles = [Vector2i(7, 2), Vector2i(7, 3), Vector2i(7, 7), Vector2i(7, 8)]
+	setup.set_terrain([Vector2i(11, 4), Vector2i(12, 4), Vector2i(11, 6)], CombatRules.Terrain.FOREST)
+	setup.add_enemy(_create_bandit(player, 0), Vector2i(12, 3))
+	setup.add_enemy(_create_bandit(player, 1), Vector2i(12, 7))
+	setup.enemy_hp_scale = 0.7
+	setup.enemy_damage_scale = 0.8
+	setup.rewards = {"experience": 30, "gold": gold_reward}
+	setup.defeat_penalty = {"injury_ratio": 0.4}
+	return setup
+
+
+## 암살자의 표적 의뢰: 호위 둘을 거느린 표적. 플레이어는 수풀 속에서 잠입을 시작한다.
+static func create_assassination(player: CharacterData) -> CombatSetup:
+	var setup := CombatSetup.new()
+	setup.id = "assassination"
+	setup.title = "표적 의뢰 — 야밤의 잠입"
+	setup.player_position = Vector2i(2, 2)
+	setup.set_terrain([
+		Vector2i(1, 1), Vector2i(2, 1), Vector2i(1, 2), Vector2i(2, 2), Vector2i(3, 2),
+		Vector2i(5, 4), Vector2i(6, 4), Vector2i(6, 5),
+	], CombatRules.Terrain.FOREST)
+	setup.blocked_tiles = [Vector2i(9, 3), Vector2i(9, 4), Vector2i(9, 6), Vector2i(9, 7)]
+	var target: CharacterData = _create_bandit(player, 0)
+	target.id = "assassination_target"
+	target.display_name = "표적 — 탐관오리"
+	target.internal_energy_max += 30
+	target.restore_internal_energy()
+	setup.add_enemy(target, Vector2i(13, 5))
+	for i in 2:
+		var guard: CharacterData = _create_bandit(player, i + 1)
+		guard.display_name = "호위 무사 %s" % ["갑", "을"][i]
+		setup.add_enemy(guard, [Vector2i(11, 4), Vector2i(11, 6)][i])
+	setup.enemy_hp_scale = 0.7
+	setup.enemy_damage_scale = 0.8
+	setup.rewards = {"experience": _Balance.ASSASSINATION_EXP, "gold": _Balance.ASSASSINATION_GOLD}
+	setup.defeat_penalty = {"injury_ratio": 0.3}
+	setup.victory_flag = "assassination_success"
+	return setup
+
+
+## 현상금이 높은 암살자를 쫓는 추격대.
+static func create_bounty_hunters(player: CharacterData) -> CombatSetup:
+	var setup := CombatSetup.new()
+	setup.id = "bounty_hunters"
+	setup.title = "추격전 — 현상금 사냥꾼"
+	setup.player_position = Vector2i(4, 5)
+	setup.set_terrain([Vector2i(5, 3), Vector2i(5, 4), Vector2i(5, 6)], CombatRules.Terrain.FOREST)
+	setup.set_terrain([Vector2i(8, 1), Vector2i(8, 2)], CombatRules.Terrain.HIGH)
+	var positions: Array[Vector2i] = [Vector2i(12, 2), Vector2i(13, 5), Vector2i(12, 8)]
+	for i in positions.size():
+		var hunter: CharacterData = _create_bandit(player, i)
+		hunter.display_name = "사냥꾼 %s" % ["갑", "을", "병"][i]
+		setup.add_enemy(hunter, positions[i])
+	setup.enemy_hp_scale = 0.7
+	setup.enemy_damage_scale = 0.8
+	setup.rewards = {"experience": 35, "reputation": 2}
+	setup.defeat_penalty = {"gold": 40, "injury_ratio": 0.3}
 	return setup
 
 

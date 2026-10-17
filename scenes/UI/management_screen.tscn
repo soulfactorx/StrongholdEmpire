@@ -183,6 +183,24 @@ layout_mode = 2
 text = "관계 없음"
 autowrap_mode = 3
 
+[node name="RolePanel" type="PanelContainer" parent="Margin/RootHBox/RightPanel"]
+layout_mode = 2
+
+[node name="RoleVBox" type="VBoxContainer" parent="Margin/RootHBox/RightPanel/RolePanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="RoleResourceLabel" type="Label" parent="Margin/RootHBox/RightPanel/RolePanel/RoleVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "역할 행동"
+autowrap_mode = 3
+
+[node name="RoleActionBox" type="HBoxContainer" parent="Margin/RootHBox/RightPanel/RolePanel/RoleVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+
 [node name="ActionPanel" type="PanelContainer" parent="Margin/RootHBox/RightPanel"]
 layout_mode = 2
 
@@ -245,11 +263,11 @@ custom_minimum_size = Vector2(170, 48)
 layout_mode = 2
 text = "강호 정세"
 
-[node name="LogPanel" type="PanelContainer" parent="Margin/RootHBox/RightPanel"]
+[node name="LogPanel" type="PanelContainer" parent="Margin/RootHBox/LeftPanel"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="LogLabel" type="Label" parent="Margin/RootHBox/RightPanel/LogPanel"]
+[node name="LogLabel" type="Label" parent="Margin/RootHBox/LeftPanel/LogPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "행동을 선택하세요."

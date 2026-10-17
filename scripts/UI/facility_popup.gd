@@ -63,6 +63,8 @@ func _refresh() -> void:
 		_rows.remove_child(child)
 		child.queue_free()
 	var sect: SectData = GameManager.player_sect
+	# 막내 제자는 시설을 볼 수만 있고 확장할 수 없다.
+	var can_build: bool = GameManager.player_character.role != CharacterData.Role.YOUNG_DISCIPLE
 	for facility in SectManager.get_facility_ids():
 		var spec: Array = _Balance.FACILITIES[facility]
 		var info: Dictionary = SectManager.FACILITY_INFO[facility]
@@ -82,6 +84,9 @@ func _refresh() -> void:
 		if cost < 0:
 			button.text = "최고 수준"
 			button.disabled = true
+		elif not can_build:
+			button.text = "권한 없음 (막내 제자)"
+			button.disabled = true
 		else:
 			button.text = ("짓기" if level == 0 else "확장") + " (금화 %d)" % cost
 			button.disabled = sect.gold < cost
@@ -92,6 +97,6 @@ func _refresh() -> void:
 
 
 func _on_upgrade_pressed(facility: String) -> void:
-	var result: Dictionary = SectManager.upgrade_facility(GameManager.player_sect, facility)
+	var result: Dictionary = GameManager.upgrade_facility(facility)
 	upgraded.emit(result)
 	_refresh()

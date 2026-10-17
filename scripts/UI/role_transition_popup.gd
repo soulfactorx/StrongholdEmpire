@@ -23,8 +23,8 @@ func _on_confirm_pressed() -> void:
 	var options: Array[Dictionary] = GameManager.pending_role_transitions
 	if selected[0] >= options.size():
 		return
-	var role: CharacterData.Role = options[selected[0]]["role"]
-	GameManager.apply_role_transition(role)
+	var option: Dictionary = options[selected[0]]
+	GameManager.apply_role_transition(option["role"], option)
 	visible = false
 
 

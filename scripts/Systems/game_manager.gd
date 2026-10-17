@@ -21,6 +21,8 @@ var story_flags: Dictionary = {}
 var flag_turns: Dictionary = {}
 ## 이번 인물이 거쳐 온 역할 이름 (CharacterData.Role 키)
 var role_history: Array[String] = []
+## 역할 자원과 역할 행동 기록 (RoleActions.create_state)
+var role_state: Dictionary = RoleActions.create_state()
 var legacy_records: Array[LegacyData] = []
 var current_ending_id: String = ""
 ## 게임오버 id. 비어 있지 않으면 이야기가 끝난 상태다.
@@ -74,6 +76,7 @@ func _initialize_new_game(
 	flag_turns.clear()
 	role_history.clear()
 	_record_role(player_character.role)
+	role_state = RoleActions.create_state()
 	legacy_records.clear()
 	current_ending_id = ""
 	game_over_id = ""
@@ -95,6 +98,7 @@ func _sync_event_context() -> void:
 	EventManager.current_generation = generation
 	EventManager.role_history = role_history
 	EventManager.flag_turns = flag_turns
+	EventManager.role_state = role_state
 
 
 func _record_role(role: CharacterData.Role) -> void:
@@ -153,11 +157,12 @@ func advance_turn() -> void:
 	var income: String = _process_seasonal_income()
 	var upkeep: Dictionary = SectManager.pay_upkeep(player_sect)
 	var facility_report: String = _apply_facility_effects()
+	var role_report: String = RoleActions.on_season(self)
+	var consequence: String = _apply_role_consequences()
 	var report_parts: PackedStringArray = [income, upkeep["message"]]
-	if not facility_report.is_empty():
-		report_parts.append(facility_report)
-	if not yearly_report.is_empty():
-		report_parts.append(yearly_report)
+	for part in [facility_report, role_report, consequence, yearly_report]:
+		if not part.is_empty():
+			report_parts.append(part)
 	last_turn_report = "%s — %s" % [get_date_text(), " | ".join(report_parts)]
 	refresh_role_transitions()
 	_check_end_states()
@@ -169,6 +174,7 @@ func advance_turn() -> void:
 
 func _process_seasonal_income() -> String:
 	var income: Dictionary = SectManager.compute_seasonal_income(player_sect, player_character, get_current_season())
+	income["gold"] += RoleActions.get_income_gold_bonus(role_state, player_character.role, income["gold"])
 	player_sect.gold += income["gold"]
 	player_sect.food += income["food"]
 	player_sect.research_points += income["research"]
@@ -179,6 +185,7 @@ func _process_seasonal_income() -> String:
 func estimate_next_season() -> Dictionary:
 	var next_season: String = SEASONS[(current_season_index + 1) % SEASONS.size()]
 	var income: Dictionary = SectManager.compute_seasonal_income(player_sect, player_character, next_season)
+	income["gold"] += RoleActions.get_income_gold_bonus(role_state, player_character.role, income["gold"])
 	return {
 		"gold": income["gold"] - player_sect.get_gold_upkeep(),
 		"food": income["food"] - player_sect.get_food_upkeep(),
@@ -225,7 +232,9 @@ func refresh_role_transitions() -> void:
 		player_character,
 		player_sect,
 		player_relationships,
-		story_flags
+		story_flags,
+		role_state,
+		world_sects
 	)
 	if not pending_role_transitions.is_empty():
 		EventBus.role_transitions_available.emit(pending_role_transitions)
@@ -370,17 +379,98 @@ func resolve_pending_event(choice_index: int) -> void:
 	_apply_event_result(result)
 
 
-func apply_role_transition(role: CharacterData.Role) -> Dictionary:
-	var result: Dictionary = RoleManager.apply_transition(
-		player_character, player_sect, role
-	)
+## 역할을 전환한다. option은 RoleManager가 준 선택지로, sect_id가 있으면 그 세력으로 옮겨 간다(이적·배신).
+func apply_role_transition(role: CharacterData.Role, option: Dictionary = {}) -> Dictionary:
+	var prefix: String = ""
+	if option.has("sect_id"):
+		prefix = _switch_player_sect(option["sect_id"], option.get("kind", "defect"))
+	var result: Dictionary = _change_role(role)
+	if not prefix.is_empty():
+		result["message"] = prefix + " " + result["message"]
 	EventBus.action_message.emit(result["message"])
+	refresh_role_transitions()
+	_check_end_states()
+	return result
+
+
+func _change_role(role: CharacterData.Role) -> Dictionary:
+	var result: Dictionary = RoleManager.apply_transition(player_character, player_sect, role)
+	RoleActions.on_role_changed(role_state, player_character.role)
+	_record_role(player_character.role)
 	EventBus.character_updated.emit(player_character)
 	EventBus.resources_changed.emit(player_sect)
 	EventBus.role_changed.emit(player_character.role)
-	_record_role(player_character.role)
+	return result
+
+
+## 역할 자원이 한계에 이르렀을 때 축출·강등을 적용하고 알림 문구를 돌려준다.
+func _apply_role_consequences() -> String:
+	var consequence: Dictionary = RoleActions.check_consequences(self)
+	if consequence.is_empty():
+		return ""
+	EventManager.set_flag(story_flags, consequence["flag"])
+	if player_character.role == CharacterData.Role.LEADER:
+		# 쫓겨난 문주 대신 원래 문주(또는 원로회)가 문파를 맡는다.
+		player_sect.leader_name = (
+			NpcRoster.get_display_name(player_sect.leader_id) if not player_sect.leader_id.is_empty() else "원로회"
+		)
+	_change_role(consequence["role"])
+	return consequence["message"]
+
+
+## 플레이어가 다른 세력으로 옮겨 간다. 옛 문파는 강호 세력이 된다. 알림 문구를 돌려준다.
+func _switch_player_sect(sect_id: String, kind: String) -> String:
+	var new_sect: SectData = get_world_sect(sect_id)
+	if new_sect == null:
+		return ""
+	var old_sect: SectData = player_sect
+	var betrayal: bool = kind == "betray"
+	world_sects.erase(new_sect)
+	old_sect.attitude = _Balance.BETRAY_OLD_SECT_ATTITUDE if betrayal else _Balance.DEFECT_OLD_SECT_ATTITUDE
+	old_sect.subjugated = false
+	old_sect.observed_commands.clear()
+	if old_sect.leader_name == player_character.display_name:
+		old_sect.leader_name = (
+			NpcRoster.get_display_name(old_sect.leader_id) if not old_sect.leader_id.is_empty() else "원로회"
+		)
+	world_sects.append(old_sect)
+	new_sect.attitude = 0
+	new_sect.subjugated = false
+	new_sect.observed_commands.clear()
+	player_sect = new_sect
+	pending_war_plan = {}
+	role_state["spy_target"] = ""
+	EventManager.set_flag(story_flags, "joined_%s" % new_sect.id)
+	if betrayal:
+		EventManager.set_flag(story_flags, "betrayed_%s" % old_sect.id)
+		player_character.morality -= _Balance.BETRAY_MORALITY_LOSS
+		return "%s을(를) 배신하고 %s(으)로 넘어갔습니다. (도덕 -%d)" % [
+			old_sect.sect_name, new_sect.sect_name, _Balance.BETRAY_MORALITY_LOSS,
+		]
+	EventManager.set_flag(story_flags, "defected")
+	return "%s에 객경으로 들어갔습니다." % new_sect.sect_name
+
+
+## 역할 고유 행동 (경영 화면의 역할 버튼). 전투·기연으로 이어지면 바로 시작한다.
+func do_role_action(action_id: String, target: String = "") -> Dictionary:
+	if is_game_over():
+		return {"success": false, "message": "이야기가 끝났습니다."}
+	var result: Dictionary = RoleActions.perform(self, action_id, target)
+	var consequence: String = _apply_role_consequences()
+	if not consequence.is_empty():
+		result["message"] += " " + consequence
+	EventBus.character_updated.emit(player_character)
+	EventBus.resources_changed.emit(player_sect)
+	EventBus.relationships_changed.emit(player_relationships)
 	refresh_role_transitions()
 	_check_end_states()
+	if is_game_over():
+		return result
+	if result.has("event") and pending_event.is_empty():
+		pending_event = result["event"]
+		EventBus.event_triggered.emit(pending_event)
+	elif result.has("combat"):
+		start_combat(result["combat"])
 	return result
 
 
@@ -417,6 +507,7 @@ func start_legacy_succession() -> Dictionary:
 	flag_turns.clear()
 	role_history.clear()
 	_record_role(player_character.role)
+	role_state = RoleActions.create_state()
 	_sync_event_context()
 
 	EventBus.legacy_succession.emit(legacy)
@@ -480,7 +571,9 @@ func scout_war(target_id: String) -> Dictionary:
 		return {"success": false, "message": "정찰할 대상이 없습니다."}
 	if not plan["revealed"].has(false):
 		return {"success": false, "message": "이미 적의 작전을 모두 알고 있습니다."}
-	var cost: int = SectWarManager.get_scout_cost(plan, player_character)
+	var cost: int = roundi(
+		SectWarManager.get_scout_cost(plan, player_character) * RoleActions.get_scout_scale(role_state, player_character.role)
+	)
 	if not player_sect.spend_resources(cost):
 		return {"success": false, "message": "금화가 부족합니다. (%d 필요)" % cost}
 	var round_index: int = SectWarManager.reveal_next(plan)
@@ -593,11 +686,23 @@ func hold_feast() -> Dictionary:
 		]}
 	_mark_seasonal("last_feast_turn")
 	player_sect.reputation += _Balance.FEAST_REPUTATION
+	var message: String = "문파 연회를 열었습니다. 명성 +%d (금화 -%d, 식량 -%d)" % [
+		_Balance.FEAST_REPUTATION, _Balance.FEAST_GOLD, _Balance.FEAST_FOOD,
+	]
+	# 문주가 여는 연회는 문파 안의 불만도 달랜다.
+	if player_character.role == CharacterData.Role.LEADER:
+		role_state["discontent"] = maxi(0, role_state["discontent"] - _Balance.FEAST_DISCONTENT_RELIEF)
+		message += ", 불만도 -%d" % _Balance.FEAST_DISCONTENT_RELIEF
 	EventBus.resources_changed.emit(player_sect)
 	_check_end_states()
-	return {"success": true, "message": "문파 연회를 열었습니다. 명성 +%d (금화 -%d, 식량 -%d)" % [
-		_Balance.FEAST_REPUTATION, _Balance.FEAST_GOLD, _Balance.FEAST_FOOD,
-	]}
+	return {"success": true, "message": message}
+
+
+## 시설 확장. 막내 제자는 시설을 확장할 권한이 없다.
+func upgrade_facility(facility: String) -> Dictionary:
+	if player_character.role == CharacterData.Role.YOUNG_DISCIPLE:
+		return {"success": false, "message": "막내 제자는 시설을 확장할 수 없습니다."}
+	return SectManager.upgrade_facility(player_sect, facility)
 
 
 func can_spar() -> bool:
@@ -659,6 +764,7 @@ func save_game() -> Dictionary:
 		"story_flags": story_flags,
 		"flag_turns": flag_turns,
 		"role_history": role_history,
+		"role_state": role_state,
 		"triggered_event_ids": triggered_event_ids,
 		"current_ending_id": current_ending_id,
 		"game_over_id": game_over_id,
@@ -699,6 +805,8 @@ func _apply_save_data(data: Dictionary) -> void:
 	role_history.clear()
 	for role_name in data.get("role_history", []):
 		role_history.append(str(role_name))
+	# 역할 자원이 없는 구버전 세이브는 기본값으로 시작한다.
+	role_state = RoleActions.restore_state(data.get("role_state", {}))
 	triggered_event_ids.clear()
 	for event_id in data.get("triggered_event_ids", []):
 		triggered_event_ids.append(event_id)

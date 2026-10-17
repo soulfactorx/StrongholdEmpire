@@ -7,9 +7,13 @@ static func get_available_transitions(
 	character: CharacterData,
 	sect: SectData,
 	relationships: Array[RelationshipData],
-	story_flags: Dictionary
+	story_flags: Dictionary,
+	role_state: Dictionary = {},
+	world_sects: Array[SectData] = []
 ) -> Array[Dictionary]:
 	var options: Array[Dictionary] = []
+	if role_state.is_empty():
+		role_state = RoleActions.create_state()
 
 	if character.role == CharacterData.Role.YOUNG_DISCIPLE:
 		if _can_become_manager(character, sect, relationships):
@@ -32,11 +36,11 @@ static func get_available_transitions(
 			))
 
 	elif character.role == CharacterData.Role.MANAGER:
-		if _can_become_leader(character, sect, relationships):
+		if _can_become_leader(character, sect, relationships) and role_state["trust"] >= _Balance.MANAGER_TRUST_FOR_LEADER:
 			options.append(_transition_option(
 				CharacterData.Role.LEADER,
 				"문주 승계",
-				"청운검파의 새 문주가 됩니다."
+				"%s의 새 문주가 됩니다." % sect.sect_name
 			))
 
 	elif character.role == CharacterData.Role.SPY:
@@ -52,8 +56,78 @@ static func get_available_transitions(
 				"임무 완료 후 복귀",
 				"스파이 임무를 마치고 문파로 돌아옵니다."
 			))
+		# 배신: 잠입한 세력에 붙는다.
+		var infiltrated: SectData = _find_sect(world_sects, str(role_state["spy_target"]))
+		if infiltrated and not infiltrated.subjugated:
+			options.append(_sect_option(
+				infiltrated, "betray",
+				"%s(으)로 전향" % infiltrated.sect_name,
+				"잠입한 세력에 붙어 옛 문파를 배신합니다. 그곳의 중간관리자가 됩니다."
+			))
+
+	elif character.role == CharacterData.Role.WANDERER:
+		if character.level >= _Balance.MERCENARY_LEVEL_REQ:
+			options.append(_transition_option(
+				CharacterData.Role.MERCENARY,
+				"의뢰인이 된다",
+				"세력들의 임무를 계약으로 맡는 청부업을 시작합니다."
+			))
+
+	elif character.role == CharacterData.Role.MERCENARY:
+		options.append(_transition_option(
+			CharacterData.Role.WANDERER,
+			"청부를 접는다",
+			"계약에서 손을 떼고 다시 떠돌이 낭인이 됩니다."
+		))
+
+	# 이적: 신용을 쌓은 세력에 객경으로 들어간다.
+	if character.role in [CharacterData.Role.WANDERER, CharacterData.Role.MERCENARY]:
+		for world_sect in world_sects:
+			if world_sect.subjugated:
+				continue
+			if RoleActions.get_credit(role_state, world_sect.id) >= _Balance.DEFECT_CREDIT_REQ:
+				options.append(_sect_option(
+					world_sect, "defect",
+					"%s에 객경으로 들어간다" % world_sect.sect_name,
+					"신용을 쌓은 세력에 몸을 의탁합니다. 그곳의 중간관리자가 됩니다."
+				))
+
+	# 배신: 도덕이 낮은 제자·관리자는 가장 적대적인 비정파 세력으로 넘어갈 수 있다.
+	if character.role in [CharacterData.Role.YOUNG_DISCIPLE, CharacterData.Role.MANAGER]:
+		if character.morality <= _Balance.BETRAY_MORALITY_REQ:
+			var enemy: SectData = _most_hostile_unorthodox(world_sects)
+			if enemy:
+				options.append(_sect_option(
+					enemy, "betray",
+					"%s(으)로 투항" % enemy.sect_name,
+					"문파를 배신하고 적에게 넘어갑니다. 그곳의 중간관리자가 됩니다."
+				))
 
 	return options
+
+
+static func _sect_option(sect: SectData, kind: String, title: String, description: String) -> Dictionary:
+	var option: Dictionary = _transition_option(CharacterData.Role.MANAGER, title, description)
+	option["sect_id"] = sect.id
+	option["kind"] = kind
+	return option
+
+
+static func _find_sect(world_sects: Array[SectData], sect_id: String) -> SectData:
+	for sect in world_sects:
+		if sect.id == sect_id:
+			return sect
+	return null
+
+
+static func _most_hostile_unorthodox(world_sects: Array[SectData]) -> SectData:
+	var result: SectData = null
+	for sect in world_sects:
+		if sect.subjugated or sect.alignment == SectData.Alignment.RIGHTEOUS:
+			continue
+		if result == null or sect.attitude < result.attitude:
+			result = sect
+	return result
 
 
 static func apply_transition(
@@ -84,7 +158,7 @@ static func get_role_combat_bonus(role: CharacterData.Role) -> float:
 			return 1.1
 		CharacterData.Role.MANAGER:
 			return 1.05
-		CharacterData.Role.WANDERER:
+		CharacterData.Role.WANDERER, CharacterData.Role.MERCENARY:
 			return 1.08
 		_:
 			return 1.0
@@ -169,6 +243,9 @@ static func _apply_role_bonuses(character: CharacterData, role: CharacterData.Ro
 			character.morality -= 10
 		CharacterData.Role.WANDERER:
 			character.agility += 1
+			character.charisma += 1
+		CharacterData.Role.MERCENARY:
+			character.strength += 1
 			character.charisma += 1
 	character.internal_energy_current = mini(
 		character.internal_energy_current,

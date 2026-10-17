@@ -2,6 +2,7 @@ extends Control
 
 const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
 const _FacilityPopup = preload("res://scripts/UI/facility_popup.gd")
+const _ChoicePopup = preload("res://scripts/UI/choice_popup.gd")
 
 @onready var year_label: Label = %YearLabel
 @onready var season_label: Label = %SeasonLabel
@@ -19,9 +20,15 @@ const _FacilityPopup = preload("res://scripts/UI/facility_popup.gd")
 @onready var martial_arts_label: Label = %MartialArtsLabel
 @onready var relationship_label: Label = %RelationshipLabel
 @onready var log_label: Label = %LogLabel
+@onready var role_resource_label: Label = %RoleResourceLabel
+@onready var role_action_box: HBoxContainer = %RoleActionBox
 @onready var event_popup: Control = %EventPopup
 @onready var role_popup: Control = %RolePopup
 var facility_popup: Control
+## 역할 행동의 대상을 고르는 팝업
+var choice_popup: Control
+## 대상을 고르는 중인 역할 행동 id
+var _pending_role_action: String = ""
 
 
 func _ready() -> void:
@@ -29,6 +36,9 @@ func _ready() -> void:
 	facility_popup = _FacilityPopup.new()
 	add_child(facility_popup)
 	facility_popup.upgraded.connect(_execute_action)
+	choice_popup = _ChoicePopup.new()
+	add_child(choice_popup)
+	choice_popup.chosen.connect(_on_role_target_chosen)
 	_connect_bus(EventBus.turn_advanced, _on_turn_advanced)
 	_connect_bus(EventBus.resources_changed, _on_resources_changed)
 	_connect_bus(EventBus.character_updated, _on_character_updated)
@@ -68,6 +78,58 @@ func _refresh_all() -> void:
 	_update_sect_display(GameManager.player_sect)
 	_update_character_display(GameManager.player_character)
 	_update_relationships_display(GameManager.player_relationships)
+	_update_role_actions()
+
+
+## 역할별 고유 행동 버튼과 역할 자원 표시
+func _update_role_actions() -> void:
+	var character: CharacterData = GameManager.player_character
+	role_resource_label.text = "[%s 고유 행동] %s" % [character.get_role_name(), RoleActions.describe(GameManager)]
+	for child in role_action_box.get_children():
+		role_action_box.remove_child(child)
+		child.queue_free()
+	var can_act: bool = RoleActions.can_act(GameManager.role_state, GameManager._get_turn_index())
+	for action in RoleActions.get_actions(character.role):
+		var button := Button.new()
+		button.text = action["title"]
+		button.custom_minimum_size = Vector2(170, 48)
+		button.disabled = not can_act
+		button.pressed.connect(_on_role_action_pressed.bind(action["id"]))
+		_UiTheme.style_button(button)
+		role_action_box.add_child(button)
+
+
+func _on_role_action_pressed(action_id: String) -> void:
+	AudioManager.play_click()
+	var action: Dictionary = RoleActions.ACTIONS[action_id]
+	if action["target"].is_empty():
+		_run_role_action(action_id, "")
+		return
+	var targets: Array[Dictionary] = RoleActions.get_targets(GameManager, action_id)
+	if targets.is_empty():
+		_on_action_message("%s: 고를 수 있는 대상이 없습니다." % action["title"])
+		return
+	_pending_role_action = action_id
+	choice_popup.open(action["title"], action["description"], targets)
+
+
+func _on_role_target_chosen(target_id: String) -> void:
+	var action_id: String = _pending_role_action
+	_pending_role_action = ""
+	if not action_id.is_empty():
+		_run_role_action(action_id, target_id)
+
+
+func _run_role_action(action_id: String, target_id: String) -> void:
+	var result: Dictionary = GameManager.do_role_action(action_id, target_id)
+	_on_action_message(result["message"])
+	if result["success"]:
+		AudioManager.play_success()
+	else:
+		AudioManager.play_failure()
+	# 전투로 넘어가면 이 화면은 곧 사라진다.
+	if is_inside_tree():
+		_refresh_all()
 
 
 func _update_time_display() -> void:
@@ -134,6 +196,7 @@ func _update_relationships_display(relationships: Array[RelationshipData]) -> vo
 
 func _on_turn_advanced(_year: int, _season: String) -> void:
 	_update_time_display()
+	_update_role_actions()
 	_on_action_message(GameManager.last_turn_report)
 
 
@@ -143,6 +206,7 @@ func _on_resources_changed(sect: SectData) -> void:
 
 func _on_character_updated(character: CharacterData) -> void:
 	_update_character_display(character)
+	_update_role_actions()
 
 
 func _on_relationships_changed(relationships: Array[RelationshipData]) -> void:
@@ -164,7 +228,7 @@ func _on_role_transitions_available(options: Array[Dictionary]) -> void:
 
 
 func _on_role_changed(_new_role: CharacterData.Role) -> void:
-	_update_character_display(GameManager.player_character)
+	_refresh_all()
 
 
 func _on_ending_reached(ending_id: String) -> void:

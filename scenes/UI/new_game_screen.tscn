@@ -107,7 +107,7 @@ text = "시작 역할"
 
 [node name="RoleList" type="ItemList" parent="Margin/VBox/Columns/CharacterPanel/Scroll/CharacterVBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 110)
+custom_minimum_size = Vector2(0, 150)
 layout_mode = 2
 theme_override_constants/v_separation = 14
 
