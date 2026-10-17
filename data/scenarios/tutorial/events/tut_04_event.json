@@ -1,0 +1,88 @@
+{
+  "id": "tut_04_event",
+  "title": "입문 ④ 기연 — 산길의 부상자",
+  "description": "계절이 바뀔 때 이렇게 「기연」이 일어납니다. 고른 선택지에 따라 자원·관계·이야기가 달라지고, 어떤 기연은 다음 이야기로 이어집니다.\n결과가 운에 달린 선택지도 있습니다.\n\n하산하던 제자들이 산길에서 다친 나그네를 데려왔습니다. 행색은 초라하지만 품에 낡은 책 한 권을 꼭 안고 있습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "tutorial"
+      ]
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "tut_03",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "약방에 눕히고 돌본다 (식량 -20)",
+      "message": "나그네를 정성껏 돌보았습니다. 명성 +3",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "food",
+          "add": -20
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 3
+        },
+        {
+          "type": "flag",
+          "flag": "tut_04",
+          "value": true
+        }
+      ],
+      "branches": [
+        {
+          "chance": 70,
+          "message": "기운을 차린 나그네가 낡은 책을 내밀었습니다. 연구점 +40, 명성 +3",
+          "effects": [
+            {
+              "type": "sect",
+              "field": "food",
+              "add": -20
+            },
+            {
+              "type": "sect",
+              "field": "reputation",
+              "add": 3
+            },
+            {
+              "type": "sect",
+              "field": "research_points",
+              "add": 40
+            },
+            {
+              "type": "flag",
+              "flag": "tut_04",
+              "value": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "노자를 쥐여 보낸다 (금화 -10)",
+      "message": "나그네가 고개 숙여 인사하고 떠났습니다.",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -10
+        },
+        {
+          "type": "flag",
+          "flag": "tut_04",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

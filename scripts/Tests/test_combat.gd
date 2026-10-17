@@ -849,6 +849,19 @@ func _test_grid_cursor() -> void:
 	_check(enemy.hp < 9999, "X로 공격 모드, A로 커서의 적 공격")
 	_check(c._describe_tile(enemy.grid_pos).contains(enemy.display_name), "커서 칸 설명에 유닛 이름")
 
+	# 터치·클릭: 바탕이 입력을 가로채지 않고, 커서가 아니라 이벤트 위치로 칸을 고른다 (Android에서 이동이 안 되던 버그)
+	_check(c.get_node("Background").mouse_filter == Control.MOUSE_FILTER_IGNORE, "전투 바탕은 터치를 가로채지 않음")
+	player.restore_action_points()
+	c._on_mode_move_pressed()
+	var tap_target: Vector2i = player.grid_pos + Vector2i.DOWN
+	_check(c._get_reachable(player).has(tap_target), "(준비) 터치할 칸은 이동 가능")
+	var tap := InputEventMouseButton.new()
+	tap.button_index = MOUSE_BUTTON_LEFT
+	tap.pressed = true
+	tap.position = Vector2(tap_target) * c.GRID_SIZE + Vector2(c.GRID_SIZE / 2.0, c.GRID_SIZE / 2.0)
+	c._unhandled_input(tap)
+	_check(player.grid_pos == tap_target and not c.cursor_visible, "터치한 칸으로 이동하고 커서는 숨김")
+
 	gm.pending_combat = null
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
 	await process_frame

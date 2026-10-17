@@ -63,6 +63,8 @@ var _stick_dir: Vector2i = Vector2i.ZERO
 
 func _ready() -> void:
 	ArtAssets.apply_background(self)
+	# 바탕이 터치·클릭을 가로채면 격자로 입력이 오지 않는다.
+	$Background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# HUD는 CanvasLayer 아래라 창 테마가 이어지지 않으므로 직접 준다.
 	$HUD/Panel.theme = get_tree().root.theme
 	_UiTheme.apply_to_control($HUD/Panel)
@@ -500,8 +502,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if current == null:
 		return
 
-	var local_pos := get_global_mouse_position() - global_position
-	var target := Vector2i(int(local_pos.x / GRID_SIZE), int(local_pos.y / GRID_SIZE))
+	# 마우스 커서가 아니라 이벤트 위치로 칸을 구한다. (터치는 커서 위치가 갱신되지 않을 수 있다)
+	var local_pos: Vector2 = (make_input_local(event) as InputEventMouseButton).position
+	var target := Vector2i(floori(local_pos.x / GRID_SIZE), floori(local_pos.y / GRID_SIZE))
 	if not _in_bounds(target):
 		return
 	# 터치·마우스로 고르면 커서는 숨기고 그 칸으로 옮겨 둔다.

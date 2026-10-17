@@ -7,6 +7,9 @@ const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
 @onready var choice_box: VBoxContainer = %ChoiceBox
 ## 기연에 얽힌 인물의 초상화 (없으면 숨긴다)
 var portrait: TextureRect
+## 긴 설명(길잡이 등)은 끌어서 스크롤한다. 높이는 내용에 맞추되 화면의 이 비율을 넘지 않는다.
+var desc_scroll: ScrollContainer
+const DESC_MAX_HEIGHT_RATIO := 0.5
 
 
 ## 내용 왼쪽에 초상화 자리를 만든다. (한 번만)
@@ -28,6 +31,15 @@ func _ensure_portrait() -> void:
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	# reparent는 owner를 지켜 %이름 찾기가 계속 된다.
 	content.reparent(row, false)
+	# 초상화 옆 글 칸이 좁지 않게 팝업을 넓힌다.
+	(panel as Control).custom_minimum_size.x = 900
+	desc_scroll = ScrollContainer.new()
+	desc_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	content.add_child(desc_scroll)
+	content.move_child(desc_scroll, desc_label.get_index())
+	desc_scroll.owner = content.owner
+	desc_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	desc_label.reparent(desc_scroll, false)
 
 
 func show_event(event_data: Dictionary) -> void:
@@ -37,6 +49,8 @@ func show_event(event_data: Dictionary) -> void:
 	portrait.visible = portrait.texture != null
 	title_label.text = event_data.get("title", "기연")
 	desc_label.text = event_data.get("description", "")
+	desc_scroll.scroll_vertical = 0
+	_fit_description()
 	for child in choice_box.get_children():
 		choice_box.remove_child(child)
 		child.queue_free()
@@ -56,6 +70,19 @@ func show_event(event_data: Dictionary) -> void:
 	# 키보드·게임패드로 바로 고를 수 있게 첫 선택지에 포커스를 둔다.
 	if choice_box.get_child_count() > 0:
 		(choice_box.get_child(0) as Button).grab_focus()
+
+
+## 설명 칸 높이를 내용에 맞춘다. 글이 길면 화면 절반까지만 쓰고 나머지는 스크롤한다.
+## 줄바꿈 수는 너비가 정해진 뒤에 알 수 있으므로 한 프레임 기다린다.
+func _fit_description() -> void:
+	desc_scroll.custom_minimum_size.y = 0
+	await get_tree().process_frame
+	if not is_inside_tree():
+		return
+	var line_height: int = desc_label.get_line_height() + desc_label.get_theme_constant("line_spacing")
+	var content_height: float = desc_label.get_line_count() * line_height + 8
+	var max_height: float = get_viewport_rect().size.y * DESC_MAX_HEIGHT_RATIO
+	desc_scroll.custom_minimum_size.y = minf(content_height, max_height)
 
 
 func _on_choice_pressed(index: int) -> void:

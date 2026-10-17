@@ -68,6 +68,7 @@ const RUNTIME_SEQUENCE: Array = [
 	["scenario", "_test_ending_data"],
 	["scenario", "_test_every_ending_reachable"],
 	["scenario", "_test_final_ending_flow"],
+	["scenario", "_test_tutorial_scenario"],
 	["world", "_test_war_rules"],
 	["world", "_test_war_balance"],
 	["world", "_test_war_flow"],

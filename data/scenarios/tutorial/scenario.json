@@ -1,0 +1,27 @@
+{
+  "id": "tutorial",
+  "title": "입문 수련",
+  "order": 0,
+  "era_name": "입문",
+  "guided": true,
+  "description": "처음이라면 여기서 시작하세요. 청운검파의 새 문주가 되어 계절마다 나타나는 길잡이를 따라\n경영·시설·제자·기연·전투·무공·인연·방어전·외교·문파전을 차례로 익힙니다. (약 3년, 12단계)",
+  "start_roles": [
+    "leader"
+  ],
+  "sects": [
+    "heukpung",
+    "namgung"
+  ],
+  "parameters": {
+    "time_limit_years": 4,
+    "legacy_enabled": false,
+    "event_rate": 0.0,
+    "ai_aggression": 0.0,
+    "enemy_strength_scale": 0.8,
+    "income_scale": 1.2,
+    "end_on_victory": true
+  },
+  "victory_endings": [
+    "tutorial_complete"
+  ]
+}

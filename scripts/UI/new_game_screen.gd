@@ -63,6 +63,8 @@ func get_overrides() -> Dictionary:
 func _on_scenario_selected(index: int) -> void:
 	_selected_scenario = _scenarios[index]
 	scenario_desc_label.text = _selected_scenario.get("description", "")
+	# 입문 수련처럼 자체 길잡이가 있는 시나리오에서는 일반 길잡이를 고를 필요가 없다.
+	tutorial_check.visible = _selected_scenario.get("guided", false) != true
 	_update_length_text()
 
 	# 시나리오마다 고를 수 있는 시작 역할이 다르다.
@@ -103,7 +105,7 @@ func _on_start_pressed() -> void:
 	AudioManager.play_click()
 	GameManager.start_new_game(
 		name_edit.text, _selected_role_id, _selected_scenario.get("id", ScenarioManager.DEFAULT_ID), get_overrides(),
-		ironman_check.button_pressed, tutorial_check.button_pressed
+		ironman_check.button_pressed, tutorial_check.button_pressed and tutorial_check.visible
 	)
 	SceneRouter.goto(get_tree(), SceneRouter.HUB)
 
