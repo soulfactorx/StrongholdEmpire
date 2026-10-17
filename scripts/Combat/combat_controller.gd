@@ -624,9 +624,11 @@ func _end_combat(outcome: CombatManager.Outcome) -> void:
 # ─── 적 AI ─────────────────────────────────────────
 
 ## 적이 노릴 대상: 가장 가까운 아군, 거리가 같으면 체력이 낮은 쪽
+## 가장 가까운(같으면 체력이 낮은) 상대편 유닛. 적이면 아군 중에서, 아군이면 적 중에서 고른다.
 func _pick_enemy_target(enemy: CombatUnit) -> CombatUnit:
 	var best: CombatUnit = null
-	for unit in _get_alive_friendlies():
+	var candidates: Array[CombatUnit] = _get_alive_enemies() if enemy.is_friendly() else _get_alive_friendlies()
+	for unit in candidates:
 		if best == null:
 			best = unit
 			continue
@@ -638,7 +640,7 @@ func _pick_enemy_target(enemy: CombatUnit) -> CombatUnit:
 
 
 ## 적 한 명의 차례: 공격할 수 있으면 공격하고, 아니면 다가간 뒤 공격을 시도한다.
-## 공격은 차례당 한 번이다.
+## 공격은 차례당 한 번이다. 밸런스 시뮬레이터는 같은 방식으로 아군도 자동으로 움직인다.
 func _run_enemy_ai(enemy: CombatUnit) -> void:
 	var target := _pick_enemy_target(enemy)
 	if target == null or not enemy.is_alive():
