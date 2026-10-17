@@ -69,7 +69,7 @@ func _update_character_display(character: CharacterData) -> void:
 	character_name_label.text = "%s (%d세)" % [character.display_name, character.age]
 	character_role_label.text = character.get_role_name()
 	character_stats_label.text = (
-		"무력 %d | 신법 %d | 지혜 %d | 매력 %d\n내공 %d/%d | 전투력 %d | 도덕 %d | Lv.%d"
+		"무력 %d | 신법 %d | 지혜 %d | 매력 %d\n내공 %d/%d | 전투력 %d | 도덕 %d | Lv.%d (경험 %d/%d)"
 		% [
 			character.strength,
 			character.agility,
@@ -80,6 +80,8 @@ func _update_character_display(character: CharacterData) -> void:
 			character.get_combat_power(),
 			character.morality,
 			character.level,
+			character.experience,
+			character.get_next_level_experience(),
 		]
 	)
 	martial_arts_label.text = "무공: %s" % character.get_martial_arts_text()

@@ -79,7 +79,7 @@ static func resolve_battle(
 		var gold_gain: int = 40 + wins * 15
 		player_sect.reputation += rep_gain
 		player_sect.gold += gold_gain
-		player_character.experience += 25
+		player_character.gain_experience(25)
 		return {
 			"success": true,
 			"victory": true,

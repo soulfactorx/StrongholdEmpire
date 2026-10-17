@@ -300,7 +300,7 @@ func _end_combat(player_won: bool) -> void:
 	_combat_over = true
 	if player_won:
 		_winner = "player"
-		GameManager.player_character.experience += 30
+		GameManager.player_character.gain_experience(30)
 		var rival := RelationshipManager.get_bond_with(GameManager.player_relationships, "npc_rival")
 		if rival:
 			rival.increase_bond(5)

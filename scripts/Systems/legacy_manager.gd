@@ -55,7 +55,7 @@ static func create_successor(
 	character.internal_energy_max = 100 + legacy.legacy_points
 	character.internal_energy_current = character.internal_energy_max
 	character.morality = 55
-	character.experience = legacy.legacy_points / 2
+	character.gain_experience(legacy.legacy_points / 2)
 	return character
 
 

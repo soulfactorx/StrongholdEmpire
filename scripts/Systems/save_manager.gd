@@ -2,6 +2,7 @@ class_name SaveManager
 extends RefCounted
 
 const SAVE_PATH := "user://save_slot_1.json"
+const SAVE_VERSION := 2
 
 
 static func save_game(state: Dictionary) -> Dictionary:
@@ -41,7 +42,34 @@ static func serialize_character(character: CharacterData) -> Dictionary:
 		"experience": character.experience,
 		"age": character.age,
 		"morality": character.morality,
+		"martial_arts": serialize_martial_arts(character.martial_arts),
 	}
+
+
+static func serialize_martial_arts(arts: Array[MartialArtData]) -> Array:
+	var result: Array = []
+	for art in arts:
+		var effects: Array = []
+		for effect in art.special_effects:
+			effects.append(int(effect))
+		result.append({
+			"id": art.id,
+			"display_name": art.display_name,
+			"category": art.category,
+			"element": art.element,
+			"yin_yang": art.yin_yang,
+			"special_effects": effects,
+			"research_cost": art.research_cost,
+			"complexity": art.complexity,
+			"internal_cost": art.internal_cost,
+			"action_cost": art.action_cost,
+			"damage": art.damage,
+			"range": art.range,
+			"heal_amount": art.heal_amount,
+			"move_bonus": art.move_bonus,
+			"description": art.description,
+		})
+	return result
 
 
 static func serialize_sect(sect: SectData) -> Dictionary:
@@ -101,7 +129,32 @@ static func deserialize_character(data: Dictionary) -> CharacterData:
 	character.experience = data.get("experience", 0)
 	character.age = data.get("age", 18)
 	character.morality = data.get("morality", 50)
+	character.martial_arts = deserialize_martial_arts(data.get("martial_arts", []))
 	return character
+
+
+static func deserialize_martial_arts(data: Array) -> Array[MartialArtData]:
+	var result: Array[MartialArtData] = []
+	for entry in data:
+		var art := MartialArtData.new()
+		art.id = entry.get("id", "")
+		art.display_name = entry.get("display_name", "미명무공")
+		art.category = int(entry.get("category", MartialArtData.Category.SWORD))
+		art.element = int(entry.get("element", MartialArtData.FiveElement.NONE))
+		art.yin_yang = int(entry.get("yin_yang", MartialArtData.YinYang.BALANCED))
+		for effect in entry.get("special_effects", []):
+			art.special_effects.append(int(effect) as MartialArtData.SpecialEffect)
+		art.research_cost = int(entry.get("research_cost", 30))
+		art.complexity = int(entry.get("complexity", 1))
+		art.internal_cost = int(entry.get("internal_cost", 15))
+		art.action_cost = int(entry.get("action_cost", 2))
+		art.damage = int(entry.get("damage", 10))
+		art.range = int(entry.get("range", 1))
+		art.heal_amount = int(entry.get("heal_amount", 0))
+		art.move_bonus = int(entry.get("move_bonus", 0))
+		art.description = entry.get("description", "")
+		result.append(art)
+	return result
 
 
 static func deserialize_sect(data: Dictionary) -> SectData:

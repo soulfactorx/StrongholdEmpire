@@ -187,7 +187,7 @@ static func _resolve_night_bandits(
 ) -> Dictionary:
 	if choice_index == 0:
 		character.strength += 1
-		character.experience += 20
+		character.gain_experience(20)
 		sect.reputation += 3
 		character.internal_energy_current = maxi(0, character.internal_energy_current - 15)
 		return {
@@ -256,7 +256,7 @@ static func _resolve_spy_mission(
 			}
 		story_flags["spy_mission_complete"] = true
 		sect.reputation += 10
-		character.experience += 30
+		character.gain_experience(30)
 		return {"success": true, "message": "임무 성공! 기밀 확보. 명성 +10"}
 	character.agility += 1
 	story_flags["spy_mission_complete"] = true
@@ -272,7 +272,7 @@ static func _resolve_assassin_contract(
 		story_flags["assassin_path"] = true
 		character.morality -= 15
 		character.strength += 1
-		character.experience += 25
+		character.gain_experience(25)
 		return {"success": true, "message": "암살 의뢰 완료. 도덕 -15, 암살자의 길이 열렸습니다."}
 	character.morality += 5
 	return {"success": true, "message": "의뢰를 거절했습니다. 도덕 +5"}
@@ -300,7 +300,7 @@ static func _resolve_rival_duel(
 	var rival: RelationshipData = RelationshipManager.get_bond_with(relationships, "npc_rival")
 	if choice_index == 0:
 		character.strength += 1
-		character.experience += 20
+		character.gain_experience(20)
 		if rival:
 			rival.increase_bond(10)
 		return {"success": true, "message": "결투에서 승리! 무력 +1, 라이벌 유대 +10"}

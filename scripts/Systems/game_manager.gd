@@ -2,6 +2,7 @@ extends Node
 
 const _ModLoader = preload("res://scripts/Systems/mod_loader.gd")
 const _SaveManager = preload("res://scripts/Systems/save_manager.gd")
+const _Balance = preload("res://scripts/Systems/game_balance.gd")
 
 const SEASONS: Array[String] = ["봄", "여름", "가을", "겨울"]
 
@@ -26,7 +27,7 @@ func _ready() -> void:
 
 
 func _initialize_new_game() -> void:
-	player_character = _create_default_character()
+	_set_player_character(_create_default_character())
 	player_sect = _create_default_sect()
 	player_relationships = RelationshipManager.create_default_relationships()
 	triggered_event_ids.clear()
@@ -61,6 +62,20 @@ func _create_default_sect() -> SectData:
 	sect.sect_name = "청운검파"
 	sect.leader_name = "청운검선"
 	return sect
+
+
+func _set_player_character(character: CharacterData) -> void:
+	if player_character and player_character.leveled_up.is_connected(_on_player_leveled_up):
+		player_character.leveled_up.disconnect(_on_player_leveled_up)
+	player_character = character
+	player_character.leveled_up.connect(_on_player_leveled_up)
+
+
+func _on_player_leveled_up(new_level: int) -> void:
+	EventBus.action_message.emit(
+		"%s의 경지가 올랐습니다! Lv.%d" % [player_character.display_name, new_level]
+	)
+	EventBus.character_updated.emit(player_character)
 
 
 func get_current_season() -> String:
@@ -109,7 +124,7 @@ func _process_seasonal_income() -> void:
 func _process_yearly_events() -> void:
 	player_character.age += 1
 	player_character.restore_internal_energy()
-	player_character.level += 1
+	player_character.gain_experience(_Balance.YEARLY_TRAINING_EXP)
 	EventBus.character_updated.emit(player_character)
 
 
@@ -201,7 +216,7 @@ func start_legacy_succession() -> Dictionary:
 	legacy_records.append(legacy)
 	generation += 1
 
-	player_character = LegacyManager.create_successor(legacy, player_sect)
+	_set_player_character(LegacyManager.create_successor(legacy, player_sect))
 	LegacyManager.apply_legacy_bonuses(player_sect, legacy)
 	player_relationships = RelationshipManager.create_default_relationships()
 	triggered_event_ids.clear()
@@ -244,7 +259,7 @@ func _load_mod_data() -> void:
 
 func save_game() -> Dictionary:
 	var state: Dictionary = {
-		"version": 1,
+		"version": _SaveManager.SAVE_VERSION,
 		"current_year": current_year,
 		"current_season_index": current_season_index,
 		"generation": generation,
@@ -280,7 +295,7 @@ func _apply_save_data(data: Dictionary) -> void:
 		triggered_event_ids.append(event_id)
 	current_ending_id = data.get("current_ending_id", "")
 	pending_event.clear()
-	player_character = _SaveManager.deserialize_character(data.get("character", {}))
+	_set_player_character(_SaveManager.deserialize_character(data.get("character", {})))
 	player_sect = _SaveManager.deserialize_sect(data.get("sect", {}))
 	player_relationships = _SaveManager.deserialize_relationships(data.get("relationships", []))
 	legacy_records = _SaveManager.deserialize_legacy(data.get("legacy_records", []))

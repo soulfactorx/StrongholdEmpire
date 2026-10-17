@@ -16,7 +16,7 @@ static func train_disciples(sect: SectData, character: CharacterData) -> Diction
 	character.strength += 1
 	character.agility += 1
 	character.wisdom += 1
-	character.experience += 10
+	character.gain_experience(10)
 	return {"success": true, "message": "제자 훈련 완료! 문파 전력이 강해졌습니다."}
 
 

@@ -1,6 +1,10 @@
 class_name CharacterData
 extends Resource
 
+const _Balance = preload("res://scripts/Systems/game_balance.gd")
+
+signal leveled_up(new_level: int)
+
 enum Role {
 	LEADER,
 	MANAGER,
@@ -57,6 +61,32 @@ func get_role_name() -> String:
 
 func get_combat_power() -> int:
 	return strength + agility + int(internal_energy_current * 0.1)
+
+
+static func get_experience_for_level(target_level: int) -> int:
+	return _Balance.EXP_PER_LEVEL_STEP * target_level * (target_level - 1)
+
+
+func get_next_level_experience() -> int:
+	return get_experience_for_level(level + 1)
+
+
+## 누적 경험치를 더하고 도달한 만큼 레벨업한다. 오른 레벨 수를 반환한다.
+func gain_experience(amount: int) -> int:
+	if amount <= 0:
+		return 0
+	experience += amount
+	var levels_gained: int = 0
+	while level < _Balance.MAX_LEVEL and experience >= get_next_level_experience():
+		level += 1
+		levels_gained += 1
+		strength += _Balance.LEVEL_UP_STAT_GAIN
+		agility += _Balance.LEVEL_UP_STAT_GAIN
+		wisdom += _Balance.LEVEL_UP_STAT_GAIN
+		internal_energy_max += _Balance.LEVEL_UP_INTERNAL_GAIN
+		restore_internal_energy()
+		leveled_up.emit(level)
+	return levels_gained
 
 
 func restore_internal_energy() -> void:

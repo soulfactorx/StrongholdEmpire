@@ -26,6 +26,13 @@ const LEADER_LEVEL_REQ := 5
 const LEADER_REPUTATION_REQ := 75
 const LEADER_DISCIPLE_REQ := 18
 
+# 성장
+const EXP_PER_LEVEL_STEP := 25  # 누적 경험치 요구량: 25 * L * (L - 1)
+const MAX_LEVEL := 20
+const YEARLY_TRAINING_EXP := 40
+const LEVEL_UP_STAT_GAIN := 1
+const LEVEL_UP_INTERNAL_GAIN := 10
+
 # 레거시
 const RETIRE_AGE := 55
 const RETIRE_LEVEL := 10
