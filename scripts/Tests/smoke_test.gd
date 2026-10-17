@@ -19,6 +19,8 @@ const MAIN_SCENES: Array[String] = [
 	"res://scenes/UI/new_game_screen.tscn",
 ]
 
+const TEST_SAVE_DIR := "user://_test_saves/"
+
 var _failures: int = 0
 ## 끝까지 실행된 검사 함수 이름
 var _completed: Dictionary = {}
@@ -26,6 +28,9 @@ var _checks: int = 0
 
 
 func _initialize() -> void:
+	# 테스트의 저장(자동 저장 포함)은 실제 세이브와 다른 폴더에 한다.
+	SaveManager.save_dir = TEST_SAVE_DIR
+	_clear_test_saves()
 	_test_scenes_load()
 	_check(_completed.has("_test_scenes_load"), "_test_scenes_load 끝까지 실행")
 	_test_level_curve()
@@ -152,14 +157,23 @@ func _run_runtime_tests() -> void:
 	_check(_completed.has("_test_diplomacy_screen"), "_test_diplomacy_screen 끝까지 실행")
 	_test_sect_ai()
 	_check(_completed.has("_test_sect_ai"), "_test_sect_ai 끝까지 실행")
+	_test_save_slots()
+	_check(_completed.has("_test_save_slots"), "_test_save_slots 끝까지 실행")
 	await _test_invasion_flow()
 	_check(_completed.has("_test_invasion_flow"), "_test_invasion_flow 끝까지 실행")
+	await _test_save_screens()
+	_check(_completed.has("_test_save_screens"), "_test_save_screens 끝까지 실행")
 
 	print("스모크 테스트: %d개 검사, %d개 실패" % [_checks, _failures])
 	# 재생 중인 효과음을 멈추고, 오디오 스레드가 재생 객체를 놓을 때까지 잠시 기다린다.
 	root.get_node("AudioManager").stop_all()
 	await create_timer(0.3).timeout
 	quit(1 if _failures > 0 else 0)
+
+
+func _clear_test_saves() -> void:
+	for slot in range(SaveManager.AUTO_SLOT, SaveManager.SLOT_COUNT + 1):
+		SaveManager.delete_save(slot)
 
 
 func _check(condition: bool, label: String) -> void:
@@ -3609,3 +3623,111 @@ func _test_invasion_flow() -> void:
 	SceneRouter.goto(self, SceneRouter.MAIN_MENU)
 	await process_frame
 	_completed["_test_invasion_flow"] = true
+
+
+func _test_save_slots() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_clear_test_saves()
+	_check(not gm.has_save_file(), "테스트 세이브 폴더는 비어서 시작")
+
+	# 슬롯마다 따로 저장·불러오기
+	gm.start_new_game("하나", "leader", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
+	gm.player_sect.gold = 111
+	_check(gm.save_game(1)["success"] and gm.has_save_file(1) and not gm.has_save_file(2), "슬롯 1 저장")
+	gm.start_new_game("둘", "wanderer", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
+	gm.player_sect.gold = 222
+	gm.save_game(2)
+	_check(not gm.save_game(9)["success"], "없는 슬롯 거부")
+	_check(gm.load_game(1)["success"] and gm.player_character.display_name == "하나" and gm.player_sect.gold == 111, "슬롯 1 불러오기")
+	_check(gm.load_game(2)["success"] and gm.player_character.display_name == "둘" and gm.player_sect.gold == 222, "슬롯 2 불러오기")
+	_check(not gm.load_game(3)["success"], "빈 슬롯은 불러올 수 없음")
+	var summary: Dictionary = SaveManager.get_slot_summary(2)
+	_check(summary["exists"] and summary["detail"].contains("둘") and summary["detail"].contains("낭인") and summary["title"].contains("천하대란"), "슬롯 요약: 날짜·인물·역할·시나리오")
+	_check(not SaveManager.get_slot_summary(3)["exists"], "빈 슬롯 요약")
+
+	# 계절이 바뀔 때마다 자동 저장
+	gm.start_new_game("자동", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
+	SaveManager.delete_save(SaveManager.AUTO_SLOT)
+	gm.advance_turn()
+	_check(gm.has_save_file(SaveManager.AUTO_SLOT), "계절 진행 시 자동 저장")
+	var date: String = gm.get_date_text()
+	gm.advance_turn()
+	gm.load_game(SaveManager.AUTO_SLOT)
+	_check(gm.get_date_text() != date and gm.player_character.display_name == "자동", "자동 저장은 가장 최근 계절")
+
+	# 철인 모드: 수동 저장 불가, 자동 저장만
+	gm.start_new_game("철인", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0}, true)
+	_check(gm.ironman and not gm.save_game(3)["success"] and not gm.has_save_file(3), "철인 모드: 수동 저장 불가")
+	gm.advance_turn()
+	gm.start_new_game("다른 판", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
+	_check(not gm.ironman, "새 게임 기본은 철인 모드 아님")
+	gm.load_game(SaveManager.AUTO_SLOT)
+	_check(gm.ironman and gm.player_character.display_name == "철인", "철인 모드는 세이브에 남음")
+	_check(SaveManager.get_slot_summary(SaveManager.AUTO_SLOT)["detail"].contains("철인"), "슬롯 요약에 철인 모드 표시")
+
+	# 마이그레이션: 오래된 세이브는 버전마다 생긴 항목을 기본값으로 채운다
+	var old: Dictionary = {"version": 3, "current_year": 2, "character": {"display_name": "옛사람"}, "sect": {"gold": 300}}
+	var migrated: Dictionary = SaveManager.migrate(old.duplicate(true))
+	_check(migrated["version"] == SaveManager.SAVE_VERSION, "마이그레이션: 현재 버전으로")
+	var filled: bool = true
+	for step in SaveManager.MIGRATIONS:
+		for key in SaveManager.MIGRATIONS[step]:
+			filled = filled and migrated.has(key)
+	_check(filled and migrated["scenario_id"] == "cheonha" and migrated["world_news"] is Array, "마이그레이션: 버전별 항목 기본값")
+	var newer: Dictionary = SaveManager.migrate({"version": 9, "role_state": {"bounty": 7}})
+	_check(newer["role_state"]["bounty"] == 7 and not newer.has("flag_turns"), "마이그레이션: 이미 있는 항목·이전 버전 항목은 건드리지 않음")
+	var file := FileAccess.open(SaveManager.get_slot_path(3), FileAccess.WRITE)
+	file.store_string(JSON.stringify(old))
+	file = null
+	_check(gm.load_game(3)["success"] and gm.player_character.display_name == "옛사람" and gm.current_year == 2, "버전 3 세이브 불러오기")
+	_check(gm.player_sect.use_roster and gm.player_sect.disciples.size() == gm.player_sect.disciple_count, "옛 세이브도 제자 명단을 갖춤")
+	file = FileAccess.open(SaveManager.get_slot_path(3), FileAccess.WRITE)
+	file.store_string(JSON.stringify({"version": SaveManager.SAVE_VERSION + 1}))
+	file = null
+	_check(not gm.load_game(3)["success"], "더 새 버전의 세이브는 거부")
+	file = FileAccess.open(SaveManager.get_slot_path(3), FileAccess.WRITE)
+	file.store_string("{망가진")
+	file = null
+	_check(not gm.load_game(3)["success"] and SaveManager.get_slot_summary(3)["detail"].contains("손상"), "손상된 세이브 처리")
+	_clear_test_saves()
+	_completed["_test_save_slots"] = true
+
+
+func _test_save_screens() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_clear_test_saves()
+	gm.start_new_game("화면", "leader", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
+	SceneRouter.goto(self, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	var hub: Node = current_scene
+	hub._on_save_pressed()
+	_check(hub.save_popup.visible and hub.save_popup.get_option_count() == SaveManager.SLOT_COUNT, "저장 팝업: 슬롯 %d개" % SaveManager.SLOT_COUNT)
+	hub.save_popup._on_option_pressed("2")
+	_check(gm.has_save_file(2) and hub.log_label.text.contains("슬롯 2"), "화면에서 슬롯 2에 저장")
+	hub._on_main_menu_pressed()
+	await process_frame
+	await process_frame
+	_check(gm.has_save_file(SaveManager.AUTO_SLOT), "메인 메뉴로 나갈 때 자동 저장")
+	var menu: Node = current_scene
+	menu._on_load_pressed()
+	var rows: Array = menu.load_popup._rows.get_children()
+	_check(rows.size() == SaveManager.SLOT_COUNT + 1 and rows[3].disabled and not rows[2].disabled, "불러오기 팝업: 자동 + 슬롯, 빈 슬롯은 비활성")
+	gm.start_new_game("다른", "young_disciple")
+	menu.load_popup._on_option_pressed("2")
+	await process_frame
+	await process_frame
+	_check(current_scene.scene_file_path == SceneRouter.HUB and gm.player_character.display_name == "화면", "메인 메뉴에서 슬롯 2 불러오기")
+	SceneRouter.goto(self, SceneRouter.NEW_GAME)
+	await process_frame
+	await process_frame
+	var screen: Node = current_scene
+	screen.ironman_check.button_pressed = true
+	screen._on_start_pressed()
+	await process_frame
+	_check(gm.ironman, "새 게임 화면: 철인 모드 선택")
+	gm.start_new_game("정리", "young_disciple")
+	SceneRouter.goto(self, SceneRouter.MAIN_MENU)
+	await process_frame
+	_clear_test_saves()
+	_completed["_test_save_screens"] = true

@@ -1,6 +1,7 @@
 extends Control
 
 const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
+const _ChoicePopup = preload("res://scripts/UI/choice_popup.gd")
 
 @onready var title_label: Label = %TitleLabel
 @onready var subtitle_label: Label = %SubtitleLabel
@@ -9,10 +10,15 @@ const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
 @onready var load_button: Button = %LoadButton
 @onready var dev_toggle_button: Button = %DevToggleButton
 @onready var dev_panel: Control = %DevPanel
+## 불러올 슬롯을 고르는 팝업
+var load_popup: Control
 
 
 func _ready() -> void:
 	_UiTheme.apply_to_control(self)
+	load_popup = _ChoicePopup.new()
+	add_child(load_popup)
+	load_popup.chosen.connect(_on_load_slot_chosen)
 	_UiTheme.style_label_title(title_label, 48)
 	title_label.text = "강호제패"
 	subtitle_label.text = "무협 전략 시뮬레이션 RPG"
@@ -42,7 +48,17 @@ func _on_new_game_pressed() -> void:
 
 func _on_load_pressed() -> void:
 	AudioManager.play_click()
-	var result: Dictionary = GameManager.load_game()
+	var options: Array[Dictionary] = []
+	for slot in range(SaveManager.AUTO_SLOT, SaveManager.SLOT_COUNT + 1):
+		var summary: Dictionary = SaveManager.get_slot_summary(slot)
+		options.append({
+			"id": str(slot), "title": summary["title"], "description": summary["detail"], "disabled": not summary["exists"],
+		})
+	load_popup.open("불러오기", "불러올 세이브를 고르세요.", options)
+
+
+func _on_load_slot_chosen(slot: String) -> void:
+	var result: Dictionary = GameManager.load_game(int(slot))
 	status_label.text = result["message"]
 	if result["success"]:
 		AudioManager.play_success()

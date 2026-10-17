@@ -10,6 +10,7 @@ const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
 @onready var role_desc_label: Label = %RoleDescLabel
 @onready var settings_toggle: Button = %SettingsToggle
 @onready var settings_grid: GridContainer = %SettingsGrid
+@onready var ironman_check: CheckButton = %IronmanCheck
 
 var _scenarios: Array[Dictionary] = []
 var _role_ids: Array = []
@@ -100,7 +101,8 @@ func _on_name_submitted(_text: String) -> void:
 func _on_start_pressed() -> void:
 	AudioManager.play_click()
 	GameManager.start_new_game(
-		name_edit.text, _selected_role_id, _selected_scenario.get("id", ScenarioManager.DEFAULT_ID), get_overrides()
+		name_edit.text, _selected_role_id, _selected_scenario.get("id", ScenarioManager.DEFAULT_ID), get_overrides(),
+		ironman_check.button_pressed
 	)
 	SceneRouter.goto(get_tree(), SceneRouter.HUB)
 

@@ -118,6 +118,12 @@ layout_mode = 2
 text = "역할 설명"
 autowrap_mode = 3
 
+[node name="IronmanCheck" type="CheckButton" parent="Margin/VBox/Columns/CharacterPanel/Scroll/CharacterVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "철인 모드 — 자동 저장만, 되돌릴 수 없음"
+
 [node name="SettingsToggle" type="Button" parent="Margin/VBox/Columns/CharacterPanel/Scroll/CharacterVBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 48)

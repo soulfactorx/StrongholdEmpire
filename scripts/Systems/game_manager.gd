@@ -26,6 +26,8 @@ var role_state: Dictionary = RoleActions.create_state()
 var legacy_records: Array[LegacyData] = []
 ## 전투에서 본 상대 무공 {무공 id: {id, name, element}} — 무공 연구소에서 분석한다. 세대를 넘어 남는다.
 var observed_arts: Dictionary = {}
+## 철인 모드 (자동 저장만, 수동 저장 불가)
+var ironman: bool = false
 ## 우리 문파를 침공해 온 세력 id (대응을 고르기 전까지). 없으면 ""
 var pending_invasion: String = ""
 ## 강호 소식 (세력 AI의 행동, 최근 것이 뒤에)
@@ -57,14 +59,17 @@ func _ready() -> void:
 
 ## 새 게임을 시작한다. role_id는 StartingRoles.ROLES의 id.
 ## overrides는 새 게임 "세부 설정"에서 바꾼 시나리오 파라미터다.
+## ironman: 철인 모드. 자동 저장 하나만 쓰고 수동 저장을 할 수 없어 선택을 되돌릴 수 없다.
 func start_new_game(
 	display_name: String,
 	role_id: String,
 	scenario_id: String = ScenarioManager.DEFAULT_ID,
-	overrides: Dictionary = {}
+	overrides: Dictionary = {},
+	ironman_mode: bool = false
 ) -> void:
 	ScenarioManager.activate(scenario_id, overrides)
 	_initialize_new_game(role_id, display_name)
+	ironman = ironman_mode
 	is_game_active = true
 	EventBus.character_updated.emit(player_character)
 	EventBus.resources_changed.emit(player_sect)
@@ -192,6 +197,7 @@ func advance_turn() -> void:
 	# 침공을 받은 계절에는 기연 대신 침공에 대응한다.
 	if not is_game_over() and pending_invasion.is_empty():
 		_try_trigger_event()
+	autosave()
 	EventBus.turn_advanced.emit(current_year, get_current_season())
 	EventBus.resources_changed.emit(player_sect)
 
@@ -912,8 +918,30 @@ func _load_mod_data() -> void:
 	mod_martial_arts = _ModLoader.load_martial_arts_from_json()
 
 
-func save_game() -> Dictionary:
+## 수동 저장. 철인 모드에서는 할 수 없다.
+func save_game(slot: int = 1) -> Dictionary:
+	if ironman and slot != _SaveManager.AUTO_SLOT:
+		return {"success": false, "message": "철인 모드에서는 계절이 바뀔 때 자동으로만 저장됩니다."}
+	return _SaveManager.save_game(_build_save_state(), slot)
+
+
+## 계절이 바뀔 때마다 자동 저장 슬롯에 저장한다.
+func autosave() -> Dictionary:
+	return _SaveManager.save_game(_build_save_state(), _SaveManager.AUTO_SLOT)
+
+
+func _build_save_state() -> Dictionary:
 	var state: Dictionary = {
+		"summary": {
+			"name": player_character.display_name,
+			"role": player_character.get_role_name(),
+			"date": get_date_text(),
+			"scenario": ScenarioManager.current.get("title", ""),
+			"generation": generation,
+			"ironman": ironman,
+			"ending": EndingManager.get_ending(current_ending_id).get("title", "") if not current_ending_id.is_empty() else "",
+		},
+		"ironman": ironman,
 		"version": _SaveManager.SAVE_VERSION,
 		"scenario_id": ScenarioManager.current_id,
 		"scenario_overrides": ScenarioManager.user_overrides,
@@ -938,11 +966,11 @@ func save_game() -> Dictionary:
 		"relationships": _SaveManager.serialize_relationships(player_relationships),
 		"legacy_records": _SaveManager.serialize_legacy(legacy_records),
 	}
-	return _SaveManager.save_game(state)
+	return state
 
 
-func load_game() -> Dictionary:
-	var result: Dictionary = _SaveManager.load_game()
+func load_game(slot: int = 1) -> Dictionary:
+	var result: Dictionary = _SaveManager.load_game(slot)
 	if not result["success"]:
 		return result
 	_apply_save_data(result["data"])
@@ -971,6 +999,7 @@ func _apply_save_data(data: Dictionary) -> void:
 		role_history.append(str(role_name))
 	# 역할 자원이 없는 구버전 세이브는 기본값으로 시작한다.
 	role_state = RoleActions.restore_state(data.get("role_state", {}))
+	ironman = data.get("ironman", false) == true
 	challenge_target = str(data.get("challenge_target", ""))
 	pending_invasion = str(data.get("pending_invasion", ""))
 	world_news.clear()
@@ -1012,8 +1041,8 @@ func _apply_save_data(data: Dictionary) -> void:
 	refresh_role_transitions()
 
 
-func has_save_file() -> bool:
-	return _SaveManager.has_save()
+func has_save_file(slot: int = -1) -> bool:
+	return _SaveManager.has_save(slot)
 
 
 func _apply_event_result(result: Dictionary) -> void:

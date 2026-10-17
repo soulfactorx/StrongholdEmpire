@@ -9,6 +9,8 @@ const STRATEGIES: Array[String] = ["무행동", "제자 18명까지", "제자 �
 
 
 func _initialize() -> void:
+	# 시뮬레이션의 자동 저장이 실제 세이브를 덮어쓰지 않게 한다.
+	SaveManager.save_dir = "user://_sim_saves/"
 	process_frame.connect(_run, CONNECT_ONE_SHOT)
 
 

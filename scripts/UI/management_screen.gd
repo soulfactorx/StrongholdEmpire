@@ -36,6 +36,8 @@ var disciple_popup: Control
 var bond_popup: Control
 ## 침공 대응 팝업
 var invasion_popup: Control
+## 저장 슬롯 팝업
+var save_popup: Control
 ## 대상을 고르는 중인 역할 행동 id
 var _pending_role_action: String = ""
 
@@ -57,6 +59,9 @@ func _ready() -> void:
 	invasion_popup = _ChoicePopup.new()
 	add_child(invasion_popup)
 	invasion_popup.chosen.connect(_on_invasion_chosen)
+	save_popup = _ChoicePopup.new()
+	add_child(save_popup)
+	save_popup.chosen.connect(_on_save_slot_chosen)
 	_connect_bus(EventBus.turn_advanced, _on_turn_advanced)
 	_connect_bus(EventBus.resources_changed, _on_resources_changed)
 	_connect_bus(EventBus.character_updated, _on_character_updated)
@@ -390,7 +395,22 @@ func _on_ending_pressed() -> void:
 
 func _on_save_pressed() -> void:
 	AudioManager.play_click()
-	var result: Dictionary = GameManager.save_game()
+	if GameManager.ironman:
+		_on_action_message("철인 모드에서는 계절이 바뀔 때 자동으로만 저장됩니다.")
+		return
+	var options: Array[Dictionary] = []
+	for slot in range(1, SaveManager.SLOT_COUNT + 1):
+		var summary: Dictionary = SaveManager.get_slot_summary(slot)
+		options.append({
+			"id": str(slot),
+			"title": summary["title"],
+			"description": ("덮어쓰기 — " if summary["exists"] else "") + summary["detail"],
+		})
+	save_popup.open("저장", "저장할 슬롯을 고르세요. 계절이 바뀔 때마다 자동 저장도 따로 됩니다.", options)
+
+
+func _on_save_slot_chosen(slot: String) -> void:
+	var result: Dictionary = GameManager.save_game(int(slot))
 	_on_action_message(result["message"])
 	if result["success"]:
 		AudioManager.play_success()
@@ -405,4 +425,7 @@ func _on_help_pressed() -> void:
 
 func _on_main_menu_pressed() -> void:
 	AudioManager.play_click()
+	# 메인 메뉴로 나갈 때도 자동 저장해 둔다.
+	if GameManager.is_game_active:
+		GameManager.autosave()
 	SceneRouter.goto(get_tree(), SceneRouter.MAIN_MENU)
