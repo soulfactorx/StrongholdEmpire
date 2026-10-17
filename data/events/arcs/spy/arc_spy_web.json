@@ -1,0 +1,55 @@
+{
+  "id": "arc_spy_web",
+  "title": "거미줄의 주인",
+  "description": "두 문파의 기밀이 모두 당신 손을 거쳐 갑니다. 강호의 소문이란 소문은 당신의 거미줄에 걸립니다.",
+  "can_repeat": true,
+  "weight": 5,
+  "conditions": [
+    {
+      "type": "role",
+      "in": [
+        "SPY"
+      ]
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_spy_double",
+      "op": ">=",
+      "value": 2
+    },
+    {
+      "type": "role_state",
+      "field": "exposure",
+      "op": "<=",
+      "value": 70
+    }
+  ],
+  "choices": [
+    {
+      "label": "그림자 속에서 이야기를 맺는다",
+      "message": "누구도 당신의 진짜 주인을 알지 못합니다.",
+      "effects": [
+        {
+          "type": "end_game",
+          "ending": "web_of_shadows"
+        }
+      ]
+    },
+    {
+      "label": "줄타기를 계속한다",
+      "message": "또 한 번 두 주인을 속였습니다. 금화 +150, 노출도 +15",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": 150
+        },
+        {
+          "type": "role_state",
+          "field": "exposure",
+          "add": 15
+        }
+      ]
+    }
+  ]
+}

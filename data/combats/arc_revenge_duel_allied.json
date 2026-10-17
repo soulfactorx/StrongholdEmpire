@@ -1,0 +1,76 @@
+{
+  "id": "arc_revenge_duel_allied",
+  "title": "결투 — 귀영과 수하들",
+  "player_position": [
+    3,
+    5
+  ],
+  "enemies": [
+    {
+      "npc": "npc_shadow_blade",
+      "position": [
+        12,
+        5
+      ]
+    },
+    {
+      "npc": "npc_bandit",
+      "position": [
+        13,
+        3
+      ],
+      "name": "귀영의 수하"
+    }
+  ],
+  "allies": [
+    {
+      "npc": "npc_rival",
+      "position": [
+        3,
+        3
+      ]
+    }
+  ],
+  "terrain": {
+    "FOREST": [
+      [
+        6,
+        2
+      ],
+      [
+        6,
+        3
+      ],
+      [
+        9,
+        6
+      ],
+      [
+        9,
+        7
+      ]
+    ],
+    "HIGH": [
+      [
+        4,
+        8
+      ],
+      [
+        5,
+        8
+      ]
+    ]
+  },
+  "relationship_target": "npc_shadow_blade",
+  "enemy_hp_scale": 0.9,
+  "rewards": {
+    "experience": 40,
+    "reputation": 3
+  },
+  "defeat_penalty": {
+    "reputation": 3,
+    "injury_ratio": 0.3
+  },
+  "victory_flag": "arc_revenge_won",
+  "defeat_flag": "arc_revenge_lost"
+}

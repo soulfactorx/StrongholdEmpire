@@ -1,0 +1,43 @@
+{
+  "id": "arc_love_trial",
+  "title": "가주의 시험",
+  "description": "남궁세가 연무장. 남궁천이 아들 남궁휘를 내세웠습니다.\n「휘를 꺾으면 혼인을 허락하겠다.」 남궁설이 두 손을 모읍니다.",
+  "can_repeat": false,
+  "weight": 4,
+  "conditions": [
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_love_proposed",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "검을 든다",
+      "message": "남궁휘와 마주 섭니다. 물러설 곳은 없습니다.",
+      "effects": [
+        {
+          "type": "combat",
+          "combat": "arc_love_trial"
+        }
+      ]
+    },
+    {
+      "label": "시험을 거절한다",
+      "message": "칼로 사람의 마음을 얻을 수는 없다며 물러났습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_love_ended",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lady",
+          "add": -10
+        }
+      ]
+    }
+  ]
+}

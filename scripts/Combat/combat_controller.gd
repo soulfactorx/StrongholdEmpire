@@ -56,8 +56,11 @@ func _ready() -> void:
 	back_button.text = "후퇴"
 	_log("전투 시작! %s" % _setup.title)
 	if not _setup.allies.is_empty():
-		_log("전투 시작! %s — 제자 %d명이 함께 싸웁니다. 아군은 차례가 오면 직접 조종합니다." % [
-			_setup.title, _setup.allies.size(),
+		var names: PackedStringArray = []
+		for ally in _setup.allies:
+			names.append(ally.display_name)
+		_log("전투 시작! %s — %s이(가) 함께 싸웁니다. 아군은 차례가 오면 직접 조종합니다." % [
+			_setup.title, ", ".join(names),
 		])
 	_advance_turns()
 

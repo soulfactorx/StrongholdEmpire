@@ -1,0 +1,48 @@
+{
+  "id": "arc_love_tragedy",
+  "title": "꺾인 매화",
+  "description": "남궁설은 가문으로 끌려가 먼 세가에 시집보내지게 되었습니다.\n떠나는 가마에서 매화 한 송이가 떨어졌습니다.",
+  "can_repeat": false,
+  "weight": 4,
+  "conditions": [
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_love_captured",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "그 꽃을 품고 이야기를 맺는다",
+      "message": "매화 한 송이를 품에 안고 오래 서 있었습니다.",
+      "effects": [
+        {
+          "type": "end_game",
+          "ending": "fallen_blossom"
+        }
+      ]
+    },
+    {
+      "label": "슬픔을 묻고 검을 든다",
+      "message": "슬픔을 검에 담았습니다. 무력 +2, 도덕 -5",
+      "effects": [
+        {
+          "type": "character",
+          "field": "strength",
+          "add": 2
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -5
+        },
+        {
+          "type": "flag",
+          "flag": "arc_love_ended",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

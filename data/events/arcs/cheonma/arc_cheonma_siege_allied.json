@@ -1,0 +1,53 @@
+{
+  "id": "arc_cheonma_siege_allied",
+  "title": "산문 방어전 — 연합군",
+  "description": "천마신교의 대군이 청운산 아래 진을 쳤습니다. 연합의 약속대로 남궁휘가 검을 들고 달려왔습니다.",
+  "can_repeat": false,
+  "weight": 5,
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "cheonha"
+      ]
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_cheonma_assassin_done",
+      "op": ">=",
+      "value": 1
+    },
+    {
+      "type": "flag",
+      "flag": "arc_cheonma_siege_won",
+      "value": false
+    },
+    {
+      "type": "flag",
+      "flag": "arc_cheonma_siege_lost",
+      "value": false
+    },
+    {
+      "type": "flag",
+      "flag": "arc_cheonma_alliance",
+      "value": true
+    },
+    {
+      "type": "flag",
+      "flag": "arc_cheonma_alone",
+      "value": false
+    }
+  ],
+  "choices": [
+    {
+      "label": "산문을 지킨다",
+      "message": "남궁휘와 등을 맞대고 산문 앞에 섭니다.",
+      "effects": [
+        {
+          "type": "combat",
+          "combat": "arc_cheonma_siege_allied"
+        }
+      ]
+    }
+  ]
+}

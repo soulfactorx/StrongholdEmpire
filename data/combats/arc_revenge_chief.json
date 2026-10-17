@@ -1,0 +1,93 @@
+{
+  "id": "arc_revenge_chief",
+  "title": "산채 급습 — 흑풍채 채주 마진",
+  "player_position": [
+    2,
+    5
+  ],
+  "enemies": [
+    {
+      "npc": "npc_heukpung_chief",
+      "position": [
+        13,
+        5
+      ]
+    },
+    {
+      "npc": "npc_bandit",
+      "position": [
+        12,
+        3
+      ],
+      "name": "산채 졸개 갑"
+    },
+    {
+      "npc": "npc_bandit",
+      "position": [
+        12,
+        7
+      ],
+      "name": "산채 졸개 을"
+    }
+  ],
+  "blocked": [
+    [
+      7,
+      1
+    ],
+    [
+      7,
+      2
+    ],
+    [
+      7,
+      7
+    ],
+    [
+      7,
+      8
+    ]
+  ],
+  "terrain": {
+    "FOREST": [
+      [
+        4,
+        3
+      ],
+      [
+        4,
+        4
+      ],
+      [
+        4,
+        6
+      ]
+    ],
+    "HIGH": [
+      [
+        14,
+        4
+      ],
+      [
+        14,
+        5
+      ],
+      [
+        14,
+        6
+      ]
+    ]
+  },
+  "enemy_hp_scale": 0.8,
+  "rewards": {
+    "experience": 60,
+    "gold": 120,
+    "reputation": 10
+  },
+  "defeat_penalty": {
+    "reputation": 5,
+    "injury_ratio": 0.3
+  },
+  "victory_flag": "arc_revenge_chief_slain",
+  "defeat_flag": "arc_revenge_chief_failed"
+}

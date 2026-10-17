@@ -1,0 +1,59 @@
+{
+  "id": "arc_revenge_trail",
+  "title": "핏자국을 따라",
+  "description": "자객이 남긴 비수에는 흑풍채의 표식이 새겨져 있었습니다. 관도의 객잔과 산채 주변에서 단서를 찾아야 합니다.",
+  "can_repeat": false,
+  "weight": 4,
+  "conditions": [
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_revenge_start",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "흑풍채 졸개를 붙잡아 심문한다",
+      "message": "졸개가 겁에 질려 이름을 털어놓았습니다. '귀영' — 돈만 주면 누구든 베는 흑의 자객. 도덕 -3, 흑풍채 태도 -5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_revenge_clue",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -3
+        },
+        {
+          "type": "world_sect",
+          "sect": "heukpung",
+          "field": "attitude",
+          "add": -5
+        }
+      ]
+    },
+    {
+      "label": "객잔에서 소문을 사들인다 (금화 -40)",
+      "message": "정보상에게 금화를 쥐여 주고 자객의 이름과 은신처를 알아냈습니다. '귀영'. 경험치 +10",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -40
+        },
+        {
+          "type": "flag",
+          "flag": "arc_revenge_clue",
+          "value": true
+        },
+        {
+          "type": "experience",
+          "amount": 10
+        }
+      ]
+    }
+  ]
+}

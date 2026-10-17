@@ -1,0 +1,53 @@
+{
+  "id": "arc_succession_civil_war",
+  "title": "내분",
+  "description": "진무겸이 흑풍채 무사들을 끌어들여 장문인 처소로 향합니다. 산문 안에서 칼부림이 벌어졌습니다.",
+  "can_repeat": false,
+  "weight": 4,
+  "conditions": [
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_succession_defend",
+      "op": ">=",
+      "value": 1
+    },
+    {
+      "type": "flag",
+      "flag": "arc_succession_won",
+      "value": false
+    },
+    {
+      "type": "flag",
+      "flag": "arc_succession_lost",
+      "value": false
+    }
+  ],
+  "choices": [
+    {
+      "label": "제자들을 이끌고 막아선다",
+      "message": "제자들이 당신의 뒤를 따릅니다.",
+      "effects": [
+        {
+          "type": "combat",
+          "combat": "arc_succession_coup"
+        }
+      ]
+    },
+    {
+      "label": "스승을 업고 피신한다",
+      "message": "스승을 업고 뒷산으로 피했습니다. 진무겸이 산문을 차지했습니다. 명성 -10",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": -10
+        },
+        {
+          "type": "flag",
+          "flag": "arc_succession_lost",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

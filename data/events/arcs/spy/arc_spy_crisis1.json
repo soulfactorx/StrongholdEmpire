@@ -1,0 +1,70 @@
+{
+  "id": "arc_spy_crisis1",
+  "title": "첫 번째 위기 — 검문",
+  "description": "청운검파로 보내는 밀서를 품고 나가다 산문 검문에 걸렸습니다. 무사가 품을 뒤지려 합니다.",
+  "can_repeat": false,
+  "weight": 5,
+  "conditions": [
+    {
+      "type": "role",
+      "in": [
+        "SPY"
+      ]
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_spy_start",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "밀서를 삼킨다",
+      "message": "밀서를 씹어 삼켰습니다. 의심은 넘겼지만 속이 뒤틀립니다. 노출도 -10, 내공 -30",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_spy_crisis1",
+          "value": true
+        },
+        {
+          "type": "role_state",
+          "field": "exposure",
+          "add": -10
+        },
+        {
+          "type": "character",
+          "field": "internal_energy_current",
+          "add": -30
+        }
+      ]
+    },
+    {
+      "label": "동료에게 떠넘긴다",
+      "message": "밀서를 동료 첩자의 짐에 밀어 넣었습니다. 도덕 -10, 노출도 -20",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_spy_crisis1",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "arc_spy_sold_out",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -10
+        },
+        {
+          "type": "role_state",
+          "field": "exposure",
+          "add": -20
+        }
+      ]
+    }
+  ]
+}

@@ -66,6 +66,11 @@
           "target": "npc_cheonma_envoy",
           "bond_type": "HATRED",
           "strength": 20
+        },
+        {
+          "type": "flag",
+          "flag": "cheonma_letter_refused",
+          "value": true
         }
       ]
     },
@@ -84,6 +89,11 @@
           "sect": "cheonma",
           "field": "attitude",
           "add": -20
+        },
+        {
+          "type": "flag",
+          "flag": "cheonma_letter_refused",
+          "value": true
         }
       ]
     }

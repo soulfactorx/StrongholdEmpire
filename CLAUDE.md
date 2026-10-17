@@ -18,7 +18,9 @@
 - 씬 전환은 `SceneRouter`를 통해서만 한다. 씬 경로 상수도 거기에 있다.
 - 밸런스 수치는 `GameBalance`에 모은다.
 - 기연은 `data/events/*.json` 데이터로 정의한다. 형식은 `docs/기연_데이터_형식.md` 참고.
-  새 기연은 코드가 아니라 JSON으로 추가한다.
+  새 기연은 코드가 아니라 JSON으로 추가한다. 스토리 아크는 `data/events/arcs/<아크>/`에 묶고,
+  스모크 테스트 `_test_story_arcs`에 선택지를 고정한 진행 경로를 함께 추가한다.
+- 기연에서 이어지는 전투는 `data/combats/*.json`으로 정의한다. 형식은 `docs/전투_데이터_형식.md` 참고.
 - 인물은 `data/npcs/*.json`, 문파는 `data/sects/*.json`으로 정의한다.
   형식은 `docs/NPC_문파_데이터_형식.md` 참고.
 - 엔딩은 `data/endings/*.json`으로 정의한다. 형식은 `docs/엔딩_데이터_형식.md` 참고.

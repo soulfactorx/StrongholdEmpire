@@ -16,8 +16,9 @@ const COMBAT_IDS: PackedStringArray = [
 ]
 
 
+## 코드로 만드는 전투와 data/combats/의 데이터 전투를 모두 찾는다.
 static func has_combat(combat_id: String) -> bool:
-	return combat_id in COMBAT_IDS
+	return combat_id in COMBAT_IDS or CombatLibrary.has_combat(combat_id)
 
 
 ## sect를 주면 문파 방어 전투에 제자가 아군으로 합류한다.
@@ -33,8 +34,11 @@ static func create_by_id(combat_id: String, player: CharacterData, sect: SectDat
 			return create_assassination(player)
 		"bounty_hunters":
 			return create_bounty_hunters(player)
-		_:
+		"sparring":
 			return create_sparring(player)
+	if CombatLibrary.has_combat(combat_id):
+		return CombatLibrary.create(combat_id, player, sect)
+	return create_sparring(player)
 
 
 ## 경영 화면에서 할 수 있는 라이벌과의 비무. 계절당 한 번.
@@ -91,7 +95,7 @@ static func create_night_bandits(player: CharacterData, sect: SectData = null) -
 	setup.set_terrain([Vector2i(4, 8), Vector2i(5, 8), Vector2i(4, 9)], CombatRules.Terrain.HIGH)
 	var positions: Array[Vector2i] = [Vector2i(12, 3), Vector2i(13, 5), Vector2i(12, 7)]
 	if sect:
-		_add_disciple_allies(setup, sect, player, [Vector2i(2, 4), Vector2i(2, 6)])
+		add_disciple_allies(setup, sect, player, [Vector2i(2, 4), Vector2i(2, 6)])
 	# 제자가 함께 싸우면 그만큼 도적도 늘어난다.
 	var extra_positions: Array[Vector2i] = [Vector2i(14, 3), Vector2i(14, 7)]
 	for i in setup.allies.size():
@@ -216,6 +220,8 @@ static func apply_outcome(
 			"message": "승리! " + ", ".join(parts) if not parts.is_empty() else "승리!",
 		}
 
+	if not setup.defeat_flag.is_empty():
+		EventManager.set_flag(story_flags, setup.defeat_flag)
 	# 후퇴는 패배 손실의 절반만 받는다.
 	var scale: float = 0.5 if outcome == Outcome.RETREAT else 1.0
 	var p: Dictionary = setup.defeat_penalty
@@ -273,7 +279,7 @@ static func _central_wall() -> Array[Vector2i]:
 
 
 ## 문파 제자를 아군으로 붙인다. 무술장이 좋을수록 강하다.
-static func _add_disciple_allies(
+static func add_disciple_allies(
 	setup: CombatSetup,
 	sect: SectData,
 	player: CharacterData,

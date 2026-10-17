@@ -1,0 +1,55 @@
+{
+  "id": "arc_spy_contact",
+  "title": "또 다른 주인",
+  "description": "남궁세가 집법당주 남궁철이 당신을 조용히 불렀습니다.\n「청운검파의 쥐새끼라는 건 알고 있다. 죽고 싶지 않으면 이제부터 내 말을 전해라.」",
+  "can_repeat": false,
+  "weight": 5,
+  "conditions": [
+    {
+      "type": "role",
+      "in": [
+        "SPY"
+      ]
+    },
+    {
+      "type": "role_state",
+      "field": "intel_count",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "이중첩자가 되는 척한다",
+      "message": "고개를 숙였습니다. 이제 두 주인을 섬기는 척해야 합니다. 노출도 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_spy_start",
+          "value": true
+        },
+        {
+          "type": "role_state",
+          "field": "exposure",
+          "add": 10
+        }
+      ]
+    },
+    {
+      "label": "단호히 거절한다",
+      "message": "남궁철이 웃었습니다. 「그럼 증거를 찾을 때까지 지켜보지.」 노출도 +25",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_spy_start",
+          "value": true
+        },
+        {
+          "type": "role_state",
+          "field": "exposure",
+          "add": 25
+        }
+      ]
+    }
+  ]
+}

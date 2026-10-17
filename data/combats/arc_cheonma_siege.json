@@ -1,0 +1,114 @@
+{
+  "id": "arc_cheonma_siege",
+  "title": "산문 방어전",
+  "player_position": [
+    3,
+    5
+  ],
+  "disciple_allies": [
+    [
+      2,
+      3
+    ],
+    [
+      2,
+      7
+    ]
+  ],
+  "enemies": [
+    {
+      "npc": "npc_cheonma_cultist",
+      "position": [
+        12,
+        2
+      ],
+      "name": "교도 갑"
+    },
+    {
+      "npc": "npc_cheonma_cultist",
+      "position": [
+        13,
+        4
+      ],
+      "name": "교도 을"
+    },
+    {
+      "npc": "npc_cheonma_cultist",
+      "position": [
+        13,
+        6
+      ],
+      "name": "교도 병"
+    },
+    {
+      "npc": "npc_cheonma_cultist",
+      "position": [
+        12,
+        8
+      ],
+      "name": "교도 정"
+    }
+  ],
+  "blocked": [
+    [
+      6,
+      0
+    ],
+    [
+      6,
+      1
+    ],
+    [
+      6,
+      8
+    ],
+    [
+      6,
+      9
+    ]
+  ],
+  "terrain": {
+    "HIGH": [
+      [
+        3,
+        2
+      ],
+      [
+        4,
+        2
+      ],
+      [
+        3,
+        8
+      ],
+      [
+        4,
+        8
+      ]
+    ],
+    "FOREST": [
+      [
+        10,
+        4
+      ],
+      [
+        10,
+        5
+      ]
+    ]
+  },
+  "enemy_hp_scale": 0.7,
+  "enemy_damage_scale": 0.8,
+  "rewards": {
+    "experience": 60,
+    "gold": 100,
+    "reputation": 10
+  },
+  "defeat_penalty": {
+    "gold": 100,
+    "reputation": 10,
+    "injury_ratio": 0.3
+  },
+  "victory_flag": "arc_cheonma_siege_won",
+  "defeat_flag": "arc_cheonma_siege_lost"
+}

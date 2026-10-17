@@ -91,6 +91,24 @@ static func set_flag(story_flags: Dictionary, flag: String, value: Variant = tru
 	flag_turns[flag] = current_turn
 
 
+## 지금 발생할 수 있는 기연 후보 전체 (가중치 추첨 전)
+static func get_candidates(
+	character: CharacterData,
+	sect: SectData,
+	relationships: Array[RelationshipData],
+	season: String,
+	triggered_ids: Array[String],
+	story_flags: Dictionary
+) -> Array[EventData]:
+	var pool: Array[EventData] = []
+	for event in get_definitions():
+		if not event.can_repeat and triggered_ids.has(event.id):
+			continue
+		if _conditions_met(event, character, sect, relationships, season, story_flags):
+			pool.append(event)
+	return pool
+
+
 static func check_turn_events(
 	character: CharacterData,
 	sect: SectData,
@@ -99,12 +117,7 @@ static func check_turn_events(
 	triggered_ids: Array[String],
 	story_flags: Dictionary
 ) -> Dictionary:
-	var pool: Array[EventData] = []
-	for event in get_definitions():
-		if not event.can_repeat and triggered_ids.has(event.id):
-			continue
-		if _conditions_met(event, character, sect, relationships, season, story_flags):
-			pool.append(event)
+	var pool: Array[EventData] = get_candidates(character, sect, relationships, season, triggered_ids, story_flags)
 	if pool.is_empty():
 		return {}
 
@@ -182,12 +195,7 @@ static func reload_definitions(dir_path: String = EVENTS_DIR, extra_dirs: Array 
 		if not DirAccess.dir_exists_absolute(current_dir):
 			push_warning("기연 폴더를 열 수 없습니다: %s" % current_dir)
 			continue
-		var files: PackedStringArray = DirAccess.get_files_at(current_dir)
-		files.sort()
-		for file_name in files:
-			if not file_name.ends_with(".json"):
-				continue
-			var path: String = current_dir.path_join(file_name)
+		for path in collect_json_files(current_dir):
 			var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
 			if not data is Dictionary:
 				push_warning("기연 JSON 파싱 실패: %s" % path)
@@ -200,6 +208,21 @@ static func reload_definitions(dir_path: String = EVENTS_DIR, extra_dirs: Array 
 				continue
 			seen_ids[data["id"]] = true
 			_definitions.append(_to_event_data(data))
+
+
+## 폴더와 하위 폴더(스토리 아크 등)의 JSON 파일 경로를 이름순으로 모은다.
+static func collect_json_files(dir_path: String) -> PackedStringArray:
+	var result: PackedStringArray = []
+	var files: PackedStringArray = DirAccess.get_files_at(dir_path)
+	files.sort()
+	for file_name in files:
+		if file_name.ends_with(".json"):
+			result.append(dir_path.path_join(file_name))
+	var dirs: PackedStringArray = DirAccess.get_directories_at(dir_path)
+	dirs.sort()
+	for sub_dir in dirs:
+		result.append_array(collect_json_files(dir_path.path_join(sub_dir)))
+	return result
 
 
 ## 기연 정의 하나를 검사해 오류 메시지 목록을 돌려준다. 비어 있으면 정상이다.

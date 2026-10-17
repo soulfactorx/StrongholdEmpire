@@ -1,0 +1,28 @@
+{
+  "id": "npc_namgung_enforcer",
+  "display_name": "남궁철",
+  "title": "남궁세가 집법당주",
+  "sect_id": "namgung",
+  "role": "MANAGER",
+  "description": "남궁세가의 규율을 맡은 집법당주. 세가 안의 첩자를 찾아내는 데 집요하다.",
+  "level": 5,
+  "stats": {
+    "strength": 15,
+    "agility": 16,
+    "wisdom": 16,
+    "charisma": 10,
+    "internal_energy_max": 140,
+    "age": 45,
+    "morality": 50
+  },
+  "scaling": {
+    "base_level": 5,
+    "level_offset": 1,
+    "per_level": {
+      "strength": 1,
+      "agility": 1,
+      "internal_energy_max": 8
+    }
+  },
+  "war_specialty": "DEFEND"
+}

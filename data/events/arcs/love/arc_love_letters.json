@@ -1,0 +1,60 @@
+{
+  "id": "arc_love_letters",
+  "title": "몰래 주고받은 서신",
+  "description": "남궁설의 시비가 몰래 서신을 전해 왔습니다. 매화 향이 밴 종이에 단정한 글씨가 적혀 있습니다.",
+  "can_repeat": false,
+  "weight": 4,
+  "conditions": [
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_love_start",
+      "op": ">=",
+      "value": 2
+    },
+    {
+      "type": "bond",
+      "target": "npc_namgung_lady",
+      "op": ">=",
+      "value": 20
+    }
+  ],
+  "choices": [
+    {
+      "label": "답장을 쓴다",
+      "message": "서신이 오가며 마음이 깊어졌습니다. 유대 +15, 매력 +1",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "npc_namgung_lady",
+          "add": 15
+        },
+        {
+          "type": "character",
+          "field": "charisma",
+          "add": 1
+        },
+        {
+          "type": "flag",
+          "flag": "arc_love_deepened",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "답하지 않는다",
+      "message": "답장을 보내지 않았습니다. 서신은 더 오지 않았습니다.",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "npc_namgung_lady",
+          "add": -10
+        },
+        {
+          "type": "flag",
+          "flag": "arc_love_ended",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "id": "arc_cheonma_final",
+  "title": "결전 — 천마신교 교주 위무량",
+  "player_position": [
+    3,
+    5
+  ],
+  "allies": [
+    {
+      "npc": "npc_rival",
+      "position": [
+        3,
+        3
+      ]
+    }
+  ],
+  "enemies": [
+    {
+      "npc": "npc_cheonma",
+      "position": [
+        13,
+        5
+      ]
+    }
+  ],
+  "terrain": {
+    "HIGH": [
+      [
+        7,
+        4
+      ],
+      [
+        7,
+        5
+      ]
+    ],
+    "FOREST": [
+      [
+        10,
+        2
+      ],
+      [
+        10,
+        8
+      ]
+    ]
+  },
+  "enemy_hp_scale": 0.6,
+  "enemy_damage_scale": 0.75,
+  "rewards": {
+    "experience": 120,
+    "reputation": 20
+  },
+  "defeat_penalty": {
+    "reputation": 10,
+    "injury_ratio": 0.2
+  },
+  "victory_flag": "arc_cheonma_repelled",
+  "defeat_flag": "arc_cheonma_final_lost"
+}

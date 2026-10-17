@@ -1,0 +1,26 @@
+{
+  "id": "npc_namgung_guard",
+  "display_name": "남궁세가 무사",
+  "title": "남궁세가 호위무사",
+  "sect_id": "namgung",
+  "role": "WANDERER",
+  "description": "남궁세가를 지키는 무사. 여럿이 함께 움직인다.",
+  "level": 1,
+  "stats": {
+    "strength": 11,
+    "agility": 11,
+    "wisdom": 8,
+    "charisma": 8,
+    "internal_energy_max": 70,
+    "age": 28,
+    "morality": 60
+  },
+  "scaling": {
+    "base_level": 1,
+    "level_offset": 0,
+    "per_level": {
+      "strength": 1,
+      "agility": 1
+    }
+  }
+}

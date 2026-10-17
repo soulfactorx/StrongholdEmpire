@@ -16,7 +16,8 @@ static func get_available_transitions(
 		role_state = RoleActions.create_state()
 
 	if character.role == CharacterData.Role.YOUNG_DISCIPLE:
-		if _can_become_manager(character, sect, relationships):
+		# 스토리 아크 「승계와 배신」에서 후계자로 지명되면 승진 조건을 따지지 않는다.
+		if _can_become_manager(character, sect, relationships) or story_flags.get("arc_succession_heir", false):
 			options.append(_transition_option(
 				CharacterData.Role.MANAGER,
 				"중간관리자 승진",
@@ -36,7 +37,11 @@ static func get_available_transitions(
 			))
 
 	elif character.role == CharacterData.Role.MANAGER:
-		if _can_become_leader(character, sect, relationships) and role_state["trust"] >= _Balance.MANAGER_TRUST_FOR_LEADER:
+		var named_heir: bool = story_flags.get("arc_succession_heir", false) and character.level >= _Balance.MANAGER_LEVEL_REQ
+		if (
+			(_can_become_leader(character, sect, relationships) or named_heir)
+			and role_state["trust"] >= _Balance.MANAGER_TRUST_FOR_LEADER
+		):
 			options.append(_transition_option(
 				CharacterData.Role.LEADER,
 				"문주 승계",

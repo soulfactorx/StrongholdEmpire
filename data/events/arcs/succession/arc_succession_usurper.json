@@ -1,0 +1,53 @@
+{
+  "id": "arc_succession_usurper",
+  "title": "찬탈자의 옥좌",
+  "description": "청운검선은 쓰러졌습니다. 진무겸이 장문인의 자리에 앉았고, 당신은 그의 오른팔이 되었습니다.\n그러나 진무겸의 눈빛에는 벌써 당신을 향한 경계가 서려 있습니다.",
+  "can_repeat": false,
+  "weight": 4,
+  "conditions": [
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_succession_usurped",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "진무겸마저 베고 옥좌에 앉는다",
+      "message": "피로 얼룩진 장문인의 자리에 앉았습니다.",
+      "effects": [
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -10
+        },
+        {
+          "type": "end_game",
+          "ending": "usurper"
+        }
+      ]
+    },
+    {
+      "label": "참회하고 산문을 떠난다",
+      "message": "스승의 무덤에 절하고 산문을 떠났습니다. 도덕 +5, 명성 -20",
+      "effects": [
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": -20
+        },
+        {
+          "type": "flag",
+          "flag": "arc_succession_exiled",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

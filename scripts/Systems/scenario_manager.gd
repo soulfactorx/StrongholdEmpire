@@ -62,6 +62,7 @@ static func activate(scenario_id: String, overrides: Dictionary = {}) -> PackedS
 	NpcRoster.reload_data(NpcRoster.NPC_DIR, [dir.path_join("npcs")])
 	SectRegistry.reload_data(SectRegistry.SECT_DIR, [dir.path_join("sects")])
 	EndingManager.reload_data(EndingManager.ENDING_DIR, [dir.path_join("endings")])
+	CombatLibrary.reload_data(CombatLibrary.COMBAT_DIR, [dir.path_join("combats")])
 	EventManager.reload_definitions(EventManager.EVENTS_DIR, [dir.path_join("events")])
 
 	ScenarioRules.reset()

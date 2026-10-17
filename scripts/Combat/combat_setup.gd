@@ -28,6 +28,8 @@ var rewards: Dictionary = {}
 var defeat_penalty: Dictionary = {}
 ## 승리 시 true로 설정할 스토리 플래그
 var victory_flag: String = ""
+## 패배·후퇴 시 true로 설정할 스토리 플래그 (스토리 아크의 갈림길)
+var defeat_flag: String = ""
 
 
 func set_terrain(tiles: Array[Vector2i], kind: CombatRules.Terrain) -> void:

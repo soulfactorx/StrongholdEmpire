@@ -130,6 +130,10 @@ func _run_runtime_tests() -> void:
 	_check(_completed.has("_test_role_transitions_extended"), "_test_role_transitions_extended 끝까지 실행")
 	await _test_role_actions_hub()
 	_check(_completed.has("_test_role_actions_hub"), "_test_role_actions_hub 끝까지 실행")
+	_test_combat_library()
+	_check(_completed.has("_test_combat_library"), "_test_combat_library 끝까지 실행")
+	_test_story_arcs()
+	_check(_completed.has("_test_story_arcs"), "_test_story_arcs 끝까지 실행")
 
 	print("스모크 테스트: %d개 검사, %d개 실패" % [_checks, _failures])
 	quit(1 if _failures > 0 else 0)
@@ -457,10 +461,8 @@ func _test_combat_flow() -> void:
 
 
 func _test_event_definitions() -> void:
-	var json_count: int = 0
-	for file_name in DirAccess.get_files_at(EventManager.EVENTS_DIR):
-		if file_name.ends_with(".json"):
-			json_count += 1
+	# 하위 폴더(스토리 아크)까지 센다.
+	var json_count: int = EventManager.collect_json_files(EventManager.EVENTS_DIR).size()
 	var definitions: Array[EventData] = EventManager.get_definitions()
 	_check(json_count > 0 and definitions.size() == json_count, "기연 JSON %d개 모두 검증 통과" % json_count)
 	for id in [
@@ -2569,3 +2571,224 @@ func _test_role_actions_hub() -> void:
 	SceneRouter.goto(self, SceneRouter.MAIN_MENU)
 	await process_frame
 	_completed["_test_role_actions_hub"] = true
+
+
+func _test_combat_library() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_new_quiet_game(gm, "young_disciple")
+	var ids: Array = CombatLibrary.get_ids()
+	_check(ids.size() >= 12, "데이터 전투 %d개 로드" % ids.size())
+	_check(CombatManager.has_combat("arc_revenge_duel") and CombatManager.has_combat("night_bandits"), "코드 전투와 데이터 전투 모두 찾음")
+	for combat_id in ids:
+		var setup: CombatSetup = CombatManager.create_by_id(combat_id, gm.player_character, gm.player_sect)
+		var ok: bool = setup.id == combat_id and not setup.enemies.is_empty()
+		for pos in setup.enemy_positions + setup.ally_positions + setup.blocked_tiles:
+			ok = ok and pos.x >= 0 and pos.x < 16 and pos.y >= 0 and pos.y < 10
+		_check(ok, "데이터 전투 구성: %s" % combat_id)
+	var allied: CombatSetup = CombatManager.create_by_id("arc_revenge_duel_allied", gm.player_character)
+	_check(allied.allies.size() == 1 and allied.allies[0].id == "npc_rival" and not allied.allies_are_disciples, "데이터 전투: 인물 아군 합류")
+	var siege: CombatSetup = CombatManager.create_by_id("arc_cheonma_siege", gm.player_character, gm.player_sect)
+	_check(siege.allies_are_disciples and siege.allies.size() == _Balance.DEFENSE_ALLY_COUNT, "데이터 전투: 문파 제자 합류")
+	_check(siege.enemies[0].id != siege.enemies[1].id, "같은 졸개 템플릿은 서로 다른 id")
+	var traitor: CombatSetup = CombatManager.create_by_id("arc_succession_coup_traitor", gm.player_character)
+	var master_full: CharacterData = NpcRoster.create_character("npc_master")
+	_check(traitor.enemies[0].strength == master_full.strength - 5 and traitor.enemies[0].display_name == "병든 청운검선", "데이터 전투: 능력치 보정과 이름")
+
+	# 패배 플래그
+	var duel: CombatSetup = CombatManager.create_by_id("arc_revenge_duel", gm.player_character)
+	CombatManager.apply_outcome(duel, CombatManager.Outcome.RETREAT, gm.player_character, gm.player_sect, gm.player_relationships, gm.story_flags)
+	_check(gm.story_flags.get("arc_revenge_lost", false) and not gm.story_flags.get("arc_revenge_won", false), "후퇴하면 패배 플래그")
+
+	# 검증 오류
+	var errors: PackedStringArray = CombatLibrary.validate_combat_dict({
+		"id": "x", "title": "x",
+		"enemies": [{"npc": "no_such_npc", "position": [20, 3], "stats": {"luck": 1}}],
+		"terrain": {"LAVA": []}, "rewards": {"fame": 1},
+	})
+	for keyword in ["명부에 없는 인물", "전장 밖", "능력치", "지형", "보상"]:
+		_check(Array(errors).any(func(e: String) -> bool: return e.contains(keyword)), "전투 검증 오류 검출: %s" % keyword)
+	_check(not CombatLibrary.validate_combat_dict({"id": "x", "title": "x", "enemies": []}).is_empty(), "적 없는 전투 거부")
+	_check(not CombatLibrary.validate_combat_dict({"id": "sparring", "title": "x", "enemies": [{"npc": "npc_bandit", "position": [1, 1]}]}).is_empty(), "코드 전투 id와 겹치면 거부")
+	_completed["_test_combat_library"] = true
+
+
+## 스토리 아크 한 단계: 기연이 후보에 오를 때까지 계절을 넘기고, 정한 선택지와 전투 결과를 적용한다.
+## step: [기연 id, 선택지 번호, (선택) 전투 결과 CombatManager.Outcome]
+func _arc_step(gm: Node, step: Array) -> bool:
+	var event_id: String = step[0]
+	var found: bool = false
+	for i in 40:
+		var candidates: Array[EventData] = EventManager.get_candidates(
+			gm.player_character, gm.player_sect, gm.player_relationships,
+			gm.get_current_season(), gm.triggered_event_ids, gm.story_flags
+		)
+		if candidates.any(func(e: EventData) -> bool: return e.id == event_id):
+			found = true
+			break
+		gm.advance_turn()
+		gm.pending_event.clear()
+	if not found:
+		_check(false, "아크 기연 발생: %s (%s %d년 %s)" % [event_id, ScenarioManager.current_id, gm.current_year, gm.get_current_season()])
+		return false
+	var event: EventData = EventManager.get_event(event_id)
+	if not event.can_repeat:
+		gm.triggered_event_ids.append(event_id)
+	var result: Dictionary = EventManager.resolve_choice(
+		event_id, step[1], gm.player_character, gm.player_sect, gm.player_relationships, gm.story_flags
+	)
+	if result.has("combat"):
+		var outcome: CombatManager.Outcome = step[2] if step.size() > 2 else CombatManager.Outcome.VICTORY
+		CombatManager.apply_outcome(result["combat"], outcome, gm.player_character, gm.player_sect, gm.player_relationships, gm.story_flags)
+	if result.has("end_game"):
+		gm._force_end(result["end_game"])
+	gm._check_end_states()
+	return true
+
+
+func _run_arc(gm: Node, steps: Array, label: String) -> bool:
+	for step in steps:
+		if not _arc_step(gm, step):
+			_check(false, "아크 진행 중단: %s (%s)" % [label, step[0]])
+			return false
+	return true
+
+
+func _test_story_arcs() -> void:
+	var gm: Node = root.get_node("GameManager")
+	var V: CombatManager.Outcome = CombatManager.Outcome.VICTORY
+	var D: CombatManager.Outcome = CombatManager.Outcome.DEFEAT
+
+	# 아크 기연은 data/events/arcs/의 하위 폴더에서 읽는다.
+	for arc in ["revenge", "succession", "love", "spy", "cheonma"]:
+		var files: PackedStringArray = EventManager.collect_json_files(EventManager.EVENTS_DIR.path_join("arcs").path_join(arc))
+		_check(files.size() >= 4 and files.size() <= 8, "아크 %s: 기연 %d개 (4~8)" % [arc, files.size()])
+	var manual_endings: Array = ["mercy_blade", "usurper", "marriage_alliance", "hidden_valley", "fallen_blossom", "web_of_shadows", "demon_slayer", "fallen_sect"]
+	for ending_id in manual_endings:
+		_check(EndingManager.has_ending(ending_id), "아크 엔딩 존재: %s" % ending_id)
+
+	# ── 복수와 용서: 패배 후 재도전 → 용서 → 자비의 검 ──
+	_new_quiet_game(gm, "young_disciple")
+	if _run_arc(gm, [
+		["arc_revenge_ambush", 0], ["arc_revenge_trail", 1], ["arc_revenge_confrontation", 0, D],
+		["arc_revenge_rematch", 0, V], ["arc_revenge_judgment", 1],
+	], "복수와 용서"):
+		var blade: RelationshipData = RelationshipManager.get_bond_with(gm.player_relationships, "npc_shadow_blade")
+		_check(blade != null and blade.bond_type == RelationshipData.BondType.BLOOD_OATH, "복수: 용서하면 원한이 혈맹으로")
+		_run_arc(gm, [["arc_revenge_mercy", 0]], "복수와 용서")
+		_check(gm.current_ending_id == "mercy_blade", "복수: 자비의 검 엔딩")
+	# 남궁휘와 함께 귀영을 꺾고 배후의 마진까지
+	_new_quiet_game(gm, "young_disciple")
+	var heukpung: SectData = gm.get_world_sect("heukpung")
+	var heukpung_disciples: int = heukpung.disciple_count
+	if _run_arc(gm, [
+		["arc_revenge_ambush", 1], ["arc_revenge_trail", 0], ["arc_revenge_confrontation", 1, V],
+		["arc_revenge_judgment", 2], ["arc_revenge_mastermind", 0, V], ["arc_revenge_chief_aftermath", 0],
+	], "복수: 배후 처단"):
+		_check(gm.story_flags.get("arc_revenge_closed", false) and heukpung.disciple_count < heukpung_disciples, "복수: 마진 처단 후 흑풍채 약화")
+		_check(gm.current_ending_id.is_empty(), "복수: 배후 처단 길은 엔딩 없이 계속")
+
+	# ── 승계와 배신: 반란 진압 → 후계 지명 ──
+	_new_quiet_game(gm, "young_disciple")
+	if _run_arc(gm, [
+		["arc_succession_illness", 1], ["arc_succession_conspiracy", 0], ["arc_succession_civil_war", 0, V],
+		["arc_succession_heir", 0],
+	], "승계와 배신"):
+		gm.refresh_role_transitions()
+		var roles: Array = gm.pending_role_transitions.map(func(o: Dictionary) -> int: return o["role"])
+		_check(gm.story_flags.get("arc_succession_heir", false) and roles.has(CharacterData.Role.MANAGER), "승계: 후계자는 중간관리자 승진 가능")
+	# 진무겸에 가담해 스승을 친다 → 찬탈자
+	_new_quiet_game(gm, "young_disciple")
+	var morality: int = gm.player_character.morality
+	if _run_arc(gm, [
+		["arc_succession_illness", 0], ["arc_succession_conspiracy", 1], ["arc_succession_traitor_night", 0, V],
+		["arc_succession_usurper", 0],
+	], "승계: 찬탈"):
+		_check(gm.current_ending_id == "usurper" and gm.player_character.morality <= morality - 25, "승계: 찬탈자의 옥좌 엔딩")
+	# 내분에서 지면 산문을 되찾는 기연이 반복된다
+	_new_quiet_game(gm, "young_disciple")
+	_run_arc(gm, [
+		["arc_succession_illness", 1], ["arc_succession_conspiracy", 2], ["arc_succession_civil_war", 0, D],
+		["arc_succession_retake", 0, D], ["arc_succession_retake", 0, V], ["arc_succession_heir", 1],
+	], "승계: 재도전")
+	_check(gm.story_flags.get("arc_succession_heir", false), "승계: 두 번 진 뒤 되찾고 후계 지명")
+
+	# ── 금단의 사랑: 청혼 → 시험 승리 → 혼례 ──
+	_new_quiet_game(gm, "young_disciple")
+	var namgung: SectData = gm.get_world_sect("namgung")
+	if _run_arc(gm, [
+		["arc_love_meeting", 0], ["arc_love_letters", 0], ["arc_love_opposition", 0], ["arc_love_trial", 0, V],
+		["arc_love_wedding", 0],
+	], "금단의 사랑"):
+		_check(gm.current_ending_id == "marriage_alliance" and namgung.attitude >= 20, "사랑: 두 가문의 맹약 엔딩")
+	# 도주 → 추격전 패배 → 꺾인 매화
+	_new_quiet_game(gm, "young_disciple")
+	if _run_arc(gm, [
+		["arc_love_meeting", 0], ["arc_love_letters", 0], ["arc_love_opposition", 1], ["arc_love_pursuit", 0, D],
+		["arc_love_tragedy", 0],
+	], "사랑: 비극"):
+		_check(gm.current_ending_id == "fallen_blossom", "사랑: 꺾인 매화 엔딩")
+	# 도주 → 추격전 승리 → 은거곡 (생을 마치는 엔딩)
+	_new_quiet_game(gm, "young_disciple")
+	if _run_arc(gm, [
+		["arc_love_meeting", 0], ["arc_love_letters", 0], ["arc_love_opposition", 1], ["arc_love_pursuit", 0, V],
+		["arc_love_valley", 0],
+	], "사랑: 은거"):
+		_check(gm.current_ending_id == "hidden_valley" and gm.story_flags.get("life_ended", false), "사랑: 은거곡 엔딩은 생을 마침")
+
+	# ── 스파이 이중생활: 세 번의 위기 → 양쪽을 속인다 → 거미줄의 주인 ──
+	_new_quiet_game(gm, "young_disciple")
+	gm.apply_role_transition(CharacterData.Role.SPY)
+	gm.do_role_action("intel", "namgung")
+	if _run_arc(gm, [
+		["arc_spy_contact", 0], ["arc_spy_crisis1", 0], ["arc_spy_crisis2", 0, V], ["arc_spy_crisis3", 1, V],
+		["arc_spy_choice", 2], ["arc_spy_web", 0],
+	], "스파이 이중생활"):
+		_check(gm.story_flags.get("arc_spy_rescued", false) and gm.story_flags.get("arc_spy_enforcer_slain", false), "스파이: 구출·결판 승리 기록")
+		_check(gm.current_ending_id == "web_of_shadows", "스파이: 거미줄의 주인 엔딩")
+	# 집법당주에게 지면 정체가 드러나 처형된다
+	_new_quiet_game(gm, "young_disciple")
+	gm.apply_role_transition(CharacterData.Role.SPY)
+	gm.do_role_action("intel", "namgung")
+	if _run_arc(gm, [
+		["arc_spy_contact", 1], ["arc_spy_crisis1", 1], ["arc_spy_crisis2", 1], ["arc_spy_crisis3", 1, D],
+	], "스파이: 발각"):
+		_check(gm.current_ending_id == "tragic_execution", "스파이: 결판에서 지면 비극적 처형")
+	# 충성을 택하면 임무 완료로 복귀할 수 있다
+	_new_quiet_game(gm, "young_disciple")
+	gm.apply_role_transition(CharacterData.Role.SPY)
+	gm.do_role_action("intel", "namgung")
+	_run_arc(gm, [
+		["arc_spy_contact", 0], ["arc_spy_crisis1", 0], ["arc_spy_crisis2", 1], ["arc_spy_crisis3", 1, V], ["arc_spy_choice", 0],
+	], "스파이: 충성")
+	gm.refresh_role_transitions()
+	var spy_roles: Array = gm.pending_role_transitions.map(func(o: Dictionary) -> int: return o["role"])
+	_check(spy_roles.has(CharacterData.Role.MANAGER) and gm.current_ending_id.is_empty(), "스파이: 충성하면 복귀 경로")
+
+	# ── 마교 대침공: 연합 → 혈영 격퇴 → 방어전 → 천마 격파 ──
+	_new_quiet_game(gm, "young_disciple")
+	EventManager.set_flag(gm.story_flags, "cheonma_letter_refused")
+	if _run_arc(gm, [
+		["arc_cheonma_omen", 0], ["arc_cheonma_council", 0], ["arc_cheonma_assassin", 0, V],
+		["arc_cheonma_siege_allied", 0, V], ["arc_cheonma_final", 0, V], ["arc_cheonma_triumph", 0],
+	], "마교 대침공"):
+		_check(gm.current_ending_id == "demon_slayer" and gm.current_year >= 5, "마교: 천마를 벤 영웅 엔딩")
+	# 홀로 버티다 산문이 무너진다
+	_new_quiet_game(gm, "young_disciple")
+	EventManager.set_flag(gm.story_flags, "cheonma_letter_refused")
+	if _run_arc(gm, [
+		["arc_cheonma_omen", 1], ["arc_cheonma_assassin", 1], ["arc_cheonma_siege_alone", 0, D], ["arc_cheonma_fall", 0],
+	], "마교: 함락"):
+		_check(gm.current_ending_id == "fallen_sect", "마교: 무너진 산문 엔딩")
+	# 밀약을 맺었거나 다른 시나리오면 시작하지 않는다
+	gm.start_new_game("다른 시나리오", "young_disciple", "gangho_100", {"event_rate": 0.0})
+	EventManager.set_flag(gm.story_flags, "cheonma_letter_refused")
+	gm.current_year = 6
+	_check(not EventManager.conditions_met(EventManager.get_event("arc_cheonma_omen").conditions, gm.player_character, gm.player_sect, gm.player_relationships, "봄", gm.story_flags), "마교 대침공 아크는 천하대란 시나리오 전용")
+	ScenarioManager.activate(ScenarioManager.DEFAULT_ID)
+	_new_quiet_game(gm, "young_disciple")
+	EventManager.set_flag(gm.story_flags, "cheonma_letter_refused")
+	EventManager.set_flag(gm.story_flags, "cheonma_pact")
+	gm.current_year = 6
+	gm._sync_event_context()
+	_check(not EventManager.conditions_met(EventManager.get_event("arc_cheonma_omen").conditions, gm.player_character, gm.player_sect, gm.player_relationships, "봄", gm.story_flags), "마교와 밀약했으면 대침공 아크 없음")
+	_completed["_test_story_arcs"] = true

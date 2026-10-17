@@ -1,0 +1,77 @@
+{
+  "id": "arc_cheonma_council",
+  "title": "정파 연합 회의",
+  "description": "남궁세가 대전에 정파 문파들이 모였습니다. 남궁천이 좌중을 둘러봅니다.\n「누가 선봉에 서겠소?」",
+  "can_repeat": false,
+  "weight": 5,
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "cheonha"
+      ]
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_cheonma_start",
+      "op": ">=",
+      "value": 1
+    },
+    {
+      "type": "flag",
+      "flag": "arc_cheonma_alone",
+      "value": false
+    }
+  ],
+  "choices": [
+    {
+      "label": "선봉을 자청한다",
+      "message": "청운검파가 연합의 선봉이 되었습니다. 명성 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_cheonma_alliance",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "arc_cheonma_vanguard",
+          "value": true
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 10
+        }
+      ]
+    },
+    {
+      "label": "남궁세가에 지휘를 맡긴다",
+      "message": "남궁천이 흡족하게 고개를 끄덕입니다. 남궁세가 태도 +20",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_cheonma_alliance",
+          "value": true
+        },
+        {
+          "type": "world_sect",
+          "sect": "namgung",
+          "field": "attitude",
+          "add": 20
+        }
+      ]
+    },
+    {
+      "label": "각 문파의 이해를 따지다 회의를 깬다",
+      "message": "회의는 결렬되었습니다. 각자 살길을 찾아야 합니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_cheonma_alone",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

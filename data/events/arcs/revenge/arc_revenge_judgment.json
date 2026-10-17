@@ -1,0 +1,86 @@
+{
+  "id": "arc_revenge_judgment",
+  "title": "처단인가 용서인가",
+  "description": "무릎 꿇은 귀영이 피를 토하며 말합니다.\n「흑풍채 채주 마진이 시킨 일이다. 병든 누이의 약값이 필요했다…」\n칼끝이 그의 목에 닿아 있습니다.",
+  "can_repeat": false,
+  "weight": 4,
+  "conditions": [
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_revenge_won",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "목을 벤다",
+      "message": "귀영의 목을 베어 스승의 원수를 갚았습니다. 명성 +8, 도덕 -5, 스승과의 유대 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_revenge_executed",
+          "value": true
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 8
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -5
+        },
+        {
+          "type": "bond",
+          "target": "npc_master",
+          "add": 5
+        }
+      ]
+    },
+    {
+      "label": "용서하고 놓아준다",
+      "message": "칼을 거두었습니다. 귀영은 한참을 엎드려 있다가 말없이 사라졌습니다. 도덕 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_revenge_forgiven",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 10
+        },
+        {
+          "type": "set_bond_type",
+          "target": "npc_shadow_blade",
+          "bond_type": "BLOOD_OATH"
+        },
+        {
+          "type": "bond",
+          "target": "npc_shadow_blade",
+          "add": 10
+        }
+      ]
+    },
+    {
+      "label": "칼끝을 배후의 마진에게 돌린다",
+      "message": "귀영을 길잡이로 삼아 흑풍채 채주 마진을 노리기로 했습니다. 흑풍채 태도 -20",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_revenge_mastermind",
+          "value": true
+        },
+        {
+          "type": "world_sect",
+          "sect": "heukpung",
+          "field": "attitude",
+          "add": -20
+        }
+      ]
+    }
+  ]
+}

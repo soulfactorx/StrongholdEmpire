@@ -1,0 +1,49 @@
+{
+  "id": "arc_love_pursuit",
+  "title": "추격대",
+  "description": "남궁세가의 무사들이 뒤를 쫓아왔습니다. 남궁설이 검을 뽑아 당신 곁에 섭니다.\n「돌아가지 않겠어요.」",
+  "can_repeat": false,
+  "weight": 4,
+  "conditions": [
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_love_elope",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "함께 맞서 싸운다",
+      "message": "개울을 등지고 칼을 뽑았습니다.",
+      "effects": [
+        {
+          "type": "combat",
+          "combat": "arc_love_pursuit"
+        }
+      ]
+    },
+    {
+      "label": "그녀를 돌려보낸다",
+      "message": "남궁설을 무사들에게 돌려보냈습니다. 그녀는 끝내 돌아보지 않았습니다. 남궁세가 태도 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_love_ended",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lady",
+          "add": -30
+        },
+        {
+          "type": "world_sect",
+          "sect": "namgung",
+          "field": "attitude",
+          "add": 10
+        }
+      ]
+    }
+  ]
+}
