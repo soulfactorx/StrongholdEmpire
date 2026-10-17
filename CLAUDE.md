@@ -53,7 +53,7 @@ godot --headless --path . -s res://scripts/Tests/smoke_test.gd
 `.godot/`는 커밋하지 않는다.
 
 내보내기 프리셋은 `export_presets.cfg`(Android·웹·윈도우·리눅스). 내보낸 빌드 자체 점검: `<실행 파일> --headless -- --self-check`.
-`.github/workflows/export.yml`이 푸시마다 네 플랫폼을 내보내고 APK·웹·윈도우 빌드를 아티팩트로 올린다. 기기 시험은 `docs/기기_테스트_안내.md`.
+`.github/workflows/export.yml`이 푸시마다 네 플랫폼을 내보내고 APK·웹·윈도우 빌드를 아티팩트로 올린다. `main`이면 웹 빌드를 GitHub Pages에 배포한다. 기기 시험은 `docs/기기_테스트_안내.md`.
 
 GitHub Actions(`.github/workflows/smoke_test.yml`)가 푸시마다 같은 스모크 테스트를 돌리고,
 데이터 정의 오류·스크립트 오류가 로그에 있으면 실패로 처리한다. Godot 버전을 올리면 워크플로의 `GODOT_VERSION`도 함께 바꾼다.
