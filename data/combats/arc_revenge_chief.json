@@ -5,6 +5,7 @@
     2,
     5
   ],
+  "enemy_damage_scale": 0.6,
   "enemies": [
     {
       "npc": "npc_heukpung_chief",
@@ -78,7 +79,7 @@
       ]
     ]
   },
-  "enemy_hp_scale": 0.8,
+  "enemy_hp_scale": 0.6,
   "rewards": {
     "experience": 60,
     "gold": 120,

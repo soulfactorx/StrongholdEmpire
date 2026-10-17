@@ -73,7 +73,7 @@ func _ready() -> void:
 	)
 	back_button.text = "후퇴"
 	LongPressTip.attach(ap_label, func() -> String:
-		return "행동력: 차례마다 다시 찹니다.\n이동은 칸마다 1 (수풀 %d, 물 %d, 고지 %d), 기본 공격 1, 무공은 버튼에 적힌 만큼 듭니다.\n이동한 뒤 공격·무공을 쓰기 전이면 [이동 취소]로 되돌릴 수 있습니다." % [
+		return "행동력: 차례마다 다시 찹니다.\n이동은 칸마다 1 (수풀 %d, 물 %d, 고지 %d), 기본 공격 1 (차례에 한 번), 무공은 버튼에 적힌 만큼 듭니다.\n이동한 뒤 공격·무공을 쓰기 전이면 [이동 취소]로 되돌릴 수 있습니다." % [
 			_Balance.FOREST_MOVE_COST, _Balance.WATER_MOVE_COST, _Balance.HIGH_MOVE_COST,
 		]
 	)
@@ -330,6 +330,8 @@ func _update_hud() -> void:
 	round_label.text = "라운드 %d" % _turn_manager.round_number
 	undo_move_button.disabled = _last_move.is_empty() or controlled == null or _last_move["unit"] != controlled
 	end_turn_button.disabled = _combat_over or controlled == null
+	# 기본 공격은 차례에 한 번
+	$HUD/Panel/VBox/ModeRow/ModeAttackButton.disabled = _combat_over or controlled == null or not controlled.can_basic_attack()
 	if current:
 		turn_label.text = "현재 턴: %s%s" % [current.display_name, " (조종)" if controlled else ""]
 
@@ -487,6 +489,9 @@ func _try_attack(unit: CombatUnit, target: Vector2i) -> void:
 	if unit.action_points < 1:
 		_log("행동력이 부족합니다.")
 		return
+	if unit.basic_attacks_left <= 0:
+		_log("기본 공격은 차례에 한 번만 할 수 있습니다. 남은 행동력은 이동과 무공에 쓰세요.")
+		return
 	_perform_attack(unit, enemy)
 
 
@@ -556,6 +561,7 @@ func _perform_attack(attacker: CombatUnit, defender: CombatUnit) -> void:
 	)
 	defender.take_damage(result["damage"])
 	attacker.action_points -= 1
+	attacker.basic_attacks_left -= 1
 	AudioManager.play_hit()
 	_log("%s의 공격! %s에게 %d 피해%s" % [
 		attacker.display_name, defender.display_name, result["damage"], _notes_text(result["notes"]),
@@ -708,14 +714,24 @@ func _pick_enemy_target(enemy: CombatUnit) -> CombatUnit:
 	return best
 
 
-## 적 한 명의 차례: 공격할 수 있으면 공격하고, 아니면 다가간 뒤 공격을 시도한다.
-## 공격은 차례당 한 번이다. 밸런스 시뮬레이터는 같은 방식으로 아군도 자동으로 움직인다.
+## 적 한 명의 차례: 닿지 않으면 다가간 뒤, 행동력이 남는 동안 무공과 기본 공격(차례에 한 번)을 쓴다.
+## 플레이어와 같은 규칙이다. 밸런스 시뮬레이터는 같은 방식으로 아군도 자동으로 움직인다.
 func _run_enemy_ai(enemy: CombatUnit) -> void:
 	var target := _pick_enemy_target(enemy)
 	if target == null or not enemy.is_alive():
 		return
-	if _enemy_try_attack(enemy, target):
-		return
+	if not _enemy_try_attack(enemy, target):
+		_enemy_approach(enemy, target)
+	var guard: int = 0
+	while not _combat_over and enemy.is_alive() and guard < 8:
+		guard += 1
+		target = _pick_enemy_target(enemy)
+		if target == null or not _enemy_try_attack(enemy, target):
+			break
+
+
+## 대상에게 무공 사거리(없으면 인접)까지 다가간다. 공격할 행동력 1은 남겨 둔다.
+func _enemy_approach(enemy: CombatUnit, target: CombatUnit) -> void:
 
 	var art: MartialArtData = _enemy_usable_art(enemy)
 	var desired_range: int = art.range if art else 1
@@ -723,19 +739,20 @@ func _run_enemy_ai(enemy: CombatUnit) -> void:
 		return CombatRules.distance(pos, target.grid_pos) <= desired_range
 	var path: Array[Vector2i] = CombatRules.find_path(enemy.grid_pos, is_goal, _is_valid_tile, _terrain_at)
 	if not path.is_empty():
-		# 공격할 행동력 1은 남겨 둔다.
 		var walk: Dictionary = CombatRules.walk_path(path, enemy.action_points - 1, _terrain_at)
 		if walk["index"] >= 0:
 			enemy.grid_pos = path[walk["index"]]
 			enemy.action_points -= walk["cost"]
-	_enemy_try_attack(enemy, target)
 
 
+## 지금 쓸 수 있는 공격 무공. 시전 뒤 내공이 폭주 기준 아래로 떨어지는 무공은 쓰지 않는다.
 func _enemy_usable_art(enemy: CombatUnit) -> MartialArtData:
+	var character: CharacterData = enemy.character
 	for art in enemy.get_martial_arts():
 		if art.heal_amount > 0:
 			continue
-		if enemy.action_points >= art.action_cost and enemy.character.internal_energy_current >= art.internal_cost:
+		var left: int = character.internal_energy_current - art.internal_cost
+		if enemy.action_points >= art.action_cost and left >= character.internal_energy_max * _Balance.OVERLOAD_THRESHOLD:
 			return art
 	return null
 
@@ -745,7 +762,7 @@ func _enemy_try_attack(enemy: CombatUnit, target: CombatUnit) -> bool:
 	var dist: int = CombatRules.distance(enemy.grid_pos, target.grid_pos)
 	if art and dist <= CombatRules.get_art_range(art, _terrain_at(enemy.grid_pos)):
 		return _perform_art(enemy, target, art)
-	if dist == 1 and enemy.action_points >= 1:
+	if dist == 1 and enemy.can_basic_attack():
 		_perform_attack(enemy, target)
 		return true
 	return false

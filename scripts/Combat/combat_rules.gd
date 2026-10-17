@@ -26,6 +26,9 @@ const ELEMENT_OVERCOMES: Dictionary = {
 
 const NEIGHBORS: Array[Vector2i] = [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]
 
+## 피해 흔들림과 회심을 쓸지 여부. 정확한 피해 값을 시험하는 테스트에서는 끈다.
+static var randomness: bool = true
+
 
 static func move_cost(terrain: Terrain) -> int:
 	match terrain:
@@ -183,7 +186,17 @@ static func calculate_damage(
 	if relationship_defense > 1.0:
 		damage /= relationship_defense
 		notes.append("인연의 가호")
+	if randomness:
+		damage *= randf_range(1.0 - _Balance.DAMAGE_SPREAD, 1.0 + _Balance.DAMAGE_SPREAD)
+		if randf() < crit_chance(attacker):
+			damage *= _Balance.CRIT_MULTIPLIER
+			notes.append("회심")
 	return {"damage": maxi(1, int(damage)), "notes": notes}
+
+
+## 회심(치명타) 확률: 신법이 높을수록 오른다.
+static func crit_chance(attacker: CombatUnit) -> float:
+	return minf(_Balance.CRIT_MAX, _Balance.CRIT_BASE + attacker.character.agility * _Balance.CRIT_PER_AGILITY)
 
 
 ## 무공 시전 후 내공 폭주 판정. 반동 피해(없으면 0)를 돌려준다.

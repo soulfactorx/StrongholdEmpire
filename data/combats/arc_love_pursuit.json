@@ -14,6 +14,7 @@
       ]
     }
   ],
+  "enemy_damage_scale": 0.7,
   "enemies": [
     {
       "npc": "npc_namgung_guard",
@@ -90,7 +91,7 @@
       ]
     ]
   },
-  "enemy_hp_scale": 0.8,
+  "enemy_hp_scale": 0.65,
   "rewards": {
     "experience": 40
   },

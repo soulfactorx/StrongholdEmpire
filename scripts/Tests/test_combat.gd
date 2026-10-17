@@ -681,3 +681,93 @@ func _test_martial_art_screen_actions() -> void:
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
 	await process_frame
 	_completed["_test_martial_art_screen_actions"] = true
+
+
+## 피해 흔들림과 회심: 켜면 피해가 정해진 폭 안에서 흔들리고, 신법에 따라 회심이 난다.
+func _test_damage_randomness() -> void:
+	var T := CombatRules.Terrain
+	var attacker_char := CharacterData.new()
+	attacker_char.strength = 12
+	attacker_char.agility = 15
+	var attacker := CombatUnit.new(attacker_char, true)
+	var defender := CombatUnit.new(CharacterData.new())
+	var base: int = CombatRules.calculate_damage(attacker, defender, null, T.PLAIN, T.PLAIN)["damage"]
+	CombatRules.randomness = true
+	seed(12345)
+	var lowest: int = 9999
+	var highest: int = 0
+	var crits: int = 0
+	var spread_ok: bool = true
+	var rolls: int = 1000
+	for i in rolls:
+		var result: Dictionary = CombatRules.calculate_damage(attacker, defender, null, T.PLAIN, T.PLAIN)
+		var damage: int = result["damage"]
+		if "회심" in result["notes"]:
+			crits += 1
+			damage = int(damage / _Balance.CRIT_MULTIPLIER)
+		else:
+			lowest = mini(lowest, damage)
+			highest = maxi(highest, damage)
+		if damage < floori(base * (1.0 - _Balance.DAMAGE_SPREAD)) - 1 or damage > ceili(base * (1.0 + _Balance.DAMAGE_SPREAD)) + 1:
+			spread_ok = false
+	CombatRules.randomness = false
+	_check(spread_ok, "피해 흔들림은 ±%d%% 안" % roundi(_Balance.DAMAGE_SPREAD * 100))
+	_check(lowest < base and highest > base, "피해가 실제로 흔들림 (%d~%d, 기준 %d)" % [lowest, highest, base])
+	var expected: float = CombatRules.crit_chance(attacker)
+	_check(absf(float(crits) / rolls - expected) < 0.03, "회심 확률이 신법에 맞음 (%.1f%%, 기대 %.1f%%)" % [100.0 * crits / rolls, expected * 100])
+	attacker_char.agility = 100
+	_check(is_equal_approx(CombatRules.crit_chance(attacker), _Balance.CRIT_MAX), "회심 확률 상한")
+	_check(CombatRules.calculate_damage(attacker, defender, null, T.PLAIN, T.PLAIN)["damage"] == base, "끄면 피해가 일정")
+	_completed["_test_damage_randomness"] = true
+
+
+## 기본 공격은 차례에 한 번. 적 AI도 같은 규칙으로, 남은 행동력을 무공에 쓰고 내공 폭주는 피한다.
+func _test_basic_attack_limit() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_new_quiet_game(gm, "young_disciple")
+	gm.pending_combat = CombatManager.create_sparring(gm.player_character)
+	SceneRouter.goto(tree, SceneRouter.COMBAT)
+	await process_frame
+	await process_frame
+	var c: Node = current_scene
+	var player: CombatUnit = c._get_player()
+	var enemy: CombatUnit = c._get_alive_enemies()[0]
+	enemy.max_hp = 9999
+	enemy.hp = 9999
+	enemy.grid_pos = player.grid_pos + Vector2i(1, 0)
+	player.restore_action_points()
+	var ap: int = player.action_points
+	c._try_attack(player, enemy.grid_pos)
+	var hp_after_first: int = enemy.hp
+	_check(hp_after_first < 9999 and player.action_points == ap - 1, "첫 기본 공격")
+	c._try_attack(player, enemy.grid_pos)
+	_check(enemy.hp == hp_after_first and player.action_points == ap - 1, "같은 차례의 두 번째 기본 공격은 막힘")
+	c._update_hud()
+	_check(c.get_node("HUD/Panel/VBox/ModeRow/ModeAttackButton").disabled, "기본 공격을 다 쓰면 공격 버튼 비활성")
+	player.restore_action_points()
+	_check(player.can_basic_attack(), "다음 차례에 기본 공격 회복")
+
+	# 적 AI: 무공을 거듭 쓰고 기본 공격은 한 번
+	var art: MartialArtData = MartialArtLibrary.create_art("preset_soul_chase_sword")
+	enemy.character.learn_martial_art(art)
+	enemy.character.internal_energy_max = 200
+	enemy.character.restore_internal_energy()
+	enemy.restore_action_points()
+	enemy.action_points = 5
+	player.max_hp = 9999
+	player.hp = 9999
+	var energy_before: int = enemy.character.internal_energy_current
+	c._run_enemy_ai(enemy)
+	var casts: int = (energy_before - enemy.character.internal_energy_current) / art.internal_cost
+	_check(casts == 2 and enemy.basic_attacks_left == 0 and enemy.action_points == 0, "적 AI: 무공 두 번 + 기본 공격 한 번으로 행동력을 다 씀 (무공 %d번)" % casts)
+	# 시전 뒤 내공이 폭주 기준 아래로 떨어지면 무공을 쓰지 않는다
+	enemy.restore_action_points()
+	enemy.character.internal_energy_current = int(enemy.character.internal_energy_max * _Balance.OVERLOAD_THRESHOLD) + art.internal_cost - 1
+	_check(c._enemy_usable_art(enemy) == null, "적 AI: 내공 폭주가 날 무공은 쓰지 않음")
+	enemy.character.internal_energy_current += 1
+	_check(c._enemy_usable_art(enemy) == art, "적 AI: 폭주 기준을 지키면 무공 사용")
+
+	gm.pending_combat = null
+	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
+	await process_frame
+	_completed["_test_basic_attack_limit"] = true

@@ -5,6 +5,8 @@
     3,
     5
   ],
+  "enemy_hp_scale": 0.8,
+  "enemy_damage_scale": 0.75,
   "enemies": [
     {
       "npc": "npc_rival",

@@ -1,7 +1,7 @@
 extends SceneTree
 
 ## 밸런스 시뮬레이터: 전투 자동 플레이, 세력 AI, 장기 경제를 한 번에 돌려 수치를 출력한다.
-## 실행: godot --headless --path . -s res://scripts/Tools/balance_sim.gd [-- combat|world|economy]
+## 실행: godot --headless --path . -s res://scripts/Tools/balance_sim.gd [-- combat|world|economy] [runs=N] [only=전투,전투]
 ## 영역을 주지 않으면 모두 돌린다. 수치를 바꾸면 결과를 구현 계획(M9-5)에 함께 기록한다.
 
 const _EconomySim = preload("res://scripts/Tools/economy_sim.gd")
@@ -11,9 +11,15 @@ const COMBAT_SCENE_PATH := "res://scenes/Combat/combat_scene.tscn"
 ## 전투 자동 플레이: 시험할 전투와 주인공 레벨, 판 수
 const COMBATS: Array[String] = [
 	"sparring", "rival_duel", "night_bandits", "bandit_hunt", "assassination", "bounty_hunters", "invasion",
+	"arc_love_trial", "arc_love_pursuit", "arc_revenge_duel", "arc_revenge_duel_allied", "arc_revenge_chief",
+	"arc_spy_rescue", "arc_spy_enforcer", "arc_succession_coup", "arc_succession_coup_traitor",
+	"arc_cheonma_blood_shadow", "arc_cheonma_siege", "arc_cheonma_siege_allied", "arc_cheonma_final",
 ]
 const LEVELS: Array[int] = [1, 3, 6]
-const COMBAT_RUNS := 30
+## 판 수는 인자 runs=N으로 바꿀 수 있다.
+var combat_runs: int = 30
+## 인자 only=a,b로 시험할 전투를 고른다 (비우면 모두)
+var only_combats: PackedStringArray = []
 ## 한 판에서 넘기지 않을 라운드 수 (넘으면 무승부로 센다)
 const MAX_ROUNDS := 40
 const WORLD_RUNS := 100
@@ -29,13 +35,21 @@ func _initialize() -> void:
 
 func _run() -> void:
 	var args: PackedStringArray = OS.get_cmdline_user_args()
-	var all: bool = args.is_empty()
+	for arg in args:
+		if arg.begins_with("runs="):
+			combat_runs = maxi(1, arg.trim_prefix("runs=").to_int())
+		elif arg.begins_with("only="):
+			only_combats = arg.trim_prefix("only=").split(",")
+	var all: bool = not (args.has("combat") or args.has("world") or args.has("economy"))
 	if all or args.has("combat"):
 		await _run_combat()
 	if all or args.has("world"):
 		_run_world()
 	if all or args.has("economy"):
 		_run_economy()
+	# 재생 중인 효과음을 멈추고 오디오 스레드가 놓을 때까지 기다린다 (종료 시 누수 경고 방지)
+	root.get_node("AudioManager").stop_all()
+	await create_timer(0.3).timeout
 	quit()
 
 
@@ -43,24 +57,27 @@ func _run() -> void:
 
 func _run_combat() -> void:
 	var gm: Node = root.get_node("GameManager")
-	print("[전투 자동 플레이] 양쪽 모두 같은 AI(가까운 상대에게 다가가 공격·무공). %d판씩" % COMBAT_RUNS)
+	print("[전투 자동 플레이] %d판씩. 적은 적 AI(차례마다 한 번 공격), 주인공·아군은 정공법" % combat_runs)
+	print("  정공법: 가까운 적에게 다가가 행동력이 남는 동안 무공·기본 공격을 거듭한다. 시작 위치는 한 칸 안에서 무작위")
 	print("전투 / 주인공 레벨: 승률 · 이긴 판의 남은 체력 평균 · 평균 라운드")
 	for combat_id in COMBATS:
+		if not only_combats.is_empty() and not only_combats.has(combat_id):
+			continue
 		var line: String = "%-16s" % combat_id
 		for level in LEVELS:
 			var wins: int = 0
 			var hp_sum: float = 0.0
 			var rounds_sum: int = 0
 			seed(combat_id.hash() + level)
-			for run in COMBAT_RUNS:
+			for run in combat_runs:
 				var result: Dictionary = await _play_combat(gm, combat_id, level)
 				rounds_sum += result["rounds"]
 				if result["victory"]:
 					wins += 1
 					hp_sum += result["hp_ratio"]
 			line += " | Lv.%d 승 %3d%% 체력 %3d%% %4.1f라운드" % [
-				level, roundi(100.0 * wins / COMBAT_RUNS), roundi(100.0 * hp_sum / maxi(1, wins)),
-				float(rounds_sum) / COMBAT_RUNS,
+				level, roundi(100.0 * wins / combat_runs), roundi(100.0 * hp_sum / maxi(1, wins)),
+				float(rounds_sum) / combat_runs,
 			]
 		print(line)
 
@@ -78,6 +95,7 @@ func _play_combat(gm: Node, combat_id: String, level: int) -> Dictionary:
 		setup = CombatManager.create_invasion(gm.get_world_sect("heukpung"), gm.player_character, gm.player_sect)
 	else:
 		setup = CombatManager.create_by_id(combat_id, gm.player_character, gm.player_sect)
+	_jitter_start(setup)
 	gm.pending_combat = setup
 	var controller: Node = (load(COMBAT_SCENE_PATH) as PackedScene).instantiate()
 	root.add_child(controller)
@@ -87,7 +105,7 @@ func _play_combat(gm: Node, combat_id: String, level: int) -> Dictionary:
 		guard += 1
 		var current: CombatUnit = controller._get_controlled()
 		if current:
-			controller._run_enemy_ai(current)
+			_play_turn(controller, current)
 			if controller._combat_over:
 				break
 			controller._on_end_turn_pressed()
@@ -104,6 +122,33 @@ func _play_combat(gm: Node, combat_id: String, level: int) -> Dictionary:
 	gm.pending_combat = null
 	await process_frame
 	return result
+
+
+## 정공법 차례: 적 AI처럼 다가가 한 번 친 뒤, 행동력이 남는 동안 무공·기본 공격을 거듭한다.
+## (플레이어는 행동력만 있으면 차례에 여러 번 공격할 수 있다.)
+func _play_turn(controller: Node, unit: CombatUnit) -> void:
+	controller._run_enemy_ai(unit)
+	var guard: int = 0
+	while not controller._combat_over and unit.is_alive() and guard < 12:
+		guard += 1
+		var target: CombatUnit = controller._pick_enemy_target(unit)
+		if target == null or not controller._enemy_try_attack(unit, target):
+			break
+
+
+## 주인공의 시작 위치를 한 칸 안에서 무작위로 옮겨 판마다 전개가 달라지게 한다.
+func _jitter_start(setup: CombatSetup) -> void:
+	var candidates: Array[Vector2i] = []
+	for dx in [-1, 0, 1]:
+		for dy in [-1, 0, 1]:
+			var pos: Vector2i = setup.player_position + Vector2i(dx, dy)
+			if pos.x < 0 or pos.y < 0 or pos.x >= 16 or pos.y >= 10:
+				continue
+			if setup.blocked_tiles.has(pos) or setup.enemy_positions.has(pos) or setup.ally_positions.has(pos):
+				continue
+			candidates.append(pos)
+	if not candidates.is_empty():
+		setup.player_position = candidates[randi() % candidates.size()]
 
 
 # ── 세력 AI ──

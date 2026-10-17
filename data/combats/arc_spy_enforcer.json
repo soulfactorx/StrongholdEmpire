@@ -5,6 +5,8 @@
     3,
     5
   ],
+  "enemy_hp_scale": 0.7,
+  "enemy_damage_scale": 0.7,
   "enemies": [
     {
       "npc": "npc_namgung_enforcer",

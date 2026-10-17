@@ -50,6 +50,8 @@ static func create_sparring(player: CharacterData) -> CombatSetup:
 	setup.blocked_tiles = _central_wall()
 	_add_arena_terrain(setup)
 	setup.add_enemy(_create_rival(player), Vector2i(13, 5))
+	setup.enemy_hp_scale = 0.8
+	setup.enemy_damage_scale = 0.65
 	setup.rewards = {"experience": _Balance.SPAR_EXP, "bond": 5}
 	setup.defeat_penalty = {"injury_ratio": 0.5, "bond": 2}
 	return setup
@@ -82,6 +84,8 @@ static func create_rival_duel(player: CharacterData) -> CombatSetup:
 	rival.internal_energy_max += 20
 	rival.restore_internal_energy()
 	setup.add_enemy(rival, Vector2i(13, 5))
+	setup.enemy_hp_scale = 0.85
+	setup.enemy_damage_scale = 0.7
 	setup.rewards = {"experience": 40, "reputation": 5, "strength": 1, "bond": 10}
 	setup.defeat_penalty = {"reputation": 5, "injury_ratio": 0.3, "bond": -5}
 	setup.victory_flag = "won_rival_duel"
@@ -116,8 +120,8 @@ static func create_night_bandits(player: CharacterData, sect: SectData = null) -
 		positions.append(extra_positions[i])
 	for i in positions.size():
 		setup.add_enemy(_create_bandit(player, i), positions[i])
-	setup.enemy_hp_scale = 0.6
-	setup.enemy_damage_scale = 0.7
+	setup.enemy_hp_scale = 0.5
+	setup.enemy_damage_scale = 0.6
 	setup.rewards = {"experience": 30, "gold": 30, "reputation": 3, "strength": 1}
 	setup.defeat_penalty = {"gold": 40, "reputation": 3, "injury_ratio": 0.3}
 	return setup
@@ -132,8 +136,8 @@ static func create_bandit_hunt(player: CharacterData, gold_reward: int = _Balanc
 	setup.set_terrain([Vector2i(11, 4), Vector2i(12, 4), Vector2i(11, 6)], CombatRules.Terrain.FOREST)
 	setup.add_enemy(_create_bandit(player, 0), Vector2i(12, 3))
 	setup.add_enemy(_create_bandit(player, 1), Vector2i(12, 7))
-	setup.enemy_hp_scale = 0.7
-	setup.enemy_damage_scale = 0.8
+	setup.enemy_hp_scale = 0.55
+	setup.enemy_damage_scale = 0.6
 	setup.rewards = {"experience": 30, "gold": gold_reward}
 	setup.defeat_penalty = {"injury_ratio": 0.4}
 	return setup
@@ -160,8 +164,8 @@ static func create_assassination(player: CharacterData) -> CombatSetup:
 		var guard: CharacterData = _create_bandit(player, i + 1)
 		guard.display_name = "호위 무사 %s" % ["갑", "을"][i]
 		setup.add_enemy(guard, [Vector2i(11, 4), Vector2i(11, 6)][i])
-	setup.enemy_hp_scale = 0.7
-	setup.enemy_damage_scale = 0.8
+	setup.enemy_hp_scale = 0.55
+	setup.enemy_damage_scale = 0.65
 	setup.rewards = {"experience": _Balance.ASSASSINATION_EXP, "gold": _Balance.ASSASSINATION_GOLD}
 	setup.defeat_penalty = {"injury_ratio": 0.3}
 	setup.victory_flag = "assassination_success"
@@ -181,8 +185,8 @@ static func create_bounty_hunters(player: CharacterData) -> CombatSetup:
 		var hunter: CharacterData = _create_bandit(player, i)
 		hunter.display_name = "사냥꾼 %s" % ["갑", "을", "병"][i]
 		setup.add_enemy(hunter, positions[i])
-	setup.enemy_hp_scale = 0.7
-	setup.enemy_damage_scale = 0.8
+	setup.enemy_hp_scale = 0.55
+	setup.enemy_damage_scale = 0.65
 	setup.rewards = {"experience": 35, "reputation": 2}
 	setup.defeat_penalty = {"gold": 40, "injury_ratio": 0.3}
 	return setup

@@ -97,8 +97,8 @@
       ]
     ]
   },
-  "enemy_hp_scale": 0.7,
-  "enemy_damage_scale": 0.8,
+  "enemy_hp_scale": 0.5,
+  "enemy_damage_scale": 0.65,
   "rewards": {
     "experience": 60,
     "gold": 100,

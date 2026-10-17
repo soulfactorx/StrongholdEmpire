@@ -372,10 +372,19 @@ const LEVEL_UP_INTERNAL_GAIN := 10
 
 # 전투
 const SPAR_EXP := 30
-const BASE_ATTACK_DAMAGE := 8
+const BASE_ATTACK_DAMAGE := 10
 const ENEMY_BASE_ATTACK_DAMAGE := 10
+## 기본 공격은 차례마다 이 횟수만 할 수 있다. 남은 행동력은 이동과 무공에 쓴다.
+const BASIC_ATTACKS_PER_TURN := 1
 ## 무공 피해에 더하는 무력 비율
 const ART_STRENGTH_RATIO := 0.3
+## 피해 흔들림: 최종 피해에 1 ± 이 값 사이의 배율을 곱한다
+const DAMAGE_SPREAD := 0.15
+## 회심(치명타): 확률 = 기본 + 신법 × 계수 (상한), 피해 배율
+const CRIT_BASE := 0.03
+const CRIT_PER_AGILITY := 0.004
+const CRIT_MAX := 0.25
+const CRIT_MULTIPLIER := 1.5
 
 # 전투 — 아군 제자
 ## 문파 방어 전투에 함께 나서는 제자 수 (보유 제자 수를 넘지 않음)

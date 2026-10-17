@@ -18,6 +18,8 @@ var grid_pos: Vector2i = Vector2i.ZERO
 var hp: int = 100
 var max_hp: int = 100
 var action_points: int = 4
+## 이번 차례에 남은 기본 공격 횟수
+var basic_attacks_left: int = _Balance.BASIC_ATTACKS_PER_TURN
 var max_action_points: int = 4
 ## 오행 판정과 속도에 쓰는 대표 무공 (가장 최근에 쓴 무공)
 var active_martial_art: MartialArtData = null
@@ -96,6 +98,12 @@ func get_status_text() -> String:
 
 func restore_action_points() -> void:
 	action_points = max_action_points
+	basic_attacks_left = _Balance.BASIC_ATTACKS_PER_TURN
+
+
+## 기본 공격을 할 수 있는지 (행동력 1과 이번 차례의 남은 횟수)
+func can_basic_attack() -> bool:
+	return action_points >= 1 and basic_attacks_left > 0
 
 
 func take_damage(amount: int) -> void:

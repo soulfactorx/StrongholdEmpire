@@ -44,7 +44,8 @@ godot --headless --path . -s res://scripts/Tests/smoke_test.gd
 검사는 영역별 파일 `scripts/Tests/test_*.gd`(core·events·combat·world·scenario·roles·ui)에 있고,
 `smoke_test.gd`는 실행 순서(`INIT_SEQUENCE`·`RUNTIME_SEQUENCE`)와 결과 집계만 맡는다.
 새 검사 함수는 해당 영역 파일에 넣고 순서 목록에 추가한다. 공통 도우미는 `test_base.gd`에 둔다.
-밸런스 시뮬레이터(전투 자동 플레이·세력 AI·경제): `godot --headless --path . -s res://scripts/Tools/balance_sim.gd [-- combat|world|economy]`
+밸런스 시뮬레이터(전투 자동 플레이·세력 AI·경제): `godot --headless --path . -s res://scripts/Tools/balance_sim.gd [-- combat|world|economy] [runs=N] [only=전투,…]`
+전투 수치(적 배율·피해 규칙)를 바꾸면 전투 시뮬레이션 결과를 `docs/구현_계획.md` M9-5에 갱신한다.
 
 새 스크립트를 추가했다면 먼저 `godot --headless --editor --quit`로 클래스 캐시를 갱신한다.
 경제 수치(수입·유지비·시설·재고 손실)를 바꾸면 경제 시뮬레이터로 전략별 10년 추이를 확인한다:

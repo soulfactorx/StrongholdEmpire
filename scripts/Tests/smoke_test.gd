@@ -39,6 +39,7 @@ const INIT_SEQUENCE: Array = [
 	["world", "_test_sect_registry"],
 	["world", "_test_world_sect_events"],
 	["combat", "_test_combat_rules"],
+	["combat", "_test_damage_randomness"],
 	["combat", "_test_martial_art_library"],
 	["combat", "_test_ally_setup"],
 	["events", "_test_event_grammar_validation"],
@@ -57,6 +58,7 @@ const RUNTIME_SEQUENCE: Array = [
 	["world", "_test_world_state_and_war"],
 	["combat", "_test_combat_effects"],
 	["combat", "_test_ally_combat"],
+	["combat", "_test_basic_attack_limit"],
 	["events", "_test_event_progress_tracking"],
 	["scenario", "_test_scenario_data"],
 	["scenario", "_test_scenario_parameters"],
@@ -109,6 +111,8 @@ func _initialize() -> void:
 	GameSettings.combat_delay = 0.0
 	# 세력 AI는 계절마다 강호 세력 수치를 바꾸므로, 그 영향을 시험하는 곳에서만 켠다.
 	SectAI.active = false
+	# 피해 흔들림·회심은 끄고 정확한 값으로 시험한다 (켠 상태는 test_combat의 _test_damage_randomness에서 따로)
+	CombatRules.randomness = false
 	for key in SUITES:
 		_suites[key] = SUITES[key].new(self)
 	_suites["core"]._clear_test_saves()
