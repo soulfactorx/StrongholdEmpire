@@ -1,0 +1,26 @@
+{
+  "id": "npc_tang_poisoner",
+  "display_name": "당가 독수",
+  "title": "사천당가 암기수",
+  "sect_id": "tang",
+  "role": "WANDERER",
+  "description": "독침과 비수를 다루는 당가의 무사.",
+  "level": 1,
+  "stats": {
+    "strength": 9,
+    "agility": 13,
+    "wisdom": 10,
+    "charisma": 7,
+    "internal_energy_max": 70,
+    "age": 26,
+    "morality": 40
+  },
+  "scaling": {
+    "base_level": 1,
+    "level_offset": 0,
+    "per_level": {
+      "agility": 1,
+      "strength": 1
+    }
+  }
+}

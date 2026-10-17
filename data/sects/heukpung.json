@@ -10,5 +10,6 @@
   "training_ground_level": 1,
   "attitude": -30,
   "soldier_npc": "npc_bandit",
-  "champion_npc": "npc_heukpung_second"
+  "champion_npc": "npc_heukpung_second",
+  "strategy": "opportunist"
 }

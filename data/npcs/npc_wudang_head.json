@@ -1,0 +1,33 @@
+{
+  "id": "npc_wudang_head",
+  "display_name": "청허진인",
+  "title": "무당파 장문인",
+  "sect_id": "wudang",
+  "role": "LEADER",
+  "description": "태극의 이치를 깨친 도인. 싸움을 즐기지 않지만, 무당의 검은 한번 뽑히면 물러서지 않는다.",
+  "level": 8,
+  "stats": {
+    "strength": 17,
+    "agility": 19,
+    "wisdom": 22,
+    "charisma": 17,
+    "internal_energy_max": 230,
+    "age": 64,
+    "morality": 75
+  },
+  "war_specialty": "DEFEND",
+  "dialogue": {
+    "talk": [
+      "물은 다투지 않으나 바위를 뚫는 법이지요.",
+      "강호가 시끄러울수록 마음은 고요해야 합니다.",
+      "무량수불. 귀하의 앞길에 도가 함께하길."
+    ],
+    "gift": [
+      "무당은 재물을 탐하지 않으나, 그 마음은 받겠습니다.",
+      "선물보다 귀한 것은 귀하의 뜻이지요."
+    ],
+    "spar": [
+      "태극은 부드러움으로 굳셈을 이깁니다. 한 수 청하지요."
+    ]
+  }
+}

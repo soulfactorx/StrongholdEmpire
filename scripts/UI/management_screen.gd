@@ -33,6 +33,8 @@ const _ChroniclePopup = preload("res://scripts/UI/chronicle_popup.gd")
 @onready var role_popup: Control = %RolePopup
 var facility_popup: Control
 var chronicle_popup: Control
+## 계절마다 강호 세력 동향
+var faction_popup: Control
 ## 역할 행동의 대상을 고르는 팝업
 var choice_popup: Control
 ## 제자 명단 팝업
@@ -83,6 +85,8 @@ func _ready() -> void:
 	add_child(report_popup)
 	chronicle_popup = _ChroniclePopup.new()
 	add_child(chronicle_popup)
+	faction_popup = _ConfirmPopup.new()
+	add_child(faction_popup)
 	_connect_bus(EventBus.turn_advanced, _on_turn_advanced)
 	_connect_bus(EventBus.resources_changed, _on_resources_changed)
 	_connect_bus(EventBus.character_updated, _on_character_updated)
@@ -154,7 +158,7 @@ func _food_tip() -> String:
 
 
 ## 키보드 단축키: Space 계절 진행, F 시설, M 무공 연구소, W 강호 정세, D 제자 명단, B 인연,
-## R 역할 전환, C 연대기, S 저장, O 설정, Esc 팝업 닫기(없으면 메인 메뉴로)
+## R 역할 전환, C 연대기, G 강호 지도, S 저장, O 설정, Esc 팝업 닫기(없으면 메인 메뉴로)
 const HUB_SHORTCUTS: Dictionary = {
 	KEY_SPACE: "_on_advance_turn_pressed",
 	KEY_F: "_on_facility_pressed",
@@ -164,6 +168,7 @@ const HUB_SHORTCUTS: Dictionary = {
 	KEY_B: "_on_bond_pressed",
 	KEY_R: "_on_role_pressed",
 	KEY_C: "_on_chronicle_pressed",
+	KEY_G: "_on_map_pressed",
 	KEY_S: "_on_save_pressed",
 	KEY_O: "_on_options_pressed",
 }
@@ -171,7 +176,7 @@ const HUB_SHORTCUTS: Dictionary = {
 
 func _get_open_popups() -> Array[Control]:
 	var result: Array[Control] = []
-	for popup in [role_popup, facility_popup, choice_popup, disciple_popup, bond_popup, invasion_popup, save_popup, confirm_popup, options_popup, report_popup, chronicle_popup]:
+	for popup in [role_popup, facility_popup, choice_popup, disciple_popup, bond_popup, invasion_popup, save_popup, confirm_popup, options_popup, report_popup, chronicle_popup, faction_popup]:
 		if popup and popup.visible:
 			result.append(popup)
 	# 행동 미리보기 확인창은 맨 위에 뜬다.
@@ -423,6 +428,14 @@ func _on_turn_advanced(_year: int, _season: String) -> void:
 	_on_action_message(GameManager.last_turn_report)
 	_show_invasion()
 	_show_year_report()
+	_show_faction_report()
+
+
+## 계절을 넘기면 강호 세력마다 어떤 전략으로 무엇을 했는지 보여 준다. (설정에서 끌 수 있다)
+func _show_faction_report() -> void:
+	if not GameSettings.faction_report or GameManager.last_faction_report.is_empty():
+		return
+	faction_popup.open("강호 세력 동향 — %s" % GameManager.get_date_text(), SectAI.format_reports(GameManager.last_faction_report), Callable(), "확인", "")
 
 
 ## 해가 바뀌면 1년 결산을 보여 준다.
@@ -637,6 +650,11 @@ func _on_save_slot_chosen(slot: String) -> void:
 		AudioManager.play_success()
 	else:
 		AudioManager.play_failure()
+
+
+func _on_map_pressed() -> void:
+	AudioManager.play_click()
+	SceneRouter.goto(get_tree(), SceneRouter.MAP)
 
 
 func _on_chronicle_pressed() -> void:

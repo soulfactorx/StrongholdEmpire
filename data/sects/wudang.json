@@ -1,0 +1,17 @@
+{
+  "id": "wudang",
+  "sect_name": "무당파",
+  "alignment": "RIGHTEOUS",
+  "leader_id": "npc_wudang_head",
+  "description": "태극검법의 도문 명가. 세속의 다툼을 멀리하지만, 정파의 큰 기둥이다.",
+  "optional": true,
+  "strategy": "economy",
+  "reputation": 75,
+  "disciple_count": 22,
+  "max_disciples": 40,
+  "training_ground_level": 2,
+  "library_level": 2,
+  "attitude": 10,
+  "soldier_npc": "npc_wudang_disciple",
+  "war_formation": "CIRCLE"
+}

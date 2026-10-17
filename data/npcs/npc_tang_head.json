@@ -1,0 +1,36 @@
+{
+  "id": "npc_tang_head",
+  "display_name": "당천독",
+  "title": "사천당가 가주",
+  "sect_id": "tang",
+  "role": "LEADER",
+  "description": "독과 암기로 이름난 사천당가의 가주. 이익이 되는 쪽이면 누구와도 손을 잡는다.",
+  "level": 7,
+  "stats": {
+    "strength": 15,
+    "agility": 20,
+    "wisdom": 18,
+    "charisma": 13,
+    "internal_energy_max": 190,
+    "age": 48,
+    "morality": 40
+  },
+  "war_specialty": "FLANK",
+  "dialogue": {
+    "talk": [
+      "당가의 독은 상대를 가리지 않소. 말조심하시오.",
+      "사천의 길은 험하오. 그만큼 귀한 것도 많지.",
+      "거래라면 언제든 환영이오."
+    ],
+    "gift": [
+      "허, 당가에 선물이라니. 독이 든 건 아니겠지?",
+      "좋은 물건이군. 당가는 셈이 정확하오."
+    ],
+    "spar": [
+      "암기를 피할 자신이 있다면 덤비시오."
+    ],
+    "hatred": [
+      "당가의 원한은 독보다 오래 가오."
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "haomun",
+  "sect_name": "하오문",
+  "alignment": "UNORTHODOX",
+  "leader_id": "npc_haomun_master",
+  "description": "객잔·기루·저잣거리를 잇는 정보 조직. 싸움보다 거래와 소문으로 세를 넓힌다.",
+  "optional": true,
+  "strategy": "diplomacy",
+  "reputation": 40,
+  "disciple_count": 14,
+  "max_disciples": 30,
+  "training_ground_level": 1,
+  "attitude": 0,
+  "soldier_npc": "npc_bandit"
+}

@@ -14,7 +14,7 @@ const GM_FIELDS: PackedStringArray = [
 	"pending_invasion", "world_news", "analyzed_elements", "triggered_event_ids", "current_ending_id",
 	"game_over_id", "pending_event", "pending_role_transitions", "is_game_active", "last_turn_report",
 	"player_relationships", "world_sects", "player_character", "player_sect", "pending_combat",
-	"pending_war_plan", "year_start", "chronicle",
+	"pending_war_plan", "year_start", "chronicle", "map_state", "pending_region_target", "last_faction_report",
 ]
 const STAT_NAMES: Dictionary = {
 	"strength": "무력", "agility": "신법", "wisdom": "지혜", "charisma": "매력",

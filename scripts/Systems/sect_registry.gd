@@ -8,6 +8,7 @@ extends RefCounted
 ##       is_player_sect(선택), 그리고 SectData의 수치 필드(reputation, disciple_count 등)
 ##       war_tactics(선택) { 명령: 가중치 }, war_formation(선택) CRANE/FISH/CIRCLE/NONE
 ##       — 없으면 성향별 기본값(GameBalance.WAR_TACTICS, WAR_FORMATIONS)
+##       strategy(선택) 세력 AI 전략 (FactionStrategy), optional(선택) true면 새 게임에서 골라야 등장하는 세력
 
 const SECT_DIR := "res://data/sects/"
 const NUMERIC_FIELDS: PackedStringArray = [
@@ -62,11 +63,31 @@ static func create_rival_sects(ids: Array = [], overrides: Dictionary = {}) -> A
 	var sect_ids: Array = ids.duplicate()
 	if sect_ids.is_empty():
 		for id in _sects:
-			if not _sects[id].get("is_player_sect", false):
+			if not _sects[id].get("is_player_sect", false) and not _sects[id].get("optional", false):
 				sect_ids.append(id)
 	for id in sect_ids:
 		if _sects.has(id):
 			result.append(create_sect(id, overrides.get(id, {})))
+	return result
+
+
+## 시나리오가 세력을 정하지 않았을 때 기본으로 나오는 강호 세력 id (플레이어 문파·골라 넣는 세력 제외)
+static func get_default_rival_ids() -> Array:
+	_ensure_loaded()
+	var result: Array = []
+	for id in _sects:
+		if not _sects[id].get("is_player_sect", false) and not _sects[id].get("optional", false):
+			result.append(id)
+	return result
+
+
+## 새 게임에서 골라 넣을 수 있는 세력 (optional) id 목록
+static func get_optional_ids() -> Array:
+	_ensure_loaded()
+	var result: Array = []
+	for id in _sects:
+		if _sects[id].get("optional", false):
+			result.append(id)
 	return result
 
 
@@ -78,6 +99,7 @@ static func create_sect(sect_id: String, overrides: Dictionary = {}) -> SectData
 	sect.alignment = SectData.Alignment.get(data.get("alignment", ""), SectData.Alignment.RIGHTEOUS)
 	sect.leader_id = data.get("leader_id", "")
 	sect.leader_name = NpcRoster.get_display_name(sect.leader_id)
+	sect.strategy = str(data.get("strategy", ""))
 	for key in NUMERIC_FIELDS:
 		if data.has(key):
 			sect.set(key, int(data[key]))
@@ -99,7 +121,7 @@ static func validate_sect_dict(data: Dictionary) -> PackedStringArray:
 	for key in data:
 		if not (key in NUMERIC_FIELDS or key in [
 			"id", "sect_name", "alignment", "leader_id", "description", "is_player_sect", "_path",
-			"war_tactics", "war_formation", "soldier_npc", "champion_npc", "emblem",
+			"war_tactics", "war_formation", "soldier_npc", "champion_npc", "emblem", "strategy", "optional",
 		]):
 			errors.append("알 수 없는 필드: %s" % key)
 	var tactics: Variant = data.get("war_tactics", {})
@@ -116,6 +138,8 @@ static func validate_sect_dict(data: Dictionary) -> PackedStringArray:
 			errors.append("명부에 없는 %s: %s" % [key, data[key]])
 	if data.has("emblem") and not ResourceLoader.exists("res://assets/art/" + str(data["emblem"])):
 		errors.append("문장 그림이 없음: assets/art/%s" % data["emblem"])
+	if data.has("strategy") and not FactionStrategy.is_valid(str(data["strategy"])):
+		errors.append("알 수 없는 전략: %s" % data["strategy"])
 	if data.has("war_formation") and not data["war_formation"] in ["NONE", "CRANE", "FISH", "CIRCLE"]:
 		errors.append("알 수 없는 진형: %s" % data["war_formation"])
 	return errors

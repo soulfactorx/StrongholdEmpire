@@ -8,7 +8,7 @@ extends RefCounted
 ## 경영 화면의 행동 버튼 (노드 이름)
 const ACTION_BUTTONS: PackedStringArray = [
 	"AdvanceTurnButton", "TrainButton", "FacilityButton", "ElixirButton", "FeastButton", "MartialArtButton",
-	"RoleButton", "CombatButton", "SectWarButton", "EndingButton", "WorldButton", "DiscipleButton", "MapButton",
+	"RoleButton", "CombatButton", "SectWarButton", "WorldButton", "DiscipleButton", "MapButton",
 ]
 
 ## 역할별 구성. hidden: 숨길 버튼, sect: 문파 일에 몸담는지(아니면 시설 칸을 숨기고 금화·식량을 개인 재산으로 보인다),

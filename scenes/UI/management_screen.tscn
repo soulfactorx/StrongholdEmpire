@@ -153,6 +153,12 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "연대기"
 
+[node name="EndingButton" type="Button" parent="Margin/RootHBox/LeftPanel/SystemPanel/SystemVBox"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "엔딩 / 레거시"
+
 [node name="RightPanel" type="VBoxContainer" parent="Margin/RootHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -279,11 +285,6 @@ text = "비무 (남궁휘)"
 custom_minimum_size = Vector2(170, 48)
 layout_mode = 2
 text = "문파전"
-[node name="EndingButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
-custom_minimum_size = Vector2(170, 48)
-layout_mode = 2
-text = "엔딩 / 레거시"
-
 [node name="WorldButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
 custom_minimum_size = Vector2(170, 48)
 layout_mode = 2
@@ -293,6 +294,11 @@ text = "강호 정세"
 custom_minimum_size = Vector2(170, 48)
 layout_mode = 2
 text = "제자 명단"
+
+[node name="MapButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
+custom_minimum_size = Vector2(170, 48)
+layout_mode = 2
+text = "강호 지도"
 
 [node name="LogPanel" type="PanelContainer" parent="Margin/RootHBox/LeftPanel"]
 layout_mode = 2
@@ -313,9 +319,10 @@ autowrap_mode = 3
 [connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/RoleButton" to="." method="_on_role_pressed"]
 [connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/CombatButton" to="." method="_on_combat_pressed"]
 [connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/SectWarButton" to="." method="_on_sect_war_pressed"]
-[connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/EndingButton" to="." method="_on_ending_pressed"]
+[connection signal="pressed" from="Margin/RootHBox/LeftPanel/SystemPanel/SystemVBox/EndingButton" to="." method="_on_ending_pressed"]
 [connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/WorldButton" to="." method="_on_world_pressed"]
 [connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/DiscipleButton" to="." method="_on_disciple_pressed"]
+[connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/MapButton" to="." method="_on_map_pressed"]
 [connection signal="pressed" from="Margin/RootHBox/RightPanel/RelationshipPanel/RelationshipVBox/BondButton" to="." method="_on_bond_pressed"]
 
 [connection signal="pressed" from="Margin/RootHBox/LeftPanel/SystemPanel/SystemVBox/SaveButton" to="." method="_on_save_pressed"]

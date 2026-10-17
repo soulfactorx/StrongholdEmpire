@@ -13,6 +13,7 @@ var text_option: OptionButton
 var speed_option: OptionButton
 var preview_check: CheckButton
 var action_preview_check: CheckButton
+var faction_report_check: CheckButton
 
 
 func _ready() -> void:
@@ -104,6 +105,11 @@ func _ready() -> void:
 	action_preview_check.custom_minimum_size = Vector2(0, 48)
 	action_preview_check.toggled.connect(func(on: bool) -> void: GameSettings.set_and_save("action_preview", on, get_tree()))
 	box.add_child(action_preview_check)
+	faction_report_check = CheckButton.new()
+	faction_report_check.text = "계절마다 강호 세력 동향 보기"
+	faction_report_check.custom_minimum_size = Vector2(0, 48)
+	faction_report_check.toggled.connect(func(on: bool) -> void: GameSettings.set_and_save("faction_report", on, get_tree()))
+	box.add_child(faction_report_check)
 	var note := Label.new()
 	note.text = "글자 크기는 다음에 여는 화면부터 적용됩니다."
 	_UiTheme.set_font_size(note, 14)
@@ -124,6 +130,7 @@ func open() -> void:
 	fullscreen_check.set_pressed_no_signal(GameSettings.fullscreen)
 	preview_check.set_pressed_no_signal(GameSettings.combat_preview)
 	action_preview_check.set_pressed_no_signal(GameSettings.action_preview)
+	faction_report_check.set_pressed_no_signal(GameSettings.faction_report)
 	for i in GameSettings.TEXT_SCALES.size():
 		if is_equal_approx(GameSettings.TEXT_SCALES[i][1], GameSettings.text_scale):
 			text_option.select(i)

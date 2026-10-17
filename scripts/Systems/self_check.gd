@@ -16,6 +16,7 @@ const MINIMUMS: Dictionary = {
 	"엔딩": 10,
 	"시나리오": 3,
 	"무공": 3,
+	"지도 지역": 18,
 }
 
 
@@ -36,6 +37,7 @@ static func run() -> Dictionary:
 		"엔딩": EndingManager.get_all_endings().size(),
 		"시나리오": ScenarioManager.list_scenarios().size(),
 		"무공": MartialArtLibrary.get_all().size(),
+		"지도 지역": WorldMap.get_regions().size(),
 	}
 	for key in MINIMUMS:
 		var passed: bool = counts[key] >= MINIMUMS[key]

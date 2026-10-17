@@ -77,6 +77,8 @@
 | `soldier_npc` | (선택) 이 세력이 침공할 때 오는 졸개 인물 id. 없으면 `npc_bandit` |
 | `champion_npc` | (선택) 침공을 이끄는 우두머리 인물 id. 없으면 졸개만 온다 |
 | `emblem` | (선택) 문장 그림 경로 (`assets/art/` 아래). 없으면 `emblems/<id>.png`. 256×256 투명 PNG 권장 |
+| `strategy` | (선택) 세력 AI 전략: `expansion`(영토 확장) · `military`(무력 강병) · `economy`(내실 부강) · `diplomacy`(합종연횡) · `opportunist`(기회주의). 없으면 성향별 기본값(정파 합종연횡, 사파 기회주의, 마교 무력 강병). 새 게임 화면에서 바꿀 수 있다 |
+| `optional` | (선택) `true`면 기본으로 나오지 않고, 새 게임 화면의 "강호 세력 설정"에서 켜야 나오는 세력 |
 
 ## 문파전과의 관계
 

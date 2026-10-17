@@ -64,6 +64,10 @@ var art_draft: Dictionary = {}
 ## 저장해 둔 무공 창조 설정: [{title, name, category, element, yin_yang, effects}]
 var art_blueprints: Array[Dictionary] = []
 const ART_BLUEPRINT_LIMIT := 10
+## 강호 지도 상태 {owners: {지역: 세력 id}, homes: {세력 id: 본거지}} (WorldMap)
+var map_state: Dictionary = {}
+## 지난 계절 세력마다 한 일: [{sect_id, sect_name, strategy, action, detail}] (SectAI.run_season의 reports)
+var last_faction_report: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -101,10 +105,11 @@ func start_new_game(
 	scenario_id: String = ScenarioManager.DEFAULT_ID,
 	overrides: Dictionary = {},
 	ironman_mode: bool = false,
-	tutorial: bool = false
+	tutorial: bool = false,
+	factions: Dictionary = {}
 ) -> void:
 	ScenarioManager.activate(scenario_id, overrides)
-	_initialize_new_game(role_id, display_name)
+	_initialize_new_game(role_id, display_name, factions)
 	ironman = ironman_mode
 	is_game_active = true
 	add_chronicle("시작", "%s(%s), 「%s」의 강호에 첫발을 내딛다." % [
@@ -165,13 +170,18 @@ func save_art_blueprint(blueprint: Dictionary) -> Dictionary:
 	return {"success": true, "message": message}
 
 
+## factions: 새 게임 화면의 세력 설정 {extra: [더할 세력 id], strategies: {세력 id: 전략 id 또는 "random"}}
 func _initialize_new_game(
 	role_id: String = StartingRoles.DEFAULT_ID,
-	display_name: String = ""
+	display_name: String = "",
+	factions: Dictionary = {}
 ) -> void:
 	_set_player_character(StartingRoles.create_character(role_id, display_name))
 	player_sect = ScenarioManager.create_player_sect()
 	world_sects = ScenarioManager.create_rival_sects()
+	_apply_faction_setup(factions)
+	map_state = WorldMap.create_state(_all_sect_ids())
+	last_faction_report.clear()
 	StartingRoles.apply_sect_setup(role_id, player_sect, player_character)
 	DiscipleRoster.enable(player_sect)
 	player_relationships = RelationshipManager.create_default_relationships()
@@ -208,6 +218,25 @@ func _initialize_new_game(
 	_sync_event_context()
 
 
+## 새 게임 세력 설정: 고른 세력을 더하고 세력마다 전략을 정한다.
+func _apply_faction_setup(factions: Dictionary) -> void:
+	for sect_id in factions.get("extra", []):
+		if SectRegistry.has_sect(sect_id) and get_world_sect(sect_id) == null and sect_id != player_sect.id:
+			world_sects.append(SectRegistry.create_sect(sect_id))
+	var strategies: Dictionary = factions.get("strategies", {})
+	for sect in world_sects:
+		var chosen: String = FactionStrategy.resolve(str(strategies.get(sect.id, "")))
+		if FactionStrategy.is_valid(chosen):
+			sect.strategy = chosen
+
+
+func _all_sect_ids() -> Array:
+	var ids: Array = [player_sect.id]
+	for sect in world_sects:
+		ids.append(sect.id)
+	return ids
+
+
 ## 기연 판정에 쓰는 진행 상황을 EventManager에 넘긴다. (딕셔너리·배열은 같은 객체를 공유)
 func _sync_event_context() -> void:
 	EventManager.world_sects = world_sects
@@ -217,6 +246,8 @@ func _sync_event_context() -> void:
 	EventManager.role_history = role_history
 	EventManager.flag_turns = flag_turns
 	EventManager.role_state = role_state
+	EventManager.map_state = map_state
+	EventManager.player_sect_id = player_sect.id if player_sect else ""
 
 
 func _record_role(role: CharacterData.Role) -> void:
@@ -307,7 +338,10 @@ func _run_sect_ai() -> String:
 	if not SectAI.active:
 		return ""
 	# 침공 빈도는 기연 빈도를 따른다 (기연 빈도 0인 시험·시뮬레이션에서는 침공이 없다).
-	var result: Dictionary = SectAI.run_season(world_sects, _get_turn_index(), current_year, ScenarioRules.event_rate())
+	var result: Dictionary = SectAI.run_season(
+		world_sects, _get_turn_index(), current_year, ScenarioRules.event_rate(), map_state
+	)
+	last_faction_report.assign(result["reports"])
 	for line in result["news"]:
 		add_world_news(line)
 	pending_invasion = result["invader"]
@@ -385,6 +419,7 @@ func resolve_invasion(choice: String) -> Dictionary:
 			invader.disciple_count = mini(invader.max_disciples, invader.disciple_count + 1)
 			invader.reputation += _Balance.INVASION_YIELD_REPUTATION
 			message = "%s에게 산문을 내주었습니다. 제자 -%d, 명성 -%d" % [invader.sect_name, lost, _Balance.INVASION_YIELD_REPUTATION]
+			message += _lose_region_to(invader)
 	pending_invasion = ""
 	add_world_news(message)
 	EventBus.resources_changed.emit(player_sect)
@@ -395,6 +430,9 @@ func resolve_invasion(choice: String) -> Dictionary:
 func _process_seasonal_income() -> String:
 	var income: Dictionary = SectManager.compute_seasonal_income(player_sect, player_character, get_current_season())
 	income["gold"] += RoleActions.get_income_gold_bonus(role_state, player_character.role, income["gold"])
+	var lands: Dictionary = WorldMap.income(map_state, player_sect.id)
+	income["gold"] += lands["gold"]
+	income["food"] += lands["food"]
 	player_sect.gold += income["gold"]
 	player_sect.food += income["food"]
 	player_sect.research_points += income["research"]
@@ -406,6 +444,9 @@ func estimate_next_season() -> Dictionary:
 	var next_season: String = SEASONS[(current_season_index + 1) % SEASONS.size()]
 	var income: Dictionary = SectManager.compute_seasonal_income(player_sect, player_character, next_season)
 	income["gold"] += RoleActions.get_income_gold_bonus(role_state, player_character.role, income["gold"])
+	var lands: Dictionary = WorldMap.income(map_state, player_sect.id)
+	income["gold"] += lands["gold"]
+	income["food"] += lands["food"]
 	# 공물 (끊길 세력은 빼고)
 	for sect in world_sects:
 		if sect.tribute and sect.subjugated and sect.attitude > _Balance.TRIBUTE_REVOLT_ATTITUDE:
@@ -695,6 +736,8 @@ func _switch_player_sect(sect_id: String, kind: String) -> String:
 	new_sect.observed_commands.clear()
 	player_sect = new_sect
 	pending_war_plan = {}
+	pending_region_target = ""
+	EventManager.player_sect_id = player_sect.id
 	role_state["spy_target"] = ""
 	EventManager.set_flag(story_flags, "joined_%s" % new_sect.id)
 	if betrayal:
@@ -863,6 +906,126 @@ func get_war_targets() -> Array[SectData]:
 	return result
 
 
+# ── 강호 지도 ──
+
+## 지도에서 [공략]으로 고른 땅. 그 땅의 주인과 문파전에서 이기면 이 땅을 먼저 차지한다.
+var pending_region_target: String = ""
+
+
+## 땅을 넓힐 수 있는 역할 (문주)
+func can_command_conquest() -> bool:
+	return player_character.role == CharacterData.Role.LEADER
+
+
+func get_player_regions() -> Array[String]:
+	return WorldMap.regions_of(map_state, player_sect.id)
+
+
+## 지도 화면에서 고른 땅에 할 수 있는 일: {kind: "pacify"|"attack"|"none", reason, cost?, owner?}
+func get_region_action(region_id: String) -> Dictionary:
+	if not WorldMap.has_region(region_id):
+		return {"kind": "none", "reason": "없는 땅입니다."}
+	var owner: String = WorldMap.get_owner(map_state, region_id)
+	if owner == player_sect.id:
+		return {"kind": "none", "reason": "우리 문파의 본거지입니다." if WorldMap.get_home(map_state, owner) == region_id else "우리 문파의 땅입니다."}
+	if not can_command_conquest():
+		return {"kind": "none", "reason": "땅을 넓히는 일은 문주만 명할 수 있습니다."}
+	if not WorldMap.borders(map_state, region_id, player_sect.id):
+		return {"kind": "none", "reason": "우리 땅과 맞닿은 곳만 노릴 수 있습니다."}
+	if owner.is_empty():
+		var cost: Dictionary = WorldMap.pacify_cost(region_id)
+		var defense: int = int(WorldMap.get_region(region_id)["defense"])
+		var power: int = SectWarManager.get_military_power(player_sect, player_character)
+		var reason: String = ""
+		if not can_do_seasonal("last_pacify_turn"):
+			reason = "이번 계절에는 이미 땅을 평정했습니다."
+		elif power < defense:
+			reason = "전력이 모자랍니다. (우리 %d / 주둔 %d)" % [power, defense]
+		elif player_sect.gold < cost["gold"] or player_sect.food < cost["food"]:
+			reason = "자원이 모자랍니다. (금화 %d, 식량 %d 필요)" % [cost["gold"], cost["food"]]
+		return {"kind": "pacify", "reason": reason, "cost": cost, "power": power, "defense": defense}
+	var sect: SectData = get_world_sect(owner)
+	var reason: String = ""
+	if sect == null:
+		reason = "알 수 없는 세력의 땅입니다."
+	elif not WorldMap.can_be_taken(map_state, region_id):
+		reason = "%s의 본거지는 빼앗을 수 없습니다. 문파전으로 굴복시키세요." % sect.sect_name
+	elif sect.allied:
+		reason = "동맹 세력의 땅입니다. 먼저 동맹을 깨야 합니다."
+	elif sect.subjugated:
+		reason = "굴복한 세력입니다."
+	elif not can_wage_war():
+		reason = "이번 계절에는 이미 문파전을 치렀습니다."
+	return {"kind": "attack", "reason": reason, "owner": owner}
+
+
+## 주인 없는 땅 평정: 금화·식량을 들여 차지한다. 계절에 한 번, 전력이 주둔 병력 이상이어야 한다.
+func pacify_region(region_id: String) -> Dictionary:
+	var action: Dictionary = get_region_action(region_id)
+	if action["kind"] != "pacify":
+		return {"success": false, "message": action.get("reason", "평정할 수 없는 땅입니다.")}
+	if not action["reason"].is_empty():
+		return {"success": false, "message": action["reason"]}
+	player_sect.spend_resources(action["cost"]["gold"], action["cost"]["food"])
+	_mark_seasonal("last_pacify_turn")
+	WorldMap.transfer(map_state, region_id, player_sect.id, [player_sect])
+	var region: Dictionary = WorldMap.get_region(region_id)
+	var message: String = "%s을(를) 평정했습니다. 계절마다 금화 +%d, 식량 +%d, 제자 정원 +%d (금화 -%d, 식량 -%d)" % [
+		region["name"], region["gold"], region["food"], _Balance.REGION_MAX_DISCIPLES, action["cost"]["gold"], action["cost"]["food"],
+	]
+	add_chronicle("영토", message)
+	add_world_news("%s이(가) %s을(를) 차지했습니다." % [player_sect.sect_name, region["name"]])
+	EventBus.resources_changed.emit(player_sect)
+	_check_end_states()
+	return {"success": true, "message": message}
+
+
+## 지도에서 [공략]: 문파전 대상을 그 땅의 주인으로 정한다. 문파전 화면은 호출한 쪽이 연다.
+func prepare_region_attack(region_id: String) -> Dictionary:
+	var action: Dictionary = get_region_action(region_id)
+	if action["kind"] != "attack" or not action["reason"].is_empty():
+		return {"success": false, "message": action.get("reason", "공략할 수 없는 땅입니다.")}
+	pending_region_target = region_id
+	return {"success": true, "message": "%s 공략: %s와(과) 문파전을 벌입니다." % [
+		WorldMap.get_region(region_id)["name"], get_world_sect(action["owner"]).sect_name,
+	], "owner": action["owner"]}
+
+
+## 문파전에서 이긴 상대의 땅 하나를 차지한다 (공략으로 고른 땅이 먼저). 차지한 지역 id 또는 ""
+func _capture_region_from(enemy: SectData) -> String:
+	var choices: Array[String] = []
+	if not pending_region_target.is_empty() and WorldMap.get_owner(map_state, pending_region_target) == enemy.id:
+		choices.append(pending_region_target)
+	for region_id in WorldMap.regions_of(map_state, enemy.id):
+		if WorldMap.borders(map_state, region_id, player_sect.id):
+			choices.append(region_id)
+	for region_id in choices:
+		if WorldMap.can_be_taken(map_state, region_id):
+			WorldMap.transfer(map_state, region_id, player_sect.id, [player_sect, enemy])
+			add_world_news("%s이(가) %s의 땅 %s을(를) 차지했습니다." % [
+				player_sect.sect_name, enemy.sect_name, WorldMap.get_region(region_id)["name"],
+			])
+			return region_id
+	return ""
+
+
+## 침공을 막지 못하면 침략 세력이 우리 땅 하나를 가져간다 (본거지는 빼고, 맞닿은 땅부터). 알림 문구
+func _lose_region_to(invader: SectData) -> String:
+	var candidates: Array[String] = []
+	for region_id in get_player_regions():
+		if WorldMap.can_be_taken(map_state, region_id):
+			if WorldMap.borders(map_state, region_id, invader.id):
+				candidates.push_front(region_id)
+			else:
+				candidates.append(region_id)
+	if candidates.is_empty():
+		return ""
+	WorldMap.transfer(map_state, candidates[0], invader.id, [player_sect, invader])
+	var name: String = WorldMap.get_region(candidates[0])["name"]
+	add_chronicle("영토", "%s에게 %s 땅을 빼앗겼습니다." % [invader.sect_name, name])
+	return " %s 땅을 빼앗겼습니다." % name
+
+
 func can_wage_war() -> bool:
 	return story_flags.get("last_war_turn", -1) != _get_turn_index()
 
@@ -957,6 +1120,12 @@ func resolve_sect_war(
 		EventManager.set_flag(story_flags, "defeated_%s" % enemy.id)
 	if result.get("subjugated", false):
 		EventManager.set_flag(story_flags, "subjugated_%s" % enemy.id)
+	if result.get("victory", false):
+		var captured: String = _capture_region_from(enemy)
+		if not captured.is_empty():
+			result["message"] += "\n%s 땅을 차지했습니다." % WorldMap.get_region(captured)["name"]
+			result["region"] = captured
+	pending_region_target = ""
 	add_chronicle("문파전", "%s와(과)의 문파전 %s" % [enemy.sect_name, "승리" if result.get("victory", false) else "패배"],
 		PackedStringArray(str(result.get("message", "")).split("\n", false)))
 	EventBus.character_updated.emit(player_character)
@@ -1062,7 +1231,7 @@ func finish_combat(outcome: CombatManager.Outcome, fallen_allies: int = 0, falle
 				invader.disciple_count = maxi(_Balance.AI_MIN_DISCIPLES, invader.disciple_count - _Balance.INVASION_REPEL_LOSS)
 				add_world_news("%s의 침공을 막아 냈습니다. (%s 제자 -%d)" % [invader.sect_name, invader.sect_name, _Balance.INVASION_REPEL_LOSS])
 			else:
-				add_world_news("%s의 침공을 막지 못했습니다." % invader.sect_name)
+				add_world_news("%s의 침공을 막지 못했습니다.%s" % [invader.sect_name, _lose_region_to(invader)])
 	var result: Dictionary = CombatManager.apply_outcome(
 		pending_combat,
 		outcome,
@@ -1161,6 +1330,8 @@ func _build_save_state() -> Dictionary:
 		"chronicle": chronicle,
 		"art_draft": art_draft,
 		"art_blueprints": art_blueprints,
+		"map_state": map_state,
+		"faction_report": last_faction_report,
 		"analyzed_elements": analyzed_elements,
 		"triggered_event_ids": triggered_event_ids,
 		"current_ending_id": current_ending_id,
@@ -1258,6 +1429,17 @@ func _apply_save_data(data: Dictionary) -> void:
 	_sync_event_context()
 	player_relationships = _SaveManager.deserialize_relationships(data.get("relationships", []))
 	legacy_records = _SaveManager.deserialize_legacy(data.get("legacy_records", []))
+	# 지도가 없는 구버전 세이브는 지금 세력으로 새 지도를 만든다.
+	if data.get("map_state", {}) is Dictionary and not data.get("map_state", {}).is_empty():
+		map_state = WorldMap.restore_state(data["map_state"])
+	else:
+		map_state = WorldMap.create_state(_all_sect_ids())
+	last_faction_report.clear()
+	for entry in data.get("faction_report", []):
+		if entry is Dictionary:
+			last_faction_report.append(entry)
+	pending_region_target = ""
+	_sync_event_context()
 	refresh_role_transitions()
 
 
