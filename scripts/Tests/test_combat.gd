@@ -286,7 +286,7 @@ func _test_combat_effects() -> void:
 	var c: Node = current_scene
 	var player: CombatUnit = c._get_player()
 	var enemy: CombatUnit = c._get_alive_enemies()[0]
-	_check(c._turn_manager.get_current_unit() == player, "느린 적 상대로 플레이어 선공")
+	_check(c._turn_manager.is_player_phase() and c._get_controlled() == player, "아군 턴부터 시작하고 주인공을 조종")
 
 	# 다중 칸 이동: 수풀(2) + 평지(1) = 3
 	var ap_before: int = player.action_points
@@ -426,22 +426,19 @@ func _test_ally_combat() -> void:
 	var c: Node = current_scene
 	var friends: Array = c._get_alive_friendlies()
 	_check(friends.size() == 3, "주인공과 제자 2명 배치")
-	_check(
-		c._turn_manager.turn_order.size() == friends.size() + c._get_alive_enemies().size(),
-		"아군·적 모두 턴 순서에 포함"
-	)
+	_check(c._turn_manager.get_enemy_order().size() == c._get_alive_enemies().size(), "적은 적군 턴에 모두 움직임")
 
-	# 아군 차례가 오면 그 유닛을 조종한다
+	# 아군 턴에는 아군 칸을 눌러 누구든 고른다
 	var ally: CombatUnit = null
-	var guard: int = 10
-	while guard > 0:
-		guard -= 1
-		var controlled: CombatUnit = c._get_controlled()
-		if controlled and controlled.is_ally:
-			ally = controlled
+	for unit in friends:
+		if unit.is_ally:
+			ally = unit
 			break
-		c._on_end_turn_pressed()
-	_check(ally != null, "아군 차례에 아군을 조종")
+	c._act_on_tile(c._get_controlled(), ally.grid_pos)
+	_check(c._get_controlled() == ally, "아군 칸을 누르면 그 아군을 조종")
+	c.select_next_ally()
+	_check(c._get_controlled() != ally and c._get_controlled().is_friendly(), "다음 아군으로 바꾸기")
+	c.select_unit(ally)
 	if ally:
 		_check(c._art_buttons_owner == ally and c.art_list.get_child_count() == ally.get_martial_arts().size(), "무공 버튼이 조종 중인 유닛 기준")
 		var ap_before: int = ally.action_points
@@ -866,3 +863,76 @@ func _test_grid_cursor() -> void:
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
 	await process_frame
 	_completed["_test_grid_cursor"] = true
+
+
+## 공격 미리보기·전투 기록·아군 자유 선택
+func _test_combat_preview_and_history() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_new_quiet_game(gm, "young_disciple")
+	gm.player_character.learn_martial_art(MartialArtLibrary.create_art("preset_soul_chase_sword"))
+	gm.start_combat(CombatManager.create_night_bandits(gm.player_character, gm.player_sect))
+	await process_frame
+	await process_frame
+	GameSettings.combat_preview = true
+	var c: Node = current_scene
+	var player: CombatUnit = c._get_player()
+	var enemy: CombatUnit = c._get_alive_enemies()[0]
+	enemy.grid_pos = player.grid_pos + Vector2i.RIGHT
+	var hp: int = enemy.hp
+
+	# 기본 공격 미리보기: 실행 전에는 피해가 없고, 취소하면 그대로
+	c._on_mode_attack_pressed()
+	c._act_on_tile(player, enemy.grid_pos)
+	_check(c.is_previewing() and c.preview_panel.visible and enemy.hp == hp, "공격 전 미리보기 (아직 피해 없음)")
+	var text: String = c.preview_label.text
+	_check(text.contains("예상 피해") and text.contains("체력") and text.contains("행동력"), "미리보기: 예상 피해·체력 변화·내 소모")
+	_check(text.contains("다음 적 턴"), "미리보기: 살아남은 대상의 예상 반격")
+	c.cancel_preview()
+	_check(not c.is_previewing() and enemy.hp == hp and player.basic_attacks_left == 1, "미리보기 취소: 아무 일도 없음")
+	c._act_on_tile(player, enemy.grid_pos)
+	c.confirm_preview()
+	_check(enemy.hp < hp and player.basic_attacks_left == 0, "미리보기 실행: 공격")
+	_check(c.history[c.history.size() - 1].contains("기본 공격") and c.history[c.history.size() - 1].contains("→"), "전투 기록: 공격·피해·체력 변화")
+
+	# 무공 미리보기: 내공 소모가 보인다
+	var art: MartialArtData = player.get_martial_arts()[0]
+	c._on_art_pressed(art)
+	c._act_on_tile(player, enemy.grid_pos)
+	_check(c.is_previewing() and c.preview_label.text.contains("내공"), "무공 미리보기: 내공 소모")
+	_unhandled_key(c, KEY_ESCAPE)
+	_check(not c.is_previewing(), "Esc: 미리보기 취소")
+
+	# 아군 자유 선택: 아군 칸을 누르면 그 아군, Tab은 다음 아군
+	var ally: CombatUnit = null
+	for unit in c._get_alive_friendlies():
+		if unit.is_ally:
+			ally = unit
+			break
+	c._on_mode_move_pressed()
+	c._act_on_tile(player, ally.grid_pos)
+	_check(c._get_controlled() == ally, "아군 턴에 아군을 골라 조종")
+	_unhandled_key(c, KEY_TAB)
+	_check(c._get_controlled() != ally, "Tab: 다음 아군")
+
+	# 턴 종료 → 적군 턴 → 다음 라운드 아군 턴
+	c._on_end_turn_pressed()
+	_check(c._turn_manager.is_player_phase() and c._turn_manager.round_number == 2, "턴 종료하면 적군 턴 뒤 2라운드 아군 턴")
+	var joined: String = "\n".join(c.history)
+	_check(joined.contains("적군 턴") and joined.contains("라운드 2 · 아군 턴"), "전투 기록: 턴 구분")
+	_unhandled_key(c, KEY_H)
+	_check(c.history_popup.visible and c.history_label.text.contains("전투 시작"), "H: 전투 기록 창")
+	_unhandled_key(c, KEY_ESCAPE)
+	_check(not c.history_popup.visible, "Esc: 전투 기록 닫기")
+
+	GameSettings.combat_preview = false
+	c.leave_combat()
+	_check(gm.last_combat_history.size() > 3, "전투가 끝나면 기록을 남김 (연대기용)")
+	await process_frame
+	await process_frame
+	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
+	await process_frame
+	_completed["_test_combat_preview_and_history"] = true
+
+
+func _unhandled_key(node: Node, keycode: Key) -> void:
+	node._unhandled_key_input(_key(keycode))

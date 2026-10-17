@@ -30,6 +30,7 @@ func _initialize() -> void:
 	SaveManager.save_dir = "user://_sim_saves/"
 	GameSettings.settings_path = "user://_sim_saves/settings.cfg"
 	GameSettings.combat_delay = 0.0
+	GameSettings.combat_preview = false
 	process_frame.connect(_run, CONNECT_ONE_SHOT)
 
 
@@ -103,14 +104,17 @@ func _play_combat(gm: Node, combat_id: String, level: int) -> Dictionary:
 	var guard: int = 0
 	while not controller._combat_over and controller._turn_manager.round_number <= MAX_ROUNDS and guard < 2000:
 		guard += 1
-		var current: CombatUnit = controller._get_controlled()
-		if current:
-			_play_turn(controller, current)
+		# 아군 턴: 아군마다 차례로 골라 정공법으로 움직인 뒤 턴을 끝낸다.
+		if not controller._turn_manager.is_player_phase():
+			break
+		for unit in controller._selectable_friendlies():
 			if controller._combat_over:
 				break
-			controller._on_end_turn_pressed()
-		else:
+			controller.select_unit(unit)
+			_play_turn(controller, unit)
+		if controller._combat_over:
 			break
+		controller._on_end_turn_pressed()
 	var victory: bool = controller._combat_over and player.is_alive() and controller._get_alive_enemies().is_empty()
 	var result: Dictionary = {
 		"victory": victory,

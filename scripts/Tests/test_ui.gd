@@ -153,6 +153,7 @@ func _test_settings_and_reports() -> void:
 	GameSettings.set_and_save("text_scale", 1.0, tree)
 	# 불러오기로 기본값(0.3)이 된 전투 간격을 다시 시험용 0으로
 	GameSettings.combat_delay = 0.0
+	GameSettings.combat_preview = false
 	_check(ProjectSettings.get_setting("display/window/stretch/aspect") == "expand", "화면 비율: 넓은 화면은 보이는 영역을 넓힘")
 
 	# 연간 보고서

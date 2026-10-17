@@ -52,7 +52,11 @@ static func _by_name() -> Dictionary:
 		"ModeMoveButton": "이동: 옥색 칸을 눌러 움직입니다. 칸마다 행동력이 듭니다.",
 		"ModeAttackButton": "기본 공격: 붙어 있는 적을 누릅니다. 차례에 한 번, 행동력 1.",
 		"UndoMoveButton": "공격·무공을 쓰기 전이면 방금 이동을 되돌립니다.",
-		"EndTurnButton": "이 인물의 차례를 마칩니다.",
+		"EndTurnButton": "아군 턴을 마칩니다. 적이 모두 움직인 뒤 다음 라운드의 아군 턴이 됩니다.",
+		"NextAllyButton": "행동력이 남은 다음 아군을 고릅니다. 아군 칸을 눌러도 고를 수 있습니다.",
+		"HistoryButton": "이번 전투에서 오간 이동·공격·피해·체력 변화를 라운드별로 봅니다.",
+		"PreviewConfirmButton": "미리 본 대로 공격·무공을 실행합니다.",
+		"PreviewCancelButton": "실행하지 않고 돌아갑니다. 행동력·내공은 그대로입니다.",
 		# 공용
 		"BackButton": "이전 화면으로 돌아갑니다.",
 		"SuccessionButton": "후계자를 정해 다음 세대로 이어 갑니다.",

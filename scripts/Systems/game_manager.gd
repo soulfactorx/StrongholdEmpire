@@ -53,6 +53,8 @@ var is_game_active: bool = false
 var pending_war_plan: Dictionary = {}
 ## 전투 씬이 읽어 갈 전투 구성. 전투가 끝나면 비운다.
 var pending_combat: CombatSetup = null
+## 마지막 전투의 기록 (전투 화면의 전투 기록). 연대기에서도 본다
+var last_combat_history: PackedStringArray = []
 
 
 func _ready() -> void:

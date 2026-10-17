@@ -59,6 +59,18 @@ var cursor_visible: bool = false
 var _cursor_layer: Node2D
 ## 왼쪽 스틱을 한 번 기울일 때 한 칸만 움직이도록 직전 방향을 기억한다
 var _stick_dir: Vector2i = Vector2i.ZERO
+## 아군 턴에 지금 조종하려고 고른 아군 (아군 칸을 누르거나 [다음 아군]으로 바꾼다)
+var _selected: CombatUnit = null
+## 전투 기록: 누가 무엇을 해서 얼마의 피해·회복이 났고 체력이 어떻게 바뀌었는지
+var history: PackedStringArray = []
+## 미리보기 중인 행동 {kind: "attack"|"art", unit, target, art}. 비어 있으면 미리보기 없음
+var _pending_action: Dictionary = {}
+var preview_panel: PanelContainer
+var preview_label: Label
+var history_popup: Control
+var history_label: Label
+var next_ally_button: Button
+var history_button: Button
 
 
 func _ready() -> void:
@@ -67,6 +79,7 @@ func _ready() -> void:
 	$Background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# HUD는 CanvasLayer 아래라 창 테마가 이어지지 않으므로 직접 준다.
 	$HUD/Panel.theme = get_tree().root.theme
+	_build_extra_hud()
 	_UiTheme.apply_to_control($HUD/Panel)
 	_setup = GameManager.get_or_create_combat_setup()
 	_setup_combat()
@@ -96,10 +109,111 @@ func _ready() -> void:
 		var names: PackedStringArray = []
 		for ally in _setup.allies:
 			names.append(ally.display_name)
-		_log("전투 시작! %s — %s이(가) 함께 싸웁니다. 아군은 차례가 오면 직접 조종합니다." % [
+		_log("전투 시작! %s — %s이(가) 함께 싸웁니다. 아군 턴에는 아군 칸을 눌러 누구든 골라 움직입니다." % [
 			_setup.title, ", ".join(names),
 		])
-	_advance_turns()
+	_record("전투 시작: %s" % _setup.title)
+	_start_player_phase(true)
+
+
+## 전투 화면에 코드로 더하는 것: [다음 아군]·[전투 기록] 버튼, 공격 미리보기 창, 전투 기록 창
+func _build_extra_hud() -> void:
+	var unit_row := HBoxContainer.new()
+	unit_row.name = "UnitRow"
+	unit_row.add_theme_constant_override("separation", 6)
+	next_ally_button = Button.new()
+	next_ally_button.name = "NextAllyButton"
+	next_ally_button.text = "다음 아군 (Tab)"
+	next_ally_button.custom_minimum_size = Vector2(0, 48)
+	next_ally_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	next_ally_button.pressed.connect(select_next_ally)
+	unit_row.add_child(next_ally_button)
+	history_button = Button.new()
+	history_button.name = "HistoryButton"
+	history_button.text = "전투 기록 (H)"
+	history_button.custom_minimum_size = Vector2(0, 48)
+	history_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	history_button.pressed.connect(open_history)
+	unit_row.add_child(history_button)
+	var turn_row: Node = $HUD/Panel/VBox/TurnRow
+	turn_row.get_parent().add_child(unit_row)
+	turn_row.get_parent().move_child(unit_row, turn_row.get_index() + 1)
+
+	# 공격·무공 미리보기: 화면 가운데 위쪽에 뜨고, [실행]·[취소]를 고른다.
+	preview_panel = PanelContainer.new()
+	preview_panel.name = "PreviewPanel"
+	preview_panel.visible = false
+	preview_panel.theme = get_tree().root.theme
+	preview_panel.custom_minimum_size = Vector2(520, 0)
+	preview_panel.position = Vector2(120, 40)
+	var preview_box := VBoxContainer.new()
+	preview_box.add_theme_constant_override("separation", 8)
+	preview_panel.add_child(preview_box)
+	preview_label = Label.new()
+	preview_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	preview_label.custom_minimum_size = Vector2(480, 0)
+	preview_box.add_child(preview_label)
+	var preview_row := HBoxContainer.new()
+	preview_row.add_theme_constant_override("separation", 8)
+	var confirm := Button.new()
+	confirm.name = "PreviewConfirmButton"
+	confirm.text = "실행 (Enter)"
+	confirm.custom_minimum_size = Vector2(0, 48)
+	confirm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	confirm.pressed.connect(confirm_preview)
+	preview_row.add_child(confirm)
+	var cancel := Button.new()
+	cancel.name = "PreviewCancelButton"
+	cancel.text = "취소 (Esc)"
+	cancel.custom_minimum_size = Vector2(0, 48)
+	cancel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cancel.pressed.connect(cancel_preview)
+	preview_row.add_child(cancel)
+	preview_box.add_child(preview_row)
+	$HUD.add_child(preview_panel)
+	_UiTheme.apply_to_control(preview_panel)
+
+	# 전투 기록 창: 화면 전체를 덮고 끌어서 스크롤한다.
+	history_popup = Control.new()
+	history_popup.name = "HistoryPopup"
+	history_popup.visible = false
+	history_popup.theme = get_tree().root.theme
+	history_popup.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	history_popup.mouse_filter = Control.MOUSE_FILTER_STOP
+	var dimmer := ColorRect.new()
+	dimmer.color = Color(0, 0, 0, 0.5)
+	dimmer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	history_popup.add_child(dimmer)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	history_popup.add_child(center)
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(900, 0)
+	center.add_child(panel)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	panel.add_child(box)
+	var title := Label.new()
+	title.text = "전투 기록"
+	_UiTheme.style_label_title(title, 24)
+	box.add_child(title)
+	var scroll := ScrollContainer.new()
+	scroll.name = "HistoryScroll"
+	scroll.custom_minimum_size = Vector2(0, 460)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+	history_label = Label.new()
+	history_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	history_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_UiTheme.set_font_size(history_label, 15)
+	scroll.add_child(history_label)
+	var close := Button.new()
+	close.text = "닫기"
+	close.custom_minimum_size = Vector2(0, 48)
+	close.pressed.connect(func() -> void: history_popup.visible = false)
+	box.add_child(close)
+	$HUD.add_child(history_popup)
+	_UiTheme.apply_to_control(panel)
 
 
 func _setup_combat() -> void:
@@ -158,10 +272,11 @@ func _get_friendly_at(coord: Vector2i) -> CombatUnit:
 func _get_controlled() -> CombatUnit:
 	if _combat_over:
 		return null
-	if _enemy_acting:
+	if _enemy_acting or not _turn_manager.is_player_phase():
 		return null
-	var current := _turn_manager.get_current_unit()
-	return current if current and current.is_friendly() else null
+	if _selected and _selected.is_alive() and _selected.is_friendly() and not _selected.has_status("stunned"):
+		return _selected
+	return null
 
 
 ## 쓰러진 아군의 id (명단 제자를 전사 처리할 때 쓴다)
@@ -306,6 +421,9 @@ func _make_token(unit: CombatUnit, controlled: bool) -> Control:
 	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if unit.has_status("stunned"):
 		body.modulate = Color(0.55, 0.55, 0.55)
+	elif unit.is_friendly() and _turn_manager.is_player_phase() and not _can_still_act(unit):
+		# 이번 아군 턴에 할 일을 다 한 아군은 흐리게
+		holder.modulate = Color(1, 1, 1, 0.55)
 	holder.add_child(body)
 	if controlled:
 		var ring := TextureRect.new()
@@ -367,7 +485,6 @@ func _draw_cursor() -> void:
 
 
 func _update_hud() -> void:
-	var current := _turn_manager.get_current_unit()
 	var controlled := _get_controlled()
 
 	round_label.text = "라운드 %d" % _turn_manager.round_number
@@ -375,8 +492,14 @@ func _update_hud() -> void:
 	end_turn_button.disabled = _combat_over or controlled == null
 	# 기본 공격은 차례에 한 번
 	$HUD/Panel/VBox/ModeRow/ModeAttackButton.disabled = _combat_over or controlled == null or not controlled.can_basic_attack()
-	if current:
-		turn_label.text = "현재 턴: %s%s" % [current.display_name, " (조종)" if controlled else ""]
+	if _combat_over:
+		turn_label.text = "전투 종료"
+	elif not _turn_manager.is_player_phase() or _enemy_acting:
+		turn_label.text = "적군 턴"
+	else:
+		turn_label.text = "아군 턴 — %s 조종 중 (아군 칸을 눌러 바꾸기)" % (controlled.display_name if controlled else "없음")
+	if next_ally_button:
+		next_ally_button.disabled = _combat_over or controlled == null or _selectable_friendlies().size() < 2
 
 	var friend_lines: PackedStringArray = []
 	for unit in _units:
@@ -458,7 +581,8 @@ func _log(message: String) -> void:
 
 # ─── 플레이어 입력 ───────────────────────────────────
 
-## 키보드 단축키: 방향키 커서, Enter 실행, M 이동, A 공격, 1~9 무공, Z 이동 취소, Space·E 턴 종료, Esc 후퇴(확인)
+## 키보드 단축키: 방향키 커서, Enter 실행, M 이동, A 공격, 1~9 무공, Z 이동 취소, Tab 다음 아군, H 전투 기록,
+## Space·E 턴 종료, Esc 후퇴(확인). 미리보기 중에는 Enter·Space 실행, Esc 취소
 func _unhandled_key_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
 	if key == null or not key.pressed or key.echo:
@@ -467,7 +591,23 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		if key.keycode == KEY_ESCAPE:
 			confirm_popup._answer(false)
 		return
+	if history_popup and history_popup.visible:
+		if key.keycode in [KEY_ESCAPE, KEY_H]:
+			history_popup.visible = false
+			get_viewport().set_input_as_handled()
+		return
+	if is_previewing():
+		if key.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_SPACE]:
+			confirm_preview()
+		elif key.keycode == KEY_ESCAPE:
+			cancel_preview()
+		get_viewport().set_input_as_handled()
+		return
 	match key.keycode:
+		KEY_TAB:
+			select_next_ally()
+		KEY_H:
+			open_history()
 		KEY_LEFT:
 			move_cursor(Vector2i.LEFT)
 		KEY_RIGHT:
@@ -509,7 +649,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	var current := _get_controlled()
-	if current == null:
+	if current == null or is_previewing() or history_popup.visible:
 		return
 
 	# 마우스 커서가 아니라 이벤트 위치로 칸을 구한다. (터치는 커서 위치가 갱신되지 않을 수 있다)
@@ -525,6 +665,13 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## 고른 칸에 지금 행동 방식(이동·공격·무공)을 실행한다. 터치·마우스·커서가 함께 쓴다.
 func _act_on_tile(current: CombatUnit, target: Vector2i) -> void:
+	if is_previewing():
+		return
+	var friend: CombatUnit = _get_friendly_at(target)
+	var healing: bool = _action_mode == ActionMode.MARTIAL_ART and _selected_art != null and _selected_art.heal_amount > 0
+	if friend and friend != current and not healing:
+		select_unit(friend)
+		return
 	match _action_mode:
 		ActionMode.MOVE:
 			_try_move(current, target)
@@ -535,7 +682,7 @@ func _act_on_tile(current: CombatUnit, target: Vector2i) -> void:
 
 
 ## 게임패드: 십자키·왼쪽 스틱 커서, A 실행, B 이동 취소, X 공격, Y 이동, LB·RB 무공 고르기,
-## Start 턴 종료, Back 후퇴. 처리했으면 true.
+## 왼쪽 스틱 누르기 다음 아군, Start 턴 종료, Back 후퇴. 미리보기 중에는 A 실행·B 취소. 처리했으면 true.
 func _handle_gamepad(event: InputEvent) -> bool:
 	if confirm_popup and confirm_popup.visible:
 		return false
@@ -555,7 +702,15 @@ func _handle_gamepad(event: InputEvent) -> bool:
 	var button := event as InputEventJoypadButton
 	if button == null or not button.pressed:
 		return false
+	if is_previewing():
+		if button.button_index == JOY_BUTTON_A:
+			confirm_preview()
+		elif button.button_index == JOY_BUTTON_B:
+			cancel_preview()
+		return true
 	match button.button_index:
+		JOY_BUTTON_LEFT_STICK:
+			select_next_ally()
 		JOY_BUTTON_DPAD_LEFT:
 			move_cursor(Vector2i.LEFT)
 		JOY_BUTTON_DPAD_RIGHT:
@@ -655,6 +810,10 @@ func _try_move(unit: CombatUnit, target: Vector2i) -> void:
 		_log("이동할 수 없는 위치입니다.")
 		return
 	_last_move = {"unit": unit, "from": unit.grid_pos, "ap": unit.action_points}
+	_record("%s 이동 (%d,%d) → (%d,%d) %s, 행동력 %d → %d" % [
+		unit.display_name, unit.grid_pos.x, unit.grid_pos.y, target.x, target.y,
+		CombatRules.TERRAIN_NAMES[_terrain_at(target)], unit.action_points, unit.action_points - reachable[target],
+	])
 	unit.grid_pos = target
 	unit.action_points -= reachable[target]
 	_refresh_all()
@@ -672,7 +831,7 @@ func _try_attack(unit: CombatUnit, target: Vector2i) -> void:
 	if unit.basic_attacks_left <= 0:
 		_log("기본 공격은 차례에 한 번만 할 수 있습니다. 남은 행동력은 이동과 무공에 쓰세요.")
 		return
-	_perform_attack(unit, enemy)
+	_request_action({"kind": "attack", "unit": unit, "target": enemy})
 
 
 func _try_martial_art(unit: CombatUnit, target: Vector2i) -> void:
@@ -686,13 +845,16 @@ func _try_martial_art(unit: CombatUnit, target: Vector2i) -> void:
 		if friend == null or CombatRules.distance(target, unit.grid_pos) > art_range:
 			_log("사거리 안의 아군(자신 포함)을 선택하세요. (사거리 %d)" % art_range)
 			return
-		_perform_art(unit, friend, art)
+		_request_action({"kind": "art", "unit": unit, "target": friend, "art": art})
 		return
 	var enemy := _get_enemy_at(target)
 	if enemy == null or CombatRules.distance(target, unit.grid_pos) > art_range:
 		_log("사거리 안의 적을 선택하세요. (사거리 %d)" % art_range)
 		return
-	_perform_art(unit, enemy, art)
+	if unit.action_points < art.action_cost or unit.character.internal_energy_current < art.internal_cost:
+		_log("행동력이나 내공이 부족합니다.")
+		return
+	_request_action({"kind": "art", "unit": unit, "target": enemy, "art": art})
 
 
 # ─── 공통 행동 (플레이어·적) ──────────────────────────
@@ -728,6 +890,7 @@ func _on_undo_move_pressed() -> void:
 	current.grid_pos = _last_move["from"]
 	current.action_points = _last_move["ap"]
 	_last_move = {}
+	_record("%s 이동 취소" % current.display_name)
 	_refresh_all()
 	_log("이동을 되돌렸습니다.")
 
@@ -739,9 +902,14 @@ func _perform_attack(attacker: CombatUnit, defender: CombatUnit) -> void:
 		_terrain_at(attacker.grid_pos), _terrain_at(defender.grid_pos),
 		_relationship_bonus(attacker, defender), _relationship_defense(attacker, defender)
 	)
+	var hp_before: int = defender.hp
 	defender.take_damage(result["damage"])
 	attacker.action_points -= 1
 	attacker.basic_attacks_left -= 1
+	_record("%s → %s 기본 공격 %d 피해%s | %s" % [
+		attacker.display_name, defender.display_name, result["damage"], _notes_text(result["notes"]),
+		_hp_change(defender, hp_before),
+	])
 	AudioManager.play_hit()
 	_log("%s의 공격! %s에게 %d 피해%s" % [
 		attacker.display_name, defender.display_name, result["damage"], _notes_text(result["notes"]),
@@ -760,6 +928,9 @@ func _perform_art(attacker: CombatUnit, defender: CombatUnit, art: MartialArtDat
 		return false
 	attacker.action_points -= art.action_cost
 	attacker.active_martial_art = art
+	var attacker_hp_before: int = attacker.hp
+	var target_unit: CombatUnit = defender if defender else attacker
+	var target_hp_before: int = target_unit.hp
 	var effects: Array[MartialArtData.SpecialEffect] = art.special_effects
 	var messages: PackedStringArray = []
 
@@ -822,6 +993,10 @@ func _perform_art(attacker: CombatUnit, defender: CombatUnit, art: MartialArtDat
 		messages.append("내공 폭주! %s 반동 %d 피해" % [attacker.display_name, backlash])
 
 	_log(", ".join(messages))
+	var changes: PackedStringArray = [_hp_change(target_unit, target_hp_before)]
+	if attacker != target_unit and attacker.hp != attacker_hp_before:
+		changes.append(_hp_change(attacker, attacker_hp_before))
+	_record("%s | %s | 내공 %d 소모" % [", ".join(messages), " · ".join(changes), art.internal_cost])
 	AudioManager.play_art()
 	if defender:
 		_after_hit(defender)
@@ -850,6 +1025,7 @@ func _after_hit(unit: CombatUnit) -> void:
 		_end_combat(CombatManager.Outcome.DEFEAT)
 	elif unit.is_ally and not unit.is_alive():
 		_log("%s이(가) 쓰러졌습니다!" % unit.display_name)
+		_record("%s 쓰러짐" % unit.display_name)
 	else:
 		_check_victory()
 
@@ -874,6 +1050,8 @@ func _end_combat(outcome: CombatManager.Outcome) -> void:
 	back_button.text = "문파로 돌아가기"
 	_refresh_all()
 	_log(result["message"])
+	_record("── 전투 끝: %s ──" % result["message"])
+	GameManager.last_combat_history = history
 
 
 # ─── 적 AI ─────────────────────────────────────────
@@ -921,8 +1099,11 @@ func _enemy_approach(enemy: CombatUnit, target: CombatUnit) -> void:
 	if not path.is_empty():
 		var walk: Dictionary = CombatRules.walk_path(path, enemy.action_points - 1, _terrain_at)
 		if walk["index"] >= 0:
+			var from: Vector2i = enemy.grid_pos
 			enemy.grid_pos = path[walk["index"]]
 			enemy.action_points -= walk["cost"]
+			if enemy.grid_pos != from:
+				_record("%s 이동 (%d,%d) → (%d,%d)" % [enemy.display_name, from.x, from.y, enemy.grid_pos.x, enemy.grid_pos.y])
 
 
 ## 지금 쓸 수 있는 공격 무공. 시전 뒤 내공이 폭주 기준 아래로 떨어지는 무공은 쓰지 않는다.
@@ -950,55 +1131,272 @@ func _enemy_try_attack(enemy: CombatUnit, target: CombatUnit) -> bool:
 
 # ─── 턴 진행 ────────────────────────────────────────
 
-## 아군 차례가 올 때까지 적 턴과 기절한 유닛의 턴을 처리한다.
-## 적 차례를 진행한다. 전투 속도 옵션만큼 적 행동 사이에 간격을 둔다 (0이면 바로).
-func _advance_turns() -> void:
-	var guard: int = _units.size() * 4
+## 아군 턴 시작: 아군 행동력을 채우고(첫 턴 제외, setup에서 채움) 조종할 아군을 고른다.
+## 고를 수 있는 아군이 없으면(모두 기절) 바로 적군 턴으로 넘어간다.
+func _start_player_phase(first: bool = false) -> void:
+	if _combat_over:
+		return
+	if not first:
+		_turn_manager.begin_player_phase()
 	_last_move = {}
-	while not _combat_over and guard > 0:
-		guard -= 1
-		var current := _turn_manager.get_current_unit()
-		if current == null:
+	_record("── 라운드 %d · 아군 턴 ──" % _turn_manager.round_number)
+	for unit in _turn_manager.get_friendlies():
+		if unit.has_status("stunned"):
+			_record("%s은(는) 기절해 이번 턴에 움직이지 못합니다." % unit.display_name)
+	var choices: Array[CombatUnit] = _selectable_friendlies()
+	if choices.is_empty():
+		_refresh_all()
+		await _end_player_phase()
+		return
+	var player: CombatUnit = _get_player()
+	_selected = player if choices.has(player) else choices[0]
+	_action_mode = ActionMode.MOVE
+	_selected_art = null
+	_refresh_all()
+	_log("아군 턴입니다. %s 조종 중 — 다른 아군은 그 칸을 눌러 고르세요." % _selected.display_name)
+
+
+## 이번 아군 턴에 고를 수 있는 아군 (살아 있고 기절하지 않음)
+func _selectable_friendlies() -> Array[CombatUnit]:
+	var result: Array[CombatUnit] = []
+	for unit in _turn_manager.get_friendlies():
+		if not unit.has_status("stunned"):
+			result.append(unit)
+	return result
+
+
+## 아직 할 수 있는 일이 남았는지 (행동력이 있음)
+func _can_still_act(unit: CombatUnit) -> bool:
+	return unit.action_points > 0 and not unit.has_status("stunned")
+
+
+## 아군을 골라 조종한다. 아군 턴에만, 살아 있고 기절하지 않은 아군만.
+func select_unit(unit: CombatUnit) -> bool:
+	if _combat_over or _enemy_acting or not _turn_manager.is_player_phase():
+		return false
+	if unit == null or not unit.is_friendly() or not unit.is_alive():
+		return false
+	if unit.has_status("stunned"):
+		_log("%s은(는) 기절해 움직일 수 없습니다." % unit.display_name)
+		return false
+	if unit == _selected:
+		return true
+	_selected = unit
+	_action_mode = ActionMode.MOVE
+	_selected_art = null
+	if cursor_visible:
+		cursor = unit.grid_pos
+	_refresh_all()
+	_log("%s 조종 (행동력 %d)" % [unit.display_name, unit.action_points])
+	return true
+
+
+## 다음 아군으로 바꾼다. 행동력이 남은 아군을 먼저 고른다.
+func select_next_ally() -> void:
+	var choices: Array[CombatUnit] = _selectable_friendlies()
+	if choices.size() < 2:
+		return
+	var start: int = maxi(0, choices.find(_selected))
+	for step in range(1, choices.size() + 1):
+		var candidate: CombatUnit = choices[(start + step) % choices.size()]
+		if _can_still_act(candidate) or step == choices.size():
+			select_unit(candidate)
+			return
+
+
+## 행동한 뒤 조종 중인 아군이 할 일이 없으면, 행동력이 남은 다른 아군으로 넘어간다.
+func _auto_advance_selection() -> void:
+	if _combat_over or not _turn_manager.is_player_phase() or _selected == null:
+		return
+	if _selected.is_alive() and _can_still_act(_selected):
+		return
+	for unit in _selectable_friendlies():
+		if _can_still_act(unit):
+			select_unit(unit)
+			return
+
+
+## [턴 종료]: 아군 턴을 마치고 적군 턴을 진행한 뒤, 다음 라운드의 아군 턴을 연다.
+func _on_end_turn_pressed() -> void:
+	if _combat_over or _enemy_acting or not _turn_manager.is_player_phase():
+		return
+	cancel_preview()
+	await _end_player_phase()
+
+
+func _end_player_phase() -> void:
+	for unit in _turn_manager.get_friendlies():
+		unit.tick_statuses()
+	_last_move = {}
+	await _run_enemy_phase()
+	if not _combat_over and is_inside_tree():
+		_start_player_phase()
+
+
+## 적군 턴: 적이 빠른 순서로 하나씩 움직인다. 전투 속도 옵션만큼 적 행동 사이에 간격을 둔다 (0이면 바로).
+func _run_enemy_phase() -> void:
+	_turn_manager.begin_enemy_phase()
+	_record("── 라운드 %d · 적군 턴 ──" % _turn_manager.round_number)
+	_enemy_acting = true
+	_refresh_all()
+	for enemy in _turn_manager.get_enemy_order():
+		if _combat_over:
 			break
-		if not current.is_alive():
-			_turn_manager.end_turn()
+		if not enemy.is_alive():
 			continue
-		if current.has_status("stunned"):
-			_log("%s은(는) 기절해 차례를 넘깁니다." % current.display_name)
-			current.tick_statuses()
-			_turn_manager.end_turn()
+		if enemy.has_status("stunned"):
+			_record("%s은(는) 기절해 차례를 넘깁니다." % enemy.display_name)
+			_log("%s은(는) 기절해 차례를 넘깁니다." % enemy.display_name)
+			enemy.tick_statuses()
 			continue
-		if current.is_friendly():
-			break
 		if GameSettings.combat_delay > 0.0:
-			_enemy_acting = true
 			_refresh_all()
 			await get_tree().create_timer(GameSettings.combat_delay).timeout
 			if not is_inside_tree() or _combat_over:
 				_enemy_acting = false
 				return
-		_run_enemy_ai(current)
-		current.tick_statuses()
-		_turn_manager.end_turn()
+		_run_enemy_ai(enemy)
+		enemy.tick_statuses()
 	_enemy_acting = false
 	_refresh_all()
 
 
-func _on_end_turn_pressed() -> void:
-	if _combat_over:
+## 전투 기록에 한 줄 남긴다.
+func _record(text: String) -> void:
+	history.append(text)
+	if history_popup and history_popup.visible:
+		_fill_history()
+
+
+## 전투 기록 창을 연다 (가장 최근이 아래).
+func open_history() -> void:
+	cancel_preview()
+	_fill_history()
+	history_popup.visible = true
+	var scroll: ScrollContainer = history_popup.find_child("HistoryScroll", true, false)
+	await get_tree().process_frame
+	scroll.scroll_vertical = int(scroll.get_v_scroll_bar().max_value)
+
+
+func _fill_history() -> void:
+	history_label.text = "\n".join(history)
+
+
+## 체력 변화 문구: "체력 54 → 33"
+static func _hp_change(unit: CombatUnit, before: int) -> String:
+	return "%s 체력 %d → %d%s" % [unit.display_name, before, unit.hp, " (쓰러짐)" if not unit.is_alive() else ""]
+
+
+# ─── 공격 미리보기 ──────────────────────────────────
+
+## 공격·무공을 실행하기 전에 예상 결과를 보여 준다. 설정에서 끄면 바로 실행한다.
+func _request_action(action: Dictionary) -> void:
+	if not GameSettings.combat_preview:
+		_execute_action(action)
 		return
-	var current := _get_controlled()
-	if current:
-		current.tick_statuses()
-		_turn_manager.end_turn()
-		await _advance_turns()
-		var next := _get_controlled()
-		if next:
-			# 커서를 쓰는 중이면 다음 아군 자리로 옮긴다.
-			if cursor_visible:
-				cursor = next.grid_pos
-				_draw_cursor()
-			_log("%s의 차례입니다." % next.display_name)
+	_pending_action = action
+	preview_label.text = preview_text(action)
+	preview_panel.reset_size()
+	preview_panel.visible = true
+	preview_panel.find_child("PreviewConfirmButton", true, false).grab_focus()
+
+
+func confirm_preview() -> void:
+	if _pending_action.is_empty():
+		return
+	var action: Dictionary = _pending_action
+	cancel_preview()
+	_execute_action(action)
+
+
+func cancel_preview() -> void:
+	_pending_action = {}
+	if preview_panel:
+		preview_panel.visible = false
+
+
+func is_previewing() -> bool:
+	return not _pending_action.is_empty()
+
+
+func _execute_action(action: Dictionary) -> void:
+	if action["kind"] == "attack":
+		_perform_attack(action["unit"], action["target"])
+	else:
+		_perform_art(action["unit"], action["target"], action["art"])
+	_auto_advance_selection()
+
+
+## 미리보기 문구: 예상 피해·회복, 대상 체력 변화, 내 소모와 위험, 대상이 살아남으면 다음 적 턴의 예상 반격
+func preview_text(action: Dictionary) -> String:
+	var unit: CombatUnit = action["unit"]
+	var target: CombatUnit = action["target"]
+	var art: MartialArtData = action.get("art")
+	var lines: PackedStringArray = []
+	var title: String = "기본 공격" if art == null else "[%s]" % art.display_name
+	lines.append("%s: %s → %s" % [title, unit.display_name, target.display_name])
+	if art and art.heal_amount > 0:
+		var multiplier: float = RelationshipManager.get_ally_buff_multiplier(GameManager.player_relationships) if unit.is_player else 1.0
+		var heal: int = int(art.heal_amount * multiplier)
+		var after: int = mini(target.max_hp, target.hp + heal)
+		lines.append("회복: +%d → %s 체력 %d → %d / %d" % [heal, target.display_name, target.hp, after, target.max_hp])
+	else:
+		var p: Dictionary = CombatRules.preview_damage(
+			unit, target, art, _terrain_at(unit.grid_pos), _terrain_at(target.grid_pos),
+			_relationship_bonus(unit, target), _relationship_defense(unit, target)
+		)
+		var crit_text: String = " (회심 %d%%면 최대 %d)" % [roundi(p["crit_chance"] * 100), p["crit_max"]] if p["crit_chance"] > 0.0 else ""
+		lines.append("예상 피해: %d ~ %d%s" % [p["min"], p["max"], crit_text])
+		var low_hp: int = maxi(0, target.hp - p["max"])
+		var high_hp: int = maxi(0, target.hp - p["min"])
+		var kill: String = ""
+		if p["min"] >= target.hp:
+			kill = " — 반드시 쓰러뜨림"
+		elif p["max"] >= target.hp:
+			kill = " — 쓰러뜨릴 수 있음"
+		elif p["crit_max"] >= target.hp:
+			kill = " — 회심이면 쓰러뜨림"
+		lines.append("%s 체력: %d → %d ~ %d / %d%s" % [target.display_name, target.hp, low_hp, high_hp, target.max_hp, kill])
+		if not p["notes"].is_empty():
+			lines.append("요인: %s" % ", ".join(p["notes"]))
+	# 내 소모
+	if art == null:
+		lines.append("내 소모: 행동력 1 (%d → %d), 이번 턴 기본 공격 1회 사용" % [unit.action_points, unit.action_points - 1])
+	else:
+		var energy: int = unit.character.internal_energy_current
+		lines.append("내 소모: 행동력 %d (%d → %d), 내공 %d (%d → %d)" % [
+			art.action_cost, unit.action_points, unit.action_points - art.action_cost,
+			art.internal_cost, energy, energy - art.internal_cost,
+		])
+		if energy - art.internal_cost < unit.character.internal_energy_max * _Balance.OVERLOAD_THRESHOLD:
+			lines.append("위험: 내공 폭주 %d%% — 반동으로 내가 %d 피해" % [
+				_Balance.OVERLOAD_CHANCE, maxi(1, int(art.internal_cost * _Balance.OVERLOAD_DAMAGE_PER_COST)),
+			])
+		var effects: String = art.get_effects_text()
+		if not effects.is_empty() and effects != "없음":
+			lines.append("효과: %s" % effects)
+	# 반격 예상: 대상이 살아남으면 다음 적 턴에 나에게 줄 수 있는 피해
+	if not target.is_friendly():
+		var counter: Dictionary = _counter_estimate(target, unit)
+		if not counter.is_empty():
+			lines.append("살아남으면 다음 적 턴에 %s이(가) %s(으)로 약 %d ~ %d 피해 (내 체력 %d)" % [
+				target.display_name, counter["name"], counter["min"], counter["max"], unit.hp,
+			])
+	return "\n".join(lines)
+
+
+## 적이 다음 턴에 이 아군에게 줄 수 있는 피해 범위 (쓸 수 있는 무공이 있으면 무공, 아니면 기본 공격)
+func _counter_estimate(enemy: CombatUnit, victim: CombatUnit) -> Dictionary:
+	var art: MartialArtData = null
+	for candidate in enemy.get_martial_arts():
+		if candidate.heal_amount <= 0 and enemy.character.internal_energy_current >= candidate.internal_cost:
+			art = candidate
+			break
+	var p: Dictionary = CombatRules.preview_damage(
+		enemy, victim, art, _terrain_at(enemy.grid_pos), _terrain_at(victim.grid_pos),
+		1.0, _relationship_defense(enemy, victim)
+	)
+	return {"name": "기본 공격" if art == null else "[%s]" % art.display_name, "min": p["min"], "max": p["max"]}
 
 
 func _on_mode_move_pressed() -> void:
@@ -1022,7 +1420,7 @@ func _on_art_pressed(art: MartialArtData) -> void:
 	if art.heal_amount > 0:
 		# 함께 싸우는 아군이 없으면 대상을 고를 필요 없이 자신에게 바로 쓴다.
 		if _get_alive_friendlies().size() == 1:
-			_perform_art(current, current, art)
+			_request_action({"kind": "art", "unit": current, "target": current, "art": art})
 			return
 		_refresh_all()
 		_log("행동: [%s] — 회복할 아군(자신 포함)을 누르세요 (붉은 칸)" % art.display_name)

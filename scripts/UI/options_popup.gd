@@ -11,6 +11,7 @@ var music_label: Label
 var fullscreen_check: CheckButton
 var text_option: OptionButton
 var speed_option: OptionButton
+var preview_check: CheckButton
 
 
 func _ready() -> void:
@@ -92,6 +93,11 @@ func _ready() -> void:
 	)
 	speed_row.add_child(speed_option)
 	box.add_child(speed_row)
+	preview_check = CheckButton.new()
+	preview_check.text = "공격 전 미리보기 (예상 피해 확인 후 실행)"
+	preview_check.custom_minimum_size = Vector2(0, 48)
+	preview_check.toggled.connect(func(on: bool) -> void: GameSettings.set_and_save("combat_preview", on, get_tree()))
+	box.add_child(preview_check)
 	var note := Label.new()
 	note.text = "글자 크기는 다음에 여는 화면부터 적용됩니다."
 	_UiTheme.set_font_size(note, 14)
@@ -110,6 +116,7 @@ func open() -> void:
 	music_slider.set_value_no_signal(roundi(GameSettings.music_volume * 100))
 	_update_volume_label()
 	fullscreen_check.set_pressed_no_signal(GameSettings.fullscreen)
+	preview_check.set_pressed_no_signal(GameSettings.combat_preview)
 	for i in GameSettings.TEXT_SCALES.size():
 		if is_equal_approx(GameSettings.TEXT_SCALES[i][1], GameSettings.text_scale):
 			text_option.select(i)
