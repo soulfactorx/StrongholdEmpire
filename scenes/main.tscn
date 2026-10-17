@@ -74,6 +74,11 @@ custom_minimum_size = Vector2(320, 48)
 layout_mode = 2
 text = "불러오기"
 
+[node name="OptionsButton" type="Button" parent="CenterContainer/VBox"]
+custom_minimum_size = Vector2(320, 48)
+layout_mode = 2
+text = "설정"
+
 [node name="HelpButton" type="Button" parent="CenterContainer/VBox"]
 custom_minimum_size = Vector2(320, 48)
 layout_mode = 2
@@ -134,6 +139,7 @@ text = "그리드 이동 데모"
 [connection signal="pressed" from="CenterContainer/VBox/ContinueButton" to="." method="_on_continue_pressed"]
 [connection signal="pressed" from="CenterContainer/VBox/NewGameButton" to="." method="_on_new_game_pressed"]
 [connection signal="pressed" from="CenterContainer/VBox/LoadButton" to="." method="_on_load_pressed"]
+[connection signal="pressed" from="CenterContainer/VBox/OptionsButton" to="." method="_on_options_pressed"]
 [connection signal="pressed" from="CenterContainer/VBox/HelpButton" to="." method="_on_help_pressed"]
 [connection signal="pressed" from="CenterContainer/VBox/QuitButton" to="." method="_on_quit_pressed"]
 [connection signal="pressed" from="CenterContainer/VBox/DevToggleButton" to="." method="_on_dev_toggle_pressed"]

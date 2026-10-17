@@ -26,6 +26,10 @@ var role_state: Dictionary = RoleActions.create_state()
 var legacy_records: Array[LegacyData] = []
 ## 전투에서 본 상대 무공 {무공 id: {id, name, element}} — 무공 연구소에서 분석한다. 세대를 넘어 남는다.
 var observed_arts: Dictionary = {}
+## 해가 시작될 때의 기록 (연간 보고서 비교용)
+var year_start: Dictionary = {}
+## 해가 바뀔 때 만든 연간 보고서 {title, lines}. 경영 화면이 보여 주고 비운다
+var pending_year_report: Dictionary = {}
 ## 철인 모드 (자동 저장만, 수동 저장 불가)
 var ironman: bool = false
 ## 우리 문파를 침공해 온 세력 id (대응을 고르기 전까지). 없으면 ""
@@ -52,6 +56,8 @@ var pending_combat: CombatSetup = null
 
 
 func _ready() -> void:
+	GameSettings.load_settings()
+	GameSettings.apply(get_tree())
 	_load_mod_data()
 	ScenarioManager.activate(ScenarioManager.DEFAULT_ID)
 	_initialize_new_game()
@@ -65,12 +71,19 @@ func start_new_game(
 	role_id: String,
 	scenario_id: String = ScenarioManager.DEFAULT_ID,
 	overrides: Dictionary = {},
-	ironman_mode: bool = false
+	ironman_mode: bool = false,
+	tutorial: bool = false
 ) -> void:
 	ScenarioManager.activate(scenario_id, overrides)
 	_initialize_new_game(role_id, display_name)
 	ironman = ironman_mode
 	is_game_active = true
+	# 길잡이: 첫 단계는 바로 보여 주고, 나머지는 계절마다 우선 기연으로 이어진다.
+	if tutorial:
+		EventManager.set_flag(story_flags, "tutorial")
+		pending_event = EventManager.check_turn_events(
+			player_character, player_sect, player_relationships, get_current_season(), triggered_event_ids, story_flags
+		)
 	EventBus.character_updated.emit(player_character)
 	EventBus.resources_changed.emit(player_sect)
 	EventBus.relationships_changed.emit(player_relationships)
@@ -94,11 +107,13 @@ func _initialize_new_game(
 	_record_role(player_character.role)
 	role_state = RoleActions.create_state()
 	legacy_records.clear()
+	year_start = _take_year_snapshot()
 	observed_arts = {}
 	analyzed_elements = []
 	challenge_target = ""
 	pending_invasion = ""
 	world_news.clear()
+	pending_year_report = {}
 	current_ending_id = ""
 	game_over_id = ""
 	last_turn_report = ""
@@ -197,6 +212,9 @@ func advance_turn() -> void:
 	# 침공을 받은 계절에는 기연 대신 침공에 대응한다.
 	if not is_game_over() and pending_invasion.is_empty():
 		_try_trigger_event()
+	if current_season_index == 0:
+		pending_year_report = build_year_report()
+		year_start = _take_year_snapshot()
 	autosave()
 	EventBus.turn_advanced.emit(current_year, get_current_season())
 	EventBus.resources_changed.emit(player_sect)
@@ -204,6 +222,8 @@ func advance_turn() -> void:
 
 ## 세력 AI의 한 계절. 강호 소식을 쌓고, 침공이 있으면 대응을 기다린다. 계절 보고 문구를 돌려준다.
 func _run_sect_ai() -> String:
+	if not SectAI.active:
+		return ""
 	# 침공 빈도는 기연 빈도를 따른다 (기연 빈도 0인 시험·시뮬레이션에서는 침공이 없다).
 	var result: Dictionary = SectAI.run_season(world_sects, _get_turn_index(), current_year, ScenarioRules.event_rate())
 	for line in result["news"]:
@@ -214,6 +234,43 @@ func _run_sect_ai() -> String:
 	if not result["news"].is_empty():
 		return "강호 소식 %d건" % result["news"].size()
 	return ""
+
+
+## 연간 보고서 비교용 기록
+func _take_year_snapshot() -> Dictionary:
+	return {
+		"year": current_year,
+		"gold": player_sect.gold,
+		"food": player_sect.food,
+		"reputation": player_sect.reputation,
+		"disciples": player_sect.disciple_count,
+		"level": player_character.level,
+		"arts": player_character.martial_arts.size(),
+		"subjugated": world_sects.filter(func(s: SectData) -> bool: return s.subjugated).size(),
+		"news": world_news.size(),
+	}
+
+
+## 지난 1년을 요약한다. 해가 바뀌는 계절 진행 끝에 만든다.
+func build_year_report() -> Dictionary:
+	var now: Dictionary = _take_year_snapshot()
+	var before: Dictionary = year_start if not year_start.is_empty() else now
+	var rows: Array = [
+		["금화", "gold"], ["식량", "food"], ["명성", "reputation"], ["제자", "disciples"],
+		["경지", "level"], ["무공", "arts"], ["굴복시킨 세력", "subjugated"],
+	]
+	var lines: PackedStringArray = []
+	for row in rows:
+		var a: int = int(before.get(row[1], now[row[1]]))
+		var b: int = int(now[row[1]])
+		lines.append("%s: %d → %d (%+d)" % [row[0], a, b, b - a])
+	var war_news: Array = world_news.filter(func(line: String) -> bool: return line.contains("침공") or line.contains("쳐서") or line.contains("쳤다가"))
+	lines.append("강호의 싸움 소식: %d건 (강호 정세에서 확인)" % war_news.size())
+	if not current_ending_id.is_empty():
+		lines.append("이른 결말: %s" % EndingManager.get_ending(current_ending_id).get("title", ""))
+	if ScenarioRules.has_time_limit():
+		lines.append("남은 연수: %d년" % ScenarioRules.years_left(current_year))
+	return {"title": "%s %d년 결산" % [ScenarioManager.get_era_name(), current_year - 1], "lines": lines}
 
 
 func add_world_news(line: String) -> void:
@@ -955,6 +1012,7 @@ func _build_save_state() -> Dictionary:
 		"observed_arts": observed_arts,
 		"challenge_target": challenge_target,
 		"pending_invasion": pending_invasion,
+		"year_start": year_start,
 		"world_news": world_news,
 		"analyzed_elements": analyzed_elements,
 		"triggered_event_ids": triggered_event_ids,
@@ -1002,6 +1060,8 @@ func _apply_save_data(data: Dictionary) -> void:
 	ironman = data.get("ironman", false) == true
 	challenge_target = str(data.get("challenge_target", ""))
 	pending_invasion = str(data.get("pending_invasion", ""))
+	year_start = data.get("year_start", {})
+	pending_year_report = {}
 	world_news.clear()
 	for line in data.get("world_news", []):
 		world_news.append(str(line))

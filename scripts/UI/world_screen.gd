@@ -38,7 +38,7 @@ func _build_news() -> void:
 	var label := Label.new()
 	label.text = "\n".join(lines.slice(0, NEWS_LINES))
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.add_theme_font_size_override("font_size", 13)
+	_UiTheme.set_font_size(label, 13)
 	npc_list.add_child(label)
 
 
@@ -173,7 +173,7 @@ func _add_entry(parent: Control, title: String, body: String) -> void:
 	var body_label := Label.new()
 	body_label.text = body
 	body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	body_label.add_theme_font_size_override("font_size", 13)
+	_UiTheme.set_font_size(body_label, 13)
 	body_label.add_theme_color_override("font_color", _UiTheme.COLORS["text_primary"])
 	box.add_child(title_label)
 	box.add_child(body_label)

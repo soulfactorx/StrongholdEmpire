@@ -38,7 +38,7 @@ func _ready() -> void:
 	box.add_child(_title)
 	_description = Label.new()
 	_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_description.add_theme_font_size_override("font_size", 14)
+	_UiTheme.set_font_size(_description, 14)
 	box.add_child(_description)
 
 	_rows = VBoxContainer.new()

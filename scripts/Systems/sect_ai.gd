@@ -8,6 +8,9 @@ const _Balance = preload("res://scripts/Systems/game_balance.gd")
 
 enum Action { GROW, ATTACK, INVADE, DIPLOMACY }
 
+## false면 계절 진행에서 세력 AI가 움직이지 않는다. 다른 시스템을 시험할 때 강호 세력 수치를 고정하려고 쓴다.
+static var active: bool = true
+
 
 ## 이 세력의 행동별 가중치. 할 수 없는 행동은 0
 static func get_weights(

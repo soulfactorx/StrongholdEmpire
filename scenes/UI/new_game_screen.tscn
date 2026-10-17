@@ -118,6 +118,13 @@ layout_mode = 2
 text = "역할 설명"
 autowrap_mode = 3
 
+[node name="TutorialCheck" type="CheckButton" parent="Margin/VBox/Columns/CharacterPanel/Scroll/CharacterVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+button_pressed = true
+text = "길잡이 — 처음 하는 분께 권합니다"
+
 [node name="IronmanCheck" type="CheckButton" parent="Margin/VBox/Columns/CharacterPanel/Scroll/CharacterVBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 48)

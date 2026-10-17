@@ -38,6 +38,9 @@ var _art_buttons_owner: CombatUnit = null
 @onready var art_list: VBoxContainer = %ArtList
 @onready var log_label: Label = %LogLabel
 @onready var back_button: Button = %BackButton
+const _ConfirmPopup = preload("res://scripts/UI/confirm_popup.gd")
+## 후퇴 확인 대화상자 (처음 쓸 때 만든다)
+var confirm_popup: Control
 
 
 func _ready() -> void:
@@ -675,7 +678,17 @@ func _on_art_pressed(art: MartialArtData) -> void:
 
 
 func _on_back_pressed() -> void:
-	# 전투 중에 나가면 후퇴로 처리한다.
+	if _combat_over:
+		leave_combat()
+		return
+	if confirm_popup == null:
+		confirm_popup = _ConfirmPopup.new()
+		add_child(confirm_popup)
+	confirm_popup.open("후퇴", "전투에서 물러납니다. 패배 손실의 절반을 받습니다.\n정말 후퇴할까요?", leave_combat, "후퇴", "계속 싸운다")
+
+
+## 전투를 떠난다. 전투 중이면 후퇴로 처리한다.
+func leave_combat() -> void:
 	if not _combat_over:
 		_end_combat(CombatManager.Outcome.RETREAT)
 	SceneRouter.goto(get_tree(), SceneRouter.HUB)

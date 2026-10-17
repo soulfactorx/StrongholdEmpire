@@ -30,6 +30,9 @@ var _checks: int = 0
 func _initialize() -> void:
 	# 테스트의 저장(자동 저장 포함)은 실제 세이브와 다른 폴더에 한다.
 	SaveManager.save_dir = TEST_SAVE_DIR
+	GameSettings.settings_path = TEST_SAVE_DIR.path_join("settings.cfg")
+	# 세력 AI는 계절마다 강호 세력 수치를 바꾸므로, 그 영향을 시험하는 곳에서만 켠다.
+	SectAI.active = false
 	_clear_test_saves()
 	_test_scenes_load()
 	_check(_completed.has("_test_scenes_load"), "_test_scenes_load 끝까지 실행")
@@ -163,6 +166,10 @@ func _run_runtime_tests() -> void:
 	_check(_completed.has("_test_invasion_flow"), "_test_invasion_flow 끝까지 실행")
 	await _test_save_screens()
 	_check(_completed.has("_test_save_screens"), "_test_save_screens 끝까지 실행")
+	_test_settings_and_reports()
+	_check(_completed.has("_test_settings_and_reports"), "_test_settings_and_reports 끝까지 실행")
+	await _test_ui_flows()
+	_check(_completed.has("_test_ui_flows"), "_test_ui_flows 끝까지 실행")
 
 	print("스모크 테스트: %d개 검사, %d개 실패" % [_checks, _failures])
 	# 재생 중인 효과음을 멈추고, 오디오 스레드가 재생 객체를 놓을 때까지 잠시 기다린다.
@@ -478,7 +485,7 @@ func _test_combat_flow() -> void:
 	_check(player.hp < hp_before, "인접한 적이 플레이어를 공격")
 
 	var gold_before: int = gm.player_sect.gold
-	controller._on_back_pressed()
+	controller.leave_combat()
 	await process_frame
 	await process_frame
 	_check(gm.player_sect.gold == gold_before - 20, "전투 중 후퇴: 손실 절반 반영")
@@ -1158,7 +1165,7 @@ func _test_combat_effects() -> void:
 		CombatRules.distance(enemy.grid_pos, player.grid_pos) == 1 and never_on_wall,
 		"적이 벽을 돌아 플레이어에게 접근"
 	)
-	c._on_back_pressed()
+	c.leave_combat()
 	await process_frame
 	await process_frame
 
@@ -1177,7 +1184,7 @@ func _test_combat_effects() -> void:
 	c._run_enemy_ai(rival)
 	_check(rival.character.internal_energy_current < ie_before, "라이벌 AI가 무공 사용")
 	_check(c.art_list.get_child_count() == player.get_martial_arts().size(), "무공 버튼이 습득 무공 수만큼")
-	c._on_back_pressed()
+	c.leave_combat()
 	await process_frame
 	_completed["_test_combat_effects"] = true
 
@@ -1285,7 +1292,7 @@ func _test_ally_combat() -> void:
 		enemy.take_damage(99999)
 	c._check_victory()
 	_check(c._combat_over and gm.player_sect.disciple_count == disciples_before - 1, "승리 후 전사한 제자 1명 반영")
-	c._on_back_pressed()
+	c.leave_combat()
 	await process_frame
 	_completed["_test_ally_combat"] = true
 
@@ -3540,6 +3547,16 @@ func _test_sect_ai() -> void:
 		_check(dominated == 0, "세력 AI 밸런스 (%s): 100판 중 한 세력이 5년 안에 강호를 휩쓴 판 %d" % [scenario_id, dominated])
 	ScenarioManager.activate(ScenarioManager.DEFAULT_ID)
 
+	# 계절 진행과 연결: 세력 AI가 움직여 강호 소식이 쌓이고, 기연 빈도 0이면 침공은 없다
+	SectAI.active = true
+	gm.start_new_game("세력", "leader", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
+	var powers_before: Array = gm.world_sects.map(func(x: SectData) -> int: return x.disciple_count + x.reputation)
+	for i in 8:
+		gm.advance_turn()
+	var powers_after: Array = gm.world_sects.map(func(x: SectData) -> int: return x.disciple_count + x.reputation)
+	_check(powers_after != powers_before and gm.pending_invasion == "", "계절 진행마다 세력 AI가 움직임 (기연 빈도 0이면 침공 없음)")
+	SectAI.active = false
+
 	# 침공 대응
 	gm.start_new_game("침공", "leader", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
 	var invader: SectData = gm.get_world_sect("heukpung")
@@ -3705,7 +3722,7 @@ func _test_save_screens() -> void:
 	_check(hub.save_popup.visible and hub.save_popup.get_option_count() == SaveManager.SLOT_COUNT, "저장 팝업: 슬롯 %d개" % SaveManager.SLOT_COUNT)
 	hub.save_popup._on_option_pressed("2")
 	_check(gm.has_save_file(2) and hub.log_label.text.contains("슬롯 2"), "화면에서 슬롯 2에 저장")
-	hub._on_main_menu_pressed()
+	hub.go_main_menu()
 	await process_frame
 	await process_frame
 	_check(gm.has_save_file(SaveManager.AUTO_SLOT), "메인 메뉴로 나갈 때 자동 저장")
@@ -3731,3 +3748,130 @@ func _test_save_screens() -> void:
 	await process_frame
 	_clear_test_saves()
 	_completed["_test_save_screens"] = true
+
+
+func _test_settings_and_reports() -> void:
+	var gm: Node = root.get_node("GameManager")
+
+	# 설정: 저장·불러오기·적용
+	GameSettings.set_and_save("sfx_volume", 0.5, self)
+	GameSettings.set_and_save("text_scale", 1.3, self)
+	GameSettings.sfx_volume = 0.0
+	GameSettings.text_scale = 1.0
+	GameSettings.load_settings()
+	_check(is_equal_approx(GameSettings.sfx_volume, 0.5) and is_equal_approx(GameSettings.text_scale, 1.3), "설정 저장·불러오기")
+	GameSettings.apply(self)
+	_check(is_equal_approx(db_to_linear(AudioServer.get_bus_volume_db(0)), 0.5), "효과음 음량 적용")
+	_check(root.theme != null and root.theme.default_font_size == roundi(16 * 1.3), "글자 크기: 화면 기본 글자 크기")
+	_check(UiTheme.font_size(13) == roundi(UiTheme.MIN_FONT_SIZE * 1.3), "작은 글자도 최소 크기와 배율 적용")
+	var label := Label.new()
+	UiTheme.set_font_size(label, 20)
+	var panel := PanelContainer.new()
+	panel.add_child(label)
+	UiTheme.apply_to_control(panel)
+	UiTheme.apply_to_control(panel)
+	_check(label.get_theme_font_size("font_size") == roundi(20 * 1.3), "글자 배율은 두 번 곱해지지 않음")
+	panel.free()
+	var config := ConfigFile.new()
+	config.set_value("display", "text_scale", 7.0)
+	config.save(GameSettings.settings_path)
+	GameSettings.load_settings()
+	_check(is_equal_approx(GameSettings.text_scale, 1.0), "잘못된 글자 배율은 보통으로")
+	GameSettings.set_and_save("sfx_volume", 0.8, self)
+	GameSettings.set_and_save("text_scale", 1.0, self)
+	_check(ProjectSettings.get_setting("display/window/stretch/aspect") == "expand", "화면 비율: 넓은 화면은 보이는 영역을 넓힘")
+
+	# 연간 보고서
+	_new_quiet_game(gm, "leader")
+	var gold: int = gm.player_sect.gold
+	for i in 3:
+		gm.advance_turn()
+	_check(gm.pending_year_report.is_empty(), "해가 바뀌기 전에는 연간 보고서 없음")
+	gm.advance_turn()
+	var report: Dictionary = gm.pending_year_report
+	_check(report.get("title", "").contains("1년 결산"), "해가 바뀌면 지난해 결산")
+	_check(report["lines"][0] == "금화: %d → %d (%+d)" % [gold, gm.player_sect.gold, gm.player_sect.gold - gold], "결산: 금화 변화")
+	_check(gm.year_start["year"] == 2, "결산 뒤 새해 기준 기록")
+
+	# 길잡이: 첫 단계는 바로, 나머지는 계절마다 (기연 빈도와 관계없이)
+	gm.start_new_game("길잡이", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0}, false, true)
+	var steps: PackedStringArray = []
+	var research: int = gm.player_sect.research_points
+	for i in 6:
+		if not gm.pending_event.is_empty():
+			steps.append(gm.pending_event["id"])
+			gm.resolve_pending_event(1 if gm.pending_event["id"] == "tutorial_3_combat" else 0)
+		gm.advance_turn()
+	_check(steps == PackedStringArray(["tutorial_1_hub", "tutorial_2_events", "tutorial_3_combat", "tutorial_4_martial_art"]), "길잡이 4단계가 차례로 %s" % steps)
+	_check(gm.story_flags.get("tutorial_done", false) and gm.player_sect.research_points >= research + 20, "길잡이 끝: 연구점 선물")
+	_new_quiet_game(gm, "young_disciple")
+	_check(gm.pending_event.is_empty(), "길잡이를 끄면 안내 기연 없음")
+	_completed["_test_settings_and_reports"] = true
+
+
+func _test_ui_flows() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_clear_test_saves()
+	_new_quiet_game(gm, "leader")
+	SceneRouter.goto(self, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	var hub: Node = current_scene
+
+	# 설정 팝업
+	hub._on_options_pressed()
+	_check(hub.options_popup.visible, "경영 화면: 설정 팝업")
+	hub.options_popup.volume_slider.value = 40
+	_check(is_equal_approx(GameSettings.sfx_volume, 0.4), "설정: 음량 조절")
+	hub.options_popup.volume_slider.value = 80
+	hub.options_popup.visible = false
+
+	# 연간 보고서 팝업
+	for i in 4:
+		hub._on_advance_turn_pressed()
+	await process_frame
+	_check(hub.report_popup.visible and gm.pending_year_report.is_empty(), "해가 바뀌면 연간 보고서 팝업")
+	hub.report_popup._answer(true)
+
+	# 메인 메뉴로: 확인 후 이동
+	hub._on_main_menu_pressed()
+	await process_frame
+	_check(hub.confirm_popup.visible and current_scene == hub, "메인 메뉴로 나가기 전 확인")
+	hub.confirm_popup._answer(false)
+	_check(not hub.confirm_popup.visible and current_scene == hub, "아니오: 머무름")
+	hub._on_main_menu_pressed()
+	hub.confirm_popup._answer(true)
+	await process_frame
+	await process_frame
+	_check(current_scene.scene_file_path == SceneRouter.MAIN_MENU and gm.has_save_file(SaveManager.AUTO_SLOT), "예: 자동 저장 후 메인 메뉴")
+
+	# 진행 중인 판이 있으면 새 게임 전에 확인
+	var menu: Node = current_scene
+	menu._on_new_game_pressed()
+	_check(menu.confirm_popup.visible and current_scene == menu, "새 게임 전 확인")
+	menu.confirm_popup._answer(true)
+	await process_frame
+	await process_frame
+	_check(current_scene.scene_file_path == SceneRouter.NEW_GAME, "확인하면 새 게임 화면")
+	_check(current_scene.tutorial_check.button_pressed, "새 게임 화면: 길잡이는 기본으로 켜짐")
+
+	# 전투 후퇴는 확인 후
+	_new_quiet_game(gm, "leader")
+	gm.start_combat(CombatManager.create_sparring(gm.player_character))
+	await process_frame
+	await process_frame
+	var controller: Node = current_scene
+	controller._on_back_pressed()
+	_check(controller.confirm_popup.visible and gm.pending_combat != null, "후퇴 전 확인")
+	controller.confirm_popup._answer(false)
+	_check(gm.pending_combat != null, "계속 싸운다: 전투 유지")
+	controller._on_back_pressed()
+	controller.confirm_popup._answer(true)
+	await process_frame
+	await process_frame
+	_check(gm.pending_combat == null and current_scene.scene_file_path == SceneRouter.HUB, "후퇴: 전투를 끝내고 경영 화면으로")
+	gm.start_new_game("정리", "young_disciple")
+	SceneRouter.goto(self, SceneRouter.MAIN_MENU)
+	await process_frame
+	_clear_test_saves()
+	_completed["_test_ui_flows"] = true

@@ -2,6 +2,8 @@ extends Control
 
 const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
 const _ChoicePopup = preload("res://scripts/UI/choice_popup.gd")
+const _ConfirmPopup = preload("res://scripts/UI/confirm_popup.gd")
+const _OptionsPopup = preload("res://scripts/UI/options_popup.gd")
 
 @onready var title_label: Label = %TitleLabel
 @onready var subtitle_label: Label = %SubtitleLabel
@@ -12,6 +14,8 @@ const _ChoicePopup = preload("res://scripts/UI/choice_popup.gd")
 @onready var dev_panel: Control = %DevPanel
 ## 불러올 슬롯을 고르는 팝업
 var load_popup: Control
+var confirm_popup: Control
+var options_popup: Control
 
 
 func _ready() -> void:
@@ -19,6 +23,10 @@ func _ready() -> void:
 	load_popup = _ChoicePopup.new()
 	add_child(load_popup)
 	load_popup.chosen.connect(_on_load_slot_chosen)
+	confirm_popup = _ConfirmPopup.new()
+	add_child(confirm_popup)
+	options_popup = _OptionsPopup.new()
+	add_child(options_popup)
 	_UiTheme.style_label_title(title_label, 48)
 	title_label.text = "강호제패"
 	subtitle_label.text = "무협 전략 시뮬레이션 RPG"
@@ -43,7 +51,22 @@ func _on_continue_pressed() -> void:
 
 func _on_new_game_pressed() -> void:
 	AudioManager.play_click()
+	if GameManager.is_game_active:
+		confirm_popup.open(
+			"새 게임", "진행 중인 판이 있습니다. 새로 시작할까요?\n지금 판은 자동 저장에서 이어 할 수 있지만, 새 판의 계절이 바뀌면 자동 저장을 덮어씁니다.",
+			_goto_new_game, "새로 시작", "취소"
+		)
+		return
+	_goto_new_game()
+
+
+func _goto_new_game() -> void:
 	SceneRouter.goto(get_tree(), SceneRouter.NEW_GAME)
+
+
+func _on_options_pressed() -> void:
+	AudioManager.play_click()
+	options_popup.open()
 
 
 func _on_load_pressed() -> void:

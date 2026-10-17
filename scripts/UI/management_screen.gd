@@ -6,6 +6,8 @@ const _FacilityPopup = preload("res://scripts/UI/facility_popup.gd")
 const _ChoicePopup = preload("res://scripts/UI/choice_popup.gd")
 const _DisciplePopup = preload("res://scripts/UI/disciple_popup.gd")
 const _BondPopup = preload("res://scripts/UI/bond_popup.gd")
+const _ConfirmPopup = preload("res://scripts/UI/confirm_popup.gd")
+const _OptionsPopup = preload("res://scripts/UI/options_popup.gd")
 
 @onready var year_label: Label = %YearLabel
 @onready var season_label: Label = %SeasonLabel
@@ -38,6 +40,10 @@ var bond_popup: Control
 var invasion_popup: Control
 ## 저장 슬롯 팝업
 var save_popup: Control
+## 확인 대화상자, 설정, 연간 보고서
+var confirm_popup: Control
+var options_popup: Control
+var report_popup: Control
 ## 대상을 고르는 중인 역할 행동 id
 var _pending_role_action: String = ""
 
@@ -62,6 +68,12 @@ func _ready() -> void:
 	save_popup = _ChoicePopup.new()
 	add_child(save_popup)
 	save_popup.chosen.connect(_on_save_slot_chosen)
+	confirm_popup = _ConfirmPopup.new()
+	add_child(confirm_popup)
+	options_popup = _OptionsPopup.new()
+	add_child(options_popup)
+	report_popup = _ConfirmPopup.new()
+	add_child(report_popup)
 	_connect_bus(EventBus.turn_advanced, _on_turn_advanced)
 	_connect_bus(EventBus.resources_changed, _on_resources_changed)
 	_connect_bus(EventBus.character_updated, _on_character_updated)
@@ -237,6 +249,16 @@ func _on_turn_advanced(_year: int, _season: String) -> void:
 	_update_role_actions()
 	_on_action_message(GameManager.last_turn_report)
 	_show_invasion()
+	_show_year_report()
+
+
+## 해가 바뀌면 1년 결산을 보여 준다.
+func _show_year_report() -> void:
+	if GameManager.pending_year_report.is_empty():
+		return
+	var report: Dictionary = GameManager.pending_year_report
+	GameManager.pending_year_report = {}
+	report_popup.open(report["title"], "\n".join(report["lines"]), Callable(), "확인", "")
 
 
 ## 다른 세력이 침공해 왔으면 대응을 고르게 한다. 닫으면 다음 계절에 산문을 내준 것으로 처리된다.
@@ -425,7 +447,16 @@ func _on_help_pressed() -> void:
 
 func _on_main_menu_pressed() -> void:
 	AudioManager.play_click()
-	# 메인 메뉴로 나갈 때도 자동 저장해 둔다.
+	confirm_popup.open("메인 메뉴로", "자동 저장한 뒤 메인 메뉴로 나갑니다.\n[계속하기]나 [불러오기]로 이어서 할 수 있습니다.", go_main_menu, "나가기", "머무르기")
+
+
+## 자동 저장하고 메인 메뉴로 나간다.
+func go_main_menu() -> void:
 	if GameManager.is_game_active:
 		GameManager.autosave()
 	SceneRouter.goto(get_tree(), SceneRouter.MAIN_MENU)
+
+
+func _on_options_pressed() -> void:
+	AudioManager.play_click()
+	options_popup.open()

@@ -38,7 +38,7 @@ func _ready() -> void:
 	var note := Label.new()
 	note.text = "확장할수록 비용이 오르고, 시작 수준을 넘는 단계마다 계절 유지비 금화 %d가 듭니다." % _Balance.FACILITY_UPKEEP_GOLD
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	note.add_theme_font_size_override("font_size", 13)
+	_UiTheme.set_font_size(note, 13)
 	box.add_child(note)
 
 	_rows = VBoxContainer.new()

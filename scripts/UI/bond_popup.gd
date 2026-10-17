@@ -39,7 +39,7 @@ func _ready() -> void:
 	box.add_child(title)
 	_summary = Label.new()
 	_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_summary.add_theme_font_size_override("font_size", 14)
+	_UiTheme.set_font_size(_summary, 14)
 	box.add_child(_summary)
 
 	var scroll := ScrollContainer.new()

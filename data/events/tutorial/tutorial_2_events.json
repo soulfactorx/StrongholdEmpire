@@ -1,0 +1,33 @@
+{
+  "id": "tutorial_2_events",
+  "title": "길잡이 ② 기연과 인연",
+  "description": "계절이 바뀌면 이런 기연이 찾아옵니다. 고른 선택에 따라 능력치·관계·이야기가 달라집니다.\n\n· 관계 칸의 [인연 돌보기]로 인물과 대화·선물·비무를 하면 유대가 깊어지고, 깊어지면 그 인물의 기연이 일어납니다.\n· [역할 전환]이 밝아지면 새 역할로 갈아탈 수 있습니다.\n· 여러 기연이 이어지는 '스토리 아크'도 있습니다. 갈림길마다 신중히 고르세요.",
+  "can_repeat": false,
+  "priority": true,
+  "conditions": [
+    {
+      "type": "flag",
+      "flag": "tutorial",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "tutorial_step1",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "알겠습니다",
+      "message": "다음 계절에는 전투를 안내합니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "tutorial_step2",
+          "value": true
+        }
+      ]
+    }
+  ]
+}
