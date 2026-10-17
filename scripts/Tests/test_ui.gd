@@ -282,6 +282,23 @@ func _test_input_and_tips() -> void:
 		_check(LongPressTip.is_bubble_visible(hub.gold_label) and not hub.get_node("TipLayer/Bubble").get_child(0).text.is_empty(), "설명: %s" % key)
 		LongPressTip.hide_bubble(hub.gold_label)
 
+	# 버튼 설명: 길게 누르면 설명이 뜨고, 손을 떼도 버튼은 눌리지 않는다
+	var feast: Button = hub.find_child("FeastButton", true, false)
+	_check(feast.has_meta("help_attached") and ButtonHelp.text_for(feast).contains("명성"), "버튼 설명이 붙음 (문파 연회)")
+	var feast_presses: Array = [0]
+	var count_press := func() -> void: feast_presses[0] += 1
+	feast.pressed.connect(count_press)
+	feast.gui_input.emit(_mouse(true))
+	await create_timer(LongPressTip.HOLD_TIME + 0.15).timeout
+	_check(LongPressTip.is_bubble_visible(feast) and hub.get_node("TipLayer/Bubble").get_child(0).text == ButtonHelp.text_for(feast), "버튼을 길게 누르면 기능 설명")
+	_check(not feast.button_pressed and feast_presses[0] == 0, "길게 눌러 설명을 보면 버튼이 실행되지 않음")
+	feast.pressed.disconnect(count_press)
+	LongPressTip.hide_bubble(feast)
+	var unknown := Button.new()
+	unknown.text = "설명 없는 버튼"
+	_check(ButtonHelp.text_for(unknown).is_empty(), "설명이 없는 버튼은 말풍선을 붙이지 않음")
+	unknown.free()
+
 	# 단축키
 	hub._unhandled_key_input(_key(KEY_F))
 	_check(hub.facility_popup.visible, "F: 시설 관리")
