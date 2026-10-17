@@ -1,6 +1,7 @@
 # 내보내기: Android(디버그 APK)·웹·윈도우·리눅스 빌드를 만들어 아티팩트로 올린다.
 # 리눅스 빌드로 자체 점검(--self-check)을 돌려 데이터·그림·소리가 패키지에 들어갔는지 확인한다.
 # Android SDK는 GitHub의 ubuntu 러너에 미리 깔려 있다. 디버그 키는 실행마다 새로 만든다(개인 시험용).
+# main에 푸시되면 웹 빌드를 GitHub Pages에 배포한다. (저장소 Settings → Pages → Source를 "GitHub Actions"로 둬야 한다)
 name: 내보내기
 
 on:
@@ -114,6 +115,12 @@ jobs:
           path: build/web
           retention-days: 14
 
+      - name: Pages용 웹 빌드 올리기 (main만)
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
       - uses: actions/upload-artifact@v4
         with:
           name: windows
@@ -126,3 +133,23 @@ jobs:
           name: export-log
           path: export.log
           retention-days: 7
+
+  # main의 웹 빌드를 GitHub Pages에 배포한다. 주소: https://<계정>.github.io/<저장소>/
+  deploy-pages:
+    needs: export
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: GitHub Pages 배포
+        id: deployment
+        uses: actions/deploy-pages@v4
