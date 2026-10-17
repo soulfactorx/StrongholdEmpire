@@ -15,5 +15,11 @@
     "age": 29,
     "morality": 15
   },
-  "war_specialty": "FLANK"
+  "war_specialty": "FLANK",
+  "martial_arts": [
+    {
+      "id": "mod_thunder_palm",
+      "min_level": 1
+    }
+  ]
 }

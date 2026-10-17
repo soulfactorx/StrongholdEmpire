@@ -166,6 +166,26 @@ const COMPLEXITY_PENALTY := 8
 const MIN_SUCCESS_RATE := 10
 const MAX_SUCCESS_RATE := 95
 
+# 전수·강화·비전·분석 (M7-2)
+## 전수 비용(연구점) = BASE + 복잡도 × PER_COMPLEXITY. 문파 비전은 SECRET_SCALE 배
+const TRANSMIT_RESEARCH_BASE := 10
+const TRANSMIT_RESEARCH_PER_COMPLEXITY := 5
+const TRANSMIT_SECRET_SCALE := 0.5
+## 전수받을 제자의 레벨 요구 = 복잡도 ÷ 이 값 (올림)
+const TRANSMIT_COMPLEXITY_PER_LEVEL := 2
+## 강화: 문파 공동 연구. 비용 = BASE + 현재 강화 단계 × STEP
+const ENHANCE_MAX_LEVEL := 3
+const ENHANCE_RESEARCH_BASE := 30
+const ENHANCE_RESEARCH_STEP := 20
+const ENHANCE_DAMAGE := 3
+const ENHANCE_HEAL := 4
+const ENHANCE_INTERNAL_COST_REDUCTION := 1
+## 비전으로 지정하려면 이 단계 이상 강화해야 한다
+const SECRET_ART_MIN_ENHANCE := 1
+## 상대 무공 분석: 분석한 속성을 이기는 속성의 무공을 창조할 때 성공률 보너스
+const ANALYZE_RESEARCH := 25
+const COUNTER_SUCCESS_BONUS := 15
+
 # 역할 전환
 const MANAGER_LEVEL_REQ := 3
 const MANAGER_WISDOM_REQ := 18

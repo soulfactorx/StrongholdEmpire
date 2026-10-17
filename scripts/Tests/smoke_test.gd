@@ -138,6 +138,10 @@ func _run_runtime_tests() -> void:
 	_check(_completed.has("_test_disciple_roster"), "_test_disciple_roster 끝까지 실행")
 	await _test_disciple_roster_flow()
 	_check(_completed.has("_test_disciple_roster_flow"), "_test_disciple_roster_flow 끝까지 실행")
+	_test_transmission_and_secret()
+	_check(_completed.has("_test_transmission_and_secret"), "_test_transmission_and_secret 끝까지 실행")
+	await _test_martial_art_screen_actions()
+	_check(_completed.has("_test_martial_art_screen_actions"), "_test_martial_art_screen_actions 끝까지 실행")
 
 	print("스모크 테스트: %d개 검사, %d개 실패" % [_checks, _failures])
 	# 재생 중인 효과음을 멈추고, 오디오 스레드가 재생 객체를 놓을 때까지 잠시 기다린다.
@@ -2976,3 +2980,160 @@ func _test_disciple_roster_flow() -> void:
 	SceneRouter.goto(self, SceneRouter.MAIN_MENU)
 	await process_frame
 	_completed["_test_disciple_roster_flow"] = true
+
+
+func _test_transmission_and_secret() -> void:
+	var gm: Node = root.get_node("GameManager")
+
+	# 비급 목록은 MartialArtLibrary에서 (프리셋 먼저, 모드 뒤)
+	var all_arts: Array[MartialArtData] = MartialArtLibrary.get_all()
+	var ids: Array = all_arts.map(func(a: MartialArtData) -> String: return a.id)
+	_check(ids.has("preset_soul_chase_sword") and ids.has("mod_thunder_palm"), "비급 목록: 프리셋과 모드 무공")
+	_check(not MartialArtLibrary.is_mod(all_arts[0]) and MartialArtLibrary.is_mod(all_arts[-1]), "비급 목록: 프리셋이 먼저")
+
+	# 전수: 레벨 요구·연구점·한 무공
+	_new_quiet_game(gm, "leader")
+	var sect: SectData = gm.player_sect
+	var art: MartialArtData = MartialArtLibrary.create_art("preset_soul_chase_sword")
+	gm.player_character.learn_martial_art(art)
+	var disciple: DiscipleData = sect.disciples[0]
+	sect.research_points = 0
+	_check(DiscipleRoster.get_transmit_level(art) == 2, "전수 레벨 요구: 복잡도 3 → Lv.2")
+	_check(not DiscipleRoster.transmit(sect, disciple.id, art)["success"], "레벨이 모자라면 전수 불가")
+	disciple.gain_experience(_Balance.DISCIPLE_EXP_PER_LEVEL)
+	_check(not DiscipleRoster.transmit(sect, disciple.id, art)["success"], "연구점이 모자라면 전수 불가")
+	sect.research_points = 200
+	var cost: int = DiscipleRoster.get_transmit_cost(sect, art)
+	_check(DiscipleRoster.transmit(sect, disciple.id, art)["success"] and sect.research_points == 200 - cost, "전수: 연구점 소모")
+	_check(disciple.martial_art.id == art.id and disciple.martial_art != art, "제자는 무공 복제본을 익힘")
+	_check(not DiscipleRoster.transmit(sect, disciple.id, art)["success"], "같은 무공 재전수 거부")
+	DiscipleRoster.toggle_deploy(sect, disciple.id)
+	var setup: CombatSetup = CombatManager.create_night_bandits(gm.player_character, sect)
+	var ally: CharacterData = setup.allies.filter(func(c: CharacterData) -> bool: return c.id == disciple.id)[0]
+	_check(ally.knows_martial_art(art.id), "방어전: 전수받은 제자가 그 무공을 씀")
+
+	# 강화
+	var damage: int = art.damage
+	var internal: int = art.internal_cost
+	sect.research_points = 1000
+	_check(not MartialArtManager.designate_secret(art, sect)["success"], "강화하지 않은 무공은 비전 불가")
+	_check(MartialArtManager.enhance(art, sect)["success"] and art.enhance_level == 1, "무공 강화 1단계")
+	_check(art.damage == damage + _Balance.ENHANCE_DAMAGE and art.internal_cost == internal - _Balance.ENHANCE_INTERNAL_COST_REDUCTION, "강화: 피해 증가, 내공 소모 감소")
+	_check(sect.research_points == 1000 - _Balance.ENHANCE_RESEARCH_BASE, "강화 비용")
+	_check(MartialArtLibrary.create_art(art.id).enhance_level == 0, "강화는 비급 원본을 바꾸지 않음")
+
+	# 비전
+	_check(MartialArtManager.designate_secret(art, sect)["success"] and sect.secret_art.id == art.id, "강화한 무공을 비전으로 지정")
+	_check(DiscipleRoster.get_transmit_cost(sect, art) == roundi(cost * _Balance.TRANSMIT_SECRET_SCALE), "비전은 전수 비용 절반")
+	MartialArtManager.enhance(art, sect)
+	MartialArtManager.enhance(art, sect)
+	_check(sect.secret_art.enhance_level == 3 and not MartialArtManager.enhance(art, sect)["success"], "강화는 최고 3단계, 비전도 함께 강해짐")
+
+	# 세대 전승: 후계자가 비전을 물려받는다
+	gm.player_character.gain_experience(CharacterData.get_experience_for_level(_Balance.RETIRE_LEVEL))
+	var result: Dictionary = gm.start_legacy_succession()
+	_check(result["success"] and gm.player_character.knows_martial_art(art.id) and result["message"].contains("비전"), "후계자가 문파 비전을 물려받음")
+	var inherited: MartialArtData = gm.player_character.martial_arts.filter(func(a: MartialArtData) -> bool: return a.id == art.id)[0]
+	_check(inherited.enhance_level == 3 and inherited != sect.secret_art, "물려받은 비전은 강화 단계 유지, 복제본")
+
+	# 상대 무공 분석
+	_new_quiet_game(gm, "leader")
+	sect = gm.player_sect
+	gm.pending_combat = CombatManager.create_by_id("arc_cheonma_blood_shadow", gm.player_character)
+	gm.finish_combat(CombatManager.Outcome.VICTORY)
+	_check(gm.observed_arts.has("mod_thunder_palm") and gm.observed_arts["mod_thunder_palm"]["element"] == MartialArtData.FiveElement.FIRE, "전투에서 본 상대 무공 기록 (혈영의 뇌전장)")
+	sect.research_points = 0
+	var observed: Dictionary = gm.observed_arts["mod_thunder_palm"]
+	_check(not MartialArtManager.analyze(observed, sect, gm.analyzed_elements)["success"], "연구점이 모자라면 분석 불가")
+	sect.research_points = 100
+	_check(MartialArtManager.analyze(observed, sect, gm.analyzed_elements)["success"] and gm.analyzed_elements.has(MartialArtData.FiveElement.FIRE), "상대 무공 분석: 화 속성")
+	_check(not MartialArtManager.analyze(observed, sect, gm.analyzed_elements)["success"], "같은 속성 재분석 거부")
+	_check(MartialArtManager.get_counter_element(MartialArtData.FiveElement.FIRE) == MartialArtData.FiveElement.WATER, "화를 이기는 속성은 수")
+	_check(MartialArtManager.get_counter_bonus(MartialArtData.FiveElement.WATER, gm.analyzed_elements) == _Balance.COUNTER_SUCCESS_BONUS, "상극(수) 무공 창조 성공률 보너스")
+	_check(MartialArtManager.get_counter_bonus(MartialArtData.FiveElement.WOOD, gm.analyzed_elements) == 0, "상극이 아니면 보너스 없음")
+	_check(not MartialArtManager.analyze({"name": "무속성", "element": 0}, sect, gm.analyzed_elements)["success"], "속성 없는 무공은 분석 불가")
+	# 성공률 보너스가 실제 창조에 쓰인다: 성공률 10%짜리 복잡한 무공을 보너스로 25%로
+	sect.research_points = 10000
+	gm.player_character.wisdom = 0
+	sect.library_level = 0
+	var blueprint: Dictionary = {
+		"name": "역류수장", "category": MartialArtData.Category.PALM, "element": MartialArtData.FiveElement.WATER,
+		"yin_yang": MartialArtData.YinYang.YIN, "effects": [0, 1, 2],
+	}
+	var successes: Array = [0, 0]
+	seed(7)
+	for i in 600:
+		var use: Array = [[], gm.analyzed_elements][i % 2]
+		sect.research_points = 10000
+		blueprint["name"] = "역류수장%d" % i
+		if MartialArtManager.create_from_blueprint(blueprint, sect, gm.player_character, use)["success"]:
+			successes[i % 2] += 1
+	_check(successes[1] > successes[0] + 20, "분석 보너스로 창조 성공이 늘어남 (%d → %d / 300)" % [successes[0], successes[1]])
+
+	# 세이브 왕복
+	_new_quiet_game(gm, "leader")
+	sect = gm.player_sect
+	art = MartialArtLibrary.create_art("preset_soul_chase_sword")
+	art.enhance_level = 2
+	gm.player_character.learn_martial_art(art)
+	sect.secret_art = art.duplicate(true)
+	sect.disciples[0].martial_art = art.duplicate(true)
+	gm.observed_arts = {"mod_thunder_palm": {"id": "mod_thunder_palm", "name": "뇌전장", "element": 2, "owner": "혈영"}}
+	gm.analyzed_elements = [2]
+	var disciple_id: String = sect.disciples[0].id
+	gm._apply_save_data(JSON.parse_string(JSON.stringify({
+		"character": _SaveManager.serialize_character(gm.player_character),
+		"sect": _SaveManager.serialize_sect(sect),
+		"observed_arts": gm.observed_arts,
+		"analyzed_elements": gm.analyzed_elements,
+	})))
+	var loaded: SectData = gm.player_sect
+	_check(loaded.secret_art != null and loaded.secret_art.id == art.id and loaded.secret_art.enhance_level == 2, "문파 비전 저장·복원")
+	_check(DiscipleRoster.get_disciple(loaded, disciple_id).martial_art.id == art.id, "제자의 전수 무공 저장·복원")
+	_check(gm.player_character.martial_arts[0].enhance_level == 2, "무공 강화 단계 저장·복원")
+	_check(gm.observed_arts["mod_thunder_palm"]["element"] is int and gm.analyzed_elements == [2], "본 무공·분석 속성 저장·복원")
+	_completed["_test_transmission_and_secret"] = true
+
+
+func _test_martial_art_screen_actions() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_new_quiet_game(gm, "leader")
+	gm.player_sect.research_points = 500
+	gm.player_character.learn_martial_art(MartialArtLibrary.create_art("preset_soul_chase_sword"))
+	gm.observed_arts = {"mod_thunder_palm": {"id": "mod_thunder_palm", "name": "뇌전장", "element": 2, "owner": "혈영"}}
+	SceneRouter.goto(self, SceneRouter.MARTIAL_ART)
+	await process_frame
+	await process_frame
+	var screen: Node = current_scene
+	_check(screen.preset_list.item_count == MartialArtLibrary.get_all().size(), "무공 연구소: 비급 목록은 MartialArtLibrary")
+	screen._on_enhance_pressed()
+	_check(screen.choice_popup.visible and screen.choice_popup.get_option_count() == 1, "강화: 습득 무공 고르기")
+	screen.choice_popup._on_option_pressed("preset_soul_chase_sword")
+	_check(gm.player_character.martial_arts[0].enhance_level == 1, "화면에서 무공 강화")
+	screen._on_secret_pressed()
+	screen.choice_popup._on_option_pressed("preset_soul_chase_sword")
+	_check(gm.player_sect.secret_art != null and screen.secret_label.text.contains("유혼쾌영검"), "화면에서 비전 지정·표시")
+	screen._on_analyze_pressed()
+	screen.choice_popup._on_option_pressed("mod_thunder_palm")
+	_check(gm.analyzed_elements.has(2) and screen.secret_label.text.contains("화"), "화면에서 상대 무공 분석")
+	screen.element_option.select(screen.element_option.get_item_index(MartialArtData.FiveElement.WATER))
+	screen.element_option.item_selected.emit(screen.element_option.selected)
+	_check(screen.success_rate_label.text.contains("상극"), "상극 속성을 고르면 성공률 미리보기에 보너스 표시")
+
+	# 제자 명단에서 전수
+	SceneRouter.goto(self, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	var hub: Node = current_scene
+	var target: DiscipleData = gm.player_sect.disciples[0]
+	target.gain_experience(_Balance.DISCIPLE_EXP_PER_LEVEL)
+	hub._on_disciple_pressed()
+	await process_frame
+	hub.disciple_popup._on_transmit_pressed(target.id)
+	_check(hub.disciple_popup.art_choice.visible and hub.disciple_popup.art_choice.get_option_count() == 1, "전수: 무공 고르기 팝업")
+	hub.disciple_popup.art_choice._on_option_pressed("preset_soul_chase_sword")
+	_check(target.martial_art != null and hub.log_label.text.contains("전수"), "제자 명단에서 무공 전수")
+	gm.start_new_game("정리", "young_disciple")
+	SceneRouter.goto(self, SceneRouter.MAIN_MENU)
+	await process_frame
+	_completed["_test_martial_art_screen_actions"] = true

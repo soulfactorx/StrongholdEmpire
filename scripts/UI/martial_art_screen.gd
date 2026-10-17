@@ -1,13 +1,14 @@
 extends Control
 
 const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
+const _Balance = preload("res://scripts/Systems/game_balance.gd")
+const _ChoicePopup = preload("res://scripts/UI/choice_popup.gd")
 
-const PRESET_PATHS: Array[String] = [
-	"res://resources/MartialArts/soul_chase_sword.tres",
-	"res://resources/MartialArts/earth_life_palm.tres",
-]
-
+## 비급 목록 (MartialArtLibrary: 프리셋 + 모드 무공)
 var _preset_arts: Array[MartialArtData] = []
+## 강화·비전·분석의 대상을 고르는 팝업과, 지금 고르는 행동
+var choice_popup: Control
+var _pending_action: String = ""
 
 @onready var name_input: LineEdit = %NameInput
 @onready var category_option: OptionButton = %CategoryOption
@@ -20,10 +21,14 @@ var _preset_arts: Array[MartialArtData] = []
 @onready var known_arts_label: Label = %KnownArtsLabel
 @onready var preset_list: ItemList = %PresetList
 @onready var log_label: Label = %LogLabel
+@onready var secret_label: Label = %SecretLabel
 
 
 func _ready() -> void:
 	_UiTheme.apply_to_control(self)
+	choice_popup = _ChoicePopup.new()
+	add_child(choice_popup)
+	choice_popup.chosen.connect(_on_choice_made)
 	_setup_options()
 	_load_presets()
 	_refresh_display()
@@ -129,20 +134,31 @@ func _enum_label(key: String) -> String:
 
 func _load_presets() -> void:
 	preset_list.clear()
-	_preset_arts.clear()
-	for path in PRESET_PATHS:
-		var art: MartialArtData = load(path) as MartialArtData
-		if art:
-			_preset_arts.append(art)
-			preset_list.add_item("%s — %s" % [art.display_name, art.get_category_name()])
-	for mod_art in GameManager.mod_martial_arts:
-		_preset_arts.append(mod_art)
-		preset_list.add_item("%s — %s [모드]" % [mod_art.display_name, mod_art.get_category_name()])
+	_preset_arts = MartialArtLibrary.get_all()
+	for art in _preset_arts:
+		preset_list.add_item("%s — %s%s" % [
+			art.display_name, art.get_category_name(), " [모드]" if MartialArtLibrary.is_mod(art) else "",
+		])
 
 
 func _refresh_display() -> void:
 	known_arts_label.text = "습득 무공: %s" % GameManager.player_character.get_martial_arts_text()
+	var secret: MartialArtData = GameManager.player_sect.secret_art
+	var analyzed: PackedStringArray = []
+	for element in GameManager.analyzed_elements:
+		analyzed.append(_element_name(element))
+	secret_label.text = "문파 비전: %s\n분석한 상대 속성: %s (상극 속성 무공 창조 성공률 +%d%%)" % [
+		"[%s] 강화 %d단계 — 후계자가 물려받습니다" % [secret.display_name, secret.enhance_level] if secret else "없음",
+		", ".join(analyzed) if not analyzed.is_empty() else "없음",
+		_Balance.COUNTER_SUCCESS_BONUS,
+	]
 	_update_success_preview()
+
+
+func _element_name(element: int) -> String:
+	var art := MartialArtData.new()
+	art.element = element
+	return art.get_element_name()
 
 
 func _update_success_preview() -> void:
@@ -152,13 +168,18 @@ func _update_success_preview() -> void:
 		blueprint["yin_yang"] as MartialArtData.YinYang,
 		blueprint["effects"] as Array
 	)
-	var rate: int = MartialArtManager.calculate_success_rate(
+	var counter: int = MartialArtManager.get_counter_bonus(
+		blueprint["element"] as MartialArtData.FiveElement, GameManager.analyzed_elements
+	)
+	var rate: int = mini(_Balance.MAX_SUCCESS_RATE, MartialArtManager.calculate_success_rate(
 		GameManager.player_sect,
 		GameManager.player_character,
 		complexity
-	)
-	var cost: int = 20 + complexity * 8
-	success_rate_label.text = "예상 성공률: %d%% | 연구비: %d점 | 복잡도: %d" % [rate, cost, complexity]
+	) + counter)
+	var cost: int = _Balance.BASE_RESEARCH_COST + complexity * _Balance.RESEARCH_COST_PER_COMPLEXITY
+	success_rate_label.text = "예상 성공률: %d%%%s | 연구비: %d점 | 복잡도: %d" % [
+		rate, " (상극 +%d)" % counter if counter > 0 else "", cost, complexity,
+	]
 
 
 func _collect_effects() -> Array:
@@ -184,7 +205,8 @@ func _on_create_pressed() -> void:
 	var result: Dictionary = MartialArtManager.create_from_blueprint(
 		_build_blueprint(),
 		GameManager.player_sect,
-		GameManager.player_character
+		GameManager.player_character,
+		GameManager.analyzed_elements
 	)
 	log_label.text = result["message"]
 	if result["success"]:
@@ -200,7 +222,8 @@ func _on_research_preset_pressed() -> void:
 		log_label.text = "연구할 비급을 선택하세요."
 		return
 
-	var art: MartialArtData = _preset_arts[selected[0]]
+	# 원본(비급 목록)을 지키기 위해 복제본을 익힌다. 강화는 복제본에만 적용된다.
+	var art: MartialArtData = _preset_arts[selected[0]].duplicate(true)
 	var result: Dictionary = MartialArtManager.research_existing(
 		art,
 		GameManager.player_sect,
@@ -211,6 +234,88 @@ func _on_research_preset_pressed() -> void:
 		EventBus.martial_art_learned.emit(result["martial_art"])
 		EventBus.resources_changed.emit(GameManager.player_sect)
 		EventBus.character_updated.emit(GameManager.player_character)
+
+
+func _on_enhance_pressed() -> void:
+	var options: Array[Dictionary] = []
+	for art in GameManager.player_character.martial_arts:
+		var maxed: bool = art.enhance_level >= _Balance.ENHANCE_MAX_LEVEL
+		options.append({
+			"id": art.id,
+			"title": "%s (강화 %d/%d)" % [art.display_name, art.enhance_level, _Balance.ENHANCE_MAX_LEVEL],
+			"description": "최고 단계" if maxed else "연구점 %d · %s +%d, 내공 소모 -%d" % [
+				MartialArtManager.get_enhance_cost(art),
+				"회복" if art.heal_amount > 0 else "피해",
+				_Balance.ENHANCE_HEAL if art.heal_amount > 0 else _Balance.ENHANCE_DAMAGE,
+				_Balance.ENHANCE_INTERNAL_COST_REDUCTION,
+			],
+		})
+	_open_choice("enhance", "무공 강화", "문파의 연구점을 들여 습득한 무공을 갈고닦습니다. 반드시 성공합니다.", options)
+
+
+func _on_secret_pressed() -> void:
+	var options: Array[Dictionary] = []
+	for art in GameManager.player_character.martial_arts:
+		if art.enhance_level >= _Balance.SECRET_ART_MIN_ENHANCE:
+			options.append({"id": art.id, "title": art.display_name, "description": "강화 %d단계 · %s" % [art.enhance_level, art.description]})
+	_open_choice("secret", "비전 지정", "강화 %d단계 이상인 무공을 문파 비전으로 정합니다.\n비전은 세대 전승 때 후계자가 물려받고, 제자에게 반값에 전수합니다." % _Balance.SECRET_ART_MIN_ENHANCE, options)
+
+
+func _on_analyze_pressed() -> void:
+	var options: Array[Dictionary] = []
+	for art_id in GameManager.observed_arts:
+		var observed: Dictionary = GameManager.observed_arts[art_id]
+		var element: int = observed["element"]
+		var done: bool = GameManager.analyzed_elements.has(element)
+		options.append({
+			"id": art_id,
+			"title": "%s (%s · %s 속성)" % [observed["name"], observed["owner"], _element_name(element)],
+			"description": "분석 완료" if done else "연구점 %d · %s 속성 무공 창조 성공률 +%d%%" % [
+				_Balance.ANALYZE_RESEARCH,
+				_element_name(MartialArtManager.get_counter_element(element)),
+				_Balance.COUNTER_SUCCESS_BONUS,
+			],
+		})
+	_open_choice("analyze", "상대 무공 분석", "전투에서 본 상대의 무공을 연구해 그 속성을 이기는 무공을 만들기 쉽게 합니다.", options)
+
+
+func _open_choice(action: String, title: String, description: String, options: Array[Dictionary]) -> void:
+	AudioManager.play_click()
+	if options.is_empty():
+		log_label.text = "%s: 고를 수 있는 무공이 없습니다." % title
+		return
+	_pending_action = action
+	choice_popup.open(title, description, options)
+
+
+func _on_choice_made(option_id: String) -> void:
+	var sect: SectData = GameManager.player_sect
+	var result: Dictionary
+	match _pending_action:
+		"enhance":
+			result = MartialArtManager.enhance(_find_known_art(option_id), sect)
+		"secret":
+			result = MartialArtManager.designate_secret(_find_known_art(option_id), sect)
+		"analyze":
+			result = MartialArtManager.analyze(GameManager.observed_arts[option_id], sect, GameManager.analyzed_elements)
+		_:
+			return
+	_pending_action = ""
+	log_label.text = result["message"]
+	if result["success"]:
+		AudioManager.play_success()
+		EventBus.resources_changed.emit(sect)
+		EventBus.character_updated.emit(GameManager.player_character)
+	else:
+		AudioManager.play_failure()
+	_refresh_display()
+
+
+func _find_known_art(art_id: String) -> MartialArtData:
+	for art in GameManager.player_character.martial_arts:
+		if art.id == art_id:
+			return art
+	return null
 
 
 func _on_back_pressed() -> void:

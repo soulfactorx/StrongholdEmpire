@@ -5,10 +5,12 @@ const _Balance = preload("res://scripts/Systems/game_balance.gd")
 const MAX_EFFECTS := 3
 
 
+## analyzed_elements: 상대 무공 분석으로 파악한 속성. 그 속성을 이기는 속성이면 성공률이 오른다.
 static func create_from_blueprint(
 	blueprint: Dictionary,
 	sect: SectData,
-	character: CharacterData
+	character: CharacterData,
+	analyzed_elements: Array = []
 ) -> Dictionary:
 	var name: String = blueprint.get("name", "").strip_edges()
 	if name.is_empty():
@@ -31,7 +33,10 @@ static func create_from_blueprint(
 			"message": "연구점이 부족합니다. (%d 필요)" % research_cost,
 		}
 
-	var success_rate := calculate_success_rate(sect, character, complexity)
+	var success_rate: int = mini(
+		_Balance.MAX_SUCCESS_RATE,
+		calculate_success_rate(sect, character, complexity) + get_counter_bonus(element, analyzed_elements)
+	)
 	var roll := randi_range(1, 100)
 	sect.research_points -= research_cost
 
@@ -117,6 +122,77 @@ static func calculate_success_rate(
 	rate += character.wisdom * _Balance.WISDOM_SUCCESS_MULTIPLIER
 	rate -= complexity * _Balance.COMPLEXITY_PENALTY
 	return clampi(rate, _Balance.MIN_SUCCESS_RATE, _Balance.MAX_SUCCESS_RATE)
+
+
+## 분석한 속성을 이기는(상극) 속성이면 성공률 보너스
+static func get_counter_bonus(element: MartialArtData.FiveElement, analyzed_elements: Array) -> int:
+	var countered: Variant = CombatRules.ELEMENT_OVERCOMES.get(element)
+	if countered != null and analyzed_elements.has(int(countered)):
+		return _Balance.COUNTER_SUCCESS_BONUS
+	return 0
+
+
+## 이 속성을 이기는 속성 (상극). 없으면 NONE
+static func get_counter_element(element: MartialArtData.FiveElement) -> MartialArtData.FiveElement:
+	for attacker in CombatRules.ELEMENT_OVERCOMES:
+		if CombatRules.ELEMENT_OVERCOMES[attacker] == element:
+			return attacker
+	return MartialArtData.FiveElement.NONE
+
+
+static func get_enhance_cost(art: MartialArtData) -> int:
+	return _Balance.ENHANCE_RESEARCH_BASE + art.enhance_level * _Balance.ENHANCE_RESEARCH_STEP
+
+
+## 문파 공동 연구로 무공을 강화한다. 위력(또는 회복량)이 오르고 내공 소모가 준다. 반드시 성공한다.
+static func enhance(art: MartialArtData, sect: SectData) -> Dictionary:
+	if art.enhance_level >= _Balance.ENHANCE_MAX_LEVEL:
+		return {"success": false, "message": "[%s]은(는) 이미 극에 달했습니다." % art.display_name}
+	var cost: int = get_enhance_cost(art)
+	if sect.research_points < cost:
+		return {"success": false, "message": "연구점이 부족합니다. (%d 필요)" % cost}
+	sect.research_points -= cost
+	art.enhance_level += 1
+	if art.heal_amount > 0:
+		art.heal_amount += _Balance.ENHANCE_HEAL
+	else:
+		art.damage += _Balance.ENHANCE_DAMAGE
+	art.internal_cost = maxi(1, art.internal_cost - _Balance.ENHANCE_INTERNAL_COST_REDUCTION)
+	# 비전으로 지정한 무공이면 비전도 함께 강해진다.
+	if sect.secret_art and sect.secret_art.id == art.id:
+		sect.secret_art = art.duplicate(true)
+	return {"success": true, "message": "[%s] 강화 %d단계! (연구점 -%d)" % [art.display_name, art.enhance_level, cost]}
+
+
+## 강화한 무공을 문파 비전으로 지정한다. 세대 전승 때 후계자가 물려받고, 제자에게 싸게 전수한다.
+static func designate_secret(art: MartialArtData, sect: SectData) -> Dictionary:
+	if art.enhance_level < _Balance.SECRET_ART_MIN_ENHANCE:
+		return {"success": false, "message": "비전은 %d단계 이상 강화한 무공만 지정할 수 있습니다." % _Balance.SECRET_ART_MIN_ENHANCE}
+	if sect.secret_art and sect.secret_art.id == art.id:
+		return {"success": false, "message": "[%s]은(는) 이미 문파 비전입니다." % art.display_name}
+	sect.secret_art = art.duplicate(true)
+	return {"success": true, "message": "[%s]을(를) %s의 비전으로 정했습니다. 후계자에게 이어집니다." % [art.display_name, sect.sect_name]}
+
+
+## 전투에서 본 상대 무공을 분석한다. observed: {id, name, element}. 분석한 속성은 analyzed_elements에 더한다.
+static func analyze(observed: Dictionary, sect: SectData, analyzed_elements: Array) -> Dictionary:
+	var element: int = int(observed.get("element", MartialArtData.FiveElement.NONE))
+	if element == MartialArtData.FiveElement.NONE:
+		return {"success": false, "message": "[%s]에는 다룰 만한 오행의 기운이 없습니다." % observed.get("name", "?")}
+	if analyzed_elements.has(element):
+		return {"success": false, "message": "이미 분석한 속성입니다."}
+	if sect.research_points < _Balance.ANALYZE_RESEARCH:
+		return {"success": false, "message": "연구점이 부족합니다. (%d 필요)" % _Balance.ANALYZE_RESEARCH}
+	sect.research_points -= _Balance.ANALYZE_RESEARCH
+	analyzed_elements.append(element)
+	var counter := MartialArtData.new()
+	counter.element = get_counter_element(element)
+	var target := MartialArtData.new()
+	target.element = element
+	return {"success": true, "message": "[%s] 분석 완료: %s 속성의 약점을 알았습니다. %s 속성 무공 창조 성공률 +%d%% (연구점 -%d)" % [
+		observed.get("name", "?"), target.get_element_name(), counter.get_element_name(),
+		_Balance.COUNTER_SUCCESS_BONUS, _Balance.ANALYZE_RESEARCH,
+	]}
 
 
 static func calculate_complexity(

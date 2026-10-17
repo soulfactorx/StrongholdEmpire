@@ -20,6 +20,8 @@ const NO_ASSIGNMENT := ""
 @export var deployed: bool = false
 ## 참전한 전투 수
 @export var battles: int = 0
+## 전수받은 무공 (방어전에서 쓴다). 없으면 null
+@export var martial_art: MartialArtData = null
 ## 마지막으로 개별 수련한 계절 (-1이면 없음)
 @export var last_train_turn: int = -1
 

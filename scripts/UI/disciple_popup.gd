@@ -5,12 +5,17 @@ extends Control
 
 const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
 const _Balance = preload("res://scripts/Systems/game_balance.gd")
+const _ChoicePopup = preload("res://scripts/UI/choice_popup.gd")
 
 ## 명단을 바꾼 결과 (success, message)
 signal changed(result: Dictionary)
 
 var _summary: Label
 var _rows: VBoxContainer
+## 전수할 무공을 고르는 팝업
+var art_choice: Control
+## 전수받을 제자 id
+var _transmit_target: String = ""
 
 
 func _ready() -> void:
@@ -27,7 +32,7 @@ func _ready() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(900, 0)
+	panel.custom_minimum_size = Vector2(1040, 0)
 	center.add_child(panel)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 10)
@@ -57,6 +62,9 @@ func _ready() -> void:
 	close.pressed.connect(func() -> void: visible = false)
 	box.add_child(close)
 	_UiTheme.apply_to_control(panel)
+	art_choice = _ChoicePopup.new()
+	add_child(art_choice)
+	art_choice.chosen.connect(_on_art_chosen)
 
 
 func open() -> void:
@@ -98,8 +106,9 @@ func _make_row(disciple: DiscipleData, turn: int) -> HBoxContainer:
 	row.add_theme_constant_override("separation", 8)
 	var label := Label.new()
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	label.text = "%s  Lv.%d (%d/%d)\n무력 %d · 신법 %d · 지혜 %d · 참전 %d회" % [
+	label.text = "%s  Lv.%d (%d/%d) · %s\n무력 %d · 신법 %d · 지혜 %d · 참전 %d회" % [
 		disciple.display_name, disciple.level, disciple.experience, disciple.get_next_level_experience(),
+		"[%s]" % disciple.martial_art.display_name if disciple.martial_art else "무공 없음",
 		disciple.strength, disciple.agility, disciple.wisdom, disciple.battles,
 	]
 	row.add_child(label)
@@ -129,7 +138,14 @@ func _make_row(disciple: DiscipleData, turn: int) -> HBoxContainer:
 	)
 	train_button.pressed.connect(_on_train_pressed.bind(disciple.id))
 	row.add_child(train_button)
-	for button in [assign_button, deploy_button, train_button]:
+
+	var transmit_button := Button.new()
+	transmit_button.custom_minimum_size = Vector2(110, 48)
+	transmit_button.text = "무공 전수"
+	transmit_button.disabled = GameManager.player_character.martial_arts.is_empty()
+	transmit_button.pressed.connect(_on_transmit_pressed.bind(disciple.id))
+	row.add_child(transmit_button)
+	for button in [assign_button, deploy_button, train_button, transmit_button]:
 		_UiTheme.style_button(button)
 	return row
 
@@ -144,6 +160,34 @@ func _on_deploy_pressed(disciple_id: String) -> void:
 
 func _on_train_pressed(disciple_id: String) -> void:
 	_apply(DiscipleRoster.train(GameManager.player_sect, disciple_id, GameManager._get_turn_index()))
+
+
+func _on_transmit_pressed(disciple_id: String) -> void:
+	var sect: SectData = GameManager.player_sect
+	var disciple: DiscipleData = DiscipleRoster.get_disciple(sect, disciple_id)
+	var options: Array[Dictionary] = []
+	for art in GameManager.player_character.martial_arts:
+		var tags: PackedStringArray = []
+		if sect.secret_art and sect.secret_art.id == art.id:
+			tags.append("문파 비전")
+		var need: int = DiscipleRoster.get_transmit_level(art)
+		if disciple.level < need:
+			tags.append("Lv.%d 필요" % need)
+		options.append({
+			"id": art.id,
+			"title": "%s%s" % [art.display_name, " (%s)" % ", ".join(tags) if not tags.is_empty() else ""],
+			"description": "연구점 %d · 피해 %d · 내공 %d" % [DiscipleRoster.get_transmit_cost(sect, art), art.damage, art.internal_cost],
+		})
+	_transmit_target = disciple_id
+	art_choice.open("%s에게 무공 전수" % disciple.display_name, "전수한 무공은 방어전에서 그 제자가 씁니다. 제자는 무공을 하나만 익힙니다.", options)
+
+
+func _on_art_chosen(art_id: String) -> void:
+	var chosen: MartialArtData = null
+	for art in GameManager.player_character.martial_arts:
+		if art.id == art_id:
+			chosen = art
+	_apply(DiscipleRoster.transmit(GameManager.player_sect, _transmit_target, chosen))
 
 
 func _apply(result: Dictionary) -> void:

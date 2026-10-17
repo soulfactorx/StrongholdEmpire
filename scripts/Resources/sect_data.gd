@@ -44,6 +44,8 @@ var disciples: Array[DiscipleData] = []
 var use_roster: bool = false
 ## 다음 제자 id 번호
 var next_disciple_id: int = 1
+## 문파 비전: 세대 전승 때 후계자가 물려받는 무공 (없으면 null)
+var secret_art: MartialArtData = null
 
 @export_group("시설")
 @export var library_level: int = 1

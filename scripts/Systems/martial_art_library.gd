@@ -21,6 +21,24 @@ static func create_art(art_id: String) -> MartialArtData:
 	return art.duplicate(true) if art else null
 
 
+## 연구할 수 있는 비급 전체: 프리셋을 먼저, 모드 무공을 뒤에 (이름순)
+static func get_all() -> Array[MartialArtData]:
+	_ensure_loaded()
+	var result: Array[MartialArtData] = []
+	for art in _arts.values():
+		result.append(art)
+	result.sort_custom(func(a: MartialArtData, b: MartialArtData) -> bool:
+		if is_mod(a) != is_mod(b):
+			return not is_mod(a)
+		return a.display_name < b.display_name
+	)
+	return result
+
+
+static func is_mod(art: MartialArtData) -> bool:
+	return not art.id.begins_with("preset_")
+
+
 static func reload_data() -> void:
 	_arts.clear()
 	_loaded = true

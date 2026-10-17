@@ -225,7 +225,44 @@ static func to_character(disciple: DiscipleData, stat_bonus: int = 0) -> Charact
 	character.charisma = 8
 	character.internal_energy_max = _Balance.DISCIPLE_BASE_INTERNAL + disciple.level * _Balance.DISCIPLE_INTERNAL_PER_LEVEL
 	character.restore_internal_energy()
+	if disciple.martial_art:
+		character.learn_martial_art(disciple.martial_art.duplicate(true))
 	return character
+
+
+# ── 전수 ──
+
+## 전수받을 제자에게 필요한 레벨
+static func get_transmit_level(art: MartialArtData) -> int:
+	return ceili(float(art.complexity) / _Balance.TRANSMIT_COMPLEXITY_PER_LEVEL)
+
+
+## 전수 비용(연구점). 문파 비전은 싸다.
+static func get_transmit_cost(sect: SectData, art: MartialArtData) -> int:
+	var cost: int = _Balance.TRANSMIT_RESEARCH_BASE + art.complexity * _Balance.TRANSMIT_RESEARCH_PER_COMPLEXITY
+	if sect.secret_art and sect.secret_art.id == art.id:
+		cost = roundi(cost * _Balance.TRANSMIT_SECRET_SCALE)
+	return cost
+
+
+## 주인공의 무공을 제자에게 전수한다. 제자는 무공 하나만 익히며, 새로 전수하면 바뀐다.
+static func transmit(sect: SectData, disciple_id: String, art: MartialArtData) -> Dictionary:
+	var disciple: DiscipleData = get_disciple(sect, disciple_id)
+	if disciple == null or art == null:
+		return {"success": false, "message": "전수할 제자나 무공이 없습니다."}
+	if disciple.martial_art and disciple.martial_art.id == art.id:
+		return {"success": false, "message": "%s은(는) 이미 [%s]을(를) 익혔습니다." % [disciple.display_name, art.display_name]}
+	var need: int = get_transmit_level(art)
+	if disciple.level < need:
+		return {"success": false, "message": "[%s]은(는) Lv.%d 이상 제자에게만 전수할 수 있습니다." % [art.display_name, need]}
+	var cost: int = get_transmit_cost(sect, art)
+	if sect.research_points < cost:
+		return {"success": false, "message": "연구점이 부족합니다. (%d 필요)" % cost}
+	sect.research_points -= cost
+	disciple.martial_art = art.duplicate(true)
+	return {"success": true, "message": "%s에게 [%s]을(를) 전수했습니다. 방어전에서 이 무공을 씁니다. (연구점 -%d)" % [
+		disciple.display_name, art.display_name, cost,
+	]}
 
 
 ## 전투 뒤: 쓰러진 제자는 명단에서 빠지고, 살아남은 참전 제자는 경험을 얻는다. 전사한 제자 이름을 돌려준다.

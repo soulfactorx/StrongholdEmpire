@@ -24,6 +24,10 @@ var role_history: Array[String] = []
 ## 역할 자원과 역할 행동 기록 (RoleActions.create_state)
 var role_state: Dictionary = RoleActions.create_state()
 var legacy_records: Array[LegacyData] = []
+## 전투에서 본 상대 무공 {무공 id: {id, name, element}} — 무공 연구소에서 분석한다. 세대를 넘어 남는다.
+var observed_arts: Dictionary = {}
+## 분석을 마친 오행 속성 (MartialArtData.FiveElement). 상극 무공 창조 성공률이 오른다.
+var analyzed_elements: Array = []
 var current_ending_id: String = ""
 ## 게임오버 id. 비어 있지 않으면 이야기가 끝난 상태다.
 var game_over_id: String = ""
@@ -79,6 +83,8 @@ func _initialize_new_game(
 	_record_role(player_character.role)
 	role_state = RoleActions.create_state()
 	legacy_records.clear()
+	observed_arts = {}
+	analyzed_elements = []
 	current_ending_id = ""
 	game_over_id = ""
 	last_turn_report = ""
@@ -505,6 +511,9 @@ func start_legacy_succession() -> Dictionary:
 	generation += 1
 
 	_set_player_character(LegacyManager.create_successor(legacy, player_sect))
+	# 문파 비전은 후계자에게 이어진다.
+	if player_sect.secret_art:
+		player_character.learn_martial_art(player_sect.secret_art.duplicate(true))
 	LegacyManager.apply_legacy_bonuses(player_sect, legacy)
 	player_relationships = RelationshipManager.create_default_relationships()
 	triggered_event_ids.clear()
@@ -523,10 +532,11 @@ func start_legacy_succession() -> Dictionary:
 
 	return {
 		"success": true,
-		"message": "%s이(가) %s(으)로 이어갑니다. (제%d세대)" % [
+		"message": "%s이(가) %s(으)로 이어갑니다. (제%d세대)%s" % [
 			legacy.predecessor_name,
 			player_character.display_name,
 			generation,
+			" 문파 비전 [%s]을(를) 물려받았습니다." % player_sect.secret_art.display_name if player_sect.secret_art else "",
 		],
 	}
 
@@ -728,6 +738,7 @@ func start_sparring() -> Dictionary:
 func finish_combat(outcome: CombatManager.Outcome, fallen_allies: int = 0, fallen_ids: Array = []) -> Dictionary:
 	if pending_combat == null:
 		return {"success": false, "message": "진행 중인 전투가 없습니다."}
+	_record_observed_arts(pending_combat)
 	var result: Dictionary = CombatManager.apply_outcome(
 		pending_combat,
 		outcome,
@@ -752,6 +763,16 @@ func finish_combat(outcome: CombatManager.Outcome, fallen_allies: int = 0, falle
 	return result
 
 
+## 전투에서 상대가 지닌 무공을 기록한다.
+func _record_observed_arts(setup: CombatSetup) -> void:
+	for enemy in setup.enemies:
+		for art in enemy.martial_arts:
+			if not observed_arts.has(art.id):
+				observed_arts[art.id] = {
+					"id": art.id, "name": art.display_name, "element": int(art.element), "owner": enemy.display_name,
+				}
+
+
 func _get_turn_index() -> int:
 	return current_year * SEASONS.size() + current_season_index
 
@@ -772,6 +793,8 @@ func save_game() -> Dictionary:
 		"flag_turns": flag_turns,
 		"role_history": role_history,
 		"role_state": role_state,
+		"observed_arts": observed_arts,
+		"analyzed_elements": analyzed_elements,
 		"triggered_event_ids": triggered_event_ids,
 		"current_ending_id": current_ending_id,
 		"game_over_id": game_over_id,
@@ -814,6 +837,17 @@ func _apply_save_data(data: Dictionary) -> void:
 		role_history.append(str(role_name))
 	# 역할 자원이 없는 구버전 세이브는 기본값으로 시작한다.
 	role_state = RoleActions.restore_state(data.get("role_state", {}))
+	observed_arts = {}
+	var saved_arts: Dictionary = data.get("observed_arts", {})
+	for art_id in saved_arts:
+		var entry: Dictionary = saved_arts[art_id]
+		observed_arts[art_id] = {
+			"id": str(entry.get("id", art_id)), "name": str(entry.get("name", "?")),
+			"element": int(entry.get("element", 0)), "owner": str(entry.get("owner", "")),
+		}
+	analyzed_elements = []
+	for element in data.get("analyzed_elements", []):
+		analyzed_elements.append(int(element))
 	triggered_event_ids.clear()
 	for event_id in data.get("triggered_event_ids", []):
 		triggered_event_ids.append(event_id)

@@ -2,7 +2,7 @@ class_name SaveManager
 extends RefCounted
 
 const SAVE_PATH := "user://save_slot_1.json"
-const SAVE_VERSION := 9
+const SAVE_VERSION := 10
 
 
 static func save_game(state: Dictionary) -> Dictionary:
@@ -46,6 +46,14 @@ static func serialize_character(character: CharacterData) -> Dictionary:
 	}
 
 
+## 무공 하나(없으면 null)를 저장용 배열로 만든다.
+static func _art_list(art: MartialArtData) -> Array[MartialArtData]:
+	var result: Array[MartialArtData] = []
+	if art:
+		result.append(art)
+	return result
+
+
 static func serialize_martial_arts(arts: Array[MartialArtData]) -> Array:
 	var result: Array = []
 	for art in arts:
@@ -68,6 +76,7 @@ static func serialize_martial_arts(arts: Array[MartialArtData]) -> Array:
 			"heal_amount": art.heal_amount,
 			"move_bonus": art.move_bonus,
 			"description": art.description,
+			"enhance_level": art.enhance_level,
 		})
 	return result
 
@@ -97,6 +106,7 @@ static func serialize_sect(sect: SectData) -> Dictionary:
 		"use_roster": sect.use_roster,
 		"next_disciple_id": sect.next_disciple_id,
 		"disciples": serialize_disciples(sect.disciples),
+		"secret_art": serialize_martial_arts(_art_list(sect.secret_art)),
 	}
 
 
@@ -115,6 +125,7 @@ static func serialize_disciples(disciples: Array[DiscipleData]) -> Array:
 			"deployed": disciple.deployed,
 			"battles": disciple.battles,
 			"last_train_turn": disciple.last_train_turn,
+			"martial_arts": serialize_martial_arts(_art_list(disciple.martial_art)),
 		})
 	return result
 
@@ -129,6 +140,9 @@ static func deserialize_disciples(data: Array) -> Array[DiscipleData]:
 			disciple.set(key, int(entry.get(key, disciple.get(key))))
 		disciple.assignment = str(entry.get("assignment", ""))
 		disciple.deployed = bool(entry.get("deployed", false))
+		var arts: Array[MartialArtData] = deserialize_martial_arts(entry.get("martial_arts", []))
+		if not arts.is_empty():
+			disciple.martial_art = arts[0]
 		result.append(disciple)
 	return result
 
@@ -212,6 +226,7 @@ static func deserialize_martial_arts(data: Array) -> Array[MartialArtData]:
 		art.heal_amount = int(entry.get("heal_amount", 0))
 		art.move_bonus = int(entry.get("move_bonus", 0))
 		art.description = entry.get("description", "")
+		art.enhance_level = int(entry.get("enhance_level", 0))
 		result.append(art)
 	return result
 
@@ -239,6 +254,9 @@ static func deserialize_sect(data: Dictionary) -> SectData:
 	sect.subjugated = data.get("subjugated", false)
 	for command in data.get("observed_commands", []):
 		sect.observed_commands.append(int(command))
+	var secret: Array[MartialArtData] = deserialize_martial_arts(data.get("secret_art", []))
+	if not secret.is_empty():
+		sect.secret_art = secret[0]
 	# 제자 명단 (제자 수를 먼저 정한 뒤 켠다. 수가 다르면 명단 쪽에 맞춘다)
 	if data.get("use_roster", false):
 		sect.disciples = deserialize_disciples(data.get("disciples", []))
