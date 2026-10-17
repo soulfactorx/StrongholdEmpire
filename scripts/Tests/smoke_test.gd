@@ -120,6 +120,10 @@ func _run_runtime_tests() -> void:
 	_check(_completed.has("_test_war_balance"), "_test_war_balance 끝까지 실행")
 	await _test_war_flow()
 	_check(_completed.has("_test_war_flow"), "_test_war_flow 끝까지 실행")
+	_test_economy_rules()
+	_check(_completed.has("_test_economy_rules"), "_test_economy_rules 끝까지 실행")
+	await _test_economy_flow()
+	_check(_completed.has("_test_economy_flow"), "_test_economy_flow 끝까지 실행")
 
 	print("스모크 테스트: %d개 검사, %d개 실패" % [_checks, _failures])
 	quit(1 if _failures > 0 else 0)
@@ -2080,3 +2084,136 @@ func _test_war_flow() -> void:
 	SceneRouter.goto(self, SceneRouter.MAIN_MENU)
 	await process_frame
 	_completed["_test_war_flow"] = true
+
+
+func _test_economy_rules() -> void:
+	ScenarioManager.activate(ScenarioManager.DEFAULT_ID)
+	var sect := SectData.new()
+	var character := CharacterData.new()
+	character.wisdom = 10
+	character.role = CharacterData.Role.YOUNG_DISCIPLE
+	var spring: Dictionary = SectManager.compute_seasonal_income(sect, character, "봄")
+	_check(
+		spring["gold"] == _Balance.BASE_GOLD_INCOME + _Balance.TREASURY_GOLD_PER_LEVEL
+		and spring["food"] == _Balance.BASE_FOOD_INCOME + _Balance.TRAINING_FOOD_PER_LEVEL + 15
+		and spring["research"] == _Balance.LIBRARY_RESEARCH_PER_LEVEL + 5,
+		"봄 수입 계산 %s" % [spring]
+	)
+	var summer: Dictionary = SectManager.compute_seasonal_income(sect, character, "여름")
+	_check(summer["gold"] == spring["gold"] + 10, "여름 금화 보너스")
+	character.role = CharacterData.Role.LEADER
+	_check(SectManager.compute_seasonal_income(sect, character, "봄")["gold"] == int(spring["gold"] * 1.2), "문주 경영 보정")
+
+	# 재고 손실
+	sect.gold = 1000
+	sect.food = 800
+	var losses: Dictionary = SectManager.apply_yearly_losses(sect)
+	_check(losses["gold_loss"] == 75 and losses["food_loss"] == 100 and sect.gold == 925 and sect.food == 700, "재고 손실: 안전량 초과분의 일부")
+	sect.gold = 400
+	sect.food = 250
+	losses = SectManager.apply_yearly_losses(sect)
+	_check(losses["gold_loss"] == 0 and losses["food_loss"] == 0 and losses["message"].is_empty(), "안전량 이하면 손실 없음")
+	sect.disciple_count = 12
+	var rep_before: int = sect.reputation
+	_check(SectManager.apply_yearly_reputation(sect) == 2 and sect.reputation == rep_before + 2, "제자 12명: 해마다 명성 +2")
+
+	# 시설
+	sect = SectData.new()
+	_check(SectManager.get_upgrade_cost(sect, "library") == 80, "서고 첫 확장 80")
+	sect.gold = 10000
+	SectManager.upgrade_facility(sect, "library")
+	_check(sect.library_level == 2 and SectManager.get_upgrade_cost(sect, "library") == 120, "확장할수록 비용 상승 (120)")
+	_check(sect.apothecary_level == 0 and SectManager.get_upgrade_cost(sect, "apothecary") == 90, "약방은 0에서 짓기")
+	var upkeep_before: int = sect.get_gold_upkeep()
+	var result: Dictionary = SectManager.upgrade_facility(sect, "apothecary")
+	_check(result["success"] and sect.apothecary_level == 1 and result["message"].contains("지었습니다"), "약방 짓기")
+	_check(sect.get_gold_upkeep() == upkeep_before + _Balance.FACILITY_UPKEEP_GOLD, "새 시설도 유지비 증가")
+	for i in 5:
+		SectManager.upgrade_facility(sect, "apothecary")
+	_check(sect.apothecary_level == 3 and SectManager.get_upgrade_cost(sect, "apothecary") == -1, "약방 최대 Lv.3")
+	_check(not SectManager.upgrade_facility(sect, "apothecary")["success"], "최고 수준이면 확장 불가")
+	sect.gold = 10
+	_check(not SectManager.upgrade_facility(sect, "treasury")["success"], "금화 부족이면 확장 불가")
+
+	var restored: SectData = _SaveManager.deserialize_sect(JSON.parse_string(JSON.stringify(_SaveManager.serialize_sect(sect))))
+	_check(restored.apothecary_level == 3 and restored.library_level == 2, "새 시설 저장/복원")
+	_completed["_test_economy_rules"] = true
+
+
+func _test_economy_flow() -> void:
+	var gm: Node = root.get_node("GameManager")
+
+	# 무행동 10년: 금화가 시작값의 2배를 넘지 않는다
+	gm.start_new_game("무위", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
+	var start_gold: int = gm.player_sect.gold
+	for i in 40:
+		gm.advance_turn()
+		gm.pending_combat = null
+	_check(gm.player_sect.gold <= start_gold * 2, "무행동 10년 금화 %d (시작 %d의 2배 이하)" % [gm.player_sect.gold, start_gold])
+	_check(gm.player_sect.food <= 1000 and gm.player_sect.food > 0, "무행동 10년 식량 %d (부족도 과잉도 아님)" % gm.player_sect.food)
+
+	# 예상 수지가 실제와 같다 (해가 바뀌지 않는 계절)
+	gm.start_new_game("예측", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
+	var forecast: Dictionary = gm.estimate_next_season()
+	var gold_before: int = gm.player_sect.gold
+	var food_before: int = gm.player_sect.food
+	gm.advance_turn()
+	_check(
+		gm.player_sect.gold - gold_before == forecast["gold"] and gm.player_sect.food - food_before == forecast["food"],
+		"다음 계절 예상 수지가 실제와 같음"
+	)
+	var rep_before: int = gm.player_sect.reputation
+	gm.advance_turn()
+	_check(gm.player_sect.reputation == rep_before, "계절마다 명성이 저절로 오르지 않음")
+
+	# 약방·연공실 효과
+	gm.player_sect.apothecary_level = 2
+	gm.player_sect.meditation_hall_level = 1
+	gm.player_character.internal_energy_current = 0
+	var exp_before: int = gm.player_character.experience
+	gm.advance_turn()
+	var regen: int = int(gm.player_character.internal_energy_max * _Balance.APOTHECARY_INTERNAL_REGEN * 2)
+	_check(gm.player_character.internal_energy_current == regen, "약방 Lv.2: 계절 내공 회복 %d" % regen)
+	_check(gm.player_character.experience >= exp_before + _Balance.MEDITATION_EXP_PER_LEVEL, "연공실: 계절 수련 경험치")
+	_check(gm.last_turn_report.contains("약방") and gm.last_turn_report.contains("연공실"), "계절 보고에 시설 효과")
+
+	# 영약·연회: 계절마다 한 번
+	gm.player_sect.gold = 1000
+	gm.player_sect.food = 500
+	var internal_max: int = gm.player_character.internal_energy_max
+	_check(gm.buy_elixir()["success"] and gm.player_character.internal_energy_max == internal_max + _Balance.ELIXIR_INTERNAL_GAIN, "영약: 최대 내공 증가")
+	_check(not gm.buy_elixir()["success"], "영약은 계절마다 한 번")
+	rep_before = gm.player_sect.reputation
+	_check(gm.hold_feast()["success"] and gm.player_sect.reputation == rep_before + _Balance.FEAST_REPUTATION, "연회: 명성 증가")
+	_check(not gm.hold_feast()["success"], "연회는 계절마다 한 번")
+	gm.advance_turn()
+	_check(gm.can_do_seasonal("last_feast_turn") and gm.can_do_seasonal("last_elixir_turn"), "다음 계절에는 다시 가능")
+	gm.player_sect.gold = 10
+	_check(not gm.buy_elixir()["success"], "금화가 부족하면 영약 불가")
+
+	# 해가 바뀌면 정산 문구
+	gm.start_new_game("정산", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
+	gm.player_sect.gold = 2000
+	for i in 4:
+		gm.advance_turn()
+	_check(gm.last_turn_report.contains("새해 정산") and gm.last_turn_report.contains("금화 -"), "새해 정산 보고")
+
+	# 경영 화면: 시설 관리 팝업
+	gm.start_new_game("시설", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
+	SceneRouter.goto(self, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	var hub: Node = current_scene
+	_check(hub.gold_label.text.contains("다음 계절"), "경영 화면에 예상 수지 표시")
+	hub._on_facility_pressed()
+	await process_frame
+	var popup: Node = hub.facility_popup
+	_check(popup.visible and popup._rows.get_child_count() == SectManager.get_facility_ids().size(), "시설 관리 팝업: 시설 5종")
+	var gold_before_build: int = gm.player_sect.gold
+	popup._on_upgrade_pressed("meditation_hall")
+	_check(gm.player_sect.meditation_hall_level == 1 and gm.player_sect.gold == gold_before_build - 100, "팝업에서 연공실 짓기")
+	_check(hub.facilities_label.text.contains("연공실 Lv.1"), "경영 화면 시설 표시 갱신")
+	gm.start_new_game("정리", "young_disciple")
+	SceneRouter.goto(self, SceneRouter.MAIN_MENU)
+	await process_frame
+	_completed["_test_economy_flow"] = true

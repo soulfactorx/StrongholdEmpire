@@ -145,13 +145,20 @@ func advance_turn() -> void:
 		return
 	current_season_index = (current_season_index + 1) % SEASONS.size()
 	pending_war_plan = {}
+	var yearly_report: String = ""
 	if current_season_index == 0:
 		current_year += 1
-		_process_yearly_events()
+		yearly_report = _process_yearly_events()
 	_sync_event_context()
 	var income: String = _process_seasonal_income()
 	var upkeep: Dictionary = SectManager.pay_upkeep(player_sect)
-	last_turn_report = "%s — %s | %s" % [get_date_text(), income, upkeep["message"]]
+	var facility_report: String = _apply_facility_effects()
+	var report_parts: PackedStringArray = [income, upkeep["message"]]
+	if not facility_report.is_empty():
+		report_parts.append(facility_report)
+	if not yearly_report.is_empty():
+		report_parts.append(yearly_report)
+	last_turn_report = "%s — %s" % [get_date_text(), " | ".join(report_parts)]
 	refresh_role_transitions()
 	_check_end_states()
 	if not is_game_over():
@@ -161,42 +168,56 @@ func advance_turn() -> void:
 
 
 func _process_seasonal_income() -> String:
-	var season := get_current_season()
-	var role_bonus: float = RoleManager.get_role_management_bonus(player_character.role)
-	var gold_income: int = int((20 + player_sect.treasury_level * 10) * role_bonus)
-	var food_income: int = int((30 + player_sect.training_ground_level * 5) * role_bonus)
-	var research_income: int = int(
-		(player_sect.library_level * 3 + int(player_character.wisdom * 0.5)) * role_bonus
-	)
-
-	match season:
-		"봄":
-			food_income += 15
-		"여름":
-			gold_income += 10
-		"가을":
-			food_income += 25
-		"겨울":
-			food_income -= 10
-			research_income += 5
-
-	var scale: float = ScenarioRules.income_scale()
-	gold_income = roundi(gold_income * scale)
-	food_income = roundi(food_income * scale)
-	research_income = roundi(research_income * scale)
-	player_sect.gold += gold_income
-	player_sect.food += food_income
-	player_sect.research_points += research_income
-	player_sect.reputation += 1
-	return "수입: 금화 +%d, 식량 +%d, 연구점 +%d" % [gold_income, food_income, research_income]
+	var income: Dictionary = SectManager.compute_seasonal_income(player_sect, player_character, get_current_season())
+	player_sect.gold += income["gold"]
+	player_sect.food += income["food"]
+	player_sect.research_points += income["research"]
+	return "수입: 금화 +%d, 식량 +%d, 연구점 +%d" % [income["gold"], income["food"], income["research"]]
 
 
-func _process_yearly_events() -> void:
+## 다음 계절 예상 수지 (경영 화면 표시용). 계절 보정은 다음 계절 기준
+func estimate_next_season() -> Dictionary:
+	var next_season: String = SEASONS[(current_season_index + 1) % SEASONS.size()]
+	var income: Dictionary = SectManager.compute_seasonal_income(player_sect, player_character, next_season)
+	return {
+		"gold": income["gold"] - player_sect.get_gold_upkeep(),
+		"food": income["food"] - player_sect.get_food_upkeep(),
+	}
+
+
+## 약방·연공실의 계절 효과
+func _apply_facility_effects() -> String:
+	var parts: PackedStringArray = []
+	if player_sect.apothecary_level > 0:
+		var regen: int = int(
+			player_character.internal_energy_max * _Balance.APOTHECARY_INTERNAL_REGEN * player_sect.apothecary_level
+		)
+		var before: int = player_character.internal_energy_current
+		player_character.internal_energy_current = mini(player_character.internal_energy_max, before + regen)
+		if player_character.internal_energy_current > before:
+			parts.append("약방 내공 +%d" % (player_character.internal_energy_current - before))
+	if player_sect.meditation_hall_level > 0:
+		var exp_gain: int = _Balance.MEDITATION_EXP_PER_LEVEL * player_sect.meditation_hall_level
+		player_character.gain_experience(exp_gain)
+		parts.append("연공실 수련 경험치 +%d" % exp_gain)
+	return ", ".join(parts)
+
+
+## 해가 바뀔 때: 나이·수련, 강호 세력 성장, 문파 명성, 재고 손실. 연간 정산 문구를 돌려준다.
+func _process_yearly_events() -> String:
 	player_character.age += 1
 	player_character.restore_internal_energy()
 	player_character.gain_experience(_Balance.YEARLY_TRAINING_EXP)
 	SectWarManager.grow_world_sects(world_sects)
+	var parts: PackedStringArray = []
+	var reputation_gain: int = SectManager.apply_yearly_reputation(player_sect)
+	if reputation_gain > 0:
+		parts.append("문하생의 이름이 알려져 명성 +%d" % reputation_gain)
+	var losses: Dictionary = SectManager.apply_yearly_losses(player_sect)
+	if not losses["message"].is_empty():
+		parts.append(losses["message"])
 	EventBus.character_updated.emit(player_character)
+	return "새해 정산: " + ", ".join(parts) if not parts.is_empty() else ""
 
 
 func refresh_role_transitions() -> void:
@@ -535,6 +556,48 @@ func get_or_create_combat_setup() -> CombatSetup:
 	if pending_combat == null:
 		pending_combat = CombatManager.create_sparring(player_character)
 	return pending_combat
+
+
+## 계절마다 한 번 할 수 있는 행동인지 (플래그에 마지막으로 한 계절을 기록)
+func can_do_seasonal(action_flag: String) -> bool:
+	return story_flags.get(action_flag, -1) != _get_turn_index()
+
+
+func _mark_seasonal(action_flag: String) -> void:
+	EventManager.set_flag(story_flags, action_flag, _get_turn_index())
+
+
+## 영약 구매: 최대 내공이 오른다. 계절마다 한 번.
+func buy_elixir() -> Dictionary:
+	if not can_do_seasonal("last_elixir_turn"):
+		return {"success": false, "message": "이번 계절에는 이미 영약을 구했습니다."}
+	if not player_sect.spend_resources(_Balance.ELIXIR_GOLD):
+		return {"success": false, "message": "금화가 부족합니다. (%d 필요)" % _Balance.ELIXIR_GOLD}
+	_mark_seasonal("last_elixir_turn")
+	player_character.internal_energy_max += _Balance.ELIXIR_INTERNAL_GAIN
+	player_character.internal_energy_current += _Balance.ELIXIR_INTERNAL_GAIN
+	EventBus.character_updated.emit(player_character)
+	EventBus.resources_changed.emit(player_sect)
+	return {"success": true, "message": "영약을 복용해 최대 내공 +%d (금화 -%d)" % [
+		_Balance.ELIXIR_INTERNAL_GAIN, _Balance.ELIXIR_GOLD,
+	]}
+
+
+## 문파 연회: 강호 인사를 초대해 명성을 높인다. 계절마다 한 번.
+func hold_feast() -> Dictionary:
+	if not can_do_seasonal("last_feast_turn"):
+		return {"success": false, "message": "이번 계절에는 이미 연회를 열었습니다."}
+	if not player_sect.spend_resources(_Balance.FEAST_GOLD, _Balance.FEAST_FOOD):
+		return {"success": false, "message": "자원이 부족합니다. (금화 %d, 식량 %d 필요)" % [
+			_Balance.FEAST_GOLD, _Balance.FEAST_FOOD,
+		]}
+	_mark_seasonal("last_feast_turn")
+	player_sect.reputation += _Balance.FEAST_REPUTATION
+	EventBus.resources_changed.emit(player_sect)
+	_check_end_states()
+	return {"success": true, "message": "문파 연회를 열었습니다. 명성 +%d (금화 -%d, 식량 -%d)" % [
+		_Balance.FEAST_REPUTATION, _Balance.FEAST_GOLD, _Balance.FEAST_FOOD,
+	]}
 
 
 func can_spar() -> bool:

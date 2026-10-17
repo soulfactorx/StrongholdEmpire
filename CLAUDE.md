@@ -40,4 +40,6 @@ godot --headless --path . -s res://scripts/Tests/smoke_test.gd
 ```
 
 새 스크립트를 추가했다면 먼저 `godot --headless --editor --quit`로 클래스 캐시를 갱신한다.
+경제 수치(수입·유지비·시설·재고 손실)를 바꾸면 경제 시뮬레이터로 전략별 10년 추이를 확인한다:
+`godot --headless --path . -s res://scripts/Tools/economy_sim.gd`
 `.godot/`는 커밋하지 않는다.

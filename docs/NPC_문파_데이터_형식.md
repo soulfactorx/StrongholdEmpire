@@ -66,7 +66,7 @@
 | `leader_id` | 문주 NPC id. 명부에 있어야 하며, 이 인물의 능력치가 문파전 전력에 들어갑니다. |
 | `is_player_sect` | (선택) `true`인 문파 하나가 플레이어 문파가 됩니다. |
 | `attitude` | 플레이어 문파에 대한 태도 (-100 적대 ~ 100 우호) |
-| 수치 필드 | `gold`, `food`, `reputation`, `research_points`, `disciple_count`, `max_disciples`, `library_level`, `training_ground_level`, `treasury_level` |
+| 수치 필드 | `gold`, `food`, `reputation`, `research_points`, `disciple_count`, `max_disciples`, `library_level`, `training_ground_level`, `treasury_level`, `apothecary_level`, `meditation_hall_level` |
 | `war_tactics` | (선택) 문파전 명령 선택 가중치. 예: `{ "CHARGE": 0.4, "DEFEND": 0.15, "FLANK": 0.4, "RETREAT": 0.05 }`. 없으면 성향별 기본값 |
 | `war_formation` | (선택) 문파전 진형: `CRANE`(학익진) · `FISH`(어린진) · `CIRCLE`(방원진) · `NONE`. 없으면 성향별 기본값 |
 

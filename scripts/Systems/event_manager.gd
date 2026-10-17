@@ -57,6 +57,7 @@ const CHARACTER_COMPUTED_FIELDS: PackedStringArray = ["martial_arts_count"]
 const SECT_FIELDS: PackedStringArray = [
 	"gold", "food", "reputation", "research_points", "disciple_count", "max_disciples",
 	"library_level", "training_ground_level", "treasury_level",
+	"apothecary_level", "meditation_hall_level",
 ]
 const WORLD_SECT_FIELDS: PackedStringArray = ["attitude", "reputation", "disciple_count"]
 ## 조건에서만 쓰는 세력 필드 (효과로는 바꿀 수 없음)

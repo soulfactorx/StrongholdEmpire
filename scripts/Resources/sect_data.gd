@@ -37,6 +37,10 @@ enum Alignment { RIGHTEOUS, UNORTHODOX, DEMONIC }
 @export var library_level: int = 1
 @export var training_ground_level: int = 1
 @export var treasury_level: int = 1
+## 약방: 계절마다 주인공의 내공 회복 (0이면 없음)
+@export var apothecary_level: int = 0
+## 연공실: 계절마다 주인공 수련 경험치 (0이면 없음)
+@export var meditation_hall_level: int = 0
 
 
 func can_afford(gold_cost: int, food_cost: int = 0) -> bool:
@@ -56,8 +60,16 @@ func get_food_upkeep() -> int:
 	return roundi(disciple_count * _Balance.FOOD_PER_DISCIPLE * ScenarioRules.upkeep_scale())
 
 
+## 시설이 시작 레벨을 넘은 단계 수의 합 (유지비 계산용)
+func get_facility_steps() -> int:
+	var steps: int = 0
+	for facility in _Balance.FACILITIES:
+		steps += maxi(0, int(get(facility + "_level")) - int(_Balance.FACILITIES[facility][0]))
+	return steps
+
+
 func get_gold_upkeep() -> int:
-	var facility_steps: int = (library_level - 1) + (training_ground_level - 1) + (treasury_level - 1)
+	var facility_steps: int = get_facility_steps()
 	var base: int = disciple_count * _Balance.GOLD_PER_DISCIPLE + facility_steps * _Balance.FACILITY_UPKEEP_GOLD
 	return roundi(base * ScenarioRules.upkeep_scale())
 

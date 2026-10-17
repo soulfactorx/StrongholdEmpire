@@ -63,31 +63,87 @@ static func train_disciples(sect: SectData, character: CharacterData) -> Diction
 	return {"success": true, "message": "제자 훈련 완료! 문파 전력이 강해졌습니다."}
 
 
-static func upgrade_library(sect: SectData) -> Dictionary:
-	if sect.library_level >= 5:
-		return {"success": false, "message": "서고는 이미 최고 수준입니다."}
-	if not sect.spend_resources(_Balance.UPGRADE_LIBRARY_GOLD):
-		return {"success": false, "message": "금화가 부족합니다. (80 필요)"}
-
-	sect.library_level += 1
-	return {"success": true, "message": "서고를 확장했습니다. 연구 효율이 상승합니다."}
-
-
-static func upgrade_training_ground(sect: SectData) -> Dictionary:
-	if sect.training_ground_level >= 5:
-		return {"success": false, "message": "무술장은 이미 최고 수준입니다."}
-	if not sect.spend_resources(_Balance.UPGRADE_TRAINING_GOLD):
-		return {"success": false, "message": "금화가 부족합니다. (60 필요)"}
-
-	sect.training_ground_level += 1
-	return {"success": true, "message": "무술장을 확장했습니다. 훈련 효율이 상승합니다."}
+## 시설 정보: 이름과 효과 설명. 수치는 GameBalance.FACILITIES
+const FACILITY_INFO: Dictionary = {
+	"library": {"name": "서고", "effect": "연구점 수입과 무공 연구 성공률"},
+	"training_ground": {"name": "무술장", "effect": "식량 수입, 문파전 전력, 제자 전투력"},
+	"treasury": {"name": "금고", "effect": "금화 수입"},
+	"apothecary": {"name": "약방", "effect": "계절마다 내공 회복"},
+	"meditation_hall": {"name": "연공실", "effect": "계절마다 수련 경험치"},
+}
 
 
-static func upgrade_treasury(sect: SectData) -> Dictionary:
-	if sect.treasury_level >= 5:
-		return {"success": false, "message": "금고는 이미 최고 수준입니다."}
-	if not sect.spend_resources(_Balance.UPGRADE_TREASURY_GOLD):
-		return {"success": false, "message": "금화가 부족합니다. (70 필요)"}
+static func get_facility_ids() -> Array:
+	return _Balance.FACILITIES.keys()
 
-	sect.treasury_level += 1
-	return {"success": true, "message": "금고를 확장했습니다. 계절 수입이 증가합니다."}
+
+static func get_facility_level(sect: SectData, facility: String) -> int:
+	return int(sect.get(facility + "_level"))
+
+
+## 다음 단계로 확장하는 비용. 최대 레벨이면 -1
+static func get_upgrade_cost(sect: SectData, facility: String) -> int:
+	var spec: Array = _Balance.FACILITIES[facility]
+	var level: int = get_facility_level(sect, facility)
+	if level >= spec[1]:
+		return -1
+	return spec[2] + spec[3] * (level - spec[0])
+
+
+static func upgrade_facility(sect: SectData, facility: String) -> Dictionary:
+	if not _Balance.FACILITIES.has(facility):
+		return {"success": false, "message": "알 수 없는 시설입니다."}
+	var name: String = FACILITY_INFO[facility]["name"]
+	var cost: int = get_upgrade_cost(sect, facility)
+	if cost < 0:
+		return {"success": false, "message": "%s은(는) 이미 최고 수준입니다." % name}
+	if not sect.spend_resources(cost):
+		return {"success": false, "message": "금화가 부족합니다. (%d 필요)" % cost}
+	var level: int = get_facility_level(sect, facility) + 1
+	sect.set(facility + "_level", level)
+	var verb: String = "지었습니다" if level == 1 and _Balance.FACILITIES[facility][0] == 0 else "확장했습니다"
+	return {
+		"success": true,
+		"message": "%s을(를) %s (Lv.%d). %s 상승, 계절 유지비 금화 +%d" % [
+			name, verb, level, FACILITY_INFO[facility]["effect"], _Balance.FACILITY_UPKEEP_GOLD,
+		],
+	}
+
+
+## 이번 계절 수입 (적용 전 계산값). 역할 보정과 시나리오 수입 배율을 반영한다.
+static func compute_seasonal_income(sect: SectData, character: CharacterData, season: String) -> Dictionary:
+	var role_bonus: float = RoleManager.get_role_management_bonus(character.role)
+	var bonus: Array = _Balance.SEASON_INCOME_BONUS.get(season, [0, 0, 0])
+	var gold: float = (_Balance.BASE_GOLD_INCOME + sect.treasury_level * _Balance.TREASURY_GOLD_PER_LEVEL) * role_bonus
+	var food: float = (_Balance.BASE_FOOD_INCOME + sect.training_ground_level * _Balance.TRAINING_FOOD_PER_LEVEL) * role_bonus
+	var research: float = (
+		sect.library_level * _Balance.LIBRARY_RESEARCH_PER_LEVEL
+		+ int(character.wisdom * _Balance.WISDOM_RESEARCH_RATIO)
+	) * role_bonus
+	var scale: float = ScenarioRules.income_scale()
+	return {
+		"gold": roundi((int(gold) + bonus[0]) * scale),
+		"food": roundi((int(food) + bonus[1]) * scale),
+		"research": roundi((int(research) + bonus[2]) * scale),
+	}
+
+
+## 해마다 재고 손실: 안전량을 넘는 금화·식량의 일부가 사라진다.
+static func apply_yearly_losses(sect: SectData) -> Dictionary:
+	var gold_loss: int = int(maxi(0, sect.gold - _Balance.GOLD_SAFE_AMOUNT) * _Balance.GOLD_LOSS_RATE)
+	var food_loss: int = int(maxi(0, sect.food - _Balance.FOOD_SAFE_AMOUNT) * _Balance.FOOD_SPOIL_RATE)
+	sect.gold -= gold_loss
+	sect.food -= food_loss
+	var parts: PackedStringArray = []
+	if gold_loss > 0:
+		parts.append("쌓아 둔 재물을 노린 도둑과 관부의 수탈로 금화 -%d" % gold_loss)
+	if food_loss > 0:
+		parts.append("곳간의 곡식이 상해 식량 -%d" % food_loss)
+	return {"gold_loss": gold_loss, "food_loss": food_loss, "message": ", ".join(parts)}
+
+
+## 해마다 제자 수에 비례해 명성이 오른다.
+static func apply_yearly_reputation(sect: SectData) -> int:
+	var gain: int = sect.disciple_count / _Balance.DISCIPLES_PER_YEARLY_REPUTATION
+	sect.reputation += gain
+	return gain

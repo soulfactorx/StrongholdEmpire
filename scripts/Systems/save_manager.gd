@@ -2,7 +2,7 @@ class_name SaveManager
 extends RefCounted
 
 const SAVE_PATH := "user://save_slot_1.json"
-const SAVE_VERSION := 6
+const SAVE_VERSION := 7
 
 
 static func save_game(state: Dictionary) -> Dictionary:
@@ -91,6 +91,8 @@ static func serialize_sect(sect: SectData) -> Dictionary:
 		"library_level": sect.library_level,
 		"training_ground_level": sect.training_ground_level,
 		"treasury_level": sect.treasury_level,
+		"apothecary_level": sect.apothecary_level,
+		"meditation_hall_level": sect.meditation_hall_level,
 		"shortage_seasons": sect.shortage_seasons,
 	}
 
@@ -191,6 +193,8 @@ static func deserialize_sect(data: Dictionary) -> SectData:
 	sect.library_level = data.get("library_level", 1)
 	sect.training_ground_level = data.get("training_ground_level", 1)
 	sect.treasury_level = data.get("treasury_level", 1)
+	sect.apothecary_level = data.get("apothecary_level", 0)
+	sect.meditation_hall_level = data.get("meditation_hall_level", 0)
 	sect.shortage_seasons = data.get("shortage_seasons", 0)
 	sect.id = data.get("id", "")
 	sect.alignment = int(data.get("alignment", SectData.Alignment.RIGHTEOUS))

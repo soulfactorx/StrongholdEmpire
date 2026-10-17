@@ -4,15 +4,56 @@ extends RefCounted
 # 내정
 const TRAIN_GOLD := 30
 const TRAIN_FOOD := 20
-const UPGRADE_LIBRARY_GOLD := 80
-const UPGRADE_TRAINING_GOLD := 60
-const UPGRADE_TREASURY_GOLD := 70
+
+# 계절 수입 (역할 보정·시나리오 수입 배율을 곱하기 전)
+const BASE_GOLD_INCOME := 15
+const TREASURY_GOLD_PER_LEVEL := 10
+const BASE_FOOD_INCOME := 30
+const TRAINING_FOOD_PER_LEVEL := 5
+const LIBRARY_RESEARCH_PER_LEVEL := 3
+const WISDOM_RESEARCH_RATIO := 0.5
+## 계절별 보정: { 계절: [금화, 식량, 연구점] }
+const SEASON_INCOME_BONUS: Dictionary = {
+	"봄": [0, 15, 0],
+	"여름": [10, 0, 0],
+	"가을": [0, 25, 0],
+	"겨울": [0, -10, 5],
+}
+## 해마다 제자 이만큼마다 명성 +1 (문하생이 강호에 이름을 알린다)
+const DISCIPLES_PER_YEARLY_REPUTATION := 5
+
+# 재고 손실 (해마다): 쌓아 둔 재물은 노리는 자가 많고, 곡식은 상한다
+const GOLD_SAFE_AMOUNT := 500
+const GOLD_LOSS_RATE := 0.15
+const FOOD_SAFE_AMOUNT := 300
+const FOOD_SPOIL_RATE := 0.2
+
+# 시설: 확장 비용 = base + step × (현재 레벨 − 시작 레벨). 유지비는 시작 레벨을 넘는 단계마다
+## { 시설 id: [시작 레벨, 최대 레벨, base 비용, step 비용] }
+const FACILITIES: Dictionary = {
+	"library": [1, 5, 80, 40],
+	"training_ground": [1, 5, 60, 30],
+	"treasury": [1, 5, 70, 35],
+	"apothecary": [0, 3, 90, 45],
+	"meditation_hall": [0, 3, 100, 50],
+}
+## 약방: 레벨마다 계절 내공 회복 (최대 내공 대비)
+const APOTHECARY_INTERNAL_REGEN := 0.15
+## 연공실: 레벨마다 계절 수련 경험치
+const MEDITATION_EXP_PER_LEVEL := 8
+
+# 계절 행동 (계절마다 한 번)
+const ELIXIR_GOLD := 100
+const ELIXIR_INTERNAL_GAIN := 10
+const FEAST_GOLD := 60
+const FEAST_FOOD := 40
+const FEAST_REPUTATION := 4
 
 # 유지비 (계절마다)
 const FOOD_PER_DISCIPLE := 2
 const GOLD_PER_DISCIPLE := 1
-## 시설 레벨 1을 넘는 단계마다 드는 금화
-const FACILITY_UPKEEP_GOLD := 3
+## 시설이 시작 레벨을 넘는 단계마다 드는 금화
+const FACILITY_UPKEEP_GOLD := 4
 ## 식량이 모자라면 모자란 식량 이 값마다 제자 1명이 떠난다 (최소 1명)
 const DESERTION_FOOD_PER_DISCIPLE := 6
 ## 금화가 모자라면 명성이 떨어진다

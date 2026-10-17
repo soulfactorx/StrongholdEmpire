@@ -1,6 +1,7 @@
 extends Control
 
 const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
+const _FacilityPopup = preload("res://scripts/UI/facility_popup.gd")
 
 @onready var year_label: Label = %YearLabel
 @onready var season_label: Label = %SeasonLabel
@@ -11,9 +12,7 @@ const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
 @onready var reputation_label: Label = %ReputationLabel
 @onready var research_label: Label = %ResearchLabel
 @onready var disciple_label: Label = %DiscipleLabel
-@onready var library_label: Label = %LibraryLabel
-@onready var training_label: Label = %TrainingLabel
-@onready var treasury_label: Label = %TreasuryLabel
+@onready var facilities_label: Label = %FacilitiesLabel
 @onready var character_name_label: Label = %CharacterNameLabel
 @onready var character_role_label: Label = %CharacterRoleLabel
 @onready var character_stats_label: Label = %CharacterStatsLabel
@@ -22,10 +21,14 @@ const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
 @onready var log_label: Label = %LogLabel
 @onready var event_popup: Control = %EventPopup
 @onready var role_popup: Control = %RolePopup
+var facility_popup: Control
 
 
 func _ready() -> void:
 	_UiTheme.apply_to_control(self)
+	facility_popup = _FacilityPopup.new()
+	add_child(facility_popup)
+	facility_popup.upgraded.connect(_execute_action)
 	_connect_bus(EventBus.turn_advanced, _on_turn_advanced)
 	_connect_bus(EventBus.resources_changed, _on_resources_changed)
 	_connect_bus(EventBus.character_updated, _on_character_updated)
@@ -78,17 +81,22 @@ func _update_time_display() -> void:
 
 func _update_sect_display(sect: SectData) -> void:
 	sect_name_label.text = sect.sect_name
-	gold_label.text = "금화: %d (계절 유지비 -%d)" % [sect.gold, sect.get_gold_upkeep()]
-	food_label.text = "식량: %d (계절 유지비 -%d)" % [sect.food, sect.get_food_upkeep()]
-	# 보유량이 다음 계절 유지비보다 적으면 경고 색으로 표시한다.
-	_set_warning(gold_label, sect.gold < sect.get_gold_upkeep())
-	_set_warning(food_label, sect.food < sect.get_food_upkeep())
+	# 다음 계절 예상 수지 (수입 − 유지비)
+	var forecast: Dictionary = GameManager.estimate_next_season()
+	gold_label.text = "금화: %d (다음 계절 %+d, 유지비 %d)" % [sect.gold, forecast["gold"], sect.get_gold_upkeep()]
+	food_label.text = "식량: %d (다음 계절 %+d, 유지비 %d)" % [sect.food, forecast["food"], sect.get_food_upkeep()]
+	# 다음 계절을 넘기지 못할 것 같으면 경고 색으로 표시한다.
+	_set_warning(gold_label, sect.gold + forecast["gold"] < 0)
+	_set_warning(food_label, sect.food + forecast["food"] < 0)
 	reputation_label.text = "명성: %d" % sect.reputation
 	research_label.text = "연구점: %d" % sect.research_points
 	disciple_label.text = "제자: %d / %d" % [sect.disciple_count, sect.max_disciples]
-	library_label.text = "서고 Lv.%d" % sect.library_level
-	training_label.text = "무술장 Lv.%d" % sect.training_ground_level
-	treasury_label.text = "금고 Lv.%d" % sect.treasury_level
+	var facility_texts: PackedStringArray = []
+	for facility in SectManager.get_facility_ids():
+		var level: int = SectManager.get_facility_level(sect, facility)
+		var name: String = SectManager.FACILITY_INFO[facility]["name"]
+		facility_texts.append("%s Lv.%d" % [name, level] if level > 0 else "%s 없음" % name)
+	facilities_label.text = "  ".join(facility_texts.slice(0, 3)) + "\n" + "  ".join(facility_texts.slice(3))
 
 
 func _set_warning(label: Label, warn: bool) -> void:
@@ -185,16 +193,17 @@ func _on_train_pressed() -> void:
 	_execute_action(SectManager.train_disciples(GameManager.player_sect, GameManager.player_character))
 
 
-func _on_upgrade_library_pressed() -> void:
-	_execute_action(SectManager.upgrade_library(GameManager.player_sect))
+func _on_facility_pressed() -> void:
+	AudioManager.play_click()
+	facility_popup.open()
 
 
-func _on_upgrade_training_pressed() -> void:
-	_execute_action(SectManager.upgrade_training_ground(GameManager.player_sect))
+func _on_elixir_pressed() -> void:
+	_execute_action(GameManager.buy_elixir())
 
 
-func _on_upgrade_treasury_pressed() -> void:
-	_execute_action(SectManager.upgrade_treasury(GameManager.player_sect))
+func _on_feast_pressed() -> void:
+	_execute_action(GameManager.hold_feast())
 
 
 func _on_martial_art_pressed() -> void:

@@ -12,7 +12,8 @@ extends RefCounted
 const SECT_DIR := "res://data/sects/"
 const NUMERIC_FIELDS: PackedStringArray = [
 	"gold", "food", "reputation", "research_points", "disciple_count", "max_disciples",
-	"library_level", "training_ground_level", "treasury_level", "attitude",
+	"library_level", "training_ground_level", "treasury_level",
+	"apothecary_level", "meditation_hall_level", "attitude",
 ]
 
 static var _sects: Dictionary = {}
