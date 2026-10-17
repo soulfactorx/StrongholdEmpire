@@ -41,6 +41,8 @@ func _initialize() -> void:
 	_test_npc_roster()
 	_test_sect_registry()
 	_test_world_sect_events()
+	_test_combat_rules()
+	_test_martial_art_library()
 	# 오토로드의 _ready()는 첫 프레임에 실행되므로 런타임 검사는 그 뒤로 미룬다.
 	process_frame.connect(_run_runtime_tests, CONNECT_ONE_SHOT)
 
@@ -53,6 +55,7 @@ func _run_runtime_tests() -> void:
 	await _test_event_popup_choices()
 	await _test_game_over_flow()
 	_test_world_state_and_war()
+	await _test_combat_effects()
 
 	print("스모크 테스트: %d개 검사, %d개 실패" % [_checks, _failures])
 	quit(1 if _failures > 0 else 0)
@@ -336,7 +339,7 @@ func _test_combat_flow() -> void:
 	var enemies: Array = controller._get_alive_enemies()
 	_check(enemies.size() == 3, "도적 전투: 적 3명 배치")
 	var full_hp: int = CombatUnit.new(enemies[0].character).max_hp
-	_check(enemies[0].max_hp == int(full_hp * 0.5), "도적 체력 배율 적용")
+	_check(enemies[0].max_hp == int(full_hp * gm.pending_combat.enemy_hp_scale), "도적 체력 배율 적용")
 
 	var player: CombatUnit = controller._get_player()
 	var attacker: CombatUnit = enemies[0]
@@ -793,3 +796,243 @@ func _test_world_state_and_war() -> void:
 	state.erase("world_sects")
 	gm._apply_save_data(state)
 	_check(gm.world_sects.size() == 3 and not gm.get_world_sect("heukpung").subjugated, "구버전 세이브는 강호 세력 초기값 사용")
+
+
+func _make_unit(strength: int = 10, player: bool = true) -> CombatUnit:
+	var character := CharacterData.new()
+	character.strength = strength
+	return CombatUnit.new(character, player)
+
+
+func _test_combat_rules() -> void:
+	var T := CombatRules.Terrain
+	_check(
+		CombatRules.move_cost(T.PLAIN) == 1 and CombatRules.move_cost(T.FOREST) == _Balance.FOREST_MOVE_COST
+		and CombatRules.move_cost(T.WATER) == _Balance.WATER_MOVE_COST,
+		"지형별 이동 비용"
+	)
+
+	# 3×1 통로: (1,0)이 수풀이면 행동력 2로 (1,0)까지만, 3이면 (2,0)까지
+	var terrain := {Vector2i(1, 0): T.FOREST}
+	var passable := func(pos: Vector2i) -> bool: return pos.x >= 0 and pos.x < 3 and pos.y == 0
+	var terrain_of := func(pos: Vector2i) -> int: return terrain.get(pos, T.PLAIN)
+	var reach: Dictionary = CombatRules.reachable_tiles(Vector2i(0, 0), 2, passable, terrain_of)
+	_check(reach.has(Vector2i(1, 0)) and not reach.has(Vector2i(2, 0)), "수풀은 이동 비용 2")
+	reach = CombatRules.reachable_tiles(Vector2i(0, 0), 3, passable, terrain_of)
+	_check(reach.get(Vector2i(2, 0)) == 3 and not reach.has(Vector2i(0, 0)), "도달 가능 칸과 비용")
+
+	# 벽을 돌아가는 경로
+	var wall: Array[Vector2i] = [Vector2i(2, 0), Vector2i(2, 1), Vector2i(2, 2)]
+	var open := func(pos: Vector2i) -> bool:
+		return pos.x >= 0 and pos.x < 5 and pos.y >= 0 and pos.y < 5 and not wall.has(pos)
+	var plain := func(_pos: Vector2i) -> int: return T.PLAIN
+	var path: Array[Vector2i] = CombatRules.find_path(
+		Vector2i(0, 0), func(pos: Vector2i) -> bool: return pos == Vector2i(4, 0), open, plain
+	)
+	_check(path.size() == 10 and path[-1] == Vector2i(4, 0) and not path.any(func(p): return wall.has(p)), "벽을 돌아가는 최단 경로")
+	var walk: Dictionary = CombatRules.walk_path(path, 4, plain)
+	_check(walk["index"] == 3 and walk["cost"] == 4, "행동력만큼만 경로 이동")
+	_check(
+		CombatRules.find_path(Vector2i(0, 0), func(pos: Vector2i) -> bool: return pos == Vector2i(9, 9), open, plain).is_empty(),
+		"도달할 수 없으면 빈 경로"
+	)
+
+	var E := MartialArtData.FiveElement
+	_check(is_equal_approx(CombatRules.element_modifier(E.WOOD, E.EARTH), _Balance.ELEMENT_ADVANTAGE), "목극토: 우위")
+	_check(is_equal_approx(CombatRules.element_modifier(E.EARTH, E.WOOD), _Balance.ELEMENT_DISADVANTAGE), "토는 목에 열세")
+	_check(is_equal_approx(CombatRules.element_modifier(E.FIRE, E.NONE), 1.0), "무속성 상대는 보정 없음")
+
+	# 피해 계산
+	var attacker: CombatUnit = _make_unit(12)
+	var defender: CombatUnit = _make_unit(10, false)
+	var basic: int = CombatRules.calculate_damage(attacker, defender, null, T.PLAIN, T.PLAIN)["damage"]
+	_check(basic == _Balance.BASE_ATTACK_DAMAGE + 12, "기본 공격 피해 = 기준 + 무력")
+	_check(
+		CombatRules.calculate_damage(attacker, defender, null, T.HIGH, T.PLAIN)["damage"] == int(basic * _Balance.HIGH_ATTACK),
+		"고지 공격 보너스"
+	)
+	_check(
+		CombatRules.calculate_damage(attacker, defender, null, T.PLAIN, T.FOREST)["damage"] == int(basic * _Balance.FOREST_DEFENSE),
+		"수풀 엄폐"
+	)
+	attacker.add_status("empowered", 2)
+	_check(
+		CombatRules.calculate_damage(attacker, defender, null, T.PLAIN, T.PLAIN)["damage"] == int(basic * _Balance.EMPOWER_MULTIPLIER),
+		"기세 상태 피해 증가"
+	)
+	attacker.tick_statuses()
+	attacker.tick_statuses()
+	_check(not attacker.has_status("empowered"), "상태는 턴이 지나면 사라짐")
+
+	var ambush_art := MartialArtData.new()
+	ambush_art.damage = 20
+	ambush_art.special_effects.append(MartialArtData.SpecialEffect.AMBUSH)
+	var first: int = CombatRules.calculate_damage(attacker, defender, ambush_art, T.PLAIN, T.PLAIN)["damage"]
+	defender.take_damage(1)
+	var second: int = CombatRules.calculate_damage(attacker, defender, ambush_art, T.PLAIN, T.PLAIN)["damage"]
+	# 정수 변환 시점 차이로 1 이내 오차는 허용
+	_check(absf(first - second * _Balance.AMBUSH_MULTIPLIER) <= 1.0, "기습은 다치지 않은 대상에게만 1.5배")
+
+	var ranged := MartialArtData.new()
+	ranged.range = 2
+	var melee := MartialArtData.new()
+	_check(
+		CombatRules.get_art_range(ranged, T.HIGH) == 2 + _Balance.HIGH_RANGE_BONUS
+		and CombatRules.get_art_range(melee, T.HIGH) == 1,
+		"고지 사거리 보너스는 원거리 무공만"
+	)
+
+	# 내공 폭주: 내공이 넉넉하면 일어나지 않고, 바닥이면 확률적으로 일어난다
+	var caster := CharacterData.new()
+	caster.internal_energy_max = 100
+	caster.internal_energy_current = 100
+	var art := MartialArtData.new()
+	art.internal_cost = 20
+	var safe: bool = true
+	for sd in 50:
+		seed(sd)
+		safe = safe and CombatRules.roll_overload(caster, art) == 0
+	caster.internal_energy_current = 5
+	var overloads: int = 0
+	for sd in 100:
+		seed(sd)
+		if CombatRules.roll_overload(caster, art) == int(20 * _Balance.OVERLOAD_DAMAGE_PER_COST):
+			overloads += 1
+	randomize()
+	_check(safe, "내공이 넉넉하면 폭주 없음")
+	_check(overloads > 10 and overloads < 60, "내공 바닥일 때 폭주 확률 적용 (%d/100)" % overloads)
+
+
+func _test_martial_art_library() -> void:
+	_check(
+		MartialArtLibrary.has_art("preset_soul_chase_sword") and MartialArtLibrary.has_art("preset_earth_life_palm")
+		and MartialArtLibrary.has_art("mod_thunder_palm"),
+		"무공 목록: 프리셋과 모드 무공"
+	)
+	var a: MartialArtData = MartialArtLibrary.create_art("preset_soul_chase_sword")
+	a.damage = 999
+	_check(MartialArtLibrary.create_art("preset_soul_chase_sword").damage != 999, "무공 목록은 복제본을 줌")
+
+	var player := CharacterData.new()
+	player.level = 2
+	_check(NpcRoster.create_character("npc_rival", player).martial_arts.is_empty(), "라이벌은 레벨 2에서는 무공 없음")
+	player.level = 3
+	var rival: CharacterData = NpcRoster.create_character("npc_rival", player)
+	_check(rival.knows_martial_art("preset_soul_chase_sword"), "라이벌은 레벨 3부터 유혼쾌영검 사용")
+	_check(
+		not NpcRoster.validate_npc_dict({
+			"id": "x", "display_name": "x", "sect_id": "s", "role": "LEADER",
+			"martial_arts": [{"id": "no_such_art"}],
+		}).is_empty(),
+		"없는 무공을 가진 NPC 검출"
+	)
+
+
+## 전투 씬에서 무공 효과와 적 AI를 확인한다.
+func _test_combat_effects() -> void:
+	var gm: Node = root.get_node("GameManager")
+	gm.start_new_game("효과", "young_disciple")
+	var setup := CombatSetup.new()
+	setup.title = "시험장"
+	setup.player_position = Vector2i(2, 5)
+	setup.blocked_tiles = [Vector2i(6, 4), Vector2i(6, 5), Vector2i(6, 6)]
+	setup.set_terrain([Vector2i(3, 5)], CombatRules.Terrain.FOREST)
+	var dummy: CharacterData = NpcRoster.create_character("npc_bandit")
+	dummy.agility = 1  # 플레이어가 먼저 움직이도록
+	setup.add_enemy(dummy, Vector2i(10, 5))
+	gm.start_combat(setup)
+	await process_frame
+	await process_frame
+	var c: Node = current_scene
+	var player: CombatUnit = c._get_player()
+	var enemy: CombatUnit = c._get_alive_enemies()[0]
+	_check(c._turn_manager.get_current_unit() == player, "느린 적 상대로 플레이어 선공")
+
+	# 다중 칸 이동: 수풀(2) + 평지(1) = 3
+	var ap_before: int = player.action_points
+	c._try_move(player, Vector2i(4, 5))
+	_check(player.grid_pos == Vector2i(4, 5) and player.action_points == ap_before - 3, "수풀을 지나 두 칸 이동 (행동력 -3)")
+
+	# 제어: 기절 → 적 차례 건너뜀
+	var control := MartialArtData.new()
+	control.display_name = "점혈수"
+	control.range = 9
+	control.damage = 1
+	control.internal_cost = 1
+	control.action_cost = 1
+	control.special_effects.append(MartialArtData.SpecialEffect.CONTROL)
+	player.character.internal_energy_current = player.character.internal_energy_max
+	c._perform_art(player, enemy, control)
+	_check(enemy.has_status("stunned"), "제어: 대상 기절")
+	var enemy_pos: Vector2i = enemy.grid_pos
+	c._on_end_turn_pressed()
+	_check(enemy.grid_pos == enemy_pos and not enemy.has_status("stunned"), "기절한 적은 차례를 건너뜀")
+	c._perform_art(player, enemy, control)
+	_check(not enemy.has_status("stunned"), "막 풀려난 적은 기절 저항")
+
+	# 파괴력: 밀어내기, 막히면 추가 피해
+	var smash := MartialArtData.new()
+	smash.display_name = "붕산권"
+	smash.range = 9
+	smash.damage = 5
+	smash.internal_cost = 1
+	smash.action_cost = 1
+	smash.special_effects.append(MartialArtData.SpecialEffect.DESTRUCTION)
+	player.grid_pos = Vector2i(9, 5)
+	enemy.grid_pos = Vector2i(10, 5)
+	player.action_points = 5
+	c._perform_art(player, enemy, smash)
+	_check(enemy.grid_pos == Vector2i(11, 5), "파괴력: 한 칸 밀려남")
+	player.grid_pos = Vector2i(14, 5)
+	enemy.grid_pos = Vector2i(15, 5)
+	var hp_before: int = enemy.hp
+	c._perform_art(player, enemy, smash)
+	var expected: int = int(CombatRules.calculate_damage(player, enemy, smash, 0, 0)["damage"] * (1 + _Balance.KNOCKBACK_WALL_BONUS))
+	_check(enemy.grid_pos == Vector2i(15, 5) and hp_before - enemy.hp == expected, "파괴력: 가장자리에 막히면 추가 피해")
+
+	# 강화 + 회복
+	var palm: MartialArtData = MartialArtLibrary.create_art("preset_earth_life_palm")
+	player.take_damage(30)
+	var hurt_hp: int = player.hp
+	player.action_points = 5
+	c._perform_art(player, null, palm)
+	_check(player.hp > hurt_hp and player.has_status("empowered"), "대지생명장: 회복과 기세")
+
+	# 적 AI: 벽 뒤에서 길을 찾아 다가온다
+	player.grid_pos = Vector2i(4, 5)
+	enemy.grid_pos = Vector2i(8, 5)
+	enemy.statuses.clear()
+	enemy.action_points = enemy.max_action_points
+	# 벽을 돌아가느라 잠시 멀어질 수 있으므로 몇 차례 안에 붙는지 본다.
+	var never_on_wall: bool = true
+	for i in 6:
+		enemy.action_points = enemy.max_action_points
+		c._run_enemy_ai(enemy)
+		never_on_wall = never_on_wall and not setup.blocked_tiles.has(enemy.grid_pos)
+		if CombatRules.distance(enemy.grid_pos, player.grid_pos) == 1:
+			break
+	_check(
+		CombatRules.distance(enemy.grid_pos, player.grid_pos) == 1 and never_on_wall,
+		"적이 벽을 돌아 플레이어에게 접근"
+	)
+	c._on_back_pressed()
+	await process_frame
+	await process_frame
+
+	# 레벨 3 라이벌은 무공을 쓴다
+	gm.start_new_game("무공", "young_disciple")
+	gm.player_character.gain_experience(CharacterData.get_experience_for_level(3))
+	gm.start_combat(CombatManager.create_sparring(gm.player_character))
+	await process_frame
+	await process_frame
+	c = current_scene
+	player = c._get_player()
+	var rival: CombatUnit = c._get_alive_enemies()[0]
+	rival.grid_pos = player.grid_pos + Vector2i(1, 0)
+	rival.action_points = rival.max_action_points
+	var ie_before: int = rival.character.internal_energy_current
+	c._run_enemy_ai(rival)
+	_check(rival.character.internal_energy_current < ie_before, "라이벌 AI가 무공 사용")
+	_check(c.art_list.get_child_count() == player.get_martial_arts().size(), "무공 버튼이 습득 무공 수만큼")
+	c._on_back_pressed()
+	await process_frame

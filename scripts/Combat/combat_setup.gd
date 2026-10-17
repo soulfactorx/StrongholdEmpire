@@ -9,6 +9,8 @@ var enemies: Array[CharacterData] = []
 var enemy_positions: Array[Vector2i] = []
 var player_position: Vector2i = Vector2i(2, 5)
 var blocked_tiles: Array[Vector2i] = []
+## 칸 → CombatRules.Terrain. 없는 칸은 평지.
+var terrain: Dictionary = {}
 ## 관계 보정(원한·라이벌 피해 보너스)과 전투 후 유대 변화에 쓰는 관계 대상 id
 var relationship_target_id: String = ""
 ## 다수의 약한 적(도적 등)을 만들 때 쓰는 적 체력·피해 배율
@@ -21,6 +23,15 @@ var rewards: Dictionary = {}
 var defeat_penalty: Dictionary = {}
 ## 승리 시 true로 설정할 스토리 플래그
 var victory_flag: String = ""
+
+
+func set_terrain(tiles: Array[Vector2i], kind: CombatRules.Terrain) -> void:
+	for tile in tiles:
+		terrain[tile] = kind
+
+
+func get_terrain(tile: Vector2i) -> CombatRules.Terrain:
+	return terrain.get(tile, CombatRules.Terrain.PLAIN)
 
 
 func add_enemy(character: CharacterData, position: Vector2i) -> void:

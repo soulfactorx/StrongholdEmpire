@@ -35,6 +35,7 @@ static func create_sparring(player: CharacterData) -> CombatSetup:
 	setup.title = "비무 — %s" % NpcRoster.get_display_name(RIVAL_ID)
 	setup.relationship_target_id = RIVAL_ID
 	setup.blocked_tiles = _central_wall()
+	_add_arena_terrain(setup)
 	setup.add_enemy(_create_rival(player), Vector2i(13, 5))
 	setup.rewards = {"experience": _Balance.SPAR_EXP, "bond": 5}
 	setup.defeat_penalty = {"injury_ratio": 0.5, "bond": 2}
@@ -48,6 +49,7 @@ static func create_rival_duel(player: CharacterData) -> CombatSetup:
 	setup.title = "결투 — %s의 도전" % NpcRoster.get_display_name(RIVAL_ID)
 	setup.relationship_target_id = RIVAL_ID
 	setup.blocked_tiles = _central_wall()
+	_add_arena_terrain(setup)
 	var rival: CharacterData = _create_rival(player)
 	rival.strength += 2
 	rival.internal_energy_max += 20
@@ -68,11 +70,21 @@ static func create_night_bandits(player: CharacterData) -> CombatSetup:
 	setup.blocked_tiles = [
 		Vector2i(6, 2), Vector2i(6, 3), Vector2i(9, 6), Vector2i(9, 7), Vector2i(10, 7),
 	]
+	# 개울(물)이 가로지르는 야산. 가운데 돌다리로 건너고, 도적은 수풀에 숨어 있다.
+	var stream: Array[Vector2i] = []
+	for y in [0, 1, 2, 3, 4, 7, 8, 9]:
+		stream.append(Vector2i(8, y))
+	setup.set_terrain(stream, CombatRules.Terrain.WATER)
+	setup.set_terrain([
+		Vector2i(11, 2), Vector2i(12, 2), Vector2i(13, 2), Vector2i(11, 3), Vector2i(12, 3),
+		Vector2i(11, 7), Vector2i(12, 7), Vector2i(12, 8),
+	], CombatRules.Terrain.FOREST)
+	setup.set_terrain([Vector2i(4, 8), Vector2i(5, 8), Vector2i(4, 9)], CombatRules.Terrain.HIGH)
 	var positions: Array[Vector2i] = [Vector2i(12, 3), Vector2i(13, 5), Vector2i(12, 7)]
 	for i in positions.size():
 		setup.add_enemy(_create_bandit(player, i), positions[i])
-	setup.enemy_hp_scale = 0.5
-	setup.enemy_damage_scale = 0.6
+	setup.enemy_hp_scale = 0.6
+	setup.enemy_damage_scale = 0.7
 	setup.rewards = {"experience": 30, "gold": 30, "reputation": 3, "strength": 1}
 	setup.defeat_penalty = {"gold": 40, "reputation": 3, "injury_ratio": 0.3}
 	return setup
@@ -153,6 +165,14 @@ static func _change_bond(bond: RelationshipData, amount: int, parts: PackedStrin
 	else:
 		bond.decrease_bond(-amount)
 	parts.append("%s 유대 %+d" % [bond.target_name, amount])
+
+
+## 비무장: 한쪽에 수풀, 반대쪽에 고지가 있다.
+static func _add_arena_terrain(setup: CombatSetup) -> void:
+	setup.set_terrain([Vector2i(3, 2), Vector2i(4, 2), Vector2i(3, 3)], CombatRules.Terrain.FOREST)
+	setup.set_terrain([Vector2i(10, 7), Vector2i(11, 7), Vector2i(10, 8)], CombatRules.Terrain.FOREST)
+	setup.set_terrain([Vector2i(10, 2), Vector2i(11, 2), Vector2i(10, 3)], CombatRules.Terrain.HIGH)
+	setup.set_terrain([Vector2i(4, 5), Vector2i(4, 6)], CombatRules.Terrain.HIGH)
 
 
 static func _central_wall() -> Array[Vector2i]:

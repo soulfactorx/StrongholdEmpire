@@ -1,6 +1,14 @@
 class_name CombatUnit
 extends RefCounted
 
+const _Balance = preload("res://scripts/Systems/game_balance.gd")
+
+const STATUS_NAMES: Dictionary = {
+	"stunned": "기절",
+	"empowered": "기세",
+	"stun_immune": "기절 저항",
+}
+
 var character: CharacterData
 var display_name: String
 var is_player: bool = false
@@ -9,9 +17,11 @@ var hp: int = 100
 var max_hp: int = 100
 var action_points: int = 4
 var max_action_points: int = 4
+## 오행 판정과 속도에 쓰는 대표 무공 (가장 최근에 쓴 무공)
 var active_martial_art: MartialArtData = null
-var target_id: String = ""
 var damage_scale: float = 1.0
+## 상태 이름 → 남은 턴 수. 자기 턴이 끝날 때 1씩 줄어든다.
+var statuses: Dictionary = {}
 
 
 func _init(char: CharacterData, player: bool = false) -> void:
@@ -30,14 +40,50 @@ func get_speed() -> int:
 	return character.agility + (active_martial_art.move_bonus if active_martial_art else 0)
 
 
+func get_martial_arts() -> Array[MartialArtData]:
+	return character.martial_arts
+
+
+func get_active_element() -> MartialArtData.FiveElement:
+	if active_martial_art == null:
+		return MartialArtData.FiveElement.NONE
+	return active_martial_art.element
+
+
+## 기본 공격의 기준 피해 (배율 적용 전)
+func get_basic_attack_base() -> int:
+	var base: int = _Balance.BASE_ATTACK_DAMAGE if is_player else _Balance.ENEMY_BASE_ATTACK_DAMAGE
+	return base + character.strength
+
+
 func scale_stats(hp_scale: float, new_damage_scale: float) -> void:
 	max_hp = maxi(1, int(max_hp * hp_scale))
 	hp = max_hp
 	damage_scale = new_damage_scale
 
 
-func get_attack_damage(base_damage: int) -> int:
-	return maxi(1, int((base_damage + character.strength) * damage_scale))
+func add_status(status: String, turns: int) -> void:
+	statuses[status] = maxi(statuses.get(status, 0), turns)
+
+
+func has_status(status: String) -> bool:
+	return statuses.get(status, 0) > 0
+
+
+func tick_statuses() -> void:
+	for status in statuses.keys():
+		statuses[status] -= 1
+		if statuses[status] <= 0:
+			statuses.erase(status)
+
+
+func get_status_text() -> String:
+	var names: PackedStringArray = []
+	for status in statuses:
+		if status == "stun_immune":
+			continue
+		names.append("%s %d" % [STATUS_NAMES.get(status, status), statuses[status]])
+	return ", ".join(names)
 
 
 func restore_action_points() -> void:

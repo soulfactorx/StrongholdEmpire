@@ -60,6 +60,36 @@ const LEVEL_UP_INTERNAL_GAIN := 10
 const SPAR_EXP := 30
 const BASE_ATTACK_DAMAGE := 8
 const ENEMY_BASE_ATTACK_DAMAGE := 10
+## 무공 피해에 더하는 무력 비율
+const ART_STRENGTH_RATIO := 0.3
+
+# 전투 — 지형
+const FOREST_MOVE_COST := 2
+const WATER_MOVE_COST := 3
+const HIGH_MOVE_COST := 2
+## 수풀에 선 대상이 받는 피해 배율
+const FOREST_DEFENSE := 0.75
+## 물에 선 공격자가 주는 피해 배율
+const WATER_ATTACK := 0.8
+## 고지에 선 공격자가 주는 피해 배율과 무공 사거리 보너스
+const HIGH_ATTACK := 1.25
+const HIGH_RANGE_BONUS := 1
+
+# 전투 — 무공 효과
+const AMBUSH_MULTIPLIER := 1.5
+const ELEMENT_ADVANTAGE := 1.2
+const ELEMENT_DISADVANTAGE := 0.85
+const EMPOWER_MULTIPLIER := 1.25
+const EMPOWER_TURNS := 2
+const STUN_TURNS := 1
+## 기절이 풀린 직후 다시 기절하지 않는 기간
+const STUN_IMMUNE_TURNS := 2
+const KNOCKBACK_WALL_BONUS := 0.2
+
+# 전투 — 내공 폭주: 시전 후 내공이 최대치의 이 비율 미만이면 확률적으로 반동
+const OVERLOAD_THRESHOLD := 0.25
+const OVERLOAD_CHANCE := 30
+const OVERLOAD_DAMAGE_PER_COST := 1.5
 
 # 레거시
 const RETIRE_AGE := 55

@@ -8,6 +8,7 @@ extends RefCounted
 ## scaling: { base_level, level_offset, per_level{능력치: 레벨당 증가} }
 ##   → 레벨 = max(base_level, 플레이어 레벨 + level_offset), 능력치는 base_level 대비 증가
 ## initial_bond: { type(RelationshipData.BondType 이름), strength, stage } — 새 게임 시작 관계
+## martial_arts: [{ id(MartialArtLibrary), min_level }] — 해당 레벨 이상이면 그 무공을 쓴다
 
 const NPC_DIR := "res://data/npcs/"
 const STAT_FIELDS: PackedStringArray = [
@@ -66,6 +67,12 @@ static func create_character(npc_id: String, player: CharacterData = null) -> Ch
 		for key in per_level:
 			character.set(key, int(character.get(key)) + int(per_level[key]) * growth)
 
+	for entry in data.get("martial_arts", []):
+		if character.level >= int(entry.get("min_level", 1)):
+			var art: MartialArtData = MartialArtLibrary.create_art(entry["id"])
+			if art:
+				character.learn_martial_art(art)
+
 	character.restore_internal_energy()
 	return character
 
@@ -83,6 +90,9 @@ static func validate_npc_dict(data: Dictionary) -> PackedStringArray:
 	for key in data.get("scaling", {}).get("per_level", {}):
 		if not key in STAT_FIELDS:
 			errors.append("알 수 없는 성장 능력치: %s" % key)
+	for entry in data.get("martial_arts", []):
+		if not entry is Dictionary or not MartialArtLibrary.has_art(str(entry.get("id", ""))):
+			errors.append("알 수 없는 무공: %s" % entry)
 	var bond: Variant = data.get("initial_bond")
 	if bond != null and not RelationshipData.BondType.has(bond.get("type", "")):
 		errors.append("알 수 없는 관계 유형: %s" % bond.get("type"))
