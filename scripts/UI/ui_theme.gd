@@ -45,6 +45,7 @@ static func apply_root_theme(theme: Theme) -> void:
 	theme.set_color("default_color", "RichTextLabel", COLORS["text_primary"])
 	for type in ["Button", "OptionButton", "MenuButton"]:
 		theme.set_color("font_color", type, COLORS["text_primary"])
+		theme.set_color("font_focus_color", type, COLORS["text_primary"])
 		theme.set_color("font_hover_color", type, COLORS["accent_gold"])
 		theme.set_color("font_pressed_color", type, COLORS["text_on_ink"])
 		theme.set_color("font_hover_pressed_color", type, COLORS["text_on_ink"])
@@ -173,6 +174,8 @@ static func style_button(button: Button) -> void:
 		button.add_theme_stylebox_override(state, _button_style(state))
 	button.add_theme_color_override("font_disabled_color", COLORS["text_muted"])
 	button.add_theme_color_override("font_color", COLORS["text_primary"])
+	# 키보드·게임패드 포커스가 있을 때도 먹 글씨로 (기본값은 흰 글씨라 한지 바탕에서 안 보인다)
+	button.add_theme_color_override("font_focus_color", COLORS["text_primary"])
 	button.add_theme_color_override("font_hover_color", COLORS["accent_gold"])
 	button.add_theme_color_override("font_pressed_color", COLORS["text_on_ink"])
 	button.add_theme_color_override("font_hover_pressed_color", COLORS["text_on_ink"])

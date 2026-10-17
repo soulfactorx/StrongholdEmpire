@@ -643,7 +643,8 @@ func _test_bond_flow() -> void:
 	var popup: Node = hub.bond_popup
 	_check(popup.visible and popup.get_row_count() == gm.player_relationships.size(), "인연 팝업: 관계마다 한 줄")
 	var bond_before: int = _rel(gm, "npc_master").bond_strength
-	popup._rows.get_child(0).get_child(1).pressed.emit()
+	_check(popup._rows.get_child(0).get_child(0) is TextureRect, "인연 팝업: 줄마다 초상화")
+	popup._rows.get_child(0).get_child(2).pressed.emit()
 	await process_frame
 	_check(_rel(gm, "npc_master").bond_strength > bond_before and hub.log_label.text.contains("이야기"), "팝업에서 대화")
 	popup.visible = false

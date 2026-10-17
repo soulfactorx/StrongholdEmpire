@@ -364,6 +364,28 @@ func _test_art_assets() -> void:
 		_check(ArtAssets.ui(ui) != null, "UI 텍스처 %s" % ui)
 	_check(ArtAssets.body_font() != null and ArtAssets.brush_font() != null, "본문·붓글씨 글꼴")
 	_check(root.theme != null and root.theme.default_font == ArtAssets.body_font(), "창 테마의 기본 글꼴")
+	# 초상화·문장: 명부의 모든 인물, 모든 주인공 역할, 모든 문파
+	var missing: PackedStringArray = []
+	for npc in NpcRoster.get_all():
+		if ArtAssets.portrait(npc["id"]) == null:
+			missing.append(npc["id"])
+	for role in CharacterData.Role.values():
+		if ArtAssets.role_portrait(role) == null:
+			missing.append(CharacterData.Role.keys()[role])
+	for sect_id in ["qingyun", "namgung", "heukpung", "cheonma"]:
+		if ArtAssets.emblem(sect_id) == null:
+			missing.append(sect_id)
+	_check(missing.is_empty(), "초상화·문장 모두 있음 %s" % [missing])
+	# 기연 초상화: 명시한 npc가 없으면 조건·효과의 인물로
+	_check(EventManager.get_event("rival_duel").npc == "npc_rival", "기연 인물 추론 (라이벌의 도전 → 남궁휘)")
+	var bad_npc: PackedStringArray = EventManager.validate_event_dict({
+		"id": "x", "title": "x", "description": "x", "npc": "npc_nobody", "choices": [{"label": "확인"}],
+	})
+	_check(bad_npc.size() == 1 and bad_npc[0].contains("npc"), "기연 검증: 명부에 없는 npc")
+	var bad_emblem: PackedStringArray = SectRegistry.validate_sect_dict({
+		"id": "x", "sect_name": "x", "alignment": "RIGHTEOUS", "leader_id": "npc_master", "emblem": "emblems/없음.png",
+	})
+	_check(bad_emblem.size() == 1 and bad_emblem[0].contains("문장"), "문파 검증: 없는 문장 그림")
 
 	_new_quiet_game(gm, "leader")
 	SceneRouter.goto(tree, SceneRouter.HUB)
@@ -371,6 +393,19 @@ func _test_art_assets() -> void:
 	await process_frame
 	var art: TextureRect = current_scene.get_node_or_null("Background/Art") as TextureRect
 	_check(art != null and art.texture == ArtAssets.background("hub"), "문파 경영 화면에 배경 그림")
+	var hub: Node = current_scene
+	_check(hub.character_portrait != null and hub.character_portrait.texture == ArtAssets.role_portrait(gm.player_character.role), "경영 화면: 주인공 역할 초상화")
+	hub.event_popup.show_event(EventManager.get_event("rival_duel").to_popup_dict())
+	_check(hub.event_popup.portrait.visible and hub.event_popup.portrait.texture == ArtAssets.portrait("npc_rival"), "기연 팝업: 얽힌 인물 초상화")
+	hub.event_popup.show_event({"title": "x", "description": "x", "choices": ["확인"]})
+	_check(not hub.event_popup.portrait.visible, "기연 팝업: 인물이 없으면 초상화 숨김")
+	hub.event_popup.visible = false
+	SceneRouter.goto(tree, SceneRouter.WORLD)
+	await process_frame
+	await process_frame
+	var pictures: int = current_scene.sect_list.find_children("*", "TextureRect", true, false).size()
+	_check(pictures == 1 + gm.world_sects.size(), "강호 정세: 문파마다 문장")
+	_check(current_scene.npc_list.find_children("*", "TextureRect", true, false).size() > 3, "강호 정세: 인물 초상화")
 
 	gm.pending_combat = CombatManager.create_sparring_with("npc_rival", gm.player_character)
 	SceneRouter.goto(tree, SceneRouter.COMBAT)

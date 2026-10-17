@@ -21,6 +21,11 @@ python3 tools/art/generate_art.py <밑그림폴더>
 같은 이름·크기의 파일로 덮어쓰면(예: AI로 그린 그림) 코드 수정 없이 바뀐다.
 배경 1920×1080 JPG, 타일 96px, 장기말 128px(가운데 비움), 버튼 96×48·패널 96px(9분할 여백 10·16px).
 
+## 초상화·문장 (`assets/art/portraits`, `emblems`)
+- `tools/art/generate_portraits.py`로 그린 절차적 수묵 초상화(NPC 19명·주인공 역할 7종)와 세력 문장 4개다. (이 저장소 소유)
+- 인물별 모습(머리·관·옷 색·무기·표정·수염)은 생성기의 `NPCS`·`ROLES` 표에서 바꾼다.
+  같은 이름·크기(초상화 256×320 JPG, 문장 256×256 PNG)로 덮어쓰면 코드 수정 없이 바뀐다
+
 ## 소리 (`assets/audio/`)
 - 배경음악 4곡·효과음 10종 모두 `tools/audio/generate_audio.py`로 합성했다. (이 저장소 소유)
   다시 만들기: `python3 tools/audio/generate_audio.py` (numpy, libvorbis가 든 ffmpeg 필요)

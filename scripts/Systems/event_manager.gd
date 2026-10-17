@@ -49,6 +49,9 @@ extends RefCounted
 ## ■ 가중치
 ##   최상위 "weight"(기본 1): 발생 후보 중에서 뽑힐 상대적 확률. 스토리 핵심 기연은 높게 준다.
 ##   최상위 "priority"(기본 false): true면 조건을 채운 계절에 기연 발생 확률과 관계없이 먼저 일어난다.
+##
+## ■ 초상화
+##   최상위 "npc"(선택): 팝업에 초상화를 보일 인물 id. 없으면 조건·효과에서 처음 나오는 명부 인물(target)을 쓴다.
 
 const EVENTS_DIR := "res://data/events/"
 
@@ -239,6 +242,8 @@ static func validate_event_dict(data: Dictionary) -> PackedStringArray:
 	for key in ["id", "title", "description"]:
 		if not data.get(key) is String or String(data.get(key)).is_empty():
 			errors.append("'%s'가 비어 있음" % key)
+	if data.has("npc") and not NpcRoster.has_npc(str(data["npc"])):
+		errors.append("명부에 없는 인물(npc): %s" % data["npc"])
 	if data.has("priority") and not data["priority"] is bool:
 		errors.append("priority는 true/false여야 함")
 	if data.has("weight") and not ((data["weight"] is float or data["weight"] is int) and data["weight"] > 0):
@@ -400,6 +405,29 @@ static func _find_world_sect(sect_id: String) -> SectData:
 	return null
 
 
+## 초상화를 보일 인물: 조건·효과에서 처음 나오는 명부의 인물 (target·npc 값). 없으면 ""
+static func _infer_npc(data: Dictionary) -> String:
+	var found: Array[String] = []
+	_collect_npc_ids(data.get("conditions", []), found)
+	_collect_npc_ids(data.get("choices", []), found)
+	return found[0] if not found.is_empty() else ""
+
+
+static func _collect_npc_ids(value: Variant, found: Array[String]) -> void:
+	if not found.is_empty():
+		return
+	if value is Dictionary:
+		for key in ["target", "npc"]:
+			if value.get(key) is String and NpcRoster.has_npc(value[key]):
+				found.append(value[key])
+				return
+		for key in value:
+			_collect_npc_ids(value[key], found)
+	elif value is Array:
+		for item in value:
+			_collect_npc_ids(item, found)
+
+
 static func _to_event_data(data: Dictionary) -> EventData:
 	var event := EventData.new()
 	event.id = data["id"]
@@ -408,6 +436,7 @@ static func _to_event_data(data: Dictionary) -> EventData:
 	event.can_repeat = data.get("can_repeat", false)
 	event.weight = float(data.get("weight", 1.0))
 	event.priority = data.get("priority", false) == true
+	event.npc = str(data.get("npc", _infer_npc(data)))
 	for condition in data.get("conditions", []):
 		event.conditions.append(condition)
 	for choice in data["choices"]:

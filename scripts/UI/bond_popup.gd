@@ -84,6 +84,12 @@ func refresh() -> void:
 func _make_row(rel: RelationshipData, can_act: bool) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
+	# 초상화 (그림이 없으면 같은 크기의 빈칸으로 줄을 맞춘다)
+	var picture: Control = ArtAssets.picture_rect(ArtAssets.portrait(rel.target_id), Vector2(64, 80))
+	if picture == null:
+		picture = Control.new()
+		picture.custom_minimum_size = Vector2(64, 80)
+	row.add_child(picture)
 	var label := Label.new()
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var npc: Dictionary = NpcRoster.get_npc(rel.target_id)

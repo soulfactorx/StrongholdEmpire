@@ -62,6 +62,36 @@ static func ui(name: String) -> Texture2D:
 	return texture("ui/%s.png" % name)
 
 
+## 인물 초상화: NPC 데이터의 "portrait"(assets/art/ 아래 경로)가 있으면 그것, 없으면 portraits/<npc_id>.jpg
+static func portrait(npc_id: String) -> Texture2D:
+	var npc: Dictionary = NpcRoster.get_npc(npc_id)
+	return texture(str(npc.get("portrait", "portraits/%s.jpg" % npc_id)))
+
+
+## 주인공 역할 초상화 (portraits/role_<역할>.jpg)
+static func role_portrait(role: CharacterData.Role) -> Texture2D:
+	return texture("portraits/role_%s.jpg" % CharacterData.Role.keys()[role].to_lower())
+
+
+## 세력 문장: 문파 데이터의 "emblem"이 있으면 그것, 없으면 emblems/<sect_id>.png
+static func emblem(sect_id: String) -> Texture2D:
+	var info: Dictionary = SectRegistry.get_sect_info(sect_id)
+	return texture(str(info.get("emblem", "emblems/%s.png" % sect_id)))
+
+
+## 그림을 담은 TextureRect (그림이 없으면 null). 비율을 지켜 size 안에 맞춘다.
+static func picture_rect(tex: Texture2D, size: Vector2) -> TextureRect:
+	if tex == null:
+		return null
+	var rect := TextureRect.new()
+	rect.texture = tex
+	rect.custom_minimum_size = size
+	rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return rect
+
+
 static func body_font() -> Font:
 	return _font(FONT_BODY_PATH)
 

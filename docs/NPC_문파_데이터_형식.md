@@ -38,6 +38,7 @@
 어느 문파에도 속하지 않은 인물(낭인 등)은 `sect_id`를 `"none"`으로 씁니다.
 
 | (선택) `war_specialty` | 문파전 장수로 참전할 때 보너스를 주는 명령: `CHARGE`(돌격) · `DEFEND`(방어) · `FLANK`(측면) |
+| (선택) `portrait` | 초상화 그림 경로 (`assets/art/` 아래, 예: `"portraits/npc_rival.jpg"`). 없으면 `portraits/<id>.jpg`. 256×320 권장 |
 | (선택) `martial_arts` | `[{ "id": 무공 id, "min_level": 레벨 }]` — 그 레벨 이상이면 전투에서 해당 무공을 씁니다. 무공 id는 `resources/MartialArts/`의 프리셋 또는 `data/martial_arts/`의 모드 무공 |
 
 특수 용도 인물:
@@ -74,6 +75,7 @@
 | `war_formation` | (선택) 문파전 진형: `CRANE`(학익진) · `FISH`(어린진) · `CIRCLE`(방원진) · `NONE`. 없으면 성향별 기본값 |
 | `soldier_npc` | (선택) 이 세력이 침공할 때 오는 졸개 인물 id. 없으면 `npc_bandit` |
 | `champion_npc` | (선택) 침공을 이끄는 우두머리 인물 id. 없으면 졸개만 온다 |
+| `emblem` | (선택) 문장 그림 경로 (`assets/art/` 아래). 없으면 `emblems/<id>.png`. 256×256 투명 PNG 권장 |
 
 ## 문파전과의 관계
 

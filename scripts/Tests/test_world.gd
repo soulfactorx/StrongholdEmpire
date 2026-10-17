@@ -506,9 +506,8 @@ func _test_diplomacy_screen() -> void:
 	await process_frame
 	_check(gm.get_world_sect("namgung").allied and screen.log_label.text.contains("동맹"), "화면에서 동맹 체결")
 	var titles: String = ""
-	for child in screen.sect_list.get_children():
-		if child is VBoxContainer:
-			titles += child.get_child(0).text
+	for label in screen.sect_list.find_children("*", "Label", true, false):
+		titles += label.text
 	_check(titles.contains("동맹"), "세력 목록에 동맹 표시")
 	gm.start_new_game("정리", "young_disciple")
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)

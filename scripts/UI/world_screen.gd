@@ -5,6 +5,10 @@ extends Control
 const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
 const _ChoicePopup = preload("res://scripts/UI/choice_popup.gd")
 
+## 세력 문장과 인물 초상화 크기
+const EMBLEM_SIZE := Vector2(56, 56)
+const PORTRAIT_SIZE := Vector2(56, 70)
+
 @onready var sect_list: VBoxContainer = %SectList
 @onready var npc_list: VBoxContainer = %NpcList
 @onready var log_label: Label = %LogLabel
@@ -91,7 +95,8 @@ func _build_sect_list() -> void:
 			player_sect.disciple_count,
 			player_sect.reputation,
 			SectWarManager.get_military_power(player_sect, GameManager.player_character),
-		]
+		],
+		ArtAssets.emblem(player_sect.id), EMBLEM_SIZE
 	)
 	for sect in GameManager.get_world_sects_by_power():
 		var status: String = "굴복" if sect.subjugated else sect.get_attitude_text()
@@ -116,7 +121,8 @@ func _build_sect_list() -> void:
 				sect.attitude,
 				SectWarManager.get_sect_power(sect),
 				SectRegistry.get_description(sect.id),
-			]
+			],
+			ArtAssets.emblem(sect.id), EMBLEM_SIZE
 		)
 		var button := Button.new()
 		button.text = "외교"
@@ -153,7 +159,8 @@ func _build_npc_list() -> void:
 		_add_entry(
 			npc_list,
 			"%s — %s" % [npc["display_name"], npc.get("title", "")],
-			"%s%s\n%s" % [sect_name, bond_text, npc.get("description", "")]
+			"%s%s\n%s" % [sect_name, bond_text, npc.get("description", "")],
+			ArtAssets.portrait(npc["id"]), PORTRAIT_SIZE
 		)
 
 
@@ -164,8 +171,10 @@ func _add_heading(parent: Control, text: String) -> void:
 	parent.add_child(label)
 
 
-func _add_entry(parent: Control, title: String, body: String) -> void:
+## 항목: 제목과 본문. 그림(문장·초상화)이 있으면 왼쪽에 둔다.
+func _add_entry(parent: Control, title: String, body: String, picture: Texture2D = null, picture_size := Vector2.ZERO) -> void:
 	var box := VBoxContainer.new()
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.add_theme_constant_override("separation", 2)
 	var title_label := Label.new()
 	title_label.text = title
@@ -177,7 +186,16 @@ func _add_entry(parent: Control, title: String, body: String) -> void:
 	body_label.add_theme_color_override("font_color", _UiTheme.COLORS["text_primary"])
 	box.add_child(title_label)
 	box.add_child(body_label)
-	parent.add_child(box)
+	var rect: TextureRect = ArtAssets.picture_rect(picture, picture_size)
+	if rect == null:
+		parent.add_child(box)
+		return
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	rect.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	row.add_child(rect)
+	row.add_child(box)
+	parent.add_child(row)
 
 
 func _on_back_pressed() -> void:

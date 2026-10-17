@@ -48,6 +48,8 @@ var report_popup: Control
 var _pending_role_action: String = ""
 ## 화면에 마지막으로 보여 준 주인공 레벨 (오르면 효과음)
 var _shown_level: int = -1
+## 주인공 초상화 (역할에 따라 바뀐다)
+var character_portrait: TextureRect
 
 
 func _ready() -> void:
@@ -300,10 +302,34 @@ func _set_warning(label: Label, warn: bool) -> void:
 		label.add_theme_color_override("font_color", _UiTheme.COLORS["text_primary"])
 
 
+## 인물 패널 왼쪽에 초상화 자리를 만든다. (한 번만)
+func _ensure_character_portrait() -> void:
+	if character_portrait:
+		return
+	var content: Control = character_name_label.get_parent()
+	var panel: Node = content.get_parent()
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	panel.add_child(row)
+	row.owner = content.owner
+	character_portrait = TextureRect.new()
+	character_portrait.custom_minimum_size = Vector2(88, 110)
+	character_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	character_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	character_portrait.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	row.add_child(character_portrait)
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# reparent는 owner를 지켜 %이름 찾기가 계속 된다.
+	content.reparent(row, false)
+
+
 func _update_character_display(character: CharacterData) -> void:
 	if _shown_level >= 0 and character.level > _shown_level:
 		AudioManager.play_level_up()
 	_shown_level = character.level
+	_ensure_character_portrait()
+	character_portrait.texture = ArtAssets.role_portrait(character.role)
+	character_portrait.visible = character_portrait.texture != null
 	character_name_label.text = "%s (%d세)" % [character.display_name, character.age]
 	character_role_label.text = character.get_role_name()
 	character_stats_label.text = (

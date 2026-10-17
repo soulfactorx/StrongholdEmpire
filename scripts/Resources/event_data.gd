@@ -12,6 +12,8 @@ extends Resource
 @export var weight: float = 1.0
 ## 우선 기연: 조건을 채우면 기연 발생 확률과 관계없이 그 계절에 먼저 일어난다 (인연 단계 변화 등)
 @export var priority: bool = false
+## 팝업에 초상화를 보일 인물 id (없으면 "")
+@export var npc: String = ""
 ## 모두 만족해야 발생하는 조건 목록
 @export var conditions: Array[Dictionary] = []
 ## 선택지 목록: label, message, effects, (선택) branches, success
@@ -33,4 +35,5 @@ func to_popup_dict() -> Dictionary:
 		"description": description,
 		"choices": get_choice_labels(),
 		"can_repeat": can_repeat,
+		"npc": npc,
 	}

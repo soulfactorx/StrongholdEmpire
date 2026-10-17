@@ -99,7 +99,7 @@ static func validate_sect_dict(data: Dictionary) -> PackedStringArray:
 	for key in data:
 		if not (key in NUMERIC_FIELDS or key in [
 			"id", "sect_name", "alignment", "leader_id", "description", "is_player_sect", "_path",
-			"war_tactics", "war_formation", "soldier_npc", "champion_npc",
+			"war_tactics", "war_formation", "soldier_npc", "champion_npc", "emblem",
 		]):
 			errors.append("알 수 없는 필드: %s" % key)
 	var tactics: Variant = data.get("war_tactics", {})
@@ -114,6 +114,8 @@ static func validate_sect_dict(data: Dictionary) -> PackedStringArray:
 	for key in ["soldier_npc", "champion_npc"]:
 		if data.has(key) and not NpcRoster.has_npc(str(data[key])):
 			errors.append("명부에 없는 %s: %s" % [key, data[key]])
+	if data.has("emblem") and not ResourceLoader.exists("res://assets/art/" + str(data["emblem"])):
+		errors.append("문장 그림이 없음: assets/art/%s" % data["emblem"])
 	if data.has("war_formation") and not data["war_formation"] in ["NONE", "CRANE", "FISH", "CIRCLE"]:
 		errors.append("알 수 없는 진형: %s" % data["war_formation"])
 	return errors
