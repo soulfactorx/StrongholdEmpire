@@ -1,4 +1,4 @@
-# 그림·글꼴 출처
+# 그림·글꼴·소리 출처
 
 ## 글꼴 (`assets/fonts/`)
 - **나눔명조** (본문), **나눔손글씨 붓** (제목·장기말 글자) — NAVER, SIL Open Font License 1.1.
@@ -20,3 +20,8 @@ python3 tools/art/generate_art.py <밑그림폴더>
 ```
 같은 이름·크기의 파일로 덮어쓰면(예: AI로 그린 그림) 코드 수정 없이 바뀐다.
 배경 1920×1080 JPG, 타일 96px, 장기말 128px(가운데 비움), 버튼 96×48·패널 96px(9분할 여백 10·16px).
+
+## 소리 (`assets/audio/`)
+- 배경음악 4곡·효과음 10종 모두 `tools/audio/generate_audio.py`로 합성했다. (이 저장소 소유)
+  다시 만들기: `python3 tools/audio/generate_audio.py` (numpy, libvorbis가 든 ffmpeg 필요)
+- 같은 이름의 OGG로 덮어쓰면 코드 수정 없이 바뀐다. 배경음악은 반복 재생된다.

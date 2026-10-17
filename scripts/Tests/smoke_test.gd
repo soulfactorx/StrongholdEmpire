@@ -91,6 +91,7 @@ const RUNTIME_SEQUENCE: Array = [
 	["ui", "_test_ui_flows"],
 	["ui", "_test_input_and_tips"],
 	["ui", "_test_art_assets"],
+	["ui", "_test_audio"],
 ]
 
 var _failures: int = 0

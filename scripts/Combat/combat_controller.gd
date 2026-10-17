@@ -80,9 +80,10 @@ func _ready() -> void:
 	LongPressTip.attach(martial_label, func() -> String:
 		if _selected_art:
 			return "%s\n%s" % [_selected_art.display_name, _selected_art.description]
-		return "무공 버튼(또는 숫자 키)을 누른 뒤 사거리 안(보라 칸)의 대상을 고르세요.\n오행 상극(목→토→수→화→금→목)이면 피해 +%d%%." % int((_Balance.ELEMENT_ADVANTAGE - 1.0) * 100)
+		return "무공 버튼(또는 숫자 키)을 누른 뒤 사거리 안(붉은 칸)의 대상을 고르세요.\n오행 상극(목→토→수→화→금→목)이면 피해 +%d%%." % int((_Balance.ELEMENT_ADVANTAGE - 1.0) * 100)
 	)
 	_log("전투 시작! %s" % _setup.title)
+	AudioManager.play_battle_start()
 	if not _setup.allies.is_empty():
 		var names: PackedStringArray = []
 		for ally in _setup.allies:
@@ -555,6 +556,7 @@ func _perform_attack(attacker: CombatUnit, defender: CombatUnit) -> void:
 	)
 	defender.take_damage(result["damage"])
 	attacker.action_points -= 1
+	AudioManager.play_hit()
 	_log("%s의 공격! %s에게 %d 피해%s" % [
 		attacker.display_name, defender.display_name, result["damage"], _notes_text(result["notes"]),
 	])
@@ -634,6 +636,7 @@ func _perform_art(attacker: CombatUnit, defender: CombatUnit, art: MartialArtDat
 		messages.append("내공 폭주! %s 반동 %d 피해" % [attacker.display_name, backlash])
 
 	_log(", ".join(messages))
+	AudioManager.play_art()
 	if defender:
 		_after_hit(defender)
 	if not _combat_over and not attacker.is_alive():
@@ -674,7 +677,14 @@ func _end_combat(outcome: CombatManager.Outcome) -> void:
 	if _combat_over:
 		return
 	_combat_over = true
+	var level_before: int = GameManager.player_character.level
 	var result: Dictionary = GameManager.finish_combat(outcome, _count_fallen_allies(), _get_fallen_ally_ids())
+	if GameManager.player_character.level > level_before:
+		AudioManager.play_level_up()
+	elif outcome == CombatManager.Outcome.VICTORY:
+		AudioManager.play_victory()
+	elif outcome == CombatManager.Outcome.DEFEAT:
+		AudioManager.play_defeat()
 	back_button.text = "문파로 돌아가기"
 	_refresh_all()
 	_log(result["message"])
@@ -793,7 +803,7 @@ func _on_end_turn_pressed() -> void:
 func _on_mode_move_pressed() -> void:
 	_action_mode = ActionMode.MOVE
 	_refresh_all()
-	_log("행동: 이동 (초록 칸)")
+	_log("행동: 이동 (옥색 칸)")
 
 
 func _on_mode_attack_pressed() -> void:
@@ -814,10 +824,10 @@ func _on_art_pressed(art: MartialArtData) -> void:
 			_perform_art(current, current, art)
 			return
 		_refresh_all()
-		_log("행동: [%s] — 회복할 아군(자신 포함)을 누르세요 (보라 칸)" % art.display_name)
+		_log("행동: [%s] — 회복할 아군(자신 포함)을 누르세요 (붉은 칸)" % art.display_name)
 		return
 	_refresh_all()
-	_log("행동: [%s] — 사거리 안의 적을 누르세요 (보라 칸)" % art.display_name)
+	_log("행동: [%s] — 사거리 안의 적을 누르세요 (붉은 칸)" % art.display_name)
 
 
 func _on_back_pressed() -> void:

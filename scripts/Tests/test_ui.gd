@@ -117,13 +117,23 @@ func _test_settings_and_reports() -> void:
 
 	# 설정: 저장·불러오기·적용
 	GameSettings.set_and_save("sfx_volume", 0.5, tree)
+	GameSettings.set_and_save("music_volume", 0.3, tree)
 	GameSettings.set_and_save("text_scale", 1.3, tree)
 	GameSettings.sfx_volume = 0.0
+	GameSettings.music_volume = 1.0
 	GameSettings.text_scale = 1.0
 	GameSettings.load_settings()
-	_check(is_equal_approx(GameSettings.sfx_volume, 0.5) and is_equal_approx(GameSettings.text_scale, 1.3), "설정 저장·불러오기")
+	_check(
+		is_equal_approx(GameSettings.sfx_volume, 0.5) and is_equal_approx(GameSettings.music_volume, 0.3)
+		and is_equal_approx(GameSettings.text_scale, 1.3),
+		"설정 저장·불러오기"
+	)
 	GameSettings.apply(tree)
-	_check(is_equal_approx(db_to_linear(AudioServer.get_bus_volume_db(0)), 0.5), "효과음 음량 적용")
+	var sfx_bus: int = GameSettings.bus_index(GameSettings.SFX_BUS)
+	var music_bus: int = GameSettings.bus_index(GameSettings.MUSIC_BUS)
+	_check(is_equal_approx(db_to_linear(AudioServer.get_bus_volume_db(sfx_bus)), 0.5), "효과음 음량 적용")
+	_check(is_equal_approx(db_to_linear(AudioServer.get_bus_volume_db(music_bus)), 0.3), "배경음악 음량 적용 (따로)")
+	_check(is_equal_approx(AudioServer.get_bus_volume_db(0), 0.0), "Master 음량은 그대로")
 	_check(root.theme != null and root.theme.default_font_size == roundi(16 * 1.3), "글자 크기: 화면 기본 글자 크기")
 	_check(UiTheme.font_size(13) == roundi(UiTheme.MIN_FONT_SIZE * 1.3), "작은 글자도 최소 크기와 배율 적용")
 	var label := Label.new()
@@ -188,6 +198,9 @@ func _test_ui_flows() -> void:
 	hub.options_popup.volume_slider.value = 40
 	_check(is_equal_approx(GameSettings.sfx_volume, 0.4), "설정: 음량 조절")
 	hub.options_popup.volume_slider.value = 80
+	hub.options_popup.music_slider.value = 20
+	_check(is_equal_approx(GameSettings.music_volume, 0.2), "설정: 배경음악 음량 조절")
+	hub.options_popup.music_slider.value = 60
 	hub.options_popup.visible = false
 
 	# 연간 보고서 팝업
@@ -380,3 +393,53 @@ func _test_art_assets() -> void:
 	await process_frame
 	_clear_test_saves()
 	_completed["_test_art_assets"] = true
+
+
+## 소리: 곡·효과음 파일이 불러와지고, 화면마다 곡이 바뀌고, 전투 행동에 효과음이 난다.
+func _test_audio() -> void:
+	var gm: Node = root.get_node("GameManager")
+	var audio: Node = root.get_node("AudioManager")
+	var tracks: Dictionary = {}
+	for screen in audio.SCREEN_MUSIC:
+		tracks[audio.SCREEN_MUSIC[screen]] = true
+	for track in tracks:
+		var stream: AudioStream = load(audio.MUSIC_DIR + track + ".ogg")
+		_check(stream is AudioStreamOggVorbis and stream.get_length() > 20.0, "배경음악 %s" % track)
+	for sfx in ["click", "success", "failure", "event", "hit", "art", "level_up", "battle_start", "victory", "defeat"]:
+		_check(load(audio.SFX_DIR + sfx + ".ogg") is AudioStreamOggVorbis, "효과음 %s" % sfx)
+	_check(AudioServer.get_bus_index(GameSettings.MUSIC_BUS) > 0 and AudioServer.get_bus_index(GameSettings.SFX_BUS) > 0, "배경음악·효과음 버스")
+	_check(audio._sfx_players[0].bus == GameSettings.SFX_BUS and audio._music_players[0].bus == GameSettings.MUSIC_BUS, "재생기가 각자의 버스로")
+
+	_new_quiet_game(gm, "leader")
+	SceneRouter.goto(tree, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	_check(audio.current_music == "hub", "문파 경영 화면: 경영 곡")
+	var playing: AudioStreamPlayer = audio._music_players[audio._music_index]
+	_check(playing.playing and playing.stream.loop, "배경음악은 반복 재생")
+
+	gm.pending_combat = CombatManager.create_sparring_with("npc_rival", gm.player_character)
+	SceneRouter.goto(tree, SceneRouter.COMBAT)
+	await process_frame
+	await process_frame
+	var combat: Node = current_scene
+	_check(audio.current_music == "combat", "전투 화면: 전투 곡")
+	var player_unit: CombatUnit = combat._get_player()
+	var enemy: CombatUnit = combat._get_alive_enemies()[0]
+	enemy.grid_pos = player_unit.grid_pos + Vector2i(1, 0)
+	combat._perform_attack(player_unit, enemy)
+	_check(audio.last_sfx == "hit", "기본 공격: 타격 소리")
+	enemy.hp = 1
+	player_unit.action_points = 5
+	combat._perform_attack(player_unit, enemy)
+	_check(audio.last_sfx in ["victory", "level_up"], "승리: 승전 소리")
+	gm.pending_combat = null
+
+	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
+	await process_frame
+	await process_frame
+	_check(audio.current_music == "main", "메인 메뉴: 메인 곡")
+	audio.play_music("main")
+	_check(audio.current_music == "main", "같은 곡이면 다시 시작하지 않음")
+	_clear_test_saves()
+	_completed["_test_audio"] = true

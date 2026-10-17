@@ -46,6 +46,8 @@ var options_popup: Control
 var report_popup: Control
 ## 대상을 고르는 중인 역할 행동 id
 var _pending_role_action: String = ""
+## 화면에 마지막으로 보여 준 주인공 레벨 (오르면 효과음)
+var _shown_level: int = -1
 
 
 func _ready() -> void:
@@ -299,6 +301,9 @@ func _set_warning(label: Label, warn: bool) -> void:
 
 
 func _update_character_display(character: CharacterData) -> void:
+	if _shown_level >= 0 and character.level > _shown_level:
+		AudioManager.play_level_up()
+	_shown_level = character.level
 	character_name_label.text = "%s (%d세)" % [character.display_name, character.age]
 	character_role_label.text = character.get_role_name()
 	character_stats_label.text = (

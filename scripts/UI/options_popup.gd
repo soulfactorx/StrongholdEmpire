@@ -1,11 +1,13 @@
 extends Control
 
-## 옵션: 효과음 음량, 전체 화면, 글자 크기. 바꾸면 바로 적용하고 저장한다. 화면 구성은 코드로 만든다.
+## 옵션: 배경음악·효과음 음량, 전체 화면, 글자 크기. 바꾸면 바로 적용하고 저장한다. 화면 구성은 코드로 만든다.
 
 const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
 
 var volume_slider: HSlider
 var volume_label: Label
+var music_slider: HSlider
+var music_label: Label
 var fullscreen_check: CheckButton
 var text_option: OptionButton
 var speed_option: OptionButton
@@ -43,6 +45,18 @@ func _ready() -> void:
 	volume_slider.custom_minimum_size = Vector2(0, 48)
 	volume_slider.value_changed.connect(_on_volume_changed)
 	box.add_child(volume_slider)
+	music_label = Label.new()
+	box.add_child(music_label)
+	music_slider = HSlider.new()
+	music_slider.min_value = 0
+	music_slider.max_value = 100
+	music_slider.step = 5
+	music_slider.custom_minimum_size = Vector2(0, 48)
+	music_slider.value_changed.connect(func(value: float) -> void:
+		GameSettings.set_and_save("music_volume", value / 100.0, get_tree())
+		_update_volume_label()
+	)
+	box.add_child(music_slider)
 
 	fullscreen_check = CheckButton.new()
 	fullscreen_check.text = "전체 화면"
@@ -93,6 +107,7 @@ func _ready() -> void:
 
 func open() -> void:
 	volume_slider.set_value_no_signal(roundi(GameSettings.sfx_volume * 100))
+	music_slider.set_value_no_signal(roundi(GameSettings.music_volume * 100))
 	_update_volume_label()
 	fullscreen_check.set_pressed_no_signal(GameSettings.fullscreen)
 	for i in GameSettings.TEXT_SCALES.size():
@@ -106,6 +121,7 @@ func open() -> void:
 
 func _update_volume_label() -> void:
 	volume_label.text = "효과음 음량: %d%%" % roundi(GameSettings.sfx_volume * 100)
+	music_label.text = "배경음악 음량: %d%%" % roundi(GameSettings.music_volume * 100)
 
 
 func _on_volume_changed(value: float) -> void:
