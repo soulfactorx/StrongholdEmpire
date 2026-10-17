@@ -8,6 +8,7 @@ var volume_slider: HSlider
 var volume_label: Label
 var fullscreen_check: CheckButton
 var text_option: OptionButton
+var speed_option: OptionButton
 
 
 func _ready() -> void:
@@ -62,6 +63,21 @@ func _ready() -> void:
 	text_option.item_selected.connect(_on_text_scale_selected)
 	text_row.add_child(text_option)
 	box.add_child(text_row)
+	var speed_row := HBoxContainer.new()
+	speed_row.add_theme_constant_override("separation", 12)
+	var speed_label := Label.new()
+	speed_label.text = "전투 속도 (적 차례)"
+	speed_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	speed_row.add_child(speed_label)
+	speed_option = OptionButton.new()
+	speed_option.custom_minimum_size = Vector2(200, 48)
+	for entry in GameSettings.COMBAT_DELAYS:
+		speed_option.add_item(entry[0])
+	speed_option.item_selected.connect(func(index: int) -> void:
+		GameSettings.set_and_save("combat_delay", GameSettings.COMBAT_DELAYS[index][1], get_tree())
+	)
+	speed_row.add_child(speed_option)
+	box.add_child(speed_row)
 	var note := Label.new()
 	note.text = "글자 크기는 다음에 여는 화면부터 적용됩니다."
 	_UiTheme.set_font_size(note, 14)
@@ -82,6 +98,9 @@ func open() -> void:
 	for i in GameSettings.TEXT_SCALES.size():
 		if is_equal_approx(GameSettings.TEXT_SCALES[i][1], GameSettings.text_scale):
 			text_option.select(i)
+	for i in GameSettings.COMBAT_DELAYS.size():
+		if is_equal_approx(GameSettings.COMBAT_DELAYS[i][1], GameSettings.combat_delay):
+			speed_option.select(i)
 	visible = true
 
 

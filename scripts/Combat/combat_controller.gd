@@ -38,6 +38,12 @@ var _art_buttons_owner: CombatUnit = null
 @onready var art_list: VBoxContainer = %ArtList
 @onready var log_label: Label = %LogLabel
 @onready var back_button: Button = %BackButton
+@onready var undo_move_button: Button = %UndoMoveButton
+@onready var end_turn_button: Button = %EndTurnButton
+## 되돌릴 수 있는 마지막 이동 {unit, from, ap}. 공격·무공·턴 종료 뒤에는 되돌릴 수 없다
+var _last_move: Dictionary = {}
+## 적이 움직이는 중 (전투 속도 옵션의 간격을 두고). 이때는 입력을 받지 않는다
+var _enemy_acting: bool = false
 const _ConfirmPopup = preload("res://scripts/UI/confirm_popup.gd")
 ## 후퇴 확인 대화상자 (처음 쓸 때 만든다)
 var confirm_popup: Control
@@ -57,6 +63,16 @@ func _ready() -> void:
 		]
 	)
 	back_button.text = "후퇴"
+	LongPressTip.attach(ap_label, func() -> String:
+		return "행동력: 차례마다 다시 찹니다.\n이동은 칸마다 1 (수풀 %d, 물 %d, 고지 %d), 기본 공격 1, 무공은 버튼에 적힌 만큼 듭니다.\n이동한 뒤 공격·무공을 쓰기 전이면 [이동 취소]로 되돌릴 수 있습니다." % [
+			_Balance.FOREST_MOVE_COST, _Balance.WATER_MOVE_COST, _Balance.HIGH_MOVE_COST,
+		]
+	)
+	LongPressTip.attach(martial_label, func() -> String:
+		if _selected_art:
+			return "%s\n%s" % [_selected_art.display_name, _selected_art.description]
+		return "무공 버튼(또는 숫자 키)을 누른 뒤 사거리 안(보라 칸)의 대상을 고르세요.\n오행 상극(목→토→수→화→금→목)이면 피해 +%d%%." % int((_Balance.ELEMENT_ADVANTAGE - 1.0) * 100)
+	)
 	_log("전투 시작! %s" % _setup.title)
 	if not _setup.allies.is_empty():
 		var names: PackedStringArray = []
@@ -123,6 +139,8 @@ func _get_friendly_at(coord: Vector2i) -> CombatUnit:
 ## 지금 조종 중인 아군 유닛 (적 차례이거나 전투가 끝났으면 null)
 func _get_controlled() -> CombatUnit:
 	if _combat_over:
+		return null
+	if _enemy_acting:
 		return null
 	var current := _turn_manager.get_current_unit()
 	return current if current and current.is_friendly() else null
@@ -250,6 +268,8 @@ func _update_hud() -> void:
 	var controlled := _get_controlled()
 
 	round_label.text = "라운드 %d" % _turn_manager.round_number
+	undo_move_button.disabled = _last_move.is_empty() or controlled == null or _last_move["unit"] != controlled
+	end_turn_button.disabled = _combat_over or controlled == null
 	if current:
 		turn_label.text = "현재 턴: %s%s" % [current.display_name, " (조종)" if controlled else ""]
 
@@ -312,9 +332,15 @@ func _build_art_buttons(unit: CombatUnit) -> void:
 		child.queue_free()
 	if unit == null:
 		return
-	for art in unit.get_martial_arts():
+	var arts: Array = unit.get_martial_arts()
+	for i in arts.size():
+		var art: MartialArtData = arts[i]
 		var button := Button.new()
-		button.text = "%s (내공 %d · 행동력 %d)" % [art.display_name, art.internal_cost, art.action_cost]
+		button.custom_minimum_size = Vector2(0, 48)
+		# 숫자 키로 고를 수 있다 (1~9)
+		button.text = "%s%s (내공 %d · 행동력 %d)" % [
+			"%d. " % (i + 1) if i < 9 else "", art.display_name, art.internal_cost, art.action_cost,
+		]
 		_UiTheme.style_button(button)
 		button.pressed.connect(_on_art_pressed.bind(art))
 		art_list.add_child(button)
@@ -326,6 +352,36 @@ func _log(message: String) -> void:
 
 
 # ─── 플레이어 입력 ───────────────────────────────────
+
+## 키보드 단축키: M 이동, A 공격, 1~9 무공, Z 이동 취소, Space·E 턴 종료, Esc 후퇴(확인)
+func _unhandled_key_input(event: InputEvent) -> void:
+	var key := event as InputEventKey
+	if key == null or not key.pressed or key.echo:
+		return
+	if confirm_popup and confirm_popup.visible:
+		if key.keycode == KEY_ESCAPE:
+			confirm_popup._answer(false)
+		return
+	match key.keycode:
+		KEY_M:
+			_on_mode_move_pressed()
+		KEY_A:
+			_on_mode_attack_pressed()
+		KEY_Z:
+			_on_undo_move_pressed()
+		KEY_SPACE, KEY_E:
+			_on_end_turn_pressed()
+		KEY_ESCAPE:
+			_on_back_pressed()
+		_:
+			var index: int = key.keycode - KEY_1
+			var controlled := _get_controlled()
+			if index >= 0 and index < 9 and controlled and index < controlled.get_martial_arts().size():
+				_on_art_pressed(controlled.get_martial_arts()[index])
+				return
+			return
+	get_viewport().set_input_as_handled()
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _combat_over:
@@ -356,6 +412,7 @@ func _try_move(unit: CombatUnit, target: Vector2i) -> void:
 	if not reachable.has(target):
 		_log("이동할 수 없는 위치입니다.")
 		return
+	_last_move = {"unit": unit, "from": unit.grid_pos, "ap": unit.action_points}
 	unit.grid_pos = target
 	unit.action_points -= reachable[target]
 	_refresh_all()
@@ -417,7 +474,21 @@ func _relationship_defense(attacker: CombatUnit, defender: CombatUnit) -> float:
 	return RelationshipManager.get_defense_modifier(relationships, [defender.character.id])
 
 
+## 이동 취소: 이번 차례의 마지막 이동을 되돌린다. 공격·무공을 쓴 뒤에는 할 수 없다.
+func _on_undo_move_pressed() -> void:
+	var current := _get_controlled()
+	if _last_move.is_empty() or current == null or _last_move["unit"] != current:
+		_log("되돌릴 이동이 없습니다.")
+		return
+	current.grid_pos = _last_move["from"]
+	current.action_points = _last_move["ap"]
+	_last_move = {}
+	_refresh_all()
+	_log("이동을 되돌렸습니다.")
+
+
 func _perform_attack(attacker: CombatUnit, defender: CombatUnit) -> void:
+	_last_move = {}
 	var result: Dictionary = CombatRules.calculate_damage(
 		attacker, defender, null,
 		_terrain_at(attacker.grid_pos), _terrain_at(defender.grid_pos),
@@ -433,6 +504,7 @@ func _perform_attack(attacker: CombatUnit, defender: CombatUnit) -> void:
 
 ## 무공 시전. 회복 무공이면 defender는 회복 대상(null이면 자신). 시전하면 true.
 func _perform_art(attacker: CombatUnit, defender: CombatUnit, art: MartialArtData) -> bool:
+	_last_move = {}
 	if attacker.action_points < art.action_cost:
 		_log("행동력이 부족합니다.")
 		return false
@@ -611,8 +683,10 @@ func _enemy_try_attack(enemy: CombatUnit, target: CombatUnit) -> bool:
 # ─── 턴 진행 ────────────────────────────────────────
 
 ## 아군 차례가 올 때까지 적 턴과 기절한 유닛의 턴을 처리한다.
+## 적 차례를 진행한다. 전투 속도 옵션만큼 적 행동 사이에 간격을 둔다 (0이면 바로).
 func _advance_turns() -> void:
 	var guard: int = _units.size() * 4
+	_last_move = {}
 	while not _combat_over and guard > 0:
 		guard -= 1
 		var current := _turn_manager.get_current_unit()
@@ -628,9 +702,17 @@ func _advance_turns() -> void:
 			continue
 		if current.is_friendly():
 			break
+		if GameSettings.combat_delay > 0.0:
+			_enemy_acting = true
+			_refresh_all()
+			await get_tree().create_timer(GameSettings.combat_delay).timeout
+			if not is_inside_tree() or _combat_over:
+				_enemy_acting = false
+				return
 		_run_enemy_ai(current)
 		current.tick_statuses()
 		_turn_manager.end_turn()
+	_enemy_acting = false
 	_refresh_all()
 
 
@@ -641,7 +723,7 @@ func _on_end_turn_pressed() -> void:
 	if current:
 		current.tick_statuses()
 		_turn_manager.end_turn()
-		_advance_turns()
+		await _advance_turns()
 		var next := _get_controlled()
 		if next:
 			_log("%s의 차례입니다." % next.display_name)

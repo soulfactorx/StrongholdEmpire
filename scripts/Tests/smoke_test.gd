@@ -31,6 +31,8 @@ func _initialize() -> void:
 	# 테스트의 저장(자동 저장 포함)은 실제 세이브와 다른 폴더에 한다.
 	SaveManager.save_dir = TEST_SAVE_DIR
 	GameSettings.settings_path = TEST_SAVE_DIR.path_join("settings.cfg")
+	# 적 차례 간격 없이 바로 진행 (간격은 _test_input_and_tips에서 따로 시험)
+	GameSettings.combat_delay = 0.0
 	# 세력 AI는 계절마다 강호 세력 수치를 바꾸므로, 그 영향을 시험하는 곳에서만 켠다.
 	SectAI.active = false
 	_clear_test_saves()
@@ -170,6 +172,8 @@ func _run_runtime_tests() -> void:
 	_check(_completed.has("_test_settings_and_reports"), "_test_settings_and_reports 끝까지 실행")
 	await _test_ui_flows()
 	_check(_completed.has("_test_ui_flows"), "_test_ui_flows 끝까지 실행")
+	await _test_input_and_tips()
+	_check(_completed.has("_test_input_and_tips"), "_test_input_and_tips 끝까지 실행")
 
 	print("스모크 테스트: %d개 검사, %d개 실패" % [_checks, _failures])
 	# 재생 중인 효과음을 멈추고, 오디오 스레드가 재생 객체를 놓을 때까지 잠시 기다린다.
@@ -3779,6 +3783,8 @@ func _test_settings_and_reports() -> void:
 	_check(is_equal_approx(GameSettings.text_scale, 1.0), "잘못된 글자 배율은 보통으로")
 	GameSettings.set_and_save("sfx_volume", 0.8, self)
 	GameSettings.set_and_save("text_scale", 1.0, self)
+	# 불러오기로 기본값(0.3)이 된 전투 간격을 다시 시험용 0으로
+	GameSettings.combat_delay = 0.0
 	_check(ProjectSettings.get_setting("display/window/stretch/aspect") == "expand", "화면 비율: 넓은 화면은 보이는 영역을 넓힘")
 
 	# 연간 보고서
@@ -3875,3 +3881,111 @@ func _test_ui_flows() -> void:
 	await process_frame
 	_clear_test_saves()
 	_completed["_test_ui_flows"] = true
+
+
+func _key(code: Key) -> InputEventKey:
+	var event := InputEventKey.new()
+	event.keycode = code
+	event.pressed = true
+	return event
+
+
+func _mouse(pressed: bool) -> InputEventMouseButton:
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.pressed = pressed
+	return event
+
+
+func _test_input_and_tips() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_clear_test_saves()
+	_new_quiet_game(gm, "leader")
+	SceneRouter.goto(self, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	var hub: Node = current_scene
+
+	# 길게 눌러 설명
+	var gold_tip: LongPressTip = hub.tips["gold"]
+	_check(hub.gold_label.mouse_filter == Control.MOUSE_FILTER_STOP, "설명이 붙은 라벨은 누를 수 있음")
+	hub.gold_label.gui_input.emit(_mouse(true))
+	hub.gold_label.gui_input.emit(_mouse(false))
+	await create_timer(LongPressTip.HOLD_TIME + 0.15).timeout
+	_check(not LongPressTip.is_bubble_visible(hub.gold_label), "짧게 누르면 설명이 뜨지 않음")
+	hub.gold_label.gui_input.emit(_mouse(true))
+	await create_timer(LongPressTip.HOLD_TIME + 0.15).timeout
+	_check(LongPressTip.is_bubble_visible(hub.gold_label), "길게 누르면 설명")
+	var bubble_text: String = hub.get_node("TipLayer/Bubble").get_child(0).text
+	_check(bubble_text.contains("유지비") and bubble_text.contains("제자 12명"), "금화 설명: 수입·유지비 계산 근거")
+	gold_tip._input(_mouse(true))
+	_check(not LongPressTip.is_bubble_visible(hub.gold_label), "다시 누르면 설명이 닫힘")
+	for key in ["food", "reputation", "research", "stats", "facilities"]:
+		hub.tips[key].show_now()
+		_check(LongPressTip.is_bubble_visible(hub.gold_label) and not hub.get_node("TipLayer/Bubble").get_child(0).text.is_empty(), "설명: %s" % key)
+		LongPressTip.hide_bubble(hub.gold_label)
+
+	# 단축키
+	hub._unhandled_key_input(_key(KEY_F))
+	_check(hub.facility_popup.visible, "F: 시설 관리")
+	hub._unhandled_key_input(_key(KEY_D))
+	_check(not hub.disciple_popup.visible, "팝업이 열려 있으면 다른 단축키는 무시")
+	hub._unhandled_key_input(_key(KEY_ESCAPE))
+	_check(not hub.facility_popup.visible, "Esc: 팝업 닫기")
+	var date: String = gm.get_date_text()
+	hub._unhandled_key_input(_key(KEY_SPACE))
+	_check(gm.get_date_text() != date, "Space: 계절 진행")
+	hub._unhandled_key_input(_key(KEY_O))
+	_check(hub.options_popup.visible and hub.options_popup.speed_option.item_count == GameSettings.COMBAT_DELAYS.size(), "O: 설정 (전투 속도 포함)")
+	hub._unhandled_key_input(_key(KEY_ESCAPE))
+	hub._unhandled_key_input(_key(KEY_ESCAPE))
+	_check(hub.confirm_popup.visible, "팝업이 없을 때 Esc: 메인 메뉴로(확인)")
+	hub.confirm_popup._answer(false)
+
+	# 키보드·게임패드 포커스
+	hub._on_save_pressed()
+	_check(hub.save_popup._rows.get_child(0).has_focus(), "선택 팝업: 첫 항목에 포커스")
+	hub.save_popup.visible = false
+
+	# 전투: 이동 취소, 단축키
+	gm.player_character.learn_martial_art(MartialArtLibrary.create_art("preset_soul_chase_sword"))
+	gm.start_combat(CombatManager.create_sparring(gm.player_character))
+	await process_frame
+	await process_frame
+	var c: Node = current_scene
+	var player: CombatUnit = c._get_player()
+	var start: Vector2i = player.grid_pos
+	var ap: int = player.action_points
+	var target: Vector2i = start + Vector2i(1, 0)
+	c._try_move(player, target)
+	_check(player.grid_pos == target and not c.undo_move_button.disabled, "이동하면 이동 취소 가능")
+	c._unhandled_key_input(_key(KEY_Z))
+	_check(player.grid_pos == start and player.action_points == ap and c.undo_move_button.disabled, "Z: 이동 취소 (위치·행동력 복원)")
+	c._try_move(player, target)
+	var enemy: CombatUnit = c._get_alive_enemies()[0]
+	enemy.grid_pos = player.grid_pos + Vector2i(1, 0)
+	c._perform_attack(player, enemy)
+	c._on_undo_move_pressed()
+	_check(player.grid_pos == target, "공격한 뒤에는 이동 취소 불가")
+	c._unhandled_key_input(_key(KEY_A))
+	_check(c._action_mode == c.ActionMode.ATTACK, "A: 공격 모드")
+	c._unhandled_key_input(_key(KEY_1))
+	_check(c._selected_art != null and c._action_mode == c.ActionMode.MARTIAL_ART, "1: 첫 무공 선택")
+	c._unhandled_key_input(_key(KEY_M))
+	_check(c._action_mode == c.ActionMode.MOVE, "M: 이동 모드")
+
+	# 전투 속도: 적 차례 사이에 간격을 두고, 그동안은 조작할 수 없다
+	GameSettings.combat_delay = 0.2
+	c._unhandled_key_input(_key(KEY_SPACE))
+	_check(c._enemy_acting and c._get_controlled() == null and c.end_turn_button.disabled, "적이 움직이는 동안 조작 불가")
+	await create_timer(0.5).timeout
+	_check(not c._enemy_acting and c._get_controlled() == player, "간격 뒤 적이 행동하고 다시 내 차례")
+	GameSettings.combat_delay = 0.0
+	c.leave_combat()
+	await process_frame
+	await process_frame
+	gm.start_new_game("정리", "young_disciple")
+	SceneRouter.goto(self, SceneRouter.MAIN_MENU)
+	await process_frame
+	_clear_test_saves()
+	_completed["_test_input_and_tips"] = true

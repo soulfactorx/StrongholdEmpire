@@ -88,9 +88,103 @@ func _ready() -> void:
 		_on_game_over.call_deferred(GameManager.game_over_id)
 		return
 	_refresh_all()
+	_attach_tips()
 	if not GameManager.pending_event.is_empty():
 		event_popup.show_event(GameManager.pending_event)
 	_show_invasion()
+	# 게임패드가 있으면 계절 진행에 포커스를 두어 바로 조작할 수 있게 한다.
+	if not Input.get_connected_joypads().is_empty() and not event_popup.visible:
+		$Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/AdvanceTurnButton.grab_focus()
+
+
+## 길게 눌러(마우스는 올려 두면) 계산 근거를 보여 준다.
+var tips: Dictionary = {}
+
+
+func _attach_tips() -> void:
+	tips["gold"] = LongPressTip.attach(gold_label, _gold_tip)
+	tips["food"] = LongPressTip.attach(food_label, _food_tip)
+	tips["reputation"] = LongPressTip.attach(reputation_label, func() -> String:
+		return "명성: 해마다 제자 %d명마다 +1. 연회·문파전·기연으로도 오릅니다.\n0이 되면 이야기가 끝납니다(게임오버)." % _Balance.DISCIPLES_PER_YEARLY_REPUTATION
+	)
+	tips["research"] = LongPressTip.attach(research_label, func() -> String:
+		var sect: SectData = GameManager.player_sect
+		return "연구점 수입 = 서고 Lv.%d × %d + 지혜 %d × %.1f (역할·시나리오 보정)\n무공 창조·비급 연구·강화·전수·상대 무공 분석에 씁니다." % [
+			sect.library_level, _Balance.LIBRARY_RESEARCH_PER_LEVEL, GameManager.player_character.wisdom, _Balance.WISDOM_RESEARCH_RATIO,
+		]
+	)
+	tips["stats"] = LongPressTip.attach(character_stats_label, func() -> String:
+		return "전투력 = 무력 + 신법 + 현재 내공 ÷ 10\n무력: 공격·무공 피해 / 신법: 전투력 / 지혜: 연구 성공률·연구점 / 매력: 대화 유대·리더십\n경험치가 차면 경지(레벨)가 오르고 능력치·최대 내공이 오릅니다."
+	)
+	tips["facilities"] = LongPressTip.attach(facilities_label, func() -> String:
+		var lines: PackedStringArray = []
+		for facility in SectManager.get_facility_ids():
+			lines.append("%s: %s" % [SectManager.FACILITY_INFO[facility]["name"], SectManager.FACILITY_INFO[facility]["effect"]])
+		return "\n".join(lines) + "\n시작 수준을 넘는 단계마다 계절 유지비 금화 %d" % _Balance.FACILITY_UPKEEP_GOLD
+	)
+
+
+func _gold_tip() -> String:
+	var sect: SectData = GameManager.player_sect
+	var forecast: Dictionary = GameManager.estimate_next_season()
+	return "다음 계절 금화 %+d\n수입: 기본 %d + 금고 Lv.%d × %d (역할·계절·시나리오 보정, 금고 담당 제자·공물 포함)\n유지비 %d: 제자 %d명 × %d + 확장한 시설 %d단계 × %d\n금화가 모자라면 명성이 떨어지고, 3계절 연속이면 이야기가 끝납니다.\n해마다 %d을 넘는 몫의 %d%%를 잃습니다." % [
+		forecast["gold"], _Balance.BASE_GOLD_INCOME, sect.treasury_level, _Balance.TREASURY_GOLD_PER_LEVEL,
+		sect.get_gold_upkeep(), sect.disciple_count, _Balance.GOLD_PER_DISCIPLE, sect.get_facility_steps(), _Balance.FACILITY_UPKEEP_GOLD,
+		_Balance.GOLD_SAFE_AMOUNT, int(_Balance.GOLD_LOSS_RATE * 100),
+	]
+
+
+func _food_tip() -> String:
+	var sect: SectData = GameManager.player_sect
+	var forecast: Dictionary = GameManager.estimate_next_season()
+	return "다음 계절 식량 %+d\n수입: 기본 %d + 무술장 Lv.%d × %d (역할·계절·시나리오 보정)\n유지비 %d: 제자 %d명 × %d\n식량이 모자라면 제자가 떠납니다. 해마다 %d을 넘는 몫의 %d%%가 상합니다." % [
+		forecast["food"], _Balance.BASE_FOOD_INCOME, sect.training_ground_level, _Balance.TRAINING_FOOD_PER_LEVEL,
+		sect.get_food_upkeep(), sect.disciple_count, _Balance.FOOD_PER_DISCIPLE,
+		_Balance.FOOD_SAFE_AMOUNT, int(_Balance.FOOD_SPOIL_RATE * 100),
+	]
+
+
+## 키보드 단축키: Space 계절 진행, F 시설, M 무공 연구소, W 강호 정세, D 제자 명단, B 인연,
+## R 역할 전환, S 저장, O 설정, Esc 팝업 닫기(없으면 메인 메뉴로)
+const HUB_SHORTCUTS: Dictionary = {
+	KEY_SPACE: "_on_advance_turn_pressed",
+	KEY_F: "_on_facility_pressed",
+	KEY_M: "_on_martial_art_pressed",
+	KEY_W: "_on_world_pressed",
+	KEY_D: "_on_disciple_pressed",
+	KEY_B: "_on_bond_pressed",
+	KEY_R: "_on_role_pressed",
+	KEY_S: "_on_save_pressed",
+	KEY_O: "_on_options_pressed",
+}
+
+
+func _get_open_popups() -> Array[Control]:
+	var result: Array[Control] = []
+	for popup in [role_popup, facility_popup, choice_popup, disciple_popup, bond_popup, invasion_popup, save_popup, confirm_popup, options_popup, report_popup]:
+		if popup and popup.visible:
+			result.append(popup)
+	return result
+
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	var key := event as InputEventKey
+	if key == null or not key.pressed or key.echo:
+		return
+	# 기연은 반드시 골라야 하므로 단축키로 넘기지 않는다.
+	if event_popup.visible:
+		return
+	var open: Array[Control] = _get_open_popups()
+	if key.keycode == KEY_ESCAPE:
+		if open.is_empty():
+			_on_main_menu_pressed()
+		else:
+			open[-1].visible = false
+		get_viewport().set_input_as_handled()
+		return
+	if open.is_empty() and HUB_SHORTCUTS.has(key.keycode):
+		call(HUB_SHORTCUTS[key.keycode])
+		get_viewport().set_input_as_handled()
 
 
 ## 전역 EventBus 연결. 화면이 트리를 떠나면 모두 끊어, 떠난 화면이 신호에 반응하지 않게 한다.

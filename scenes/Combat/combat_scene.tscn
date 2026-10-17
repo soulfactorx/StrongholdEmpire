@@ -69,26 +69,51 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "무공"
 
-[node name="ModeMoveButton" type="Button" parent="HUD/Panel/VBox"]
+[node name="ModeRow" type="HBoxContainer" parent="HUD/Panel/VBox"]
 layout_mode = 2
-text = "이동 모드"
+theme_override_constants/separation = 6
 
-[node name="ModeAttackButton" type="Button" parent="HUD/Panel/VBox"]
+[node name="ModeMoveButton" type="Button" parent="HUD/Panel/VBox/ModeRow"]
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
-text = "공격 모드"
+size_flags_horizontal = 3
+text = "이동 (M)"
+
+[node name="ModeAttackButton" type="Button" parent="HUD/Panel/VBox/ModeRow"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "공격 (A)"
+
+[node name="UndoMoveButton" type="Button" parent="HUD/Panel/VBox/ModeRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+disabled = true
+text = "이동 취소 (Z)"
 
 [node name="ArtList" type="VBoxContainer" parent="HUD/Panel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="EndTurnButton" type="Button" parent="HUD/Panel/VBox"]
+[node name="TurnRow" type="HBoxContainer" parent="HUD/Panel/VBox"]
 layout_mode = 2
-text = "턴 종료"
+theme_override_constants/separation = 6
 
-[node name="BackButton" type="Button" parent="HUD/Panel/VBox"]
+[node name="EndTurnButton" type="Button" parent="HUD/Panel/VBox/TurnRow"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
+size_flags_horizontal = 3
+text = "턴 종료 (Space)"
+
+[node name="BackButton" type="Button" parent="HUD/Panel/VBox/TurnRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
 text = "문파로 돌아가기"
 
 [node name="LogLabel" type="Label" parent="HUD/Panel/VBox"]
@@ -98,7 +123,8 @@ size_flags_vertical = 3
 text = "전투 로그"
 autowrap_mode = 3
 
-[connection signal="pressed" from="HUD/Panel/VBox/ModeMoveButton" to="." method="_on_mode_move_pressed"]
-[connection signal="pressed" from="HUD/Panel/VBox/ModeAttackButton" to="." method="_on_mode_attack_pressed"]
-[connection signal="pressed" from="HUD/Panel/VBox/EndTurnButton" to="." method="_on_end_turn_pressed"]
-[connection signal="pressed" from="HUD/Panel/VBox/BackButton" to="." method="_on_back_pressed"]
+[connection signal="pressed" from="HUD/Panel/VBox/ModeRow/ModeMoveButton" to="." method="_on_mode_move_pressed"]
+[connection signal="pressed" from="HUD/Panel/VBox/ModeRow/ModeAttackButton" to="." method="_on_mode_attack_pressed"]
+[connection signal="pressed" from="HUD/Panel/VBox/ModeRow/UndoMoveButton" to="." method="_on_undo_move_pressed"]
+[connection signal="pressed" from="HUD/Panel/VBox/TurnRow/EndTurnButton" to="." method="_on_end_turn_pressed"]
+[connection signal="pressed" from="HUD/Panel/VBox/TurnRow/BackButton" to="." method="_on_back_pressed"]

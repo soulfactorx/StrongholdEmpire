@@ -69,6 +69,11 @@ func open(title: String, description: String, options: Array[Dictionary]) -> voi
 		_UiTheme.style_button(button)
 		_rows.add_child(button)
 	visible = true
+	# 키보드·게임패드: 고를 수 있는 첫 항목에 포커스
+	for button in _rows.get_children():
+		if not button.disabled:
+			button.grab_focus()
+			break
 
 
 func get_option_count() -> int:

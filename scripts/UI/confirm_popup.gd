@@ -61,6 +61,7 @@ func open(title: String, message: String, on_yes: Callable = Callable(), yes_tex
 	_no.visible = not no_text.is_empty()
 	_on_yes = on_yes
 	visible = true
+	_yes.grab_focus()
 
 
 func _answer(confirmed: bool) -> void:
