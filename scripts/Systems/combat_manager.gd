@@ -134,7 +134,7 @@ static func apply_outcome(
 			parts.append("무력 +%d" % r["strength"])
 		_change_bond(bond, r.get("bond", 0), parts)
 		if not setup.victory_flag.is_empty():
-			story_flags[setup.victory_flag] = true
+			EventManager.set_flag(story_flags, setup.victory_flag)
 		if lost > 0:
 			parts.append("제자 %d명 전사" % lost)
 		return {

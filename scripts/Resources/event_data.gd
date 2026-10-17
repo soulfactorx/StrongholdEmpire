@@ -8,6 +8,8 @@ extends Resource
 @export var title: String = ""
 @export var description: String = ""
 @export var can_repeat: bool = false
+## 발생 후보 중 뽑힐 상대적 확률
+@export var weight: float = 1.0
 ## 모두 만족해야 발생하는 조건 목록
 @export var conditions: Array[Dictionary] = []
 ## 선택지 목록: label, message, effects, (선택) branches, success

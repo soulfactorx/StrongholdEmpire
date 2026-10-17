@@ -17,6 +17,10 @@ var player_relationships: Array[RelationshipData] = []
 var triggered_event_ids: Array[String] = []
 var pending_event: Dictionary = {}
 var story_flags: Dictionary = {}
+## 플래그 이름 → 켜진 계절. 기연의 turns_since_flag 조건에 쓴다.
+var flag_turns: Dictionary = {}
+## 이번 인물이 거쳐 온 역할 이름 (CharacterData.Role 키)
+var role_history: Array[String] = []
 var legacy_records: Array[LegacyData] = []
 var current_ending_id: String = ""
 ## 게임오버 id. 비어 있지 않으면 이야기가 끝난 상태다.
@@ -52,12 +56,14 @@ func _initialize_new_game(
 	_set_player_character(StartingRoles.create_character(role_id, display_name))
 	player_sect = SectRegistry.create_player_sect()
 	world_sects = SectRegistry.create_rival_sects()
-	EventManager.world_sects = world_sects
 	StartingRoles.apply_sect_setup(role_id, player_sect, player_character)
 	player_relationships = RelationshipManager.create_default_relationships()
 	triggered_event_ids.clear()
 	pending_event.clear()
 	story_flags.clear()
+	flag_turns.clear()
+	role_history.clear()
+	_record_role(player_character.role)
 	legacy_records.clear()
 	current_ending_id = ""
 	game_over_id = ""
@@ -67,6 +73,22 @@ func _initialize_new_game(
 	generation = 1
 	current_year = 1
 	current_season_index = 0
+	_sync_event_context()
+
+
+## 기연 판정에 쓰는 진행 상황을 EventManager에 넘긴다. (딕셔너리·배열은 같은 객체를 공유)
+func _sync_event_context() -> void:
+	EventManager.world_sects = world_sects
+	EventManager.current_year = current_year
+	EventManager.current_turn = _get_turn_index()
+	EventManager.role_history = role_history
+	EventManager.flag_turns = flag_turns
+
+
+func _record_role(role: CharacterData.Role) -> void:
+	var role_name: String = CharacterData.Role.find_key(role)
+	if not role_history.has(role_name):
+		role_history.append(role_name)
 
 
 func _set_player_character(character: CharacterData) -> void:
@@ -94,6 +116,7 @@ func advance_turn() -> void:
 	if current_season_index == 0:
 		current_year += 1
 		_process_yearly_events()
+	_sync_event_context()
 	var income: String = _process_seasonal_income()
 	var upkeep: Dictionary = SectManager.pay_upkeep(player_sect)
 	last_turn_report = "%s %s — %s | %s" % [
@@ -198,9 +221,25 @@ func _check_ending() -> void:
 	)
 	if ending.is_empty():
 		return
+	_reach_ending(ending)
+
+
+func _reach_ending(ending: String) -> void:
 	current_ending_id = ending
-	story_flags["ending_reached"] = ending
+	EventManager.set_flag(story_flags, "ending_reached", ending)
 	EventBus.ending_reached.emit(ending)
+
+
+## 기연의 end_game 효과: 엔딩이면 엔딩에 도달하고, 게임오버면 이야기를 끝낸다.
+func _force_end(end_id: String) -> void:
+	if EndingManager.GAME_OVERS.has(end_id):
+		if not is_game_over():
+			game_over_id = end_id
+			is_game_active = false
+			pending_event.clear()
+			EventBus.game_over.emit(end_id)
+	elif EndingManager.ENDINGS.has(end_id) and current_ending_id.is_empty():
+		_reach_ending(end_id)
 
 
 func resolve_pending_event(choice_index: int) -> void:
@@ -227,6 +266,7 @@ func apply_role_transition(role: CharacterData.Role) -> Dictionary:
 	EventBus.character_updated.emit(player_character)
 	EventBus.resources_changed.emit(player_sect)
 	EventBus.role_changed.emit(player_character.role)
+	_record_role(player_character.role)
 	refresh_role_transitions()
 	_check_end_states()
 	return result
@@ -256,6 +296,9 @@ func start_legacy_succession() -> Dictionary:
 	triggered_event_ids.clear()
 	current_ending_id = ""
 	story_flags.clear()
+	flag_turns.clear()
+	role_history.clear()
+	_record_role(player_character.role)
 
 	EventBus.legacy_succession.emit(legacy)
 	EventBus.character_updated.emit(player_character)
@@ -311,15 +354,15 @@ func resolve_sect_war(target_id: String, commands: Array) -> Dictionary:
 	var typed_commands: Array[SectWarManager.Command] = []
 	for cmd in commands:
 		typed_commands.append(cmd as SectWarManager.Command)
-	story_flags["last_war_turn"] = _get_turn_index()
+	EventManager.set_flag(story_flags, "last_war_turn", _get_turn_index())
 	var result: Dictionary = SectWarManager.resolve_battle(
 		player_sect, player_character, enemy, typed_commands
 	)
 	if result.get("victory", false):
-		story_flags["won_sect_war"] = true
-		story_flags["defeated_%s" % enemy.id] = true
+		EventManager.set_flag(story_flags, "won_sect_war")
+		EventManager.set_flag(story_flags, "defeated_%s" % enemy.id)
 	if result.get("subjugated", false):
-		story_flags["subjugated_%s" % enemy.id] = true
+		EventManager.set_flag(story_flags, "subjugated_%s" % enemy.id)
 	EventBus.character_updated.emit(player_character)
 	EventBus.resources_changed.emit(player_sect)
 	_check_end_states()
@@ -347,7 +390,7 @@ func can_spar() -> bool:
 func start_sparring() -> Dictionary:
 	if not can_spar():
 		return {"success": false, "message": "이번 계절에는 이미 비무를 했습니다."}
-	story_flags["last_spar_turn"] = _get_turn_index()
+	EventManager.set_flag(story_flags, "last_spar_turn", _get_turn_index())
 	start_combat(CombatManager.create_sparring(player_character))
 	return {"success": true, "message": "남궁휘에게 비무를 청합니다."}
 
@@ -394,6 +437,8 @@ func save_game() -> Dictionary:
 		"current_season_index": current_season_index,
 		"generation": generation,
 		"story_flags": story_flags,
+		"flag_turns": flag_turns,
+		"role_history": role_history,
 		"triggered_event_ids": triggered_event_ids,
 		"current_ending_id": current_ending_id,
 		"game_over_id": game_over_id,
@@ -423,6 +468,12 @@ func _apply_save_data(data: Dictionary) -> void:
 	current_season_index = data.get("current_season_index", 0)
 	generation = data.get("generation", 1)
 	story_flags = data.get("story_flags", {})
+	flag_turns.clear()
+	for flag in data.get("flag_turns", {}):
+		flag_turns[flag] = int(data["flag_turns"][flag])
+	role_history.clear()
+	for role_name in data.get("role_history", []):
+		role_history.append(str(role_name))
 	triggered_event_ids.clear()
 	for event_id in data.get("triggered_event_ids", []):
 		triggered_event_ids.append(event_id)
@@ -436,7 +487,9 @@ func _apply_save_data(data: Dictionary) -> void:
 		world_sects = _SaveManager.deserialize_sects(data["world_sects"])
 	else:
 		world_sects = SectRegistry.create_rival_sects()
-	EventManager.world_sects = world_sects
+	# 역할 기록이 없는 구버전 세이브는 현재 역할만 기록한다.
+	_record_role(player_character.role)
+	_sync_event_context()
 	player_relationships = _SaveManager.deserialize_relationships(data.get("relationships", []))
 	legacy_records = _SaveManager.deserialize_legacy(data.get("legacy_records", []))
 	refresh_role_transitions()
@@ -447,6 +500,8 @@ func has_save_file() -> bool:
 
 
 func _apply_event_result(result: Dictionary) -> void:
+	if result.has("end_game"):
+		_force_end(result["end_game"])
 	EventBus.event_resolved.emit(result)
 	EventBus.action_message.emit(result.get("message", ""))
 	EventBus.resources_changed.emit(player_sect)

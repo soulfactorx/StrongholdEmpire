@@ -20,7 +20,7 @@
   "choices": [
     {
       "label": "밀약을 맺는다",
-      "message": "천마신교와 은밀한 밀약을 맺었습니다. 도덕 -10, 천마신교 태도 +30.",
+      "message": "천마신교와 은밀한 밀약을 맺었습니다. 도덕 -10, 천마신교 태도 +30. 혈영과 은밀한 연을 맺었습니다.",
       "effects": [
         {
           "type": "character",
@@ -37,12 +37,18 @@
           "type": "flag",
           "flag": "cheonma_pact",
           "value": true
+        },
+        {
+          "type": "add_relationship",
+          "target": "npc_cheonma_envoy",
+          "bond_type": "BLOOD_OATH",
+          "strength": 20
         }
       ]
     },
     {
       "label": "밀서를 불태운다",
-      "message": "마교의 회유를 단호히 거절했습니다. 명성 +3, 천마신교 태도 -10.",
+      "message": "마교의 회유를 단호히 거절했습니다. 명성 +3, 천마신교 태도 -10. 혈영이 당신을 원수로 여깁니다.",
       "effects": [
         {
           "type": "sect",
@@ -54,6 +60,12 @@
           "sect": "cheonma",
           "field": "attitude",
           "add": -10
+        },
+        {
+          "type": "add_relationship",
+          "target": "npc_cheonma_envoy",
+          "bond_type": "HATRED",
+          "strength": 20
         }
       ]
     },

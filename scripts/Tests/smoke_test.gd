@@ -67,6 +67,12 @@ func _initialize() -> void:
 	_check(_completed.has("_test_martial_art_library"), "_test_martial_art_library 끝까지 실행")
 	_test_ally_setup()
 	_check(_completed.has("_test_ally_setup"), "_test_ally_setup 끝까지 실행")
+	_test_event_grammar_validation()
+	_check(_completed.has("_test_event_grammar_validation"), "_test_event_grammar_validation 끝까지 실행")
+	_test_event_grammar_conditions()
+	_check(_completed.has("_test_event_grammar_conditions"), "_test_event_grammar_conditions 끝까지 실행")
+	_test_event_grammar_effects()
+	_check(_completed.has("_test_event_grammar_effects"), "_test_event_grammar_effects 끝까지 실행")
 	# 오토로드의 _ready()는 첫 프레임에 실행되므로 런타임 검사는 그 뒤로 미룬다.
 	process_frame.connect(_run_runtime_tests, CONNECT_ONE_SHOT)
 
@@ -91,6 +97,8 @@ func _run_runtime_tests() -> void:
 	_check(_completed.has("_test_combat_effects"), "_test_combat_effects 끝까지 실행")
 	await _test_ally_combat()
 	_check(_completed.has("_test_ally_combat"), "_test_ally_combat 끝까지 실행")
+	_test_event_progress_tracking()
+	_check(_completed.has("_test_event_progress_tracking"), "_test_event_progress_tracking 끝까지 실행")
 
 	print("스모크 테스트: %d개 검사, %d개 실패" % [_checks, _failures])
 	quit(1 if _failures > 0 else 0)
@@ -1210,3 +1218,225 @@ func _test_ally_combat() -> void:
 	c._on_back_pressed()
 	await process_frame
 	_completed["_test_ally_combat"] = true
+
+
+func _event_with(extra: Dictionary) -> Dictionary:
+	var data: Dictionary = {
+		"id": "t", "title": "t", "description": "t",
+		"choices": [{"label": "a", "effects": []}],
+	}
+	data.merge(extra, true)
+	return data
+
+
+func _test_event_grammar_validation() -> void:
+	var good_cases: Dictionary = {
+		"year": {"conditions": [{"type": "year", "op": ">=", "value": 3}]},
+		"turns_since_flag": {"conditions": [{"type": "turns_since_flag", "flag": "f", "op": ">=", "value": 4}]},
+		"relationship_type": {"conditions": [{"type": "relationship_type", "target": "npc_rival", "bond_type": "RIVALRY"}]},
+		"role_history": {"conditions": [{"type": "role_history", "role": "SPY", "value": false}]},
+		"set_bond_type": {"choices": [{"label": "a", "effects": [{"type": "set_bond_type", "target": "npc_rival", "bond_type": "BLOOD_OATH"}]}]},
+		"add_relationship": {"choices": [{"label": "a", "effects": [{"type": "add_relationship", "target": "npc_cheonma", "bond_type": "HATRED"}]}]},
+		"learn_art": {"choices": [{"label": "a", "effects": [{"type": "learn_art", "art": "preset_earth_life_palm"}]}]},
+		"end_game": {"choices": [{"label": "a", "effects": [{"type": "end_game", "ending": "famine_collapse"}]}]},
+		"weight": {"weight": 2.5},
+	}
+	for label in good_cases:
+		var errors: PackedStringArray = EventManager.validate_event_dict(_event_with(good_cases[label]))
+		_check(errors.is_empty(), "새 문법 정상 통과: %s %s" % [label, errors])
+
+	var bad_cases: Dictionary = {
+		"year 연산자": {"conditions": [{"type": "year", "op": "~", "value": 3}]},
+		"turns_since_flag 플래그 누락": {"conditions": [{"type": "turns_since_flag", "op": ">=", "value": 1}]},
+		"잘못된 관계 유형": {"conditions": [{"type": "relationship_type", "target": "npc_rival", "bond_type": "FRIEND"}]},
+		"잘못된 역할 기록": {"conditions": [{"type": "role_history", "role": "EMPEROR"}]},
+		"명부에 없는 인물과 관계": {"choices": [{"label": "a", "effects": [{"type": "add_relationship", "target": "npc_nobody", "bond_type": "ROMANCE"}]}]},
+		"없는 무공 습득": {"choices": [{"label": "a", "effects": [{"type": "learn_art", "art": "no_art"}]}]},
+		"없는 엔딩": {"choices": [{"label": "a", "effects": [{"type": "end_game", "ending": "no_ending"}]}]},
+		"음수 가중치": {"weight": -1},
+	}
+	for label in bad_cases:
+		_check(not EventManager.validate_event_dict(_event_with(bad_cases[label])).is_empty(), "새 문법 오류 검출: %s" % label)
+	_completed["_test_event_grammar_validation"] = true
+
+
+func _condition_holds(condition: Dictionary, st: Dictionary) -> bool:
+	var event := EventData.new()
+	event.conditions.append(condition)
+	return EventManager._conditions_met(event, st["character"], st["sect"], st["relationships"], "봄", st["flags"])
+
+
+func _test_event_grammar_conditions() -> void:
+	var saved_year: int = EventManager.current_year
+	var saved_turn: int = EventManager.current_turn
+	var saved_history: Array[String] = EventManager.role_history
+	var saved_flag_turns: Dictionary = EventManager.flag_turns
+	EventManager.flag_turns = {}
+	var st: Dictionary = _make_combat_state()
+
+	EventManager.current_year = 3
+	_check(_condition_holds({"type": "year", "op": ">=", "value": 3}, st), "year: 3년차 조건 충족")
+	_check(not _condition_holds({"type": "year", "op": ">=", "value": 4}, st), "year: 4년차 조건 불충족")
+
+	var since: Dictionary = {"type": "turns_since_flag", "flag": "oath", "op": ">=", "value": 4}
+	_check(not _condition_holds(since, st), "turns_since_flag: 켜진 적 없으면 거짓")
+	EventManager.current_turn = 10
+	EventManager.set_flag(st["flags"], "oath")
+	EventManager.current_turn = 13
+	_check(not _condition_holds(since, st), "turns_since_flag: 3계절 경과는 불충족")
+	EventManager.current_turn = 14
+	_check(_condition_holds(since, st), "turns_since_flag: 4계절 경과 충족")
+	EventManager.set_flag(st["flags"], "oath", false)
+	_check(not _condition_holds(since, st), "turns_since_flag: 꺼진 플래그는 거짓")
+
+	_check(_condition_holds({"type": "relationship_type", "target": "npc_rival", "bond_type": "RIVALRY"}, st), "relationship_type: 라이벌 일치")
+	_check(not _condition_holds({"type": "relationship_type", "target": "npc_rival", "bond_type": "BLOOD_OATH"}, st), "relationship_type: 불일치")
+	_check(not _condition_holds({"type": "relationship_type", "target": "npc_cheonma", "bond_type": "HATRED"}, st), "relationship_type: 관계 없으면 거짓")
+
+	EventManager.role_history = ["YOUNG_DISCIPLE", "SPY"] as Array[String]
+	_check(_condition_holds({"type": "role_history", "role": "SPY"}, st), "role_history: 거쳐 온 역할")
+	_check(not _condition_holds({"type": "role_history", "role": "LEADER"}, st), "role_history: 거치지 않은 역할")
+	_check(_condition_holds({"type": "role_history", "role": "LEADER", "value": false}, st), "role_history: 거친 적 없음 조건")
+
+	# 가중치: 1 대 9로 뽑히는지
+	var light := EventData.new()
+	light.id = "light"
+	var heavy := EventData.new()
+	heavy.id = "heavy"
+	heavy.weight = 9.0
+	var heavy_count: int = 0
+	seed(7)
+	for i in 1000:
+		if EventManager._pick_weighted([light, heavy] as Array[EventData]) == heavy:
+			heavy_count += 1
+	randomize()
+	_check(heavy_count > 850 and heavy_count < 950, "가중치 9배 기연이 약 90%% 선택 (%d/1000)" % heavy_count)
+
+	EventManager.current_year = saved_year
+	EventManager.current_turn = saved_turn
+	EventManager.role_history = saved_history
+	EventManager.flag_turns = saved_flag_turns
+	_completed["_test_event_grammar_conditions"] = true
+
+
+func _test_event_grammar_effects() -> void:
+	var st: Dictionary = _make_combat_state()
+	var result: Dictionary = {}
+	var apply := func(effect: Dictionary) -> void:
+		EventManager._apply_effect(effect, st["character"], st["sect"], st["relationships"], st["flags"], result)
+
+	apply.call({"type": "set_bond_type", "target": "npc_rival", "bond_type": "BLOOD_OATH"})
+	var rival: RelationshipData = RelationshipManager.get_bond_with(st["relationships"], "npc_rival")
+	_check(rival.bond_type == RelationshipData.BondType.BLOOD_OATH, "set_bond_type: 라이벌 → 혈맹")
+
+	apply.call({"type": "add_relationship", "target": "npc_cheonma_envoy", "bond_type": "HATRED", "strength": 25})
+	var envoy: RelationshipData = RelationshipManager.get_bond_with(st["relationships"], "npc_cheonma_envoy")
+	_check(
+		envoy != null and envoy.target_name == "혈영" and envoy.bond_type == RelationshipData.BondType.HATRED
+		and envoy.bond_strength == 25,
+		"add_relationship: 명부 인물과 원한 관계 생성"
+	)
+	var count: int = st["relationships"].size()
+	apply.call({"type": "add_relationship", "target": "npc_cheonma_envoy", "bond_type": "ROMANCE"})
+	_check(st["relationships"].size() == count and envoy.bond_type == RelationshipData.BondType.HATRED, "add_relationship: 이미 있으면 무시")
+
+	apply.call({"type": "learn_art", "art": "preset_earth_life_palm"})
+	_check(st["character"].knows_martial_art("preset_earth_life_palm"), "learn_art: 무공 습득")
+
+	apply.call({"type": "end_game", "ending": "unify_righteous"})
+	_check(result.get("end_game") == "unify_righteous", "end_game: 결과에 엔딩 지정")
+
+	# 신규 기연 데이터
+	var sworn: EventData = EventManager.get_event("rival_sworn_brothers")
+	var secret: EventData = EventManager.get_event("master_secret_art")
+	_check(sworn != null and secret != null and sworn.weight > 1.0, "신규 기연 로드 (가중치 포함)")
+	_completed["_test_event_grammar_effects"] = true
+
+
+## GameManager가 역할 기록·플래그 시점을 남기고, 저장·불러오기와 end_game을 처리하는지 확인한다.
+func _test_event_progress_tracking() -> void:
+	var gm: Node = root.get_node("GameManager")
+	gm.start_new_game("기록", "young_disciple")
+	_check(gm.role_history == ["YOUNG_DISCIPLE"], "새 게임: 시작 역할 기록")
+	gm.apply_role_transition(CharacterData.Role.SPY)
+	gm.apply_role_transition(CharacterData.Role.MANAGER)
+	_check(gm.role_history == ["YOUNG_DISCIPLE", "SPY", "MANAGER"], "역할 전환 기록")
+	_check(EventManager.role_history == gm.role_history, "기연 판정에 역할 기록 공유")
+
+	for i in 3:
+		gm.advance_turn()
+		gm.pending_event.clear()
+		gm.pending_combat = null
+	_check(EventManager.current_turn == gm._get_turn_index() and EventManager.current_year == gm.current_year, "계절 진행 시 기연 진행 상황 동기화")
+
+	EventManager.set_flag(gm.story_flags, "test_flag")
+	_check(gm.flag_turns.get("test_flag") == gm._get_turn_index(), "플래그 켜진 계절 기록")
+
+	# 결투 승리 플래그도 시점이 남는다 (의형제 기연 조건)
+	var duel: CombatSetup = CombatManager.create_rival_duel(gm.player_character)
+	gm.pending_combat = duel
+	gm.finish_combat(CombatManager.Outcome.VICTORY)
+	_check(gm.flag_turns.get("won_rival_duel") == gm._get_turn_index(), "전투 승리 플래그 시점 기록")
+
+	# 저장/불러오기
+	var state: Dictionary = JSON.parse_string(JSON.stringify({
+		"current_year": gm.current_year,
+		"current_season_index": gm.current_season_index,
+		"story_flags": gm.story_flags,
+		"flag_turns": gm.flag_turns,
+		"role_history": gm.role_history,
+		"character": _SaveManager.serialize_character(gm.player_character),
+		"sect": _SaveManager.serialize_sect(gm.player_sect),
+	}))
+	var expected_turn: int = gm.flag_turns["test_flag"]
+	gm.start_new_game("초기화", "leader")
+	gm._apply_save_data(state)
+	_check(
+		gm.flag_turns.get("test_flag") == expected_turn and gm.role_history.has("SPY")
+		and EventManager.flag_turns == gm.flag_turns,
+		"플래그 시점·역할 기록 저장/복원"
+	)
+	state.erase("role_history")
+	state.erase("flag_turns")
+	gm._apply_save_data(state)
+	_check(gm.role_history.size() == 1 and gm.flag_turns.is_empty(), "구버전 세이브: 현재 역할만 기록")
+
+	# 의형제 기연: 결투 승리 4계절 뒤, 라이벌 유대 40 이상
+	gm.start_new_game("의형제", "young_disciple")
+	var rival: RelationshipData = RelationshipManager.get_bond_with(gm.player_relationships, "npc_rival")
+	rival.bond_strength = 45
+	EventManager.set_flag(gm.story_flags, "won_rival_duel")
+	var sworn: EventData = EventManager.get_event("rival_sworn_brothers")
+	var holds := func() -> bool:
+		return EventManager._conditions_met(
+			sworn, gm.player_character, gm.player_sect, gm.player_relationships,
+			gm.get_current_season(), gm.story_flags
+		)
+	_check(not holds.call(), "의형제 기연: 결투 직후에는 발생하지 않음")
+	for i in 4:
+		gm.advance_turn()
+		gm.pending_event.clear()
+		gm.pending_combat = null
+	_check(holds.call(), "의형제 기연: 4계절 뒤 발생 조건 충족")
+	gm.pending_event = {"id": "rival_sworn_brothers"}
+	gm.resolve_pending_event(0)
+	_check(rival.bond_type == RelationshipData.BondType.BLOOD_OATH, "의형제 기연: 혈맹으로 전환")
+
+	# end_game 효과로 게임오버
+	var dir_path: String = "user://_test_end_game"
+	DirAccess.make_dir_recursive_absolute(dir_path)
+	var file := FileAccess.open(dir_path.path_join("end.json"), FileAccess.WRITE)
+	file.store_string(JSON.stringify({
+		"id": "test_end", "title": "끝", "description": "끝",
+		"choices": [{"label": "끝낸다", "effects": [{"type": "end_game", "ending": "disgraced"}]}],
+	}))
+	file.close()
+	EventManager.reload_definitions(dir_path)
+	gm.pending_event = {"id": "test_end"}
+	gm.resolve_pending_event(0)
+	_check(gm.is_game_over() and gm.game_over_id == "disgraced", "end_game: 기연으로 게임오버")
+	DirAccess.remove_absolute(dir_path.path_join("end.json"))
+	DirAccess.remove_absolute(dir_path)
+	EventManager.reload_definitions()
+	gm.start_new_game("정리", "young_disciple")
+	_completed["_test_event_progress_tracking"] = true

@@ -20,6 +20,10 @@ extends RefCounted
 ##   season     in: [계절]          — "봄" "여름" "가을" "겨울"
 ##   flag       flag, value        — 스토리 플래그 값 비교 (없으면 false로 간주)
 ##   world_sect sect, field, op, value — 강호 세력 수치 비교 (WORLD_SECT_FIELDS)
+##   year       op, value          — 현재 연차 비교
+##   turns_since_flag flag, op, value — 플래그가 켜진 뒤 지난 계절 수 비교 (켜진 적 없으면 거짓)
+##   relationship_type target, bond_type — 해당 인물과의 관계 유형이 일치
+##   role_history role, value       — 그 역할을 거쳐 왔는지 (value 생략 시 true)
 ##   op: ">=" "<=" ">" "<" "==" "!="
 ##
 ## ■ 효과 (type별 필드)
@@ -30,6 +34,13 @@ extends RefCounted
 ##   flag        flag, value       — 스토리 플래그 설정
 ##   combat      combat            — 전투 시작 (CombatManager.create_by_id, 방어전이면 제자 합류)
 ##   world_sect  sect, field, add  — 강호 세력 수치 증감 (태도는 -100~100)
+##   set_bond_type target, bond_type — 기존 관계의 유형을 바꾼다
+##   add_relationship target, bond_type, strength — 명부 인물과 새 관계를 맺는다 (이미 있으면 무시)
+##   learn_art   art               — 무공 습득 (MartialArtLibrary id)
+##   end_game    ending            — 지정한 엔딩 또는 게임오버로 이야기를 끝낸다
+##
+## ■ 가중치
+##   최상위 "weight"(기본 1): 발생 후보 중에서 뽑힐 상대적 확률. 스토리 핵심 기연은 높게 준다.
 
 const EVENTS_DIR := "res://data/events/"
 
@@ -50,8 +61,21 @@ static var _definitions: Array[EventData] = []
 static var _loaded: bool = false
 
 
-## 조건·효과에서 강호 세력을 찾을 때 쓰는 목록. GameManager가 새 게임·불러오기 때 지정한다.
+## 기연 판정에 쓰는 진행 상황. GameManager가 새 게임·불러오기·계절 진행 때 갱신한다.
 static var world_sects: Array[SectData] = []
+static var current_year: int = 1
+## 연차 × 4 + 계절 순번
+static var current_turn: int = 0
+## 거쳐 온 역할 이름 (CharacterData.Role 키)
+static var role_history: Array[String] = []
+## 플래그 이름 → 켜진 계절(current_turn)
+static var flag_turns: Dictionary = {}
+
+
+## 스토리 플래그를 설정하고 켜진 계절을 기록한다. 플래그는 항상 이 함수로 설정한다.
+static func set_flag(story_flags: Dictionary, flag: String, value: Variant = true) -> void:
+	story_flags[flag] = value
+	flag_turns[flag] = current_turn
 
 
 static func check_turn_events(
@@ -71,7 +95,7 @@ static func check_turn_events(
 	if pool.is_empty():
 		return {}
 
-	var chosen: EventData = pool[randi() % pool.size()]
+	var chosen: EventData = _pick_weighted(pool)
 	if not chosen.can_repeat:
 		triggered_ids.append(chosen.id)
 	return chosen.to_popup_dict()
@@ -105,6 +129,18 @@ static func resolve_choice(
 	for effect in effects:
 		_apply_effect(effect, character, sect, relationships, story_flags, result)
 	return result
+
+
+static func _pick_weighted(pool: Array[EventData]) -> EventData:
+	var total: float = 0.0
+	for event in pool:
+		total += event.weight
+	var roll: float = randf() * total
+	for event in pool:
+		roll -= event.weight
+		if roll < 0.0:
+			return event
+	return pool[-1]
 
 
 static func get_definitions() -> Array[EventData]:
@@ -155,6 +191,8 @@ static func validate_event_dict(data: Dictionary) -> PackedStringArray:
 	for key in ["id", "title", "description"]:
 		if not data.get(key) is String or String(data.get(key)).is_empty():
 			errors.append("'%s'가 비어 있음" % key)
+	if data.has("weight") and not ((data["weight"] is float or data["weight"] is int) and data["weight"] > 0):
+		errors.append("weight는 0보다 큰 숫자여야 함")
 	if not data.get("conditions", []) is Array:
 		errors.append("conditions는 배열이어야 함")
 	else:
@@ -212,6 +250,19 @@ static func _validate_condition(condition: Variant, errors: PackedStringArray) -
 		"world_sect":
 			_validate_world_sect(c, errors)
 			_validate_compare(c, errors)
+		"year":
+			_validate_compare(c, errors)
+		"turns_since_flag":
+			if not c.get("flag") is String:
+				errors.append("turns_since_flag 조건에 flag 필요")
+			_validate_compare(c, errors)
+		"relationship_type":
+			if not c.get("target") is String:
+				errors.append("relationship_type 조건에 target 필요")
+			_validate_bond_type(c, errors)
+		"role_history":
+			if not CharacterData.Role.has(c.get("role", "")):
+				errors.append("알 수 없는 역할: %s" % c.get("role"))
 		_:
 			errors.append("알 수 없는 조건 type: %s" % c.get("type"))
 
@@ -249,8 +300,28 @@ static func _validate_effect(effect: Variant, errors: PackedStringArray) -> void
 				errors.append("알 수 없는 전투: %s" % e.get("combat"))
 		"world_sect":
 			_validate_world_sect(e, errors)
+		"set_bond_type":
+			if not e.get("target") is String:
+				errors.append("set_bond_type 효과에 target 필요")
+			_validate_bond_type(e, errors)
+		"add_relationship":
+			if not NpcRoster.has_npc(str(e.get("target", ""))):
+				errors.append("명부에 없는 인물: %s" % e.get("target"))
+			_validate_bond_type(e, errors)
+		"learn_art":
+			if not MartialArtLibrary.has_art(str(e.get("art", ""))):
+				errors.append("알 수 없는 무공: %s" % e.get("art"))
+		"end_game":
+			var ending: String = str(e.get("ending", ""))
+			if not (EndingManager.ENDINGS.has(ending) or EndingManager.GAME_OVERS.has(ending)):
+				errors.append("알 수 없는 엔딩: %s" % ending)
 		_:
 			errors.append("알 수 없는 효과 type: %s" % e.get("type"))
+
+
+static func _validate_bond_type(entry: Dictionary, errors: PackedStringArray) -> void:
+	if not RelationshipData.BondType.has(entry.get("bond_type", "")):
+		errors.append("알 수 없는 관계 유형: %s" % entry.get("bond_type"))
 
 
 static func _validate_world_sect(entry: Dictionary, errors: PackedStringArray) -> void:
@@ -274,6 +345,7 @@ static func _to_event_data(data: Dictionary) -> EventData:
 	event.title = data["title"]
 	event.description = data["description"]
 	event.can_repeat = data.get("can_repeat", false)
+	event.weight = float(data.get("weight", 1.0))
 	for condition in data.get("conditions", []):
 		event.conditions.append(condition)
 	for choice in data["choices"]:
@@ -325,6 +397,17 @@ static func _condition_met(
 		"world_sect":
 			var world_sect: SectData = _find_world_sect(c["sect"])
 			return world_sect != null and _compare(world_sect.get(c["field"]), c["op"], c["value"])
+		"year":
+			return _compare(current_year, c["op"], c["value"])
+		"turns_since_flag":
+			if not flag_turns.has(c["flag"]) or not story_flags.get(c["flag"], false):
+				return false
+			return _compare(current_turn - int(flag_turns[c["flag"]]), c["op"], c["value"])
+		"relationship_type":
+			var rel: RelationshipData = RelationshipManager.get_bond_with(relationships, c["target"])
+			return rel != null and rel.bond_type == RelationshipData.BondType.get(c["bond_type"])
+		"role_history":
+			return role_history.has(c["role"]) == c.get("value", true)
 	return false
 
 
@@ -370,7 +453,7 @@ static func _apply_effect(
 			if bond:
 				bond.increase_bond(int(e.get("add", 0)))
 		"flag":
-			story_flags[e["flag"]] = e.get("value", true)
+			set_flag(story_flags, e["flag"], e.get("value", true))
 		"combat":
 			result["combat"] = CombatManager.create_by_id(e["combat"], character, sect)
 		"world_sect":
@@ -382,3 +465,21 @@ static func _apply_effect(
 				else:
 					value = maxi(0, value)
 				world_sect.set(e["field"], value)
+		"set_bond_type":
+			var rel: RelationshipData = RelationshipManager.get_bond_with(relationships, e["target"])
+			if rel:
+				rel.bond_type = RelationshipData.BondType.get(e["bond_type"])
+		"add_relationship":
+			if RelationshipManager.get_bond_with(relationships, e["target"]) == null:
+				var rel := RelationshipData.new()
+				rel.target_id = e["target"]
+				rel.target_name = NpcRoster.get_display_name(e["target"])
+				rel.bond_type = RelationshipData.BondType.get(e["bond_type"])
+				rel.increase_bond(int(e.get("strength", 10)))
+				relationships.append(rel)
+		"learn_art":
+			var art: MartialArtData = MartialArtLibrary.create_art(e["art"])
+			if art:
+				character.learn_martial_art(art)
+		"end_game":
+			result["end_game"] = e["ending"]
