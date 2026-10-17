@@ -15,6 +15,7 @@ const MAIN_SCENES: Array[String] = [
 	"res://scenes/UI/sect_war_screen.tscn",
 	"res://scenes/UI/ending_screen.tscn",
 	"res://scenes/UI/help_screen.tscn",
+	"res://scenes/UI/new_game_screen.tscn",
 ]
 
 var _failures: int = 0
@@ -27,12 +28,15 @@ func _initialize() -> void:
 	_test_gain_experience()
 	_test_martial_art_round_trip()
 	_test_old_save_without_martial_arts()
+	_test_starting_roles()
 	# 오토로드의 _ready()는 첫 프레임에 실행되므로 런타임 검사는 그 뒤로 미룬다.
 	process_frame.connect(_run_runtime_tests, CONNECT_ONE_SHOT)
 
 
 func _run_runtime_tests() -> void:
 	_test_turn_loop()
+	_test_start_new_game()
+	await _test_scene_navigation()
 
 	print("스모크 테스트: %d개 검사, %d개 실패" % [_checks, _failures])
 	quit(1 if _failures > 0 else 0)
@@ -141,3 +145,63 @@ func _test_turn_loop() -> void:
 			game_manager.resolve_pending_event(0)
 	_check(game_manager.current_year == 3, "8턴 진행 후 3년차")
 	_check(game_manager.player_character.level > start_level, "연간 수련으로 레벨 상승")
+
+
+func _test_starting_roles() -> void:
+	for entry in StartingRoles.ROLES:
+		var character: CharacterData = StartingRoles.create_character(entry["id"], "")
+		_check(
+			character.role == entry["role"]
+			and character.display_name == entry["default_name"]
+			and character.internal_energy_current == character.internal_energy_max,
+			"시작 역할 생성: %s" % entry["title"]
+		)
+	var named: CharacterData = StartingRoles.create_character("wanderer", "  연남천 ")
+	_check(named.display_name == "연남천", "입력한 이름 사용 (앞뒤 공백 제거)")
+	var unknown: CharacterData = StartingRoles.create_character("no_such_role", "")
+	_check(unknown.role == CharacterData.Role.YOUNG_DISCIPLE, "알 수 없는 역할 id는 기본 역할")
+	var leader: CharacterData = StartingRoles.create_character("leader", "")
+	_check(leader.level > 1, "문주는 경험치를 갖고 시작")
+
+
+func _test_start_new_game() -> void:
+	var game_manager: Node = root.get_node_or_null("GameManager")
+	if game_manager == null:
+		return
+	game_manager.story_flags["dirty"] = true
+	game_manager.start_new_game("백리운", "leader")
+	_check(game_manager.is_game_active, "새 게임 시작 후 진행 중 상태")
+	_check(game_manager.player_character.display_name == "백리운", "새 게임 이름 적용")
+	_check(game_manager.player_character.role == CharacterData.Role.LEADER, "새 게임 역할 적용")
+	_check(game_manager.player_sect.leader_name == "백리운", "문주 시작 시 문파 문주 이름 갱신")
+	_check(game_manager.player_sect.gold == 400, "역할별 문파 초기 자원 적용")
+	_check(
+		game_manager.current_year == 1 and game_manager.current_season_index == 0
+		and game_manager.story_flags.is_empty() and game_manager.triggered_event_ids.is_empty(),
+		"새 게임이 이전 진행 상태를 초기화"
+	)
+
+
+## 각 화면을 실제로 띄워 @onready 노드 경로와 시그널 연결이 깨지지 않았는지 확인한다.
+func _test_scene_navigation() -> void:
+	for path in [
+		SceneRouter.MAIN_MENU, SceneRouter.NEW_GAME, SceneRouter.HUB,
+		SceneRouter.MARTIAL_ART, SceneRouter.SECT_WAR, SceneRouter.ENDING,
+		SceneRouter.HELP, SceneRouter.COMBAT,
+	]:
+		SceneRouter.goto(self, path)
+		await process_frame
+		await process_frame
+		_check(
+			current_scene != null and current_scene.scene_file_path == path,
+			"화면 전환: %s" % path.get_file()
+		)
+
+	SceneRouter.goto(self, SceneRouter.HUB)
+	await process_frame
+	SceneRouter.goto(self, SceneRouter.HELP)
+	await process_frame
+	SceneRouter.back(self, SceneRouter.MAIN_MENU)
+	await process_frame
+	await process_frame
+	_check(current_scene.scene_file_path == SceneRouter.HUB, "도움말에서 직전 화면(경영)으로 복귀")

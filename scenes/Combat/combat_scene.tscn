@@ -79,7 +79,7 @@ text = "턴 종료"
 
 [node name="BackButton" type="Button" parent="HUD/Panel/VBox"]
 layout_mode = 2
-text = "메인으로"
+text = "문파로 돌아가기"
 
 [node name="LogLabel" type="Label" parent="HUD/Panel/VBox"]
 unique_name_in_owner = true

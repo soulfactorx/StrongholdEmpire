@@ -46,9 +46,15 @@ static func style_button(button: Button) -> void:
 	var pressed := normal.duplicate()
 	pressed.bg_color = COLORS["accent_red"]
 
+	var disabled := normal.duplicate()
+	disabled.bg_color = Color(0.13, 0.14, 0.17)
+	disabled.border_color = COLORS["text_muted"]
+
 	button.add_theme_stylebox_override("normal", normal)
 	button.add_theme_stylebox_override("hover", hover)
 	button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_stylebox_override("disabled", disabled)
+	button.add_theme_color_override("font_disabled_color", COLORS["text_muted"])
 	button.add_theme_color_override("font_color", COLORS["text_primary"])
 	button.add_theme_color_override("font_hover_color", COLORS["accent_gold"])
 

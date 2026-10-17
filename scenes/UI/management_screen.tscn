@@ -124,6 +124,25 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "금고 Lv.1"
 
+[node name="SystemPanel" type="PanelContainer" parent="Margin/RootHBox/LeftPanel"]
+layout_mode = 2
+
+[node name="SystemVBox" type="VBoxContainer" parent="Margin/RootHBox/LeftPanel/SystemPanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="SaveButton" type="Button" parent="Margin/RootHBox/LeftPanel/SystemPanel/SystemVBox"]
+layout_mode = 2
+text = "저장"
+
+[node name="HelpButton" type="Button" parent="Margin/RootHBox/LeftPanel/SystemPanel/SystemVBox"]
+layout_mode = 2
+text = "도움말"
+
+[node name="MainMenuButton" type="Button" parent="Margin/RootHBox/LeftPanel/SystemPanel/SystemVBox"]
+layout_mode = 2
+text = "메인 메뉴"
+
 [node name="RightPanel" type="VBoxContainer" parent="Margin/RootHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -179,49 +198,57 @@ layout_mode = 2
 
 [node name="ActionGrid" type="GridContainer" parent="Margin/RootHBox/RightPanel/ActionPanel"]
 layout_mode = 2
-columns = 2
+columns = 3
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
 
 [node name="AdvanceTurnButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
-custom_minimum_size = Vector2(200, 40)
+custom_minimum_size = Vector2(170, 40)
 layout_mode = 2
 text = "계절 진행"
 
 [node name="TrainButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
-custom_minimum_size = Vector2(200, 40)
+custom_minimum_size = Vector2(170, 40)
 layout_mode = 2
 text = "제자 훈련"
 
 [node name="UpgradeLibraryButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
-custom_minimum_size = Vector2(200, 40)
+custom_minimum_size = Vector2(170, 40)
 layout_mode = 2
 text = "서고 확장"
 
 [node name="UpgradeTrainingButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
-custom_minimum_size = Vector2(200, 40)
+custom_minimum_size = Vector2(170, 40)
 layout_mode = 2
 text = "무술장 확장"
 
 [node name="UpgradeTreasuryButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
-custom_minimum_size = Vector2(200, 40)
+custom_minimum_size = Vector2(170, 40)
 layout_mode = 2
 text = "금고 확장"
 
 [node name="MartialArtButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
-custom_minimum_size = Vector2(200, 40)
+custom_minimum_size = Vector2(170, 40)
 layout_mode = 2
 text = "무공 연구소"
 
 [node name="RoleButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
-custom_minimum_size = Vector2(200, 40)
+custom_minimum_size = Vector2(170, 40)
 layout_mode = 2
 text = "역할 전환"
 
-[node name="BackButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
-custom_minimum_size = Vector2(200, 40)
+[node name="CombatButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
+custom_minimum_size = Vector2(170, 40)
 layout_mode = 2
-text = "메인으로"
+text = "결투"
+[node name="SectWarButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
+custom_minimum_size = Vector2(170, 40)
+layout_mode = 2
+text = "문파전"
+[node name="EndingButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
+custom_minimum_size = Vector2(170, 40)
+layout_mode = 2
+text = "엔딩 / 레거시"
 
 [node name="LogPanel" type="PanelContainer" parent="Margin/RootHBox/RightPanel"]
 layout_mode = 2
@@ -240,7 +267,13 @@ autowrap_mode = 3
 [connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/UpgradeTreasuryButton" to="." method="_on_upgrade_treasury_pressed"]
 [connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/MartialArtButton" to="." method="_on_martial_art_pressed"]
 [connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/RoleButton" to="." method="_on_role_pressed"]
-[connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/BackButton" to="." method="_on_back_pressed"]
+[connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/CombatButton" to="." method="_on_combat_pressed"]
+[connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/SectWarButton" to="." method="_on_sect_war_pressed"]
+[connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/EndingButton" to="." method="_on_ending_pressed"]
+
+[connection signal="pressed" from="Margin/RootHBox/LeftPanel/SystemPanel/SystemVBox/SaveButton" to="." method="_on_save_pressed"]
+[connection signal="pressed" from="Margin/RootHBox/LeftPanel/SystemPanel/SystemVBox/HelpButton" to="." method="_on_help_pressed"]
+[connection signal="pressed" from="Margin/RootHBox/LeftPanel/SystemPanel/SystemVBox/MainMenuButton" to="." method="_on_main_menu_pressed"]
 
 [node name="EventPopup" type="Control" parent="."]
 unique_name_in_owner = true

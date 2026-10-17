@@ -28,9 +28,11 @@ func _ready() -> void:
 ■ 엔딩 / 레거시
   5가지 엔딩 분기. 달성 후 세대 전승으로 후계자 플레이 가능.
 
-■ 저장
-  메인 메뉴에서 저장/불러오기 (1슬롯)"""
+■ 시작 / 저장
+  메인 메뉴 [새 게임]에서 이름과 시작 역할(막내 제자·낭인·문주)을 고릅니다.
+  문파 경영 화면이 중심이며, 모든 활동은 여기서 이동합니다.
+  저장은 경영 화면 왼쪽 [저장], 불러오기는 메인 메뉴에서 합니다. (1슬롯)"""
 
 
 func _on_back_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/main.tscn")
+	SceneRouter.back(get_tree(), SceneRouter.MAIN_MENU)

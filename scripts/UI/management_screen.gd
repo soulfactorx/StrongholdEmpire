@@ -161,7 +161,8 @@ func _on_upgrade_treasury_pressed() -> void:
 
 
 func _on_martial_art_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/UI/martial_art_screen.tscn")
+	AudioManager.play_click()
+	SceneRouter.goto(get_tree(), SceneRouter.MARTIAL_ART)
 
 
 func _on_role_pressed() -> void:
@@ -171,5 +172,36 @@ func _on_role_pressed() -> void:
 	role_popup.show_options(GameManager.pending_role_transitions)
 
 
-func _on_back_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/main.tscn")
+func _on_combat_pressed() -> void:
+	AudioManager.play_click()
+	SceneRouter.goto(get_tree(), SceneRouter.COMBAT)
+
+
+func _on_sect_war_pressed() -> void:
+	AudioManager.play_click()
+	SceneRouter.goto(get_tree(), SceneRouter.SECT_WAR)
+
+
+func _on_ending_pressed() -> void:
+	AudioManager.play_click()
+	SceneRouter.goto(get_tree(), SceneRouter.ENDING)
+
+
+func _on_save_pressed() -> void:
+	AudioManager.play_click()
+	var result: Dictionary = GameManager.save_game()
+	_on_action_message(result["message"])
+	if result["success"]:
+		AudioManager.play_success()
+	else:
+		AudioManager.play_failure()
+
+
+func _on_help_pressed() -> void:
+	AudioManager.play_click()
+	SceneRouter.goto(get_tree(), SceneRouter.HELP)
+
+
+func _on_main_menu_pressed() -> void:
+	AudioManager.play_click()
+	SceneRouter.goto(get_tree(), SceneRouter.MAIN_MENU)

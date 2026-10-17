@@ -62,7 +62,7 @@ text = "세대 전승 (레거시)"
 
 [node name="BackButton" type="Button" parent="Center/Panel/VBox"]
 layout_mode = 2
-text = "메인으로"
+text = "문파로 돌아가기"
 
 [connection signal="pressed" from="Center/Panel/VBox/SuccessionButton" to="." method="_on_succession_pressed"]
 [connection signal="pressed" from="Center/Panel/VBox/BackButton" to="." method="_on_back_pressed"]

@@ -19,6 +19,8 @@ var legacy_records: Array[LegacyData] = []
 var current_ending_id: String = ""
 var pending_role_transitions: Array[Dictionary] = []
 var mod_martial_arts: Array[MartialArtData] = []
+## 새 게임을 시작했거나 세이브를 불러와 진행 중인 게임이 있는지 여부
+var is_game_active: bool = false
 
 
 func _ready() -> void:
@@ -26,9 +28,22 @@ func _ready() -> void:
 	_initialize_new_game()
 
 
-func _initialize_new_game() -> void:
-	_set_player_character(_create_default_character())
+## 새 게임을 시작한다. role_id는 StartingRoles.ROLES의 id.
+func start_new_game(display_name: String, role_id: String) -> void:
+	_initialize_new_game(role_id, display_name)
+	is_game_active = true
+	EventBus.character_updated.emit(player_character)
+	EventBus.resources_changed.emit(player_sect)
+	EventBus.relationships_changed.emit(player_relationships)
+
+
+func _initialize_new_game(
+	role_id: String = StartingRoles.DEFAULT_ID,
+	display_name: String = ""
+) -> void:
+	_set_player_character(StartingRoles.create_character(role_id, display_name))
 	player_sect = _create_default_sect()
+	StartingRoles.apply_sect_setup(role_id, player_sect, player_character)
 	player_relationships = RelationshipManager.create_default_relationships()
 	triggered_event_ids.clear()
 	pending_event.clear()
@@ -39,22 +54,6 @@ func _initialize_new_game() -> void:
 	generation = 1
 	current_year = 1
 	current_season_index = 0
-
-
-func _create_default_character() -> CharacterData:
-	var character := CharacterData.new()
-	character.id = "player_001"
-	character.display_name = "이청풍"
-	character.role = CharacterData.Role.YOUNG_DISCIPLE
-	character.strength = 12
-	character.agility = 14
-	character.wisdom = 16
-	character.charisma = 11
-	character.internal_energy_max = 120
-	character.internal_energy_current = 120
-	character.age = 18
-	character.morality = 55
-	return character
 
 
 func _create_default_sect() -> SectData:
@@ -279,6 +278,7 @@ func load_game() -> Dictionary:
 	if not result["success"]:
 		return result
 	_apply_save_data(result["data"])
+	is_game_active = true
 	EventBus.character_updated.emit(player_character)
 	EventBus.resources_changed.emit(player_sect)
 	EventBus.relationships_changed.emit(player_relationships)

@@ -1,0 +1,91 @@
+[gd_scene load_steps=2 format=3 uid="uid://new_game_screen"]
+
+[ext_resource type="Script" path="res://scripts/UI/new_game_screen.gd" id="1_new"]
+
+[node name="NewGameScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_new")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.1, 0.14, 1)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="CenterContainer"]
+custom_minimum_size = Vector2(720, 0)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="CenterContainer/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "새 강호행"
+horizontal_alignment = 1
+
+[node name="NameLabel" type="Label" parent="CenterContainer/Panel/VBox"]
+layout_mode = 2
+text = "이름"
+
+[node name="NameEdit" type="LineEdit" parent="CenterContainer/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "주인공 이름"
+max_length = 12
+
+[node name="RoleLabel" type="Label" parent="CenterContainer/Panel/VBox"]
+layout_mode = 2
+text = "시작 역할"
+
+[node name="RoleList" type="ItemList" parent="CenterContainer/Panel/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+auto_height = true
+
+[node name="RoleDescLabel" type="Label" parent="CenterContainer/Panel/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 90)
+layout_mode = 2
+text = "역할 설명"
+autowrap_mode = 3
+
+[node name="ButtonHBox" type="HBoxContainer" parent="CenterContainer/Panel/VBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="BackButton" type="Button" parent="CenterContainer/Panel/VBox/ButtonHBox"]
+custom_minimum_size = Vector2(200, 44)
+layout_mode = 2
+text = "돌아가기"
+
+[node name="StartButton" type="Button" parent="CenterContainer/Panel/VBox/ButtonHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 44)
+layout_mode = 2
+text = "강호에 나선다"
+
+[connection signal="item_selected" from="CenterContainer/Panel/VBox/RoleList" to="." method="_on_role_selected"]
+[connection signal="text_submitted" from="CenterContainer/Panel/VBox/NameEdit" to="." method="_on_name_submitted"]
+[connection signal="pressed" from="CenterContainer/Panel/VBox/ButtonHBox/BackButton" to="." method="_on_back_pressed"]
+[connection signal="pressed" from="CenterContainer/Panel/VBox/ButtonHBox/StartButton" to="." method="_on_start_pressed"]

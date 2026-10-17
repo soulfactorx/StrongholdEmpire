@@ -118,7 +118,7 @@ autowrap_mode = 3
 
 [node name="BackButton" type="Button" parent="Margin/RootHBox/PresetPanel"]
 layout_mode = 2
-text = "메인으로"
+text = "문파로 돌아가기"
 
 [connection signal="pressed" from="Margin/RootHBox/CreatePanel/CreateButton" to="." method="_on_create_pressed"]
 [connection signal="pressed" from="Margin/RootHBox/PresetPanel/ResearchPresetButton" to="." method="_on_research_preset_pressed"]

@@ -104,7 +104,7 @@ autowrap_mode = 3
 
 [node name="BackButton" type="Button" parent="Margin/VBox"]
 layout_mode = 2
-text = "메인으로"
+text = "문파로 돌아가기"
 
 [connection signal="pressed" from="Margin/VBox/CommandGrid/ChargeButton" to="." method="_on_charge_pressed"]
 [connection signal="pressed" from="Margin/VBox/CommandGrid/DefendButton" to="." method="_on_defend_pressed"]
