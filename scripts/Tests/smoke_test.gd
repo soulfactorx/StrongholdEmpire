@@ -341,7 +341,10 @@ func _test_combat_events() -> void:
 		"night_bandits", 0, st["character"], st["sect"], st["relationships"], st["flags"]
 	)
 	var setup: CombatSetup = result.get("combat")
-	_check(setup != null and setup.enemies.size() == 3, "야습 도적: 싸우기 선택 시 3인 전투 예약")
+	_check(
+		setup != null and setup.enemies.size() == 3 + setup.allies.size(),
+		"야습 도적: 싸우기 선택 시 도적 3명 + 합류 제자 수만큼 전투 예약"
+	)
 	result = EventManager.resolve_choice(
 		"night_bandits", 1, st["character"], st["sect"], st["relationships"], st["flags"]
 	)
@@ -1148,7 +1151,10 @@ func _test_ally_combat() -> void:
 	var c: Node = current_scene
 	var friends: Array = c._get_alive_friendlies()
 	_check(friends.size() == 3, "주인공과 제자 2명 배치")
-	_check(c._turn_manager.turn_order.size() == 6, "아군·적 모두 턴 순서에 포함")
+	_check(
+		c._turn_manager.turn_order.size() == friends.size() + c._get_alive_enemies().size(),
+		"아군·적 모두 턴 순서에 포함"
+	)
 
 	# 아군 차례가 오면 그 유닛을 조종한다
 	var ally: CombatUnit = null
