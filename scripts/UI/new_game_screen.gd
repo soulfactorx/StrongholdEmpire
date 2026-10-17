@@ -89,7 +89,7 @@ func _on_role_selected(index: int) -> void:
 	if name_edit.text.is_empty() or name_edit.text == previous["default_name"]:
 		name_edit.text = entry["default_name"]
 	_selected_role_id = entry["id"]
-	role_desc_label.text = entry["description"]
+	role_desc_label.text = "%s\n\n%s" % [entry["description"], RoleDashboard.describe_role(entry["role"])]
 
 
 func _on_settings_toggle_pressed() -> void:

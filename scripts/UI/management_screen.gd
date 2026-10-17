@@ -29,6 +29,7 @@ const _ChroniclePopup = preload("res://scripts/UI/chronicle_popup.gd")
 @onready var role_resource_label: Label = %RoleResourceLabel
 @onready var role_action_box: HBoxContainer = %RoleActionBox
 @onready var event_popup: Control = %EventPopup
+@onready var action_grid: GridContainer = $Margin/RootHBox/RightPanel/ActionPanel/ActionGrid
 @onready var role_popup: Control = %RolePopup
 var facility_popup: Control
 var chronicle_popup: Control
@@ -195,7 +196,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			open[-1].visible = false
 		get_viewport().set_input_as_handled()
 		return
-	if open.is_empty() and HUB_SHORTCUTS.has(key.keycode):
+	if open.is_empty() and HUB_SHORTCUTS.has(key.keycode) and _shortcut_allowed(HUB_SHORTCUTS[key.keycode]):
 		call(HUB_SHORTCUTS[key.keycode])
 		get_viewport().set_input_as_handled()
 
@@ -217,6 +218,7 @@ func _exit_tree() -> void:
 
 
 func _refresh_all() -> void:
+	_apply_role_layout()
 	_update_time_display()
 	_update_sect_display(GameManager.player_sect)
 	_update_character_display(GameManager.player_character)
@@ -224,10 +226,32 @@ func _refresh_all() -> void:
 	_update_role_actions()
 
 
+## 역할마다 할 일이 없는 버튼과 칸을 숨긴다 (RoleDashboard)
+func _apply_role_layout() -> void:
+	var role: CharacterData.Role = GameManager.player_character.role
+	for button_name in RoleDashboard.ACTION_BUTTONS:
+		var button: Control = action_grid.get_node_or_null(button_name)
+		if button:
+			button.visible = RoleDashboard.is_button_visible(role, button_name)
+	$Margin/RootHBox/LeftPanel/FacilityPanel.visible = RoleDashboard.get_layout(role)["sect"]
+
+
+## 버튼이 숨겨진 행동은 단축키로도 열지 않는다.
+func _shortcut_allowed(method: String) -> bool:
+	for button in action_grid.get_children():
+		if button is BaseButton and not button.visible:
+			for connection in button.pressed.get_connections():
+				if connection["callable"].get_method() == method:
+					return false
+	return true
+
+
 ## 역할별 고유 행동 버튼과 역할 자원 표시
 func _update_role_actions() -> void:
 	var character: CharacterData = GameManager.player_character
-	role_resource_label.text = "[%s 고유 행동] %s" % [character.get_role_name(), RoleActions.describe(GameManager)]
+	role_resource_label.text = "%s\n[%s 고유 행동] %s" % [
+		RoleDashboard.get_layout(character.role)["focus"], character.get_role_name(), RoleActions.describe(GameManager),
+	]
 	for child in role_action_box.get_children():
 		role_action_box.remove_child(child)
 		child.queue_free()
@@ -300,7 +324,7 @@ func _update_time_display() -> void:
 
 
 func _update_sect_display(sect: SectData) -> void:
-	sect_name_label.text = sect.sect_name
+	sect_name_label.text = RoleDashboard.get_sect_title(GameManager.player_character.role, sect)
 	# 다음 계절 예상 수지 (수입 − 유지비)
 	var forecast: Dictionary = GameManager.estimate_next_season()
 	gold_label.text = "금화: %d (다음 계절 %+d, 유지비 %d)" % [sect.gold, forecast["gold"], sect.get_gold_upkeep()]

@@ -388,6 +388,40 @@ func _test_chronicle_and_dialogue() -> void:
 	_completed["_test_chronicle_and_dialogue"] = true
 
 
+## 역할별 경영 화면: 시작 역할이 7가지이고, 역할마다 보이는 버튼·칸·안내가 다르다.
+func _test_role_dashboard() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_check(StartingRoles.ROLES.size() >= 7, "시작 역할 7가지")
+	_new_quiet_game(gm, "spy")
+	_check(gm.player_character.role == CharacterData.Role.SPY and gm.story_flags.get("spy_recruitment", false), "간자로 시작: 포섭 플래그")
+	_new_quiet_game(gm, "assassin")
+	_check(gm.player_character.role == CharacterData.Role.ASSASSIN and gm.story_flags.get("assassin_path", false), "자객으로 시작")
+	SceneRouter.goto(tree, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	var hub: Node = current_scene
+	var grid: Node = hub.action_grid
+	_check(not grid.get_node("TrainButton").visible and not grid.get_node("SectWarButton").visible and grid.get_node("ElixirButton").visible, "자객: 문파 운영 버튼 숨김")
+	_check(not hub.get_node("Margin/RootHBox/LeftPanel/FacilityPanel").visible and hub.sect_name_label.text.contains("내 몫"), "자객: 시설 칸 숨김, 개인 재산")
+	_check(hub.role_resource_label.text.contains("표적") and hub.role_action_box.get_child_count() == 2, "자객: 역할 안내와 고유 행동")
+	var key := InputEventKey.new()
+	key.keycode = KEY_F
+	key.pressed = true
+	hub._unhandled_key_input(key)
+	_check(not hub.facility_popup.visible, "숨긴 버튼은 단축키로도 열리지 않음")
+	# 역할이 바뀌면 화면도 바뀐다
+	gm.apply_role_transition(CharacterData.Role.LEADER)
+	await process_frame
+	_check(grid.get_node("TrainButton").visible and grid.get_node("SectWarButton").visible and hub.get_node("Margin/RootHBox/LeftPanel/FacilityPanel").visible, "문주가 되면 모든 버튼")
+	hub._unhandled_key_input(key)
+	_check(hub.facility_popup.visible, "문주: 시설 단축키")
+	hub.facility_popup.visible = false
+	_check(RoleDashboard.describe_role(CharacterData.Role.MANAGER).contains("문주에게 건의"), "새 게임 화면 역할 소개: 고유 행동")
+	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
+	await process_frame
+	_completed["_test_role_dashboard"] = true
+
+
 func _test_input_and_tips() -> void:
 	var gm: Node = root.get_node("GameManager")
 	_clear_test_saves()

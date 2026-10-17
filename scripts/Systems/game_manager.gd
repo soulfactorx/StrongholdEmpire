@@ -179,6 +179,9 @@ func _initialize_new_game(
 	pending_event.clear()
 	story_flags.clear()
 	flag_turns.clear()
+	# 시작 역할이 이미 걸어온 길 (간자 포섭, 자객의 길 등)
+	for flag in StartingRoles.get_by_id(role_id).get("flags", []):
+		EventManager.set_flag(story_flags, flag)
 	role_history.clear()
 	_record_role(player_character.role)
 	role_state = RoleActions.create_state()
