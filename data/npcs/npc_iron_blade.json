@@ -1,0 +1,29 @@
+{
+  "id": "npc_iron_blade",
+  "display_name": "고무진",
+  "title": "철검객",
+  "sect_id": "none",
+  "role": "WANDERER",
+  "named": true,
+  "description": "무거운 철검 한 자루로 강호를 떠도는 사내. 말수는 적지만 의리를 목숨처럼 여긴다.",
+  "level": 3,
+  "stats": {
+    "strength": 16,
+    "agility": 11,
+    "wisdom": 9,
+    "charisma": 10,
+    "internal_energy_max": 120,
+    "age": 30,
+    "morality": 65
+  },
+  "scaling": {
+    "base_level": 3,
+    "level_offset": 0,
+    "per_level": {
+      "strength": 1,
+      "agility": 1,
+      "internal_energy_max": 8
+    }
+  },
+  "war_specialty": "CHARGE"
+}

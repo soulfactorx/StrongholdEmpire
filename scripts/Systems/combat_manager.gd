@@ -55,6 +55,20 @@ static func create_sparring(player: CharacterData) -> CombatSetup:
 	return setup
 
 
+## 인연 상호작용의 비무: 명부의 인물과 겨룬다. 이기면 유대가 크게, 져도 조금 오른다.
+static func create_sparring_with(npc_id: String, player: CharacterData) -> CombatSetup:
+	var setup := CombatSetup.new()
+	setup.id = "sparring_bond"
+	setup.title = "비무 — %s" % NpcRoster.get_display_name(npc_id)
+	setup.relationship_target_id = npc_id
+	setup.blocked_tiles = _central_wall()
+	_add_arena_terrain(setup)
+	setup.add_enemy(NpcRoster.create_character(npc_id, player), Vector2i(13, 5))
+	setup.rewards = {"experience": _Balance.SPAR_EXP, "bond": _Balance.SPAR_BOND_WIN}
+	setup.defeat_penalty = {"injury_ratio": 0.5, "bond": _Balance.SPAR_BOND_LOSE}
+	return setup
+
+
 ## 기연 「라이벌의 도전」에서 시작되는 진검 승부.
 static func create_rival_duel(player: CharacterData) -> CombatSetup:
 	var setup := CombatSetup.new()
@@ -312,6 +326,42 @@ static func add_disciple_allies(
 		disciple.agility += bonus
 		setup.add_ally(disciple, positions[i])
 	setup.allies_are_disciples = count > 0
+
+
+## 방어전에 깊은 인연(사제·혈맹·연인)의 인물이 아군으로 합류한다. 합류한 인물 이름을 돌려준다.
+static func add_bond_allies(setup: CombatSetup, relationships: Array[RelationshipData], player: CharacterData) -> PackedStringArray:
+	var joined: PackedStringArray = []
+	var taken: Array = setup.allies.map(func(c: CharacterData) -> String: return c.id)
+	taken.append_array(setup.enemies.map(func(c: CharacterData) -> String: return c.id))
+	for rel in RelationshipManager.get_bond_allies(relationships):
+		if joined.size() >= _Balance.BOND_ALLY_COUNT:
+			break
+		if rel.target_id in taken:
+			continue
+		var tile: Vector2i = find_free_tile(setup, setup.player_position)
+		if tile.x < 0:
+			break
+		setup.add_ally(NpcRoster.create_character(rel.target_id, player), tile)
+		joined.append(rel.target_name)
+	return joined
+
+
+## 기준 칸 근처의 빈 칸 (없으면 (-1, -1))
+static func find_free_tile(setup: CombatSetup, near: Vector2i) -> Vector2i:
+	var used: Array[Vector2i] = [setup.player_position]
+	used.append_array(setup.enemy_positions)
+	used.append_array(setup.ally_positions)
+	used.append_array(setup.blocked_tiles)
+	for radius in range(1, 4):
+		for dy in range(-radius, radius + 1):
+			for dx in range(-radius, radius + 1):
+				var tile: Vector2i = near + Vector2i(dx, dy)
+				if tile.x < 0 or tile.x >= CombatLibrary.GRID_WIDTH or tile.y < 0 or tile.y >= CombatLibrary.GRID_HEIGHT:
+					continue
+				if tile in used or setup.get_terrain(tile) == CombatRules.Terrain.WATER:
+					continue
+				return tile
+	return Vector2i(-1, -1)
 
 
 ## 남궁휘는 플레이어 레벨에 맞춰 함께 성장하는 라이벌이다. (명부의 scaling)

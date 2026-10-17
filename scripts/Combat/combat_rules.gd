@@ -148,7 +148,8 @@ static func calculate_damage(
 	art: MartialArtData,
 	attacker_terrain: Terrain,
 	defender_terrain: Terrain,
-	relationship_bonus: float = 1.0
+	relationship_bonus: float = 1.0,
+	relationship_defense: float = 1.0
 ) -> Dictionary:
 	var notes: PackedStringArray = []
 	var damage: float
@@ -179,6 +180,9 @@ static func calculate_damage(
 	if defender_terrain == Terrain.FOREST:
 		damage *= _Balance.FOREST_DEFENSE
 		notes.append("수풀 엄폐")
+	if relationship_defense > 1.0:
+		damage /= relationship_defense
+		notes.append("인연의 가호")
 	return {"damage": maxi(1, int(damage)), "notes": notes}
 
 

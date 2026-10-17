@@ -7,6 +7,8 @@ enum BondType {
 	BLOOD_OATH,
 	RIVALRY,
 	HATRED,
+	## 알게 된 인물. 유대가 깊어지면 기연으로 연애·혈맹 등으로 바뀐다
+	ACQUAINTANCE,
 }
 
 @export var target_id: String = ""
@@ -28,6 +30,8 @@ func get_bond_name() -> String:
 			return "라이벌"
 		BondType.HATRED:
 			return "원한"
+		BondType.ACQUAINTANCE:
+			return "지인"
 		_:
 			return "관계"
 

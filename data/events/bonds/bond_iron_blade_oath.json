@@ -1,0 +1,50 @@
+{
+  "id": "bond_iron_blade_oath",
+  "title": "철검의 맹세",
+  "description": "고무진이 철검을 땅에 꽂고 말합니다.\n「자네와 함께라면 지옥 끝까지라도 가겠네. 형제의 연을 맺지 않겠나?」",
+  "can_repeat": false,
+  "weight": 4,
+  "priority": true,
+  "conditions": [
+    {
+      "type": "relationship_type",
+      "target": "npc_iron_blade",
+      "bond_type": "ACQUAINTANCE"
+    },
+    {
+      "type": "bond",
+      "target": "npc_iron_blade",
+      "op": ">=",
+      "value": 50
+    }
+  ],
+  "choices": [
+    {
+      "label": "의형제를 맺는다",
+      "message": "피를 섞은 술잔을 나누었습니다. 고무진과 혈맹이 되었습니다.",
+      "effects": [
+        {
+          "type": "set_bond_type",
+          "target": "npc_iron_blade",
+          "bond_type": "BLOOD_OATH"
+        },
+        {
+          "type": "bond",
+          "target": "npc_iron_blade",
+          "add": 10
+        }
+      ]
+    },
+    {
+      "label": "벗으로 남는다",
+      "message": "고무진이 껄껄 웃습니다. 「그것도 좋지.」",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "npc_iron_blade",
+          "add": 5
+        }
+      ]
+    }
+  ]
+}

@@ -34,6 +34,8 @@
 | `initial_bond` | (선택) 새 게임 시작 관계. `type`은 `MASTER_DISCIPLE`, `ROMANCE`, `BLOOD_OATH`, `RIVALRY`, `HATRED` |
 
 `scaling`이 있고 `initial_bond`가 없는 인물(예: 도적)은 이름 없는 졸개로 보고 인물 목록에서 뺍니다.
+플레이어와 함께 성장하는 이름 있는 인물은 `"named": true`로 목록에 올립니다.
+어느 문파에도 속하지 않은 인물(낭인 등)은 `sect_id`를 `"none"`으로 씁니다.
 
 | (선택) `war_specialty` | 문파전 장수로 참전할 때 보너스를 주는 명령: `CHARGE`(돌격) · `DEFEND`(방어) · `FLANK`(측면) |
 | (선택) `martial_arts` | `[{ "id": 무공 id, "min_level": 레벨 }]` — 그 레벨 이상이면 전투에서 해당 무공을 씁니다. 무공 id는 `resources/MartialArts/`의 프리셋 또는 `data/martial_arts/`의 모드 무공 |

@@ -183,6 +183,12 @@ layout_mode = 2
 text = "관계 없음"
 autowrap_mode = 3
 
+[node name="BondButton" type="Button" parent="Margin/RootHBox/RightPanel/RelationshipPanel/RelationshipVBox"]
+custom_minimum_size = Vector2(170, 48)
+layout_mode = 2
+size_flags_horizontal = 0
+text = "인연 돌보기"
+
 [node name="RolePanel" type="PanelContainer" parent="Margin/RootHBox/RightPanel"]
 layout_mode = 2
 
@@ -290,6 +296,7 @@ autowrap_mode = 3
 [connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/EndingButton" to="." method="_on_ending_pressed"]
 [connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/WorldButton" to="." method="_on_world_pressed"]
 [connection signal="pressed" from="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/DiscipleButton" to="." method="_on_disciple_pressed"]
+[connection signal="pressed" from="Margin/RootHBox/RightPanel/RelationshipPanel/RelationshipVBox/BondButton" to="." method="_on_bond_pressed"]
 
 [connection signal="pressed" from="Margin/RootHBox/LeftPanel/SystemPanel/SystemVBox/SaveButton" to="." method="_on_save_pressed"]
 [connection signal="pressed" from="Margin/RootHBox/LeftPanel/SystemPanel/SystemVBox/HelpButton" to="." method="_on_help_pressed"]

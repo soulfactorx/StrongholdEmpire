@@ -1,0 +1,50 @@
+{
+  "id": "bond_swallow_heart",
+  "title": "비연의 마음",
+  "description": "달밤, 연소화가 검을 닦다 말고 고개를 숙입니다.\n「…요즘은 혼자 떠도는 게 싫어졌어. 당신 때문에.」",
+  "can_repeat": false,
+  "weight": 4,
+  "priority": true,
+  "conditions": [
+    {
+      "type": "relationship_type",
+      "target": "npc_swallow",
+      "bond_type": "ACQUAINTANCE"
+    },
+    {
+      "type": "bond",
+      "target": "npc_swallow",
+      "op": ">=",
+      "value": 40
+    }
+  ],
+  "choices": [
+    {
+      "label": "마음을 받아들인다",
+      "message": "두 사람의 그림자가 하나로 겹쳤습니다. 연소화와 연인이 되었습니다.",
+      "effects": [
+        {
+          "type": "set_bond_type",
+          "target": "npc_swallow",
+          "bond_type": "ROMANCE"
+        },
+        {
+          "type": "bond",
+          "target": "npc_swallow",
+          "add": 10
+        }
+      ]
+    },
+    {
+      "label": "동지로서 함께하자고 한다",
+      "message": "연소화가 웃으며 손을 내밉니다. 「그럼 평생 등을 맡길게.」 혈맹이 되었습니다.",
+      "effects": [
+        {
+          "type": "set_bond_type",
+          "target": "npc_swallow",
+          "bond_type": "BLOOD_OATH"
+        }
+      ]
+    }
+  ]
+}

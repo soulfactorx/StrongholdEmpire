@@ -1,0 +1,50 @@
+{
+  "id": "bond_healer_heart",
+  "title": "약방의 고백",
+  "description": "백소하가 약봉지를 건네며 떨리는 목소리로 말합니다.\n「다치지 마세요. …다치면, 제가 아파요.」",
+  "can_repeat": false,
+  "weight": 4,
+  "priority": true,
+  "conditions": [
+    {
+      "type": "relationship_type",
+      "target": "npc_healer",
+      "bond_type": "ACQUAINTANCE"
+    },
+    {
+      "type": "bond",
+      "target": "npc_healer",
+      "op": ">=",
+      "value": 40
+    }
+  ],
+  "choices": [
+    {
+      "label": "손을 잡는다",
+      "message": "백소하와 연인이 되었습니다. 약방의 등불이 더 따뜻해 보입니다.",
+      "effects": [
+        {
+          "type": "set_bond_type",
+          "target": "npc_healer",
+          "bond_type": "ROMANCE"
+        },
+        {
+          "type": "bond",
+          "target": "npc_healer",
+          "add": 10
+        }
+      ]
+    },
+    {
+      "label": "고마운 마음만 전한다",
+      "message": "백소하가 고개를 끄덕입니다. 「…네, 그래도 다치지 마세요.」",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "npc_healer",
+          "add": 3
+        }
+      ]
+    }
+  ]
+}

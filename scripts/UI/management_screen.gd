@@ -4,6 +4,7 @@ const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
 const _FacilityPopup = preload("res://scripts/UI/facility_popup.gd")
 const _ChoicePopup = preload("res://scripts/UI/choice_popup.gd")
 const _DisciplePopup = preload("res://scripts/UI/disciple_popup.gd")
+const _BondPopup = preload("res://scripts/UI/bond_popup.gd")
 
 @onready var year_label: Label = %YearLabel
 @onready var season_label: Label = %SeasonLabel
@@ -30,6 +31,8 @@ var facility_popup: Control
 var choice_popup: Control
 ## 제자 명단 팝업
 var disciple_popup: Control
+## 인연 팝업
+var bond_popup: Control
 ## 대상을 고르는 중인 역할 행동 id
 var _pending_role_action: String = ""
 
@@ -45,6 +48,9 @@ func _ready() -> void:
 	disciple_popup = _DisciplePopup.new()
 	add_child(disciple_popup)
 	disciple_popup.changed.connect(_execute_action)
+	bond_popup = _BondPopup.new()
+	add_child(bond_popup)
+	bond_popup.acted.connect(_on_bond_acted)
 	_connect_bus(EventBus.turn_advanced, _on_turn_advanced)
 	_connect_bus(EventBus.resources_changed, _on_resources_changed)
 	_connect_bus(EventBus.character_updated, _on_character_updated)
@@ -196,8 +202,22 @@ func _update_character_display(character: CharacterData) -> void:
 	martial_arts_label.text = "무공: %s" % character.get_martial_arts_text()
 
 
+## 경영 화면에는 유대가 깊은 인연 몇 명만 보이고, 나머지는 [인연 돌보기]에서 본다.
+const HUB_RELATIONSHIP_LINES := 3
+
+
 func _update_relationships_display(relationships: Array[RelationshipData]) -> void:
-	relationship_label.text = RelationshipManager.format_relationships(relationships)
+	var sorted: Array[RelationshipData] = relationships.duplicate()
+	sorted.sort_custom(func(a: RelationshipData, b: RelationshipData) -> bool: return a.bond_strength > b.bond_strength)
+	# 줄 수를 넘으면 마지막 줄을 "외 N명"으로 쓴다.
+	var count: int = HUB_RELATIONSHIP_LINES if sorted.size() <= HUB_RELATIONSHIP_LINES else HUB_RELATIONSHIP_LINES - 1
+	var shown: Array[RelationshipData] = []
+	for rel in sorted.slice(0, count):
+		shown.append(rel)
+	var text: String = RelationshipManager.format_relationships(shown)
+	if sorted.size() > count:
+		text += "\n… 외 %d명 — [인연 돌보기]에서 모두 보기" % (sorted.size() - count)
+	relationship_label.text = text
 
 
 func _on_turn_advanced(_year: int, _season: String) -> void:
@@ -261,6 +281,18 @@ func _on_advance_turn_pressed() -> void:
 
 func _on_train_pressed() -> void:
 	_execute_action(SectManager.train_disciples(GameManager.player_sect, GameManager.player_character))
+
+
+func _on_bond_pressed() -> void:
+	AudioManager.play_click()
+	bond_popup.open()
+
+
+func _on_bond_acted(result: Dictionary) -> void:
+	if is_inside_tree():
+		_on_action_message(result["message"])
+		_update_relationships_display(GameManager.player_relationships)
+		_update_sect_display(GameManager.player_sect)
 
 
 func _on_disciple_pressed() -> void:

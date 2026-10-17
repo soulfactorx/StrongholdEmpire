@@ -78,6 +78,18 @@ static func create_character(npc_id: String, player: CharacterData = null) -> Ch
 	return character
 
 
+## 어느 문파에도 속하지 않은 인물의 sect_id (낭인 등)
+const NO_SECT := "none"
+
+
+## 강호 정세의 인물 목록에 보일 인물인지. scaling만 있고 시작 관계가 없는 인물은 이름 없는 졸개로 본다.
+## 플레이어와 함께 성장하는 이름 있는 인물은 "named": true로 목록에 올린다.
+static func is_listed(npc: Dictionary) -> bool:
+	if npc.get("named", false) == true or npc.has("initial_bond"):
+		return true
+	return not npc.has("scaling")
+
+
 static func validate_npc_dict(data: Dictionary) -> PackedStringArray:
 	var errors: PackedStringArray = []
 	for key in ["id", "display_name", "sect_id"]:

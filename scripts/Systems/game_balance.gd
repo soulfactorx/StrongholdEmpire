@@ -166,6 +166,23 @@ const COMPLEXITY_PENALTY := 8
 const MIN_SUCCESS_RATE := 10
 const MAX_SUCCESS_RATE := 95
 
+# 인연 (M5-2)
+## 인물과의 상호작용(대화·선물·비무)은 계절마다 이만큼
+const INTERACTIONS_PER_SEASON := 2
+## 대화: 유대 +기본값 + 매력 ÷ 나눗수
+const TALK_BOND := 3
+const TALK_CHARISMA_DIVISOR := 10
+const GIFT_GOLD := 40
+const GIFT_BOND := 8
+## 비무: 이기면 유대 +WIN, 져도 +LOSE
+const SPAR_BOND_WIN := 5
+const SPAR_BOND_LOSE := 2
+## 이 유대 이상인 사제·혈맹·연인 인물이 방어전에 아군으로 합류한다
+const BOND_ALLY_MIN := 60
+const BOND_ALLY_COUNT := 1
+## 배신하면 떠나온 문파 인물과의 관계가 원한으로 바뀐다. 깊던 정만큼 원한도 깊고, 최소 이 값
+const BETRAY_HATRED_MIN := 30
+
 # 전수·강화·비전·분석 (M7-2)
 ## 전수 비용(연구점) = BASE + 복잡도 × PER_COMPLEXITY. 문파 비전은 SECRET_SCALE 배
 const TRANSMIT_RESEARCH_BASE := 10

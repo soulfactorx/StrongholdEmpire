@@ -47,16 +47,17 @@ func _build_npc_list() -> void:
 	_add_heading(npc_list, "주요 인물")
 	# 관계가 있는 인물을 먼저, 그다음 소속 문파 순으로 보여 준다.
 	var npcs: Array[Dictionary] = NpcRoster.get_all()
+	var relationships: Array[RelationshipData] = GameManager.player_relationships
 	npcs.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		var a_bond: bool = a.has("initial_bond")
-		var b_bond: bool = b.has("initial_bond")
+		var a_bond: bool = RelationshipManager.get_bond_with(relationships, a["id"]) != null
+		var b_bond: bool = RelationshipManager.get_bond_with(relationships, b["id"]) != null
 		if a_bond != b_bond:
 			return a_bond
 		return a["sect_id"] < b["sect_id"]
 	)
 	for npc in npcs:
 		# 도적처럼 이름 없는 졸개는 인물 목록에서 뺀다.
-		if npc.has("scaling") and not npc.has("initial_bond"):
+		if not NpcRoster.is_listed(npc):
 			continue
 		var bond: RelationshipData = RelationshipManager.get_bond_with(
 			GameManager.player_relationships, npc["id"]

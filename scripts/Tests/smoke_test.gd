@@ -142,6 +142,10 @@ func _run_runtime_tests() -> void:
 	_check(_completed.has("_test_transmission_and_secret"), "_test_transmission_and_secret 끝까지 실행")
 	await _test_martial_art_screen_actions()
 	_check(_completed.has("_test_martial_art_screen_actions"), "_test_martial_art_screen_actions 끝까지 실행")
+	_test_bond_evolution()
+	_check(_completed.has("_test_bond_evolution"), "_test_bond_evolution 끝까지 실행")
+	await _test_bond_flow()
+	_check(_completed.has("_test_bond_flow"), "_test_bond_flow 끝까지 실행")
 
 	print("스모크 테스트: %d개 검사, %d개 실패" % [_checks, _failures])
 	# 재생 중인 효과음을 멈추고, 오디오 스레드가 재생 객체를 놓을 때까지 잠시 기다린다.
@@ -760,7 +764,7 @@ func _test_npc_roster() -> void:
 	)
 	var bad_sect_refs: PackedStringArray = []
 	for npc in npcs:
-		if not SectRegistry.has_sect(npc["sect_id"]):
+		if not (SectRegistry.has_sect(npc["sect_id"]) or npc["sect_id"] == NpcRoster.NO_SECT):
 			bad_sect_refs.append(npc["id"])
 	_check(bad_sect_refs.is_empty(), "모든 NPC의 소속 문파가 존재 %s" % bad_sect_refs)
 
@@ -3137,3 +3141,168 @@ func _test_martial_art_screen_actions() -> void:
 	SceneRouter.goto(self, SceneRouter.MAIN_MENU)
 	await process_frame
 	_completed["_test_martial_art_screen_actions"] = true
+
+
+func _rel(gm: Node, target_id: String) -> RelationshipData:
+	return RelationshipManager.get_bond_with(gm.player_relationships, target_id)
+
+
+## 이벤트 확률 0에서 계절을 넘겨 우선 기연이 일어나는지 본다.
+func _priority_event_after_turn(gm: Node) -> String:
+	gm.pending_event.clear()
+	gm.advance_turn()
+	return str(gm.pending_event.get("id", ""))
+
+
+func _test_bond_evolution() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_new_quiet_game(gm, "young_disciple")
+	var turn: int = gm._get_turn_index()
+
+	# 새 인물: 연애 후보 2, 세력 2인자, 낭인 동료 2
+	for npc_id in ["npc_healer", "npc_scholar", "npc_heukpung_second", "npc_iron_blade", "npc_swallow"]:
+		_check(NpcRoster.has_npc(npc_id) and NpcRoster.is_listed(NpcRoster.get_npc(npc_id)), "새 인물 명부·목록: %s" % npc_id)
+	_check(not NpcRoster.is_listed(NpcRoster.get_npc("npc_bandit")), "졸개는 인물 목록에서 빠짐")
+	_check(NpcRoster.get_npc("npc_iron_blade")["sect_id"] == NpcRoster.NO_SECT, "무소속 인물")
+
+	# 상호작용: 대화·선물·횟수 제한
+	var master: RelationshipData = _rel(gm, "npc_master")
+	var bond_before: int = master.bond_strength
+	var talk: Dictionary = gm.interact_with("npc_master", "talk")
+	var talk_gain: int = _Balance.TALK_BOND + gm.player_character.charisma / _Balance.TALK_CHARISMA_DIVISOR
+	_check(talk["success"] and master.bond_strength == bond_before + talk_gain, "대화: 유대 +%d" % talk_gain)
+	var gold_before: int = gm.player_sect.gold
+	_check(gm.interact_with("npc_master", "gift")["success"] and gm.player_sect.gold == gold_before - _Balance.GIFT_GOLD, "선물: 금화 소모")
+	_check(master.bond_strength == bond_before + talk_gain + _Balance.GIFT_BOND, "선물: 유대 +%d" % _Balance.GIFT_BOND)
+	_check(not gm.interact_with("npc_master", "talk")["success"], "상호작용은 계절마다 %d번" % _Balance.INTERACTIONS_PER_SEASON)
+	gm.advance_turn()
+	gm.pending_event.clear()
+	_check(RelationshipManager.get_interactions_left(gm.story_flags, gm._get_turn_index()) == _Balance.INTERACTIONS_PER_SEASON, "다음 계절에 다시 가능")
+	var spar: Dictionary = RelationshipManager.interact(gm.player_relationships, "npc_rival", "spar", gm.player_character, gm.player_sect, gm.story_flags, gm._get_turn_index())
+	_check(spar["combat"].enemies[0].id == "npc_rival" and spar["combat"].rewards["bond"] == _Balance.SPAR_BOND_WIN, "비무 신청: 그 인물과의 비무")
+
+	# 원한: 대화로 누그러지고, 비무는 거부
+	master.bond_type = RelationshipData.BondType.HATRED
+	var hatred: int = master.bond_strength
+	RelationshipManager.interact(gm.player_relationships, "npc_master", "talk", gm.player_character, gm.player_sect, gm.story_flags, gm._get_turn_index())
+	_check(master.bond_strength < hatred, "원한 상대와 대화하면 원한이 누그러짐")
+	_check(not RelationshipManager.interact(gm.player_relationships, "npc_master", "spar", gm.player_character, gm.player_sect, gm.story_flags, gm._get_turn_index() + 1)["success"], "원한 상대와는 비무 불가")
+	# 원한이 거의 사라지면 화해 기연 (우선 기연)
+	master.bond_strength = 5
+	_check(_priority_event_after_turn(gm) == "bond_master_reconcile", "원한이 누그러지면 스승과의 화해 기연")
+	gm.resolve_pending_event(0)
+	_check(master.bond_type == RelationshipData.BondType.MASTER_DISCIPLE, "화해: 원한 → 사제")
+
+	# 유대 단계가 오르면 그 인물의 기연이 확률과 관계없이 일어난다
+	_new_quiet_game(gm, "young_disciple")
+	_rel(gm, "npc_rival").increase_bond(60)
+	_check(_priority_event_after_turn(gm) == "bond_rival_confession", "남궁휘 유대 60: 「라이벌의 고백」")
+	gm.resolve_pending_event(0)
+	_check(_rel(gm, "npc_rival").bond_type == RelationshipData.BondType.BLOOD_OATH, "라이벌 → 혈맹")
+	_rel(gm, "npc_master").increase_bond(30)
+	_check(_priority_event_after_turn(gm) == "bond_master_story", "스승 유대 60: 「스승의 옛이야기」")
+	gm.resolve_pending_event(0)
+
+	# 낯선 사이 → 지인 → 연인
+	gm.pending_event = {"id": "bond_meet_swallow"}
+	gm.resolve_pending_event(0)
+	var swallow: RelationshipData = _rel(gm, "npc_swallow")
+	_check(swallow != null and swallow.bond_type == RelationshipData.BondType.ACQUAINTANCE and swallow.get_bond_name() == "지인", "만남 기연: 지인 관계")
+	swallow.increase_bond(20)
+	_check(_priority_event_after_turn(gm) == "bond_swallow_heart", "연소화 유대 40: 고백 기연")
+	gm.resolve_pending_event(0)
+	_check(swallow.bond_type == RelationshipData.BondType.ROMANCE, "지인 → 연인")
+	gm.pending_event = {"id": "bond_meet_iron_blade"}
+	gm.resolve_pending_event(0)
+	_rel(gm, "npc_iron_blade").increase_bond(30)
+	_check(_priority_event_after_turn(gm) == "bond_iron_blade_oath", "고무진 유대 50: 의형제 기연")
+	gm.resolve_pending_event(0)
+	_check(_rel(gm, "npc_iron_blade").bond_type == RelationshipData.BondType.BLOOD_OATH, "지인 → 혈맹")
+
+	# 배신하면 떠나온 문파의 스승이 원수가 된다
+	_new_quiet_game(gm, "young_disciple")
+	gm.player_character.morality = _Balance.BETRAY_MORALITY_REQ
+	gm.refresh_role_transitions()
+	var betray: Dictionary = {}
+	for option in gm.pending_role_transitions:
+		if option.get("kind") == "betray":
+			betray = option
+	gm.apply_role_transition(betray["role"], betray)
+	var betrayed_master: RelationshipData = _rel(gm, "npc_master")
+	_check(betrayed_master.bond_type == RelationshipData.BondType.HATRED and betrayed_master.bond_strength >= _Balance.BETRAY_HATRED_MIN, "배신: 사제 → 원한")
+	_check(_rel(gm, "npc_rival").bond_type == RelationshipData.BondType.RIVALRY, "다른 세력 인물의 관계는 그대로")
+
+	# 방어전 합류: 유대 60 이상인 사제·혈맹·연인
+	_new_quiet_game(gm, "young_disciple")
+	var setup: CombatSetup = CombatManager.create_night_bandits(gm.player_character, gm.player_sect)
+	_check(CombatManager.add_bond_allies(setup, gm.player_relationships, gm.player_character).is_empty(), "유대가 낮으면 인연 합류 없음")
+	_rel(gm, "npc_master").increase_bond(30)
+	var joined: PackedStringArray = CombatManager.add_bond_allies(setup, gm.player_relationships, gm.player_character)
+	var master_ally: Array = setup.allies.filter(func(c: CharacterData) -> bool: return c.id == "npc_master")
+	_check(joined.size() == 1 and master_ally.size() == 1, "유대 60 스승이 방어전에 합류")
+	var pos: Vector2i = setup.ally_positions[setup.allies.find(master_ally[0])]
+	_check(not pos in setup.enemy_positions and not pos in setup.blocked_tiles and pos != setup.player_position, "합류 인물은 빈 칸에 선다")
+	_check(CombatManager.add_bond_allies(setup, gm.player_relationships, gm.player_character).is_empty(), "같은 인물은 두 번 합류하지 않음")
+	_check(RelationshipManager.get_bond_allies(gm.player_relationships, "qingyun").is_empty(), "상대 세력 소속 인연은 합류하지 않음")
+
+	# 인연의 가호: 받는 피해 감소
+	var guard: float = RelationshipManager.get_defense_modifier(gm.player_relationships, ["npc_master"])
+	_check(guard > 1.0 and RelationshipManager.get_defense_modifier(gm.player_relationships, ["npc_rival"]) == 1.0, "사제는 가호, 라이벌은 없음")
+	var attacker := CombatUnit.new(NpcRoster.create_character("npc_bandit"))
+	var defender := CombatUnit.new(gm.player_character, true)
+	var plain: int = CombatRules.calculate_damage(attacker, defender, null, CombatRules.Terrain.PLAIN, CombatRules.Terrain.PLAIN)["damage"]
+	var guarded: Dictionary = CombatRules.calculate_damage(attacker, defender, null, CombatRules.Terrain.PLAIN, CombatRules.Terrain.PLAIN, 1.0, 1.5)
+	_check(guarded["damage"] < plain and "인연의 가호" in guarded["notes"], "인연의 가호로 받는 피해 감소")
+
+	# 기연 검증: priority 형식
+	var errors: PackedStringArray = EventManager.validate_event_dict({"id": "x", "title": "x", "description": "x", "priority": "yes", "conditions": [], "choices": [{"label": "a", "message": "b", "effects": []}]})
+	_check(Array(errors).any(func(e: String) -> bool: return e.contains("priority")), "priority 형식 오류 검출")
+	_completed["_test_bond_evolution"] = true
+
+
+func _test_bond_flow() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_new_quiet_game(gm, "young_disciple")
+	SceneRouter.goto(self, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	var hub: Node = current_scene
+	hub._on_bond_pressed()
+	await process_frame
+	var popup: Node = hub.bond_popup
+	_check(popup.visible and popup.get_row_count() == gm.player_relationships.size(), "인연 팝업: 관계마다 한 줄")
+	var bond_before: int = _rel(gm, "npc_master").bond_strength
+	popup._rows.get_child(0).get_child(1).pressed.emit()
+	await process_frame
+	_check(_rel(gm, "npc_master").bond_strength > bond_before and hub.log_label.text.contains("이야기"), "팝업에서 대화")
+	popup.visible = false
+
+	# 경영 화면은 인연이 많아도 세 줄까지만
+	for npc_id in ["npc_swallow", "npc_iron_blade", "npc_healer"]:
+		var rel := RelationshipData.new()
+		rel.target_id = npc_id
+		rel.target_name = NpcRoster.get_display_name(npc_id)
+		rel.bond_type = RelationshipData.BondType.ACQUAINTANCE
+		gm.player_relationships.append(rel)
+	hub._update_relationships_display(gm.player_relationships)
+	_check(hub.relationship_label.text.split("\n").size() == 3 and hub.relationship_label.text.contains("외 3명"), "경영 화면 인연 표시는 세 줄")
+
+	# 방어전에 스승이 합류해 싸운다
+	_rel(gm, "npc_master").increase_bond(40)
+	gm.pending_event = {"id": "night_bandits"}
+	gm.resolve_pending_event(0)
+	await process_frame
+	await process_frame
+	var controller: Node = current_scene
+	var master_unit: CombatUnit = null
+	var enemy_unit: CombatUnit = controller._get_alive_enemies()[0]
+	for unit in controller._units:
+		if unit.is_ally and unit.character.id == "npc_master":
+			master_unit = unit
+	_check(controller.scene_file_path == SceneRouter.COMBAT and master_unit != null, "야습 도적: 스승이 아군으로 합류")
+	_check(controller._relationship_defense(enemy_unit, controller._get_player()) > 1.0, "스승과 함께 싸우면 주인공이 인연의 가호를 받음")
+	gm.pending_combat = null
+	gm.start_new_game("정리", "young_disciple")
+	SceneRouter.goto(self, SceneRouter.MAIN_MENU)
+	await process_frame
+	_completed["_test_bond_flow"] = true

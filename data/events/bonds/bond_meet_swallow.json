@@ -1,0 +1,44 @@
+{
+  "id": "bond_meet_swallow",
+  "title": "제비처럼 날랜 검",
+  "description": "관도에서 산적에게 둘러싸인 상단을 한 여협이 홀로 구하고 있습니다. 칼끝이 제비처럼 날아다닙니다.",
+  "can_repeat": false,
+  "weight": 2,
+  "conditions": [
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 1
+    },
+    {
+      "type": "season",
+      "in": [
+        "봄",
+        "여름"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "함께 산적을 물리친다",
+      "message": "연소화와 등을 맞대고 싸웠습니다. 그녀가 웃으며 이름을 알려 줍니다. 경험치 +15",
+      "effects": [
+        {
+          "type": "add_relationship",
+          "target": "npc_swallow",
+          "bond_type": "ACQUAINTANCE",
+          "strength": 20
+        },
+        {
+          "type": "experience",
+          "amount": 15
+        }
+      ]
+    },
+    {
+      "label": "지켜보기만 한다",
+      "message": "여협은 혼자서도 충분했습니다. 떠나며 당신을 흘겨봅니다.",
+      "effects": []
+    }
+  ]
+}

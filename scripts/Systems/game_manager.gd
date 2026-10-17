@@ -251,7 +251,12 @@ func refresh_role_transitions() -> void:
 func _try_trigger_event() -> void:
 	if not pending_event.is_empty():
 		return
-	if randf() >= ScenarioRules.event_rate():
+	# 우선 기연(인연 단계 변화 등)은 확률과 관계없이 일어난다.
+	var candidates: Array[EventData] = EventManager.get_candidates(
+		player_character, player_sect, player_relationships, get_current_season(), triggered_event_ids, story_flags
+	)
+	var urgent: bool = candidates.any(func(e: EventData) -> bool: return e.priority)
+	if not urgent and randf() >= ScenarioRules.event_rate():
 		return
 
 	var event: Dictionary = EventManager.check_turn_events(
@@ -456,11 +461,28 @@ func _switch_player_sect(sect_id: String, kind: String) -> String:
 	if betrayal:
 		EventManager.set_flag(story_flags, "betrayed_%s" % old_sect.id)
 		player_character.morality -= _Balance.BETRAY_MORALITY_LOSS
+		# 떠나온 문파의 스승·사형제는 배신자를 원수로 여긴다. 깊던 정만큼 원한도 깊다.
+		for rel in player_relationships:
+			if NpcRoster.get_npc(rel.target_id).get("sect_id") == old_sect.id:
+				rel.bond_type = RelationshipData.BondType.HATRED
+				rel.increase_bond(maxi(0, _Balance.BETRAY_HATRED_MIN - rel.bond_strength))
 		return "%s을(를) 배신하고 %s(으)로 넘어갔습니다. (도덕 -%d)" % [
 			old_sect.sect_name, new_sect.sect_name, _Balance.BETRAY_MORALITY_LOSS,
 		]
 	EventManager.set_flag(story_flags, "defected")
 	return "%s에 객경으로 들어갔습니다." % new_sect.sect_name
+
+
+## 인연 상호작용 (대화·선물·비무). 비무면 전투를 시작한다.
+func interact_with(target_id: String, kind: String) -> Dictionary:
+	var result: Dictionary = RelationshipManager.interact(
+		player_relationships, target_id, kind, player_character, player_sect, story_flags, _get_turn_index()
+	)
+	EventBus.relationships_changed.emit(player_relationships)
+	EventBus.resources_changed.emit(player_sect)
+	if result.has("combat"):
+		start_combat(result["combat"])
+	return result
 
 
 ## 역할 고유 행동 (경영 화면의 역할 버튼). 전투·기연으로 이어지면 바로 시작한다.
@@ -656,6 +678,9 @@ func resolve_sect_war(
 
 ## 전투를 시작한다. 전투 씬으로 이동하고, 결과는 finish_combat으로 받는다.
 func start_combat(setup: CombatSetup) -> void:
+	# 문파를 지키는 싸움에는 깊은 인연의 인물이 달려온다.
+	if setup.allies_are_disciples:
+		CombatManager.add_bond_allies(setup, player_relationships, player_character)
 	pending_combat = setup
 	SceneRouter.goto(get_tree(), SceneRouter.COMBAT)
 

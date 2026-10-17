@@ -10,6 +10,8 @@ extends Resource
 @export var can_repeat: bool = false
 ## 발생 후보 중 뽑힐 상대적 확률
 @export var weight: float = 1.0
+## 우선 기연: 조건을 채우면 기연 발생 확률과 관계없이 그 계절에 먼저 일어난다 (인연 단계 변화 등)
+@export var priority: bool = false
 ## 모두 만족해야 발생하는 조건 목록
 @export var conditions: Array[Dictionary] = []
 ## 선택지 목록: label, message, effects, (선택) branches, success

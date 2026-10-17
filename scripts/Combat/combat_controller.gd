@@ -400,11 +400,25 @@ func _relationship_bonus(attacker: CombatUnit, defender: CombatUnit) -> float:
 	)
 
 
+## 적에게 맞는 쪽의 인연 가호: 인연이 있는 아군 인물은 그 인연만큼, 주인공은 함께 싸우는 가장 깊은 인연만큼 피해가 준다.
+func _relationship_defense(attacker: CombatUnit, defender: CombatUnit) -> float:
+	if attacker.is_friendly() or not defender.is_friendly():
+		return 1.0
+	var relationships: Array[RelationshipData] = GameManager.player_relationships
+	if defender.is_player:
+		var ally_ids: Array = []
+		for unit in _units:
+			if unit.is_ally and unit.is_alive():
+				ally_ids.append(unit.character.id)
+		return RelationshipManager.get_defense_modifier(relationships, ally_ids)
+	return RelationshipManager.get_defense_modifier(relationships, [defender.character.id])
+
+
 func _perform_attack(attacker: CombatUnit, defender: CombatUnit) -> void:
 	var result: Dictionary = CombatRules.calculate_damage(
 		attacker, defender, null,
 		_terrain_at(attacker.grid_pos), _terrain_at(defender.grid_pos),
-		_relationship_bonus(attacker, defender)
+		_relationship_bonus(attacker, defender), _relationship_defense(attacker, defender)
 	)
 	defender.take_damage(result["damage"])
 	attacker.action_points -= 1
@@ -440,7 +454,7 @@ func _perform_art(attacker: CombatUnit, defender: CombatUnit, art: MartialArtDat
 		var result: Dictionary = CombatRules.calculate_damage(
 			attacker, defender, art,
 			_terrain_at(attacker.grid_pos), _terrain_at(defender.grid_pos),
-			_relationship_bonus(attacker, defender)
+			_relationship_bonus(attacker, defender), _relationship_defense(attacker, defender)
 		)
 		var damage: int = result["damage"]
 		messages.append("[%s] %s → %s %d 피해%s" % [

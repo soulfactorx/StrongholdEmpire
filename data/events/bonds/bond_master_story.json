@@ -1,0 +1,39 @@
+{
+  "id": "bond_master_story",
+  "title": "스승의 옛이야기",
+  "description": "청운검선이 차를 따르며 젊은 날의 이야기를 들려줍니다. 검으로 사람을 베던 시절과, 검을 내려놓게 된 밤의 이야기를.",
+  "can_repeat": false,
+  "weight": 4,
+  "priority": true,
+  "conditions": [
+    {
+      "type": "relationship_type",
+      "target": "npc_master",
+      "bond_type": "MASTER_DISCIPLE"
+    },
+    {
+      "type": "bond",
+      "target": "npc_master",
+      "op": ">=",
+      "value": 60
+    }
+  ],
+  "choices": [
+    {
+      "label": "끝까지 귀 기울인다",
+      "message": "검을 쥐는 이유를 다시 생각하게 되었습니다. 지혜 +2, 도덕 +3",
+      "effects": [
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 2
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 3
+        }
+      ]
+    }
+  ]
+}

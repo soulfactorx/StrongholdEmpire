@@ -48,6 +48,7 @@ extends RefCounted
 ##
 ## ■ 가중치
 ##   최상위 "weight"(기본 1): 발생 후보 중에서 뽑힐 상대적 확률. 스토리 핵심 기연은 높게 준다.
+##   최상위 "priority"(기본 false): true면 조건을 채운 계절에 기연 발생 확률과 관계없이 먼저 일어난다.
 
 const EVENTS_DIR := "res://data/events/"
 
@@ -118,6 +119,13 @@ static func check_turn_events(
 	story_flags: Dictionary
 ) -> Dictionary:
 	var pool: Array[EventData] = get_candidates(character, sect, relationships, season, triggered_ids, story_flags)
+	# 우선 기연이 있으면 그중에서만 고른다.
+	var urgent: Array[EventData] = []
+	for event in pool:
+		if event.priority:
+			urgent.append(event)
+	if not urgent.is_empty():
+		pool = urgent
 	if pool.is_empty():
 		return {}
 
@@ -231,6 +239,8 @@ static func validate_event_dict(data: Dictionary) -> PackedStringArray:
 	for key in ["id", "title", "description"]:
 		if not data.get(key) is String or String(data.get(key)).is_empty():
 			errors.append("'%s'가 비어 있음" % key)
+	if data.has("priority") and not data["priority"] is bool:
+		errors.append("priority는 true/false여야 함")
 	if data.has("weight") and not ((data["weight"] is float or data["weight"] is int) and data["weight"] > 0):
 		errors.append("weight는 0보다 큰 숫자여야 함")
 	validate_conditions(data.get("conditions", []), errors)
@@ -397,6 +407,7 @@ static func _to_event_data(data: Dictionary) -> EventData:
 	event.description = data["description"]
 	event.can_repeat = data.get("can_repeat", false)
 	event.weight = float(data.get("weight", 1.0))
+	event.priority = data.get("priority", false) == true
 	for condition in data.get("conditions", []):
 		event.conditions.append(condition)
 	for choice in data["choices"]:
