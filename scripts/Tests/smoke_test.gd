@@ -95,6 +95,8 @@ const RUNTIME_SEQUENCE: Array = [
 	["ui", "_test_settings_and_reports"],
 	["ui", "_test_ui_flows"],
 	["ui", "_test_input_and_tips"],
+	["ui", "_test_action_preview"],
+	["ui", "_test_chronicle_and_dialogue"],
 	["ui", "_test_art_assets"],
 	["ui", "_test_audio"],
 	["core", "_test_self_check"],
@@ -116,6 +118,8 @@ func _initialize() -> void:
 	GameSettings.combat_delay = 0.0
 	# 공격 미리보기는 끄고 바로 실행한다 (켠 상태는 test_combat의 _test_combat_preview_and_history에서 따로)
 	GameSettings.combat_preview = false
+	# 경영 행동 미리보기도 끈다 (켠 상태는 test_ui의 _test_action_preview에서 따로)
+	GameSettings.action_preview = false
 	# 세력 AI는 계절마다 강호 세력 수치를 바꾸므로, 그 영향을 시험하는 곳에서만 켠다.
 	SectAI.active = false
 	# 피해 흔들림·회심은 끄고 정확한 값으로 시험한다 (켠 상태는 test_combat의 _test_damage_randomness에서 따로)
@@ -134,6 +138,7 @@ func _run_runtime_tests() -> void:
 	# GameManager가 준비되며 설정 파일을 읽으므로, 시험용 전투 설정을 다시 맞춘다.
 	GameSettings.combat_delay = 0.0
 	GameSettings.combat_preview = false
+	GameSettings.action_preview = false
 	# 각 검사가 끝까지 실행됐는지 확인한다. 스크립트 오류로 중단되면 완료 표시가 남지 않는다.
 	for entry in RUNTIME_SEQUENCE:
 		await _suites[entry[0]].call(entry[1])

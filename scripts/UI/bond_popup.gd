@@ -10,6 +10,8 @@ const _Balance = preload("res://scripts/Systems/game_balance.gd")
 signal acted(result: Dictionary)
 
 var _summary: Label
+## 방금 오간 대사
+var dialogue_label: Label
 var _rows: VBoxContainer
 
 
@@ -41,6 +43,12 @@ func _ready() -> void:
 	_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_UiTheme.set_font_size(_summary, 14)
 	box.add_child(_summary)
+	dialogue_label = Label.new()
+	dialogue_label.name = "DialogueLabel"
+	dialogue_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	dialogue_label.visible = false
+	_UiTheme.set_font_size(dialogue_label, 16)
+	box.add_child(dialogue_label)
 
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(0, 420)
@@ -60,6 +68,7 @@ func _ready() -> void:
 
 
 func open() -> void:
+	dialogue_label.visible = false
 	refresh()
 	visible = true
 
@@ -109,7 +118,26 @@ func _make_row(rel: RelationshipData, can_act: bool) -> HBoxContainer:
 
 
 func _on_interact_pressed(target_id: String, kind: String) -> void:
+	# 비무는 전투로 넘어가므로 바로 시작한다.
+	if kind == "spar":
+		_interact(target_id, kind)
+		return
+	var title: String = RelationshipManager.INTERACTIONS[kind]
+	ActionPreview.confirm(self, title, _simulate_interact.bind(target_id, kind), _interact.bind(target_id, kind))
+
+
+func _simulate_interact(target_id: String, kind: String) -> Dictionary:
+	return RelationshipManager.interact(
+		GameManager.player_relationships, target_id, kind, GameManager.player_character,
+		GameManager.player_sect, GameManager.story_flags, GameManager._get_turn_index()
+	)
+
+
+func _interact(target_id: String, kind: String) -> void:
 	var result: Dictionary = GameManager.interact_with(target_id, kind)
+	var lines: PackedStringArray = result.get("dialogue", PackedStringArray())
+	dialogue_label.text = "\n".join(lines)
+	dialogue_label.visible = not lines.is_empty()
 	acted.emit(result)
 	if is_inside_tree():
 		refresh()

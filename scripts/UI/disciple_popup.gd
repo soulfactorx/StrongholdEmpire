@@ -159,7 +159,9 @@ func _on_deploy_pressed(disciple_id: String) -> void:
 
 
 func _on_train_pressed(disciple_id: String) -> void:
-	_apply(DiscipleRoster.train(GameManager.player_sect, disciple_id, GameManager._get_turn_index()))
+	var train := func() -> Dictionary:
+		return DiscipleRoster.train(GameManager.player_sect, disciple_id, GameManager._get_turn_index())
+	ActionPreview.confirm(self, "제자 개별 수련", train, func() -> void: _apply(train.call()))
 
 
 func _on_transmit_pressed(disciple_id: String) -> void:
@@ -187,7 +189,9 @@ func _on_art_chosen(art_id: String) -> void:
 	for art in GameManager.player_character.martial_arts:
 		if art.id == art_id:
 			chosen = art
-	_apply(DiscipleRoster.transmit(GameManager.player_sect, _transmit_target, chosen))
+	var target: String = _transmit_target
+	var transmit := func() -> Dictionary: return DiscipleRoster.transmit(GameManager.player_sect, target, chosen)
+	ActionPreview.confirm(self, "무공 전수", transmit, func() -> void: _apply(transmit.call()))
 
 
 func _apply(result: Dictionary) -> void:

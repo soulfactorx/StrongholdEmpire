@@ -25,5 +25,18 @@
       "internal_energy_max": 8
     }
   },
-  "war_specialty": "CHARGE"
+  "war_specialty": "CHARGE",
+  "dialogue": {
+    "talk": [
+      "말은 짧게. 검은 길게.",
+      "돈을 주면 싸우고, 의리를 주면 목숨을 걸지.",
+      "철검은 부러지지 않소. 휘어질 뿐."
+    ],
+    "gift": [
+      "...고맙소. 빚은 검으로 갚겠소."
+    ],
+    "spar": [
+      "좋소. 쇠와 쇠가 부딪혀 봅시다."
+    ]
+  }
 }

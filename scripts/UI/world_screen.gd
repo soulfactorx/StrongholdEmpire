@@ -75,8 +75,17 @@ func _on_diplomacy_pressed(sect_id: String) -> void:
 
 
 func _on_diplomacy_chosen(action_id: String) -> void:
-	var result: Dictionary = GameManager.do_diplomacy(_diplomacy_target, action_id)
-	log_label.text = result["message"]
+	var sect_id: String = _diplomacy_target
+	ActionPreview.confirm(
+		self, "외교: %s" % DiplomacyManager.ACTIONS.get(action_id, action_id),
+		DiplomacyManager.perform.bind(GameManager, sect_id, action_id), _do_diplomacy.bind(sect_id, action_id)
+	)
+
+
+func _do_diplomacy(sect_id: String, action_id: String) -> void:
+	var result: Dictionary = GameManager.do_diplomacy(sect_id, action_id)
+	var lines: PackedStringArray = result.get("dialogue", PackedStringArray())
+	log_label.text = result["message"] + ("\n" + "\n".join(lines) if not lines.is_empty() else "")
 	if result["success"]:
 		AudioManager.play_success()
 	else:

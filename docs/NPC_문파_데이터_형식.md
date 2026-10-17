@@ -40,6 +40,7 @@
 | (선택) `war_specialty` | 문파전 장수로 참전할 때 보너스를 주는 명령: `CHARGE`(돌격) · `DEFEND`(방어) · `FLANK`(측면) |
 | (선택) `portrait` | 초상화 그림 경로 (`assets/art/` 아래, 예: `"portraits/npc_rival.jpg"`). 없으면 `portraits/<id>.jpg`. 256×320 권장 |
 | (선택) `martial_arts` | `[{ "id": 무공 id, "min_level": 레벨 }]` — 그 레벨 이상이면 전투에서 해당 무공을 씁니다. 무공 id는 `resources/MartialArts/`의 프리셋 또는 `data/martial_arts/`의 모드 무공 |
+| (선택) `dialogue` | 인연 상호작용 때 이 인물이 하는 말. `{ "talk": [...], "gift": [...], "spar": [...], "hatred": [...] }` — 각각 대화·선물·비무 신청·원한 관계일 때 고를 대사 문자열 배열. 없는 종류는 관계 유형과 유대에 맞는 기본 대사(`scripts/Systems/dialogue_lines.gd`)를 씁니다. 오간 대사는 연대기에 남습니다. |
 
 특수 용도 인물:
 - `npc_bandit`: 도적 전투의 적 템플릿

@@ -1040,6 +1040,8 @@ func _end_combat(outcome: CombatManager.Outcome) -> void:
 		return
 	_combat_over = true
 	var level_before: int = GameManager.player_character.level
+	# 연대기에 전투의 마지막 몇 수를 남기도록 결과 처리 전에 넘긴다.
+	GameManager.last_combat_history = history
 	var result: Dictionary = GameManager.finish_combat(outcome, _count_fallen_allies(), _get_fallen_ally_ids())
 	if GameManager.player_character.level > level_before:
 		AudioManager.play_level_up()

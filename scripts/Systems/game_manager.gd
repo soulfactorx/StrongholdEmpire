@@ -55,6 +55,15 @@ var pending_war_plan: Dictionary = {}
 var pending_combat: CombatSetup = null
 ## 마지막 전투의 기록 (전투 화면의 전투 기록). 연대기에서도 본다
 var last_combat_history: PackedStringArray = []
+## 연대기: 이야기에서 일어난 일(기연 선택, 오간 대사, 전투, 역할 변화, 엔딩 등)을 순서대로 남긴다.
+## 항목: {date, turn, generation, kind, text, lines}. 오래된 것부터 지운다.
+var chronicle: Array[Dictionary] = []
+const CHRONICLE_LIMIT := 600
+## 무공 창조 화면에서 고르던 설정 (다시 열면 이어서): {name, category, element, yin_yang, effects}
+var art_draft: Dictionary = {}
+## 저장해 둔 무공 창조 설정: [{title, name, category, element, yin_yang, effects}]
+var art_blueprints: Array[Dictionary] = []
+const ART_BLUEPRINT_LIMIT := 10
 
 
 func _ready() -> void:
@@ -98,6 +107,9 @@ func start_new_game(
 	_initialize_new_game(role_id, display_name)
 	ironman = ironman_mode
 	is_game_active = true
+	add_chronicle("시작", "%s(%s), 「%s」의 강호에 첫발을 내딛다." % [
+		player_character.display_name, player_character.get_role_name(), ScenarioManager.current.get("title", "강호"),
+	], PackedStringArray([str(ScenarioManager.current.get("description", ""))]))
 	# 길잡이: 첫 단계는 바로 보여 주고, 나머지는 계절마다 우선 기연으로 이어진다.
 	# 안내형 시나리오("guided", 입문 수련)는 자체 길잡이가 있으므로 일반 길잡이 플래그를 켜지 않는다.
 	var guided: bool = ScenarioManager.current.get("guided", false) == true
@@ -110,6 +122,47 @@ func start_new_game(
 	EventBus.character_updated.emit(player_character)
 	EventBus.resources_changed.emit(player_sect)
 	EventBus.relationships_changed.emit(player_relationships)
+
+
+## 연대기에 한 줄 남긴다. lines는 오간 대사·세부 결과.
+func add_chronicle(kind: String, text: String, lines: PackedStringArray = PackedStringArray()) -> void:
+	if text.is_empty():
+		return
+	chronicle.append({
+		"date": get_date_text(), "turn": _get_turn_index(), "generation": generation,
+		"kind": kind, "text": text, "lines": Array(lines),
+	})
+	if chronicle.size() > CHRONICLE_LIMIT:
+		chronicle = chronicle.slice(chronicle.size() - CHRONICLE_LIMIT)
+
+
+## 무공 창조 설정을 저장 형식으로 정리한다 (JSON을 거치면 숫자가 실수가 되므로 정수로)
+static func _clean_blueprint(data: Dictionary) -> Dictionary:
+	var effects: Array = []
+	for effect in data.get("effects", []):
+		effects.append(int(effect))
+	return {
+		"title": str(data.get("title", "")), "name": str(data.get("name", "")),
+		"category": int(data.get("category", 0)), "element": int(data.get("element", 0)),
+		"yin_yang": int(data.get("yin_yang", 0)), "effects": effects,
+	}
+
+
+## 무공 창조 설정을 저장한다. 같은 이름이면 덮어쓰고, 가득 차면 가장 오래된 것을 지운다.
+func save_art_blueprint(blueprint: Dictionary) -> Dictionary:
+	var clean: Dictionary = _clean_blueprint(blueprint)
+	if clean["title"].is_empty():
+		clean["title"] = clean["name"] if not clean["name"].is_empty() else "설정 %d" % (art_blueprints.size() + 1)
+	for i in art_blueprints.size():
+		if art_blueprints[i]["title"] == clean["title"]:
+			art_blueprints[i] = clean
+			return {"success": true, "message": "설정 「%s」을(를) 덮어썼습니다." % clean["title"]}
+	art_blueprints.append(clean)
+	var message: String = "설정 「%s」을(를) 저장했습니다." % clean["title"]
+	if art_blueprints.size() > ART_BLUEPRINT_LIMIT:
+		message += " (가장 오래된 「%s」은(는) 지웠습니다)" % art_blueprints[0]["title"]
+		art_blueprints.remove_at(0)
+	return {"success": true, "message": message}
 
 
 func _initialize_new_game(
@@ -146,6 +199,9 @@ func _initialize_new_game(
 	generation = 1
 	current_year = 1
 	current_season_index = 0
+	chronicle.clear()
+	art_draft = {}
+	art_blueprints.clear()
 	_sync_event_context()
 
 
@@ -462,6 +518,7 @@ func _check_ending() -> void:
 
 func _reach_ending(ending: String) -> void:
 	current_ending_id = ending
+	add_chronicle("엔딩", "엔딩 「%s」에 이르렀습니다." % EndingManager.get_ending(ending).get("title", ending))
 	EventManager.set_flag(story_flags, "ending_reached", ending)
 	EventBus.ending_reached.emit(ending)
 	if ScenarioRules.end_on_victory() and ScenarioManager.is_victory_ending(ending):
@@ -545,8 +602,23 @@ func resolve_pending_event(choice_index: int) -> void:
 		player_relationships,
 		story_flags
 	)
+	_chronicle_event(pending_event, choice_index, result)
 	pending_event.clear()
 	_apply_event_result(result)
+
+
+## 기연 기록: 제목, 상황, 고른 선택지, 결과
+func _chronicle_event(event: Dictionary, choice_index: int, result: Dictionary) -> void:
+	var lines: PackedStringArray = []
+	var description: String = str(event.get("description", ""))
+	if not description.is_empty():
+		lines.append(description)
+	var choices: Array = Array(event.get("choices", []))
+	if choice_index >= 0 and choice_index < choices.size():
+		lines.append("▶ 선택: %s" % choices[choice_index])
+	if not str(result.get("message", "")).is_empty():
+		lines.append("결과: %s" % result["message"])
+	add_chronicle("기연", "「%s」" % event.get("title", "기연"), lines)
 
 
 ## 역할을 전환한다. option은 RoleManager가 준 선택지로, sect_id가 있으면 그 세력으로 옮겨 간다(이적·배신).
@@ -566,6 +638,7 @@ func apply_role_transition(role: CharacterData.Role, option: Dictionary = {}) ->
 func _change_role(role: CharacterData.Role) -> Dictionary:
 	var result: Dictionary = RoleManager.apply_transition(player_character, player_sect, role)
 	RoleActions.on_role_changed(role_state, player_character.role)
+	add_chronicle("역할", str(result.get("message", "")))
 	_record_role(player_character.role)
 	EventBus.character_updated.emit(player_character)
 	EventBus.resources_changed.emit(player_sect)
@@ -639,6 +712,9 @@ func _switch_player_sect(sect_id: String, kind: String) -> String:
 ## 외교 행동 (강호 정세 화면)
 func do_diplomacy(sect_id: String, action_id: String) -> Dictionary:
 	var result: Dictionary = DiplomacyManager.perform(self, sect_id, action_id)
+	if result["success"]:
+		result["dialogue"] = DialogueLines.for_diplomacy(get_world_sect(sect_id), action_id, true)
+		add_chronicle("외교", result["message"], result["dialogue"])
 	EventBus.resources_changed.emit(player_sect)
 	_check_end_states()
 	return result
@@ -649,6 +725,10 @@ func interact_with(target_id: String, kind: String) -> Dictionary:
 	var result: Dictionary = RelationshipManager.interact(
 		player_relationships, target_id, kind, player_character, player_sect, story_flags, _get_turn_index()
 	)
+	var rel: RelationshipData = RelationshipManager.get_bond_with(player_relationships, target_id)
+	if rel and result["success"]:
+		result["dialogue"] = DialogueLines.for_interaction(rel, kind, player_character.display_name, true)
+		add_chronicle("대화", result["message"], result["dialogue"])
 	EventBus.relationships_changed.emit(player_relationships)
 	EventBus.resources_changed.emit(player_sect)
 	if result.has("combat"):
@@ -661,6 +741,12 @@ func do_role_action(action_id: String, target: String = "") -> Dictionary:
 	if is_game_over():
 		return {"success": false, "message": "이야기가 끝났습니다."}
 	var result: Dictionary = RoleActions.perform(self, action_id, target)
+	var acted: bool = result["success"] or result.get("consumed", false)
+	if acted:
+		result["dialogue"] = DialogueLines.for_role_action(
+			action_id, player_character.display_name, result["success"], _role_counterpart(action_id)
+		)
+		add_chronicle("행동", "%s: %s" % [RoleActions.ACTIONS[action_id]["title"], result["message"]], result["dialogue"])
 	var consequence: String = _apply_role_consequences()
 	if not consequence.is_empty():
 		result["message"] += " " + consequence
@@ -677,6 +763,18 @@ func do_role_action(action_id: String, target: String = "") -> Dictionary:
 	elif result.has("combat"):
 		start_combat(result["combat"])
 	return result
+
+
+## 역할 행동의 상대 이름 (사부·문주는 실제 인물 이름으로)
+func _role_counterpart(action_id: String) -> String:
+	match action_id:
+		"teaching":
+			for rel in player_relationships:
+				if rel.bond_type == RelationshipData.BondType.MASTER_DISCIPLE:
+					return rel.target_name
+		"proposal":
+			return player_sect.leader_name
+	return ""
 
 
 func start_legacy_succession() -> Dictionary:
@@ -718,6 +816,9 @@ func start_legacy_succession() -> Dictionary:
 	role_state = RoleActions.create_state()
 	_sync_event_context()
 
+	add_chronicle("세대", "%s이(가) 물러나고 %s이(가) 제%d세대를 잇습니다." % [
+		legacy.predecessor_name, player_character.display_name, generation,
+	])
 	EventBus.legacy_succession.emit(legacy)
 	EventBus.character_updated.emit(player_character)
 	EventBus.resources_changed.emit(player_sect)
@@ -853,6 +954,8 @@ func resolve_sect_war(
 		EventManager.set_flag(story_flags, "defeated_%s" % enemy.id)
 	if result.get("subjugated", false):
 		EventManager.set_flag(story_flags, "subjugated_%s" % enemy.id)
+	add_chronicle("문파전", "%s와(과)의 문파전 %s" % [enemy.sect_name, "승리" if result.get("victory", false) else "패배"],
+		PackedStringArray(str(result.get("message", "")).split("\n", false)))
 	EventBus.character_updated.emit(player_character)
 	EventBus.resources_changed.emit(player_sect)
 	_check_end_states()
@@ -865,6 +968,7 @@ func start_combat(setup: CombatSetup) -> void:
 	if setup.allies_are_disciples:
 		CombatManager.add_bond_allies(setup, player_relationships, player_character)
 	pending_combat = setup
+	last_combat_history = PackedStringArray()
 	SceneRouter.goto(get_tree(), SceneRouter.COMBAT)
 
 
@@ -966,6 +1070,7 @@ func finish_combat(outcome: CombatManager.Outcome, fallen_allies: int = 0, falle
 		fallen_allies,
 		fallen_ids
 	)
+	add_chronicle("전투", str(result.get("message", "")), last_combat_history.slice(maxi(0, last_combat_history.size() - 6)))
 	pending_combat = null
 	EventBus.combat_finished.emit(result)
 	EventBus.character_updated.emit(player_character)
@@ -1050,6 +1155,9 @@ func _build_save_state() -> Dictionary:
 		"pending_invasion": pending_invasion,
 		"year_start": year_start,
 		"world_news": world_news,
+		"chronicle": chronicle,
+		"art_draft": art_draft,
+		"art_blueprints": art_blueprints,
 		"analyzed_elements": analyzed_elements,
 		"triggered_event_ids": triggered_event_ids,
 		"current_ending_id": current_ending_id,
@@ -1101,6 +1209,19 @@ func _apply_save_data(data: Dictionary) -> void:
 	world_news.clear()
 	for line in data.get("world_news", []):
 		world_news.append(str(line))
+	art_draft = _clean_blueprint(data.get("art_draft", {})) if data.get("art_draft", {}) is Dictionary and not data.get("art_draft", {}).is_empty() else {}
+	art_blueprints.clear()
+	for blueprint in data.get("art_blueprints", []):
+		if blueprint is Dictionary:
+			art_blueprints.append(_clean_blueprint(blueprint))
+	chronicle.clear()
+	for entry in data.get("chronicle", []):
+		if entry is Dictionary:
+			chronicle.append({
+				"date": str(entry.get("date", "")), "turn": int(entry.get("turn", 0)),
+				"generation": int(entry.get("generation", 1)), "kind": str(entry.get("kind", "")),
+				"text": str(entry.get("text", "")), "lines": Array(entry.get("lines", [])).map(func(line: Variant) -> String: return str(line)),
+			})
 	observed_arts = {}
 	var saved_arts: Dictionary = data.get("observed_arts", {})
 	for art_id in saved_arts:

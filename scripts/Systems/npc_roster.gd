@@ -110,6 +110,8 @@ static func validate_npc_dict(data: Dictionary) -> PackedStringArray:
 		errors.append("알 수 없는 장수 특기: %s" % data["war_specialty"])
 	if data.has("portrait") and not ResourceLoader.exists("res://assets/art/" + str(data["portrait"])):
 		errors.append("초상화 그림이 없음: assets/art/%s" % data["portrait"])
+	if data.has("dialogue"):
+		errors.append_array(DialogueLines.validate(data["dialogue"]))
 	var bond: Variant = data.get("initial_bond")
 	if bond != null and not RelationshipData.BondType.has(bond.get("type", "")):
 		errors.append("알 수 없는 관계 유형: %s" % bond.get("type"))

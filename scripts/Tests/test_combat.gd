@@ -661,6 +661,40 @@ func _test_martial_art_screen_actions() -> void:
 	screen.element_option.item_selected.emit(screen.element_option.selected)
 	_check(screen.success_rate_label.text.contains("상극"), "상극 속성을 고르면 성공률 미리보기에 보너스 표시")
 
+	# 고르던 설정은 화면을 나갔다 와도 이어지고, 이름을 붙여 저장·불러오기·지우기
+	screen.name_input.text = "수류검"
+	screen.name_input.text_changed.emit("수류검")
+	screen.effect1_option.select(screen.effect1_option.get_item_index(MartialArtData.SpecialEffect.SPEED))
+	screen.effect1_option.item_selected.emit(screen.effect1_option.selected)
+	_check(gm.art_draft["element"] == MartialArtData.FiveElement.WATER and gm.art_draft["name"] == "수류검", "무공 창조: 고르던 설정 기억")
+	_check(gm.art_draft["effects"] == [MartialArtData.SpecialEffect.SPEED], "특수 효과 \"없음\"은 효과로 치지 않음")
+	screen._on_save_blueprint_pressed()
+	_check(gm.art_blueprints.size() == 1 and gm.art_blueprints[0]["title"] == "수류검", "설정 저장 (이름으로)")
+	SceneRouter.goto(tree, SceneRouter.HUB)
+	await process_frame
+	SceneRouter.goto(tree, SceneRouter.MARTIAL_ART)
+	await process_frame
+	await process_frame
+	screen = current_scene
+	_check(screen.element_option.get_selected_id() == MartialArtData.FiveElement.WATER and screen.name_input.text == "수류검" and screen.effect1_option.get_selected_id() == MartialArtData.SpecialEffect.SPEED, "다시 열면 고르던 설정 그대로")
+	screen.element_option.select(screen.element_option.get_item_index(MartialArtData.FiveElement.FIRE))
+	screen.element_option.item_selected.emit(screen.element_option.selected)
+	screen._on_load_blueprint_pressed()
+	_check(screen.choice_popup.visible and screen.choice_popup.get_option_count() == 1, "저장한 설정 목록")
+	screen.choice_popup._on_option_pressed("0")
+	_check(screen.element_option.get_selected_id() == MartialArtData.FiveElement.WATER and screen.log_label.text.contains("불러왔습니다"), "저장한 설정 불러오기")
+	gm.save_game(3)
+	gm.art_blueprints.clear()
+	gm.art_draft = {}
+	gm.load_game(3)
+	_check(gm.art_blueprints.size() == 1 and gm.art_draft["element"] == MartialArtData.FiveElement.WATER and gm.art_blueprints[0]["effects"] == [MartialArtData.SpecialEffect.SPEED], "무공 창조 설정 저장·불러오기")
+	SaveManager.delete_save(3)
+	screen._on_delete_blueprint_pressed()
+	screen.choice_popup._on_option_pressed("0")
+	_check(gm.art_blueprints.is_empty(), "저장한 설정 지우기")
+	screen._on_load_blueprint_pressed()
+	_check(not screen.choice_popup.visible and screen.log_label.text.contains("없습니다"), "저장한 설정이 없으면 안내")
+
 	# 제자 명단에서 전수
 	SceneRouter.goto(tree, SceneRouter.HUB)
 	await process_frame
