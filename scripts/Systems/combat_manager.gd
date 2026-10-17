@@ -18,12 +18,13 @@ static func has_combat(combat_id: String) -> bool:
 	return combat_id in COMBAT_IDS
 
 
-static func create_by_id(combat_id: String, player: CharacterData) -> CombatSetup:
+## sect를 주면 문파 방어 전투에 제자가 아군으로 합류한다.
+static func create_by_id(combat_id: String, player: CharacterData, sect: SectData = null) -> CombatSetup:
 	match combat_id:
 		"rival_duel":
 			return create_rival_duel(player)
 		"night_bandits":
-			return create_night_bandits(player)
+			return create_night_bandits(player, sect)
 		_:
 			return create_sparring(player)
 
@@ -61,8 +62,8 @@ static func create_rival_duel(player: CharacterData) -> CombatSetup:
 	return setup
 
 
-## 기연 「야습 도적」에서 시작되는 다대일 전투.
-static func create_night_bandits(player: CharacterData) -> CombatSetup:
+## 기연 「야습 도적」에서 시작되는 문파 방어전. sect가 있으면 제자들이 함께 싸운다.
+static func create_night_bandits(player: CharacterData, sect: SectData = null) -> CombatSetup:
 	var setup := CombatSetup.new()
 	setup.id = "night_bandits"
 	setup.title = "야습 — 도적 무리"
@@ -81,6 +82,12 @@ static func create_night_bandits(player: CharacterData) -> CombatSetup:
 	], CombatRules.Terrain.FOREST)
 	setup.set_terrain([Vector2i(4, 8), Vector2i(5, 8), Vector2i(4, 9)], CombatRules.Terrain.HIGH)
 	var positions: Array[Vector2i] = [Vector2i(12, 3), Vector2i(13, 5), Vector2i(12, 7)]
+	if sect:
+		_add_disciple_allies(setup, sect, player, [Vector2i(2, 4), Vector2i(2, 6)])
+	# 제자가 함께 싸우면 그만큼 도적도 늘어난다.
+	var extra_positions: Array[Vector2i] = [Vector2i(14, 3), Vector2i(14, 7)]
+	for i in setup.allies.size():
+		positions.append(extra_positions[i])
 	for i in positions.size():
 		setup.add_enemy(_create_bandit(player, i), positions[i])
 	setup.enemy_hp_scale = 0.6
@@ -91,15 +98,21 @@ static func create_night_bandits(player: CharacterData) -> CombatSetup:
 
 
 ## 전투 결과를 캐릭터·문파·관계에 반영하고 결과 메시지를 돌려준다.
+## fallen_allies: 전투에서 쓰러진 아군 수. 아군이 문파 제자면 그만큼 제자가 줄어든다.
 static func apply_outcome(
 	setup: CombatSetup,
 	outcome: Outcome,
 	character: CharacterData,
 	sect: SectData,
 	relationships: Array[RelationshipData],
-	story_flags: Dictionary
+	story_flags: Dictionary,
+	fallen_allies: int = 0
 ) -> Dictionary:
 	var parts: PackedStringArray = []
+	var lost: int = 0
+	if setup.allies_are_disciples and fallen_allies > 0:
+		lost = mini(fallen_allies, sect.disciple_count)
+		sect.disciple_count -= lost
 	var bond: RelationshipData = null
 	if not setup.relationship_target_id.is_empty():
 		bond = RelationshipManager.get_bond_with(relationships, setup.relationship_target_id)
@@ -122,6 +135,8 @@ static func apply_outcome(
 		_change_bond(bond, r.get("bond", 0), parts)
 		if not setup.victory_flag.is_empty():
 			story_flags[setup.victory_flag] = true
+		if lost > 0:
+			parts.append("제자 %d명 전사" % lost)
 		return {
 			"success": true,
 			"outcome": outcome,
@@ -148,6 +163,8 @@ static func apply_outcome(
 		parts.append("부상으로 내공 %d까지 감소" % max_left)
 	if outcome == Outcome.DEFEAT:
 		_change_bond(bond, p.get("bond", 0), parts)
+	if lost > 0:
+		parts.append("제자 %d명 전사" % lost)
 
 	var head: String = "후퇴했습니다." if outcome == Outcome.RETREAT else "패배했습니다."
 	return {
@@ -182,6 +199,25 @@ static func _central_wall() -> Array[Vector2i]:
 	]
 
 
+## 문파 제자를 아군으로 붙인다. 무술장이 좋을수록 강하다.
+static func _add_disciple_allies(
+	setup: CombatSetup,
+	sect: SectData,
+	player: CharacterData,
+	positions: Array[Vector2i]
+) -> void:
+	var count: int = mini(mini(_Balance.DEFENSE_ALLY_COUNT, positions.size()), sect.disciple_count)
+	var bonus: int = (sect.training_ground_level - 1) * _Balance.ALLY_TRAINING_STAT_BONUS
+	for i in count:
+		var disciple: CharacterData = NpcRoster.create_character("npc_disciple", player)
+		disciple.id = "ally_disciple_%d" % i
+		disciple.display_name = "%s %s" % [disciple.display_name, ["갑", "을", "병"][i % 3]]
+		disciple.strength += bonus
+		disciple.agility += bonus
+		setup.add_ally(disciple, positions[i])
+	setup.allies_are_disciples = count > 0
+
+
 ## 남궁휘는 플레이어 레벨에 맞춰 함께 성장하는 라이벌이다. (명부의 scaling)
 static func _create_rival(player: CharacterData) -> CharacterData:
 	return NpcRoster.create_character(RIVAL_ID, player)
@@ -190,5 +226,5 @@ static func _create_rival(player: CharacterData) -> CharacterData:
 static func _create_bandit(player: CharacterData, index: int) -> CharacterData:
 	var bandit: CharacterData = NpcRoster.create_character("npc_bandit", player)
 	bandit.id = "npc_bandit_%d" % index
-	bandit.display_name = "%s %s" % [bandit.display_name, ["갑", "을", "병"][index % 3]]
+	bandit.display_name = "%s %s" % [bandit.display_name, ["갑", "을", "병", "정", "무"][index % 5]]
 	return bandit

@@ -28,7 +28,7 @@ extends RefCounted
 ##   experience  amount            — 경험치 (레벨업 포함)
 ##   bond        target, add       — 유대 증감
 ##   flag        flag, value       — 스토리 플래그 설정
-##   combat      combat            — 전투 시작 (CombatManager.create_by_id)
+##   combat      combat            — 전투 시작 (CombatManager.create_by_id, 방어전이면 제자 합류)
 ##   world_sect  sect, field, add  — 강호 세력 수치 증감 (태도는 -100~100)
 
 const EVENTS_DIR := "res://data/events/"
@@ -372,7 +372,7 @@ static func _apply_effect(
 		"flag":
 			story_flags[e["flag"]] = e.get("value", true)
 		"combat":
-			result["combat"] = CombatManager.create_by_id(e["combat"], character)
+			result["combat"] = CombatManager.create_by_id(e["combat"], character, sect)
 		"world_sect":
 			var world_sect: SectData = _find_world_sect(e["sect"])
 			if world_sect:

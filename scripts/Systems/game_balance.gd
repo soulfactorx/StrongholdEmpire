@@ -63,6 +63,12 @@ const ENEMY_BASE_ATTACK_DAMAGE := 10
 ## 무공 피해에 더하는 무력 비율
 const ART_STRENGTH_RATIO := 0.3
 
+# 전투 — 아군 제자
+## 문파 방어 전투에 함께 나서는 제자 수 (보유 제자 수를 넘지 않음)
+const DEFENSE_ALLY_COUNT := 2
+## 무술장 레벨 1을 넘는 단계마다 제자의 무력·신법 증가
+const ALLY_TRAINING_STAT_BONUS := 1
+
 # 전투 — 지형
 const FOREST_MOVE_COST := 2
 const WATER_MOVE_COST := 3

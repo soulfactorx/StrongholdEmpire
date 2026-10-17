@@ -1,0 +1,26 @@
+{
+  "id": "npc_disciple",
+  "display_name": "청운 제자",
+  "title": "청운검파 제자",
+  "sect_id": "qingyun",
+  "role": "YOUNG_DISCIPLE",
+  "description": "청운검파의 평범한 제자. 문파를 지키는 싸움에서 함께 검을 든다.",
+  "level": 1,
+  "stats": {
+    "strength": 10,
+    "agility": 11,
+    "wisdom": 8,
+    "charisma": 8,
+    "internal_energy_max": 60,
+    "age": 17,
+    "morality": 60
+  },
+  "scaling": {
+    "base_level": 1,
+    "level_offset": -1,
+    "per_level": {
+      "strength": 1,
+      "agility": 1
+    }
+  }
+}

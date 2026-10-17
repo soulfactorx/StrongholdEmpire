@@ -12,6 +12,8 @@ const STATUS_NAMES: Dictionary = {
 var character: CharacterData
 var display_name: String
 var is_player: bool = false
+## 플레이어가 조종하는 아군 (제자 등)
+var is_ally: bool = false
 var grid_pos: Vector2i = Vector2i.ZERO
 var hp: int = 100
 var max_hp: int = 100
@@ -24,16 +26,22 @@ var damage_scale: float = 1.0
 var statuses: Dictionary = {}
 
 
-func _init(char: CharacterData, player: bool = false) -> void:
+func _init(char: CharacterData, player: bool = false, ally: bool = false) -> void:
 	character = char
 	display_name = char.display_name
 	is_player = player
+	is_ally = ally
 	max_hp = 80 + char.strength * 3 + char.level * 5
 	hp = max_hp
 	max_action_points = 3 + int(char.agility / 5.0)
 	action_points = max_action_points
 	if not char.martial_arts.is_empty():
 		active_martial_art = char.martial_arts[0]
+
+
+## 플레이어 편(주인공 또는 아군)인지
+func is_friendly() -> bool:
+	return is_player or is_ally
 
 
 func get_speed() -> int:
@@ -52,7 +60,7 @@ func get_active_element() -> MartialArtData.FiveElement:
 
 ## 기본 공격의 기준 피해 (배율 적용 전)
 func get_basic_attack_base() -> int:
-	var base: int = _Balance.BASE_ATTACK_DAMAGE if is_player else _Balance.ENEMY_BASE_ATTACK_DAMAGE
+	var base: int = _Balance.BASE_ATTACK_DAMAGE if is_friendly() else _Balance.ENEMY_BASE_ATTACK_DAMAGE
 	return base + character.strength
 
 

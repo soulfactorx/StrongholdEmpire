@@ -353,7 +353,7 @@ func start_sparring() -> Dictionary:
 
 
 ## 전투 결과를 반영하고 결과(message, outcome 포함)를 돌려준다.
-func finish_combat(outcome: CombatManager.Outcome) -> Dictionary:
+func finish_combat(outcome: CombatManager.Outcome, fallen_allies: int = 0) -> Dictionary:
 	if pending_combat == null:
 		return {"success": false, "message": "진행 중인 전투가 없습니다."}
 	var result: Dictionary = CombatManager.apply_outcome(
@@ -362,7 +362,8 @@ func finish_combat(outcome: CombatManager.Outcome) -> Dictionary:
 		player_character,
 		player_sect,
 		player_relationships,
-		story_flags
+		story_flags,
+		fallen_allies
 	)
 	pending_combat = null
 	EventBus.combat_finished.emit(result)

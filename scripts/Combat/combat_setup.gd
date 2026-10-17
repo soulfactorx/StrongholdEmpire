@@ -7,6 +7,11 @@ var id: String = ""
 var title: String = "전술 전투"
 var enemies: Array[CharacterData] = []
 var enemy_positions: Array[Vector2i] = []
+## 플레이어가 차례대로 직접 조종하는 아군
+var allies: Array[CharacterData] = []
+var ally_positions: Array[Vector2i] = []
+## 아군이 문파 제자라면 전투에서 쓰러진 수만큼 문파 제자가 줄어든다
+var allies_are_disciples: bool = false
 var player_position: Vector2i = Vector2i(2, 5)
 var blocked_tiles: Array[Vector2i] = []
 ## 칸 → CombatRules.Terrain. 없는 칸은 평지.
@@ -32,6 +37,11 @@ func set_terrain(tiles: Array[Vector2i], kind: CombatRules.Terrain) -> void:
 
 func get_terrain(tile: Vector2i) -> CombatRules.Terrain:
 	return terrain.get(tile, CombatRules.Terrain.PLAIN)
+
+
+func add_ally(character: CharacterData, position: Vector2i) -> void:
+	allies.append(character)
+	ally_positions.append(position)
 
 
 func add_enemy(character: CharacterData, position: Vector2i) -> void:

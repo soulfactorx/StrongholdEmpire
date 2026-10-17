@@ -22,6 +22,8 @@ var _turn_manager := TurnManager.new()
 var _action_mode: ActionMode = ActionMode.MOVE
 var _selected_art: MartialArtData = null
 var _combat_over: bool = false
+## 무공 버튼을 만든 대상 (조종 중인 유닛이 바뀌면 다시 만든다)
+var _art_buttons_owner: CombatUnit = null
 
 @onready var grid_overlay: Node2D = $GridOverlay
 @onready var units_layer: Node2D = $UnitsLayer
@@ -52,8 +54,11 @@ func _ready() -> void:
 		]
 	)
 	back_button.text = "후퇴"
-	_build_art_buttons()
 	_log("전투 시작! %s" % _setup.title)
+	if not _setup.allies.is_empty():
+		_log("전투 시작! %s — 제자 %d명이 함께 싸웁니다. 아군은 차례가 오면 직접 조종합니다." % [
+			_setup.title, _setup.allies.size(),
+		])
 	_advance_turns()
 
 
@@ -61,6 +66,11 @@ func _setup_combat() -> void:
 	var player_unit := CombatUnit.new(GameManager.player_character, true)
 	player_unit.grid_pos = _setup.player_position
 	_units.append(player_unit)
+
+	for i in _setup.allies.size():
+		var ally_unit := CombatUnit.new(_setup.allies[i], false, true)
+		ally_unit.grid_pos = _setup.ally_positions[i]
+		_units.append(ally_unit)
 
 	for i in _setup.enemies.size():
 		var enemy_unit := CombatUnit.new(_setup.enemies[i], false)
@@ -83,9 +93,40 @@ func _get_player() -> CombatUnit:
 func _get_alive_enemies() -> Array[CombatUnit]:
 	var result: Array[CombatUnit] = []
 	for unit in _units:
-		if not unit.is_player and unit.is_alive():
+		if not unit.is_friendly() and unit.is_alive():
 			result.append(unit)
 	return result
+
+
+func _get_alive_friendlies() -> Array[CombatUnit]:
+	var result: Array[CombatUnit] = []
+	for unit in _units:
+		if unit.is_friendly() and unit.is_alive():
+			result.append(unit)
+	return result
+
+
+func _get_friendly_at(coord: Vector2i) -> CombatUnit:
+	for unit in _get_alive_friendlies():
+		if unit.grid_pos == coord:
+			return unit
+	return null
+
+
+## 지금 조종 중인 아군 유닛 (적 차례이거나 전투가 끝났으면 null)
+func _get_controlled() -> CombatUnit:
+	if _combat_over:
+		return null
+	var current := _turn_manager.get_current_unit()
+	return current if current and current.is_friendly() else null
+
+
+func _count_fallen_allies() -> int:
+	var fallen: int = 0
+	for unit in _units:
+		if unit.is_ally and not unit.is_alive():
+			fallen += 1
+	return fallen
 
 
 func _get_enemy_at(coord: Vector2i) -> CombatUnit:
@@ -129,13 +170,14 @@ func _draw_grid() -> void:
 	for child in grid_overlay.get_children():
 		child.queue_free()
 
-	var player := _get_player()
-	var current := _turn_manager.get_current_unit()
-	var player_turn: bool = not _combat_over and current != null and current.is_player
-	var reachable: Dictionary = _get_reachable(player) if player_turn and _action_mode == ActionMode.MOVE else {}
+	var controlled := _get_controlled()
+	var reachable: Dictionary = {}
 	var art_range: int = -1
-	if player_turn and _action_mode == ActionMode.MARTIAL_ART and _selected_art and _selected_art.heal_amount <= 0:
-		art_range = CombatRules.get_art_range(_selected_art, _terrain_at(player.grid_pos))
+	if controlled:
+		if _action_mode == ActionMode.MOVE:
+			reachable = _get_reachable(controlled)
+		elif _action_mode == ActionMode.MARTIAL_ART and _selected_art:
+			art_range = CombatRules.get_art_range(_selected_art, _terrain_at(controlled.grid_pos))
 
 	for x in GRID_WIDTH:
 		for y in GRID_HEIGHT:
@@ -149,7 +191,7 @@ func _draw_grid() -> void:
 				tile.color = TERRAIN_COLORS[_terrain_at(coord)]
 				if reachable.has(coord):
 					tile.color = tile.color.lerp(Color(0.4, 0.8, 0.4), 0.35)
-				elif art_range > 0 and CombatRules.distance(coord, player.grid_pos) <= art_range:
+				elif art_range >= 0 and CombatRules.distance(coord, controlled.grid_pos) <= art_range:
 					tile.color = tile.color.lerp(Color(0.75, 0.3, 0.85), 0.45)
 			grid_overlay.add_child(tile)
 
@@ -164,7 +206,18 @@ func _refresh_units_visual() -> void:
 		var marker := ColorRect.new()
 		marker.size = Vector2(28, 28)
 		marker.position = Vector2(unit.grid_pos.x * GRID_SIZE + 10, unit.grid_pos.y * GRID_SIZE + 10)
-		marker.color = Color(0.3, 0.7, 1) if unit.is_player else Color(0.9, 0.3, 0.2)
+		if unit.is_player:
+			marker.color = Color(0.3, 0.7, 1)
+		elif unit.is_ally:
+			marker.color = Color(0.35, 0.85, 0.65)
+		else:
+			marker.color = Color(0.9, 0.3, 0.2)
+		if unit == _get_controlled():
+			var outline := ColorRect.new()
+			outline.size = Vector2(36, 36)
+			outline.position = marker.position - Vector2(4, 4)
+			outline.color = _UiTheme.COLORS["accent_gold"]
+			units_layer.add_child(outline)
 		if unit.has_status("stunned"):
 			marker.color = marker.color.darkened(0.5)
 		units_layer.add_child(marker)
@@ -177,56 +230,73 @@ func _refresh_units_visual() -> void:
 
 
 func _update_hud() -> void:
-	var player := _get_player()
 	var current := _turn_manager.get_current_unit()
+	var controlled := _get_controlled()
 
 	round_label.text = "라운드 %d" % _turn_manager.round_number
 	if current:
-		turn_label.text = "현재 턴: %s" % current.display_name
-	if player:
-		var status: String = player.get_status_text()
-		player_hp_label.text = "%s HP: %d / %d%s" % [
-			player.display_name, player.hp, player.max_hp,
-			" [%s]" % status if not status.is_empty() else "",
-		]
-		ap_label.text = "행동력: %d / %d | 내공: %d / %d | 지형: %s" % [
-			player.action_points,
-			player.max_action_points,
-			player.character.internal_energy_current,
-			player.character.internal_energy_max,
-			CombatRules.TERRAIN_NAMES[_terrain_at(player.grid_pos)],
-		]
-		if _selected_art:
-			martial_label.text = "선택 무공: %s (피해 %d, 사거리 %d, 내공 %d, 행동력 %d)\n효과: %s" % [
-				_selected_art.display_name,
-				_selected_art.damage if _selected_art.heal_amount <= 0 else _selected_art.heal_amount,
-				_selected_art.range,
-				_selected_art.internal_cost,
-				_selected_art.action_cost,
-				_selected_art.get_effects_text(),
-			]
-		else:
-			martial_label.text = "무공: %s" % ("없음" if player.get_martial_arts().is_empty() else "선택 안 함")
+		turn_label.text = "현재 턴: %s%s" % [current.display_name, " (조종)" if controlled else ""]
 
-	var lines: PackedStringArray = []
+	var friend_lines: PackedStringArray = []
 	for unit in _units:
-		if unit.is_player:
-			continue
-		if unit.is_alive():
-			var status: String = unit.get_status_text()
-			lines.append("%s HP: %d / %d%s" % [
-				unit.display_name, unit.hp, unit.max_hp, " [%s]" % status if not status.is_empty() else "",
-			])
-		else:
-			lines.append("%s — 쓰러짐" % unit.display_name)
-	enemy_hp_label.text = "\n".join(lines)
+		if unit.is_friendly():
+			friend_lines.append(_unit_line(unit))
+	player_hp_label.text = "\n".join(friend_lines)
+
+	var enemy_lines: PackedStringArray = []
+	for unit in _units:
+		if not unit.is_friendly():
+			enemy_lines.append(_unit_line(unit))
+	enemy_hp_label.text = "\n".join(enemy_lines)
+
+	var shown: CombatUnit = controlled if controlled else _get_player()
+	ap_label.text = "%s — 행동력: %d / %d | 내공: %d / %d | 지형: %s" % [
+		shown.display_name,
+		shown.action_points,
+		shown.max_action_points,
+		shown.character.internal_energy_current,
+		shown.character.internal_energy_max,
+		CombatRules.TERRAIN_NAMES[_terrain_at(shown.grid_pos)],
+	]
+	if _selected_art:
+		var amount: int = _selected_art.damage if _selected_art.heal_amount <= 0 else _selected_art.heal_amount
+		martial_label.text = "선택 무공: %s (%s %d, 사거리 %d, 내공 %d, 행동력 %d)\n효과: %s" % [
+			_selected_art.display_name,
+			"피해" if _selected_art.heal_amount <= 0 else "회복",
+			amount,
+			_selected_art.range,
+			_selected_art.internal_cost,
+			_selected_art.action_cost,
+			_selected_art.get_effects_text(),
+		]
+	else:
+		martial_label.text = "무공: %s" % ("없음" if shown.get_martial_arts().is_empty() else "선택 안 함")
+
+	if controlled != _art_buttons_owner:
+		_build_art_buttons(controlled)
 
 
-func _build_art_buttons() -> void:
+func _unit_line(unit: CombatUnit) -> String:
+	if not unit.is_alive():
+		return "%s — 쓰러짐" % unit.display_name
+	var status: String = unit.get_status_text()
+	return "%s HP: %d / %d%s" % [
+		unit.display_name, unit.hp, unit.max_hp, " [%s]" % status if not status.is_empty() else "",
+	]
+
+
+## 조종 중인 유닛의 무공으로 버튼을 만든다. 유닛이 바뀌면 선택 무공도 초기화한다.
+func _build_art_buttons(unit: CombatUnit) -> void:
+	_art_buttons_owner = unit
+	_selected_art = null
+	if _action_mode == ActionMode.MARTIAL_ART:
+		_action_mode = ActionMode.MOVE
 	for child in art_list.get_children():
+		art_list.remove_child(child)
 		child.queue_free()
-	var player := _get_player()
-	for art in player.get_martial_arts():
+	if unit == null:
+		return
+	for art in unit.get_martial_arts():
 		var button := Button.new()
 		button.text = "%s (내공 %d · 행동력 %d)" % [art.display_name, art.internal_cost, art.action_cost]
 		_UiTheme.style_button(button)
@@ -247,8 +317,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
 		return
 
-	var current := _turn_manager.get_current_unit()
-	if current == null or not current.is_player:
+	var current := _get_controlled()
+	if current == null:
 		return
 
 	var local_pos := get_global_mouse_position() - global_position
@@ -292,11 +362,15 @@ func _try_martial_art(unit: CombatUnit, target: Vector2i) -> void:
 	if art == null:
 		_log("사용할 무공을 먼저 고르세요.")
 		return
+	var art_range: int = CombatRules.get_art_range(art, _terrain_at(unit.grid_pos))
 	if art.heal_amount > 0:
-		_perform_art(unit, null, art)
+		var friend := _get_friendly_at(target)
+		if friend == null or CombatRules.distance(target, unit.grid_pos) > art_range:
+			_log("사거리 안의 아군(자신 포함)을 선택하세요. (사거리 %d)" % art_range)
+			return
+		_perform_art(unit, friend, art)
 		return
 	var enemy := _get_enemy_at(target)
-	var art_range: int = CombatRules.get_art_range(art, _terrain_at(unit.grid_pos))
 	if enemy == null or CombatRules.distance(target, unit.grid_pos) > art_range:
 		_log("사거리 안의 적을 선택하세요. (사거리 %d)" % art_range)
 		return
@@ -327,7 +401,7 @@ func _perform_attack(attacker: CombatUnit, defender: CombatUnit) -> void:
 	_after_hit(defender)
 
 
-## 무공 시전. 회복 무공은 defender가 null이다. 시전하면 true.
+## 무공 시전. 회복 무공이면 defender는 회복 대상(null이면 자신). 시전하면 true.
 func _perform_art(attacker: CombatUnit, defender: CombatUnit, art: MartialArtData) -> bool:
 	if attacker.action_points < art.action_cost:
 		_log("행동력이 부족합니다.")
@@ -341,12 +415,14 @@ func _perform_art(attacker: CombatUnit, defender: CombatUnit, art: MartialArtDat
 	var messages: PackedStringArray = []
 
 	if art.heal_amount > 0:
+		var patient: CombatUnit = defender if defender else attacker
+		defender = null
 		var multiplier: float = 1.0
 		if attacker.is_player:
 			multiplier = RelationshipManager.get_ally_buff_multiplier(GameManager.player_relationships)
 		var heal := int(art.heal_amount * multiplier)
-		attacker.heal(heal)
-		messages.append("[%s] %s, HP %d 회복" % [art.display_name, attacker.display_name, heal])
+		patient.heal(heal)
+		messages.append("[%s] %s, HP %d 회복" % [art.display_name, patient.display_name, heal])
 	else:
 		var result: Dictionary = CombatRules.calculate_damage(
 			attacker, defender, art,
@@ -417,11 +493,13 @@ static func _notes_text(notes: PackedStringArray) -> String:
 	return " (%s)" % ", ".join(notes) if not notes.is_empty() else ""
 
 
-## 피해를 받은 유닛의 생사에 따라 승패를 정한다.
+## 피해를 받은 유닛의 생사에 따라 승패를 정한다. 아군이 쓰러져도 주인공이 살아 있으면 계속한다.
 func _after_hit(unit: CombatUnit) -> void:
 	_refresh_all()
 	if unit.is_player and not unit.is_alive():
 		_end_combat(CombatManager.Outcome.DEFEAT)
+	elif unit.is_ally and not unit.is_alive():
+		_log("%s이(가) 쓰러졌습니다!" % unit.display_name)
 	else:
 		_check_victory()
 
@@ -435,7 +513,7 @@ func _end_combat(outcome: CombatManager.Outcome) -> void:
 	if _combat_over:
 		return
 	_combat_over = true
-	var result: Dictionary = GameManager.finish_combat(outcome)
+	var result: Dictionary = GameManager.finish_combat(outcome, _count_fallen_allies())
 	back_button.text = "문파로 돌아가기"
 	_refresh_all()
 	_log(result["message"])
@@ -443,19 +521,33 @@ func _end_combat(outcome: CombatManager.Outcome) -> void:
 
 # ─── 적 AI ─────────────────────────────────────────
 
+## 적이 노릴 대상: 가장 가까운 아군, 거리가 같으면 체력이 낮은 쪽
+func _pick_enemy_target(enemy: CombatUnit) -> CombatUnit:
+	var best: CombatUnit = null
+	for unit in _get_alive_friendlies():
+		if best == null:
+			best = unit
+			continue
+		var d: int = CombatRules.distance(enemy.grid_pos, unit.grid_pos)
+		var best_d: int = CombatRules.distance(enemy.grid_pos, best.grid_pos)
+		if d < best_d or (d == best_d and unit.hp < best.hp):
+			best = unit
+	return best
+
+
 ## 적 한 명의 차례: 공격할 수 있으면 공격하고, 아니면 다가간 뒤 공격을 시도한다.
 ## 공격은 차례당 한 번이다.
 func _run_enemy_ai(enemy: CombatUnit) -> void:
-	var player := _get_player()
-	if player == null or not enemy.is_alive() or not player.is_alive():
+	var target := _pick_enemy_target(enemy)
+	if target == null or not enemy.is_alive():
 		return
-	if _enemy_try_attack(enemy, player):
+	if _enemy_try_attack(enemy, target):
 		return
 
 	var art: MartialArtData = _enemy_usable_art(enemy)
 	var desired_range: int = art.range if art else 1
 	var is_goal := func(pos: Vector2i) -> bool:
-		return CombatRules.distance(pos, player.grid_pos) <= desired_range
+		return CombatRules.distance(pos, target.grid_pos) <= desired_range
 	var path: Array[Vector2i] = CombatRules.find_path(enemy.grid_pos, is_goal, _is_valid_tile, _terrain_at)
 	if not path.is_empty():
 		# 공격할 행동력 1은 남겨 둔다.
@@ -463,7 +555,7 @@ func _run_enemy_ai(enemy: CombatUnit) -> void:
 		if walk["index"] >= 0:
 			enemy.grid_pos = path[walk["index"]]
 			enemy.action_points -= walk["cost"]
-	_enemy_try_attack(enemy, player)
+	_enemy_try_attack(enemy, target)
 
 
 func _enemy_usable_art(enemy: CombatUnit) -> MartialArtData:
@@ -475,20 +567,20 @@ func _enemy_usable_art(enemy: CombatUnit) -> MartialArtData:
 	return null
 
 
-func _enemy_try_attack(enemy: CombatUnit, player: CombatUnit) -> bool:
+func _enemy_try_attack(enemy: CombatUnit, target: CombatUnit) -> bool:
 	var art: MartialArtData = _enemy_usable_art(enemy)
-	var dist: int = CombatRules.distance(enemy.grid_pos, player.grid_pos)
+	var dist: int = CombatRules.distance(enemy.grid_pos, target.grid_pos)
 	if art and dist <= CombatRules.get_art_range(art, _terrain_at(enemy.grid_pos)):
-		return _perform_art(enemy, player, art)
+		return _perform_art(enemy, target, art)
 	if dist == 1 and enemy.action_points >= 1:
-		_perform_attack(enemy, player)
+		_perform_attack(enemy, target)
 		return true
 	return false
 
 
 # ─── 턴 진행 ────────────────────────────────────────
 
-## 플레이어 차례가 올 때까지 적 턴과 기절한 유닛의 턴을 처리한다.
+## 아군 차례가 올 때까지 적 턴과 기절한 유닛의 턴을 처리한다.
 func _advance_turns() -> void:
 	var guard: int = _units.size() * 4
 	while not _combat_over and guard > 0:
@@ -504,7 +596,7 @@ func _advance_turns() -> void:
 			current.tick_statuses()
 			_turn_manager.end_turn()
 			continue
-		if current.is_player:
+		if current.is_friendly():
 			break
 		_run_enemy_ai(current)
 		current.tick_statuses()
@@ -515,13 +607,14 @@ func _advance_turns() -> void:
 func _on_end_turn_pressed() -> void:
 	if _combat_over:
 		return
-	var current := _turn_manager.get_current_unit()
-	if current and current.is_player:
+	var current := _get_controlled()
+	if current:
 		current.tick_statuses()
 		_turn_manager.end_turn()
 		_advance_turns()
-		if not _combat_over:
-			_log("%s의 턴입니다." % _turn_manager.get_current_unit().display_name)
+		var next := _get_controlled()
+		if next:
+			_log("%s의 차례입니다." % next.display_name)
 
 
 func _on_mode_move_pressed() -> void:
@@ -537,13 +630,18 @@ func _on_mode_attack_pressed() -> void:
 
 
 func _on_art_pressed(art: MartialArtData) -> void:
+	var current := _get_controlled()
+	if current == null:
+		return
 	_selected_art = art
 	_action_mode = ActionMode.MARTIAL_ART
-	# 회복 무공은 대상 없이 바로 시전한다.
 	if art.heal_amount > 0:
-		var current := _turn_manager.get_current_unit()
-		if current and current.is_player and not _combat_over:
-			_perform_art(current, null, art)
+		# 함께 싸우는 아군이 없으면 대상을 고를 필요 없이 자신에게 바로 쓴다.
+		if _get_alive_friendlies().size() == 1:
+			_perform_art(current, current, art)
+			return
+		_refresh_all()
+		_log("행동: [%s] — 회복할 아군(자신 포함)을 누르세요 (보라 칸)" % art.display_name)
 		return
 	_refresh_all()
 	_log("행동: [%s] — 사거리 안의 적을 누르세요 (보라 칸)" % art.display_name)

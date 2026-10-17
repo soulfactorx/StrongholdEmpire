@@ -35,6 +35,12 @@
 
 `scaling`이 있고 `initial_bond`가 없는 인물(예: 도적)은 이름 없는 졸개로 보고 인물 목록에서 뺍니다.
 
+| (선택) `martial_arts` | `[{ "id": 무공 id, "min_level": 레벨 }]` — 그 레벨 이상이면 전투에서 해당 무공을 씁니다. 무공 id는 `resources/MartialArts/`의 프리셋 또는 `data/martial_arts/`의 모드 무공 |
+
+특수 용도 인물:
+- `npc_bandit`: 도적 전투의 적 템플릿
+- `npc_disciple`: 문파 방어전에 합류하는 아군 제자 템플릿. 무술장 레벨 1을 넘는 단계마다 무력·신법이 오릅니다.
+
 ## 문파
 
 ```json

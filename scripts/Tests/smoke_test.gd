@@ -19,43 +19,78 @@ const MAIN_SCENES: Array[String] = [
 ]
 
 var _failures: int = 0
+## 끝까지 실행된 검사 함수 이름
+var _completed: Dictionary = {}
 var _checks: int = 0
 
 
 func _initialize() -> void:
 	_test_scenes_load()
+	_check(_completed.has("_test_scenes_load"), "_test_scenes_load 끝까지 실행")
 	_test_level_curve()
+	_check(_completed.has("_test_level_curve"), "_test_level_curve 끝까지 실행")
 	_test_gain_experience()
+	_check(_completed.has("_test_gain_experience"), "_test_gain_experience 끝까지 실행")
 	_test_martial_art_round_trip()
+	_check(_completed.has("_test_martial_art_round_trip"), "_test_martial_art_round_trip 끝까지 실행")
 	_test_old_save_without_martial_arts()
+	_check(_completed.has("_test_old_save_without_martial_arts"), "_test_old_save_without_martial_arts 끝까지 실행")
 	_test_starting_roles()
+	_check(_completed.has("_test_starting_roles"), "_test_starting_roles 끝까지 실행")
 	_test_combat_outcomes()
+	_check(_completed.has("_test_combat_outcomes"), "_test_combat_outcomes 끝까지 실행")
 	_test_combat_events()
+	_check(_completed.has("_test_combat_events"), "_test_combat_events 끝까지 실행")
 	_test_event_definitions()
+	_check(_completed.has("_test_event_definitions"), "_test_event_definitions 끝까지 실행")
 	_test_event_validation()
+	_check(_completed.has("_test_event_validation"), "_test_event_validation 끝까지 실행")
 	_test_event_conditions()
+	_check(_completed.has("_test_event_conditions"), "_test_event_conditions 끝까지 실행")
 	_test_event_branches()
+	_check(_completed.has("_test_event_branches"), "_test_event_branches 끝까지 실행")
 	_test_event_mod_folder()
+	_check(_completed.has("_test_event_mod_folder"), "_test_event_mod_folder 끝까지 실행")
 	_test_upkeep()
+	_check(_completed.has("_test_upkeep"), "_test_upkeep 끝까지 실행")
 	_test_game_over_conditions()
+	_check(_completed.has("_test_game_over_conditions"), "_test_game_over_conditions 끝까지 실행")
 	_test_npc_roster()
+	_check(_completed.has("_test_npc_roster"), "_test_npc_roster 끝까지 실행")
 	_test_sect_registry()
+	_check(_completed.has("_test_sect_registry"), "_test_sect_registry 끝까지 실행")
 	_test_world_sect_events()
+	_check(_completed.has("_test_world_sect_events"), "_test_world_sect_events 끝까지 실행")
 	_test_combat_rules()
+	_check(_completed.has("_test_combat_rules"), "_test_combat_rules 끝까지 실행")
 	_test_martial_art_library()
+	_check(_completed.has("_test_martial_art_library"), "_test_martial_art_library 끝까지 실행")
+	_test_ally_setup()
+	_check(_completed.has("_test_ally_setup"), "_test_ally_setup 끝까지 실행")
 	# 오토로드의 _ready()는 첫 프레임에 실행되므로 런타임 검사는 그 뒤로 미룬다.
 	process_frame.connect(_run_runtime_tests, CONNECT_ONE_SHOT)
 
 
 func _run_runtime_tests() -> void:
+	# 각 검사가 끝까지 실행됐는지 확인한다. 스크립트 오류로 중단되면 완료 표시가 남지 않는다.
 	_test_turn_loop()
+	_check(_completed.has("_test_turn_loop"), "_test_turn_loop 끝까지 실행")
 	_test_start_new_game()
+	_check(_completed.has("_test_start_new_game"), "_test_start_new_game 끝까지 실행")
 	await _test_scene_navigation()
+	_check(_completed.has("_test_scene_navigation"), "_test_scene_navigation 끝까지 실행")
 	await _test_combat_flow()
+	_check(_completed.has("_test_combat_flow"), "_test_combat_flow 끝까지 실행")
 	await _test_event_popup_choices()
+	_check(_completed.has("_test_event_popup_choices"), "_test_event_popup_choices 끝까지 실행")
 	await _test_game_over_flow()
+	_check(_completed.has("_test_game_over_flow"), "_test_game_over_flow 끝까지 실행")
 	_test_world_state_and_war()
+	_check(_completed.has("_test_world_state_and_war"), "_test_world_state_and_war 끝까지 실행")
 	await _test_combat_effects()
+	_check(_completed.has("_test_combat_effects"), "_test_combat_effects 끝까지 실행")
+	await _test_ally_combat()
+	_check(_completed.has("_test_ally_combat"), "_test_ally_combat 끝까지 실행")
 
 	print("스모크 테스트: %d개 검사, %d개 실패" % [_checks, _failures])
 	quit(1 if _failures > 0 else 0)
@@ -74,12 +109,14 @@ func _test_scenes_load() -> void:
 	for path in MAIN_SCENES:
 		var scene: PackedScene = load(path)
 		_check(scene != null and scene.can_instantiate(), "씬 로드: %s" % path)
+	_completed["_test_scenes_load"] = true
 
 
 func _test_level_curve() -> void:
 	_check(CharacterData.get_experience_for_level(1) == 0, "Lv.1 요구 경험치 0")
 	_check(CharacterData.get_experience_for_level(2) == 50, "Lv.2 요구 경험치 50")
 	_check(CharacterData.get_experience_for_level(5) == 500, "Lv.5 요구 경험치 500")
+	_completed["_test_level_curve"] = true
 
 
 func _test_gain_experience() -> void:
@@ -105,6 +142,7 @@ func _test_gain_experience() -> void:
 
 	character.gain_experience(1_000_000)
 	_check(character.level == _Balance.MAX_LEVEL, "최대 레벨 제한")
+	_completed["_test_gain_experience"] = true
 
 
 func _test_martial_art_round_trip() -> void:
@@ -144,11 +182,13 @@ func _test_martial_art_round_trip() -> void:
 		"창조 무공 필드 복원"
 	)
 	_check(restored.knows_martial_art("custom_heal"), "복원된 무공 조회")
+	_completed["_test_martial_art_round_trip"] = true
 
 
 func _test_old_save_without_martial_arts() -> void:
 	var restored: CharacterData = _SaveManager.deserialize_character({"display_name": "구버전"})
 	_check(restored.martial_arts.is_empty(), "구버전 세이브(무공 필드 없음) 호환")
+	_completed["_test_old_save_without_martial_arts"] = true
 
 
 func _test_turn_loop() -> void:
@@ -164,6 +204,7 @@ func _test_turn_loop() -> void:
 			game_manager.resolve_pending_event(0)
 	_check(game_manager.current_year == 3, "8턴 진행 후 3년차")
 	_check(game_manager.player_character.level > start_level, "연간 수련으로 레벨 상승")
+	_completed["_test_turn_loop"] = true
 
 
 func _test_starting_roles() -> void:
@@ -181,6 +222,7 @@ func _test_starting_roles() -> void:
 	_check(unknown.role == CharacterData.Role.YOUNG_DISCIPLE, "알 수 없는 역할 id는 기본 역할")
 	var leader: CharacterData = StartingRoles.create_character("leader", "")
 	_check(leader.level > 1, "문주는 경험치를 갖고 시작")
+	_completed["_test_starting_roles"] = true
 
 
 func _test_start_new_game() -> void:
@@ -199,6 +241,7 @@ func _test_start_new_game() -> void:
 		and game_manager.story_flags.is_empty() and game_manager.triggered_event_ids.is_empty(),
 		"새 게임이 이전 진행 상태를 초기화"
 	)
+	_completed["_test_start_new_game"] = true
 
 
 ## 각 화면을 실제로 띄워 @onready 노드 경로와 시그널 연결이 깨지지 않았는지 확인한다.
@@ -224,6 +267,7 @@ func _test_scene_navigation() -> void:
 	await process_frame
 	await process_frame
 	_check(current_scene.scene_file_path == SceneRouter.HUB, "도움말에서 직전 화면(경영)으로 복귀")
+	_completed["_test_scene_navigation"] = true
 
 
 func _make_combat_state() -> Dictionary:
@@ -288,6 +332,7 @@ func _test_combat_outcomes() -> void:
 	st["sect"].gold = 10
 	_apply(bandits, CombatManager.Outcome.DEFEAT, st)
 	_check(st["sect"].gold == 0, "패배 손실이 보유 금화를 넘지 않음")
+	_completed["_test_combat_outcomes"] = true
 
 
 func _test_combat_events() -> void:
@@ -305,6 +350,7 @@ func _test_combat_events() -> void:
 		"rival_duel", 0, st["character"], st["sect"], st["relationships"], st["flags"]
 	)
 	_check(result.has("combat") and result["combat"].id == "rival_duel", "라이벌의 도전: 결투 예약")
+	_completed["_test_combat_events"] = true
 
 
 func _test_combat_flow() -> void:
@@ -365,6 +411,7 @@ func _test_combat_flow() -> void:
 		and gm.pending_combat != null and gm.pending_combat.id == "rival_duel",
 		"기연 선택으로 결투 시작"
 	)
+	_completed["_test_combat_flow"] = true
 
 
 func _test_event_definitions() -> void:
@@ -379,6 +426,7 @@ func _test_event_definitions() -> void:
 		"spy_mission", "assassin_contract", "leader_council", "rival_duel",
 	]:
 		_check(EventManager.get_event(id) != null, "기연 존재: %s" % id)
+	_completed["_test_event_definitions"] = true
 
 
 func _test_event_validation() -> void:
@@ -403,6 +451,7 @@ func _test_event_validation() -> void:
 		var data: Dictionary = good.duplicate(true)
 		data.merge(bad_cases[label], true)
 		_check(not EventManager.validate_event_dict(data).is_empty(), "잘못된 정의 검출: %s" % label)
+	_completed["_test_event_validation"] = true
 
 
 func _test_event_conditions() -> void:
@@ -436,6 +485,7 @@ func _test_event_conditions() -> void:
 	for id in triggered:
 		unique[id] = true
 	_check(unique.size() == triggered.size(), "반복 불가 기연은 중복 발생하지 않음")
+	_completed["_test_event_conditions"] = true
 
 
 func _test_event_branches() -> void:
@@ -460,6 +510,7 @@ func _test_event_branches() -> void:
 		"master_trial", 5, st2["character"], st2["sect"], st2["relationships"], st2["flags"]
 	)
 	_check(not result["success"], "범위 밖 선택지는 실패 처리")
+	_completed["_test_event_branches"] = true
 
 
 func _test_event_mod_folder() -> void:
@@ -494,6 +545,7 @@ func _test_event_mod_folder() -> void:
 	DirAccess.remove_absolute(dir_path.path_join("broken.json"))
 	DirAccess.remove_absolute(dir_path)
 	EventManager.reload_definitions()
+	_completed["_test_event_mod_folder"] = true
 
 
 func _test_event_popup_choices() -> void:
@@ -507,6 +559,7 @@ func _test_event_popup_choices() -> void:
 		func(n: Node) -> bool: return n is Button and not n.is_queued_for_deletion()
 	)
 	_check(buttons.size() == 3 and popup.visible, "기연 팝업: 선택지 3개 버튼 생성")
+	_completed["_test_event_popup_choices"] = true
 
 
 func _test_upkeep() -> void:
@@ -558,6 +611,7 @@ func _test_upkeep() -> void:
 		JSON.parse_string(JSON.stringify(_SaveManager.serialize_sect(sect)))
 	)
 	_check(restored.shortage_seasons == 2, "연속 부족 계절 저장/복원")
+	_completed["_test_upkeep"] = true
 
 
 func _test_game_over_conditions() -> void:
@@ -571,6 +625,7 @@ func _test_game_over_conditions() -> void:
 	sect = SectData.new()
 	sect.reputation = 0
 	_check(EndingManager.check_game_over(sect) == "disgraced", "명성 0: 명성 실추")
+	_completed["_test_game_over_conditions"] = true
 
 
 func _test_game_over_flow() -> void:
@@ -631,6 +686,7 @@ func _test_game_over_flow() -> void:
 
 	gm.start_new_game("재시작", "young_disciple")
 	_check(not gm.is_game_over() and gm.is_game_active, "새 게임으로 게임오버 해제")
+	_completed["_test_game_over_flow"] = true
 
 
 func _count_json(dir_path: String) -> int:
@@ -685,6 +741,7 @@ func _test_npc_roster() -> void:
 		}).is_empty(),
 		"잘못된 NPC 능력치 검출"
 	)
+	_completed["_test_npc_roster"] = true
 
 
 func _test_sect_registry() -> void:
@@ -708,6 +765,7 @@ func _test_sect_registry() -> void:
 		}).is_empty(),
 		"잘못된 성향 검출"
 	)
+	_completed["_test_sect_registry"] = true
 
 
 func _test_world_sect_events() -> void:
@@ -743,6 +801,7 @@ func _test_world_sect_events() -> void:
 	}
 	_check(not EventManager.validate_event_dict(bad).is_empty(), "플레이어 문파를 강호 세력으로 지정하면 오류")
 	EventManager.world_sects = root.get_node("GameManager").world_sects
+	_completed["_test_world_sect_events"] = true
 
 
 func _test_world_state_and_war() -> void:
@@ -796,6 +855,7 @@ func _test_world_state_and_war() -> void:
 	state.erase("world_sects")
 	gm._apply_save_data(state)
 	_check(gm.world_sects.size() == 3 and not gm.get_world_sect("heukpung").subjugated, "구버전 세이브는 강호 세력 초기값 사용")
+	_completed["_test_world_state_and_war"] = true
 
 
 func _make_unit(strength: int = 10, player: bool = true) -> CombatUnit:
@@ -901,6 +961,7 @@ func _test_combat_rules() -> void:
 	randomize()
 	_check(safe, "내공이 넉넉하면 폭주 없음")
 	_check(overloads > 10 and overloads < 60, "내공 바닥일 때 폭주 확률 적용 (%d/100)" % overloads)
+	_completed["_test_combat_rules"] = true
 
 
 func _test_martial_art_library() -> void:
@@ -926,6 +987,7 @@ func _test_martial_art_library() -> void:
 		}).is_empty(),
 		"없는 무공을 가진 NPC 검출"
 	)
+	_completed["_test_martial_art_library"] = true
 
 
 ## 전투 씬에서 무공 효과와 적 AI를 확인한다.
@@ -1036,3 +1098,109 @@ func _test_combat_effects() -> void:
 	_check(c.art_list.get_child_count() == player.get_martial_arts().size(), "무공 버튼이 습득 무공 수만큼")
 	c._on_back_pressed()
 	await process_frame
+	_completed["_test_combat_effects"] = true
+
+
+func _test_ally_setup() -> void:
+	var player := CharacterData.new()
+	var sect := SectData.new()
+	sect.training_ground_level = 3
+	var setup: CombatSetup = CombatManager.create_night_bandits(player, sect)
+	_check(setup.allies.size() == _Balance.DEFENSE_ALLY_COUNT and setup.allies_are_disciples, "방어전에 제자 2명 합류")
+	var base: CharacterData = NpcRoster.create_character("npc_disciple", player)
+	_check(setup.allies[0].strength == base.strength + 2 * _Balance.ALLY_TRAINING_STAT_BONUS, "무술장 레벨만큼 제자 강화")
+	_check(setup.allies[0].display_name != setup.allies[1].display_name, "제자 이름 구분")
+
+	sect.disciple_count = 1
+	_check(CombatManager.create_night_bandits(player, sect).allies.size() == 1, "보유 제자 수만큼만 합류")
+	var no_sect: CombatSetup = CombatManager.create_night_bandits(player)
+	_check(no_sect.allies.is_empty() and not no_sect.allies_are_disciples, "문파 정보 없으면 아군 없음")
+	_check(CombatManager.create_sparring(player).allies.is_empty(), "비무는 1대1")
+
+	# 기연에서 시작한 방어전에도 제자가 합류한다
+	var st: Dictionary = _make_combat_state()
+	var result: Dictionary = EventManager.resolve_choice(
+		"night_bandits", 0, st["character"], st["sect"], st["relationships"], st["flags"]
+	)
+	_check(result["combat"].allies.size() == _Balance.DEFENSE_ALLY_COUNT, "기연 야습 도적: 제자 합류")
+
+	# 쓰러진 제자는 문파에서 빠진다
+	st = _make_combat_state()
+	var disciples_before: int = st["sect"].disciple_count
+	var outcome: Dictionary = CombatManager.apply_outcome(
+		setup, CombatManager.Outcome.VICTORY, st["character"], st["sect"], st["relationships"], st["flags"], 1
+	)
+	_check(
+		st["sect"].disciple_count == disciples_before - 1 and outcome["message"].contains("제자 1명 전사"),
+		"승리해도 쓰러진 제자 수만큼 문파 제자 감소"
+	)
+	_completed["_test_ally_setup"] = true
+
+
+func _test_ally_combat() -> void:
+	var gm: Node = root.get_node("GameManager")
+	gm.start_new_game("동료", "young_disciple")
+	gm.player_character.learn_martial_art(MartialArtLibrary.create_art("preset_earth_life_palm"))
+	var setup: CombatSetup = CombatManager.create_night_bandits(gm.player_character, gm.player_sect)
+	gm.start_combat(setup)
+	await process_frame
+	await process_frame
+	var c: Node = current_scene
+	var friends: Array = c._get_alive_friendlies()
+	_check(friends.size() == 3, "주인공과 제자 2명 배치")
+	_check(c._turn_manager.turn_order.size() == 6, "아군·적 모두 턴 순서에 포함")
+
+	# 아군 차례가 오면 그 유닛을 조종한다
+	var ally: CombatUnit = null
+	var guard: int = 10
+	while guard > 0:
+		guard -= 1
+		var controlled: CombatUnit = c._get_controlled()
+		if controlled and controlled.is_ally:
+			ally = controlled
+			break
+		c._on_end_turn_pressed()
+	_check(ally != null, "아군 차례에 아군을 조종")
+	if ally:
+		_check(c._art_buttons_owner == ally and c.art_list.get_child_count() == ally.get_martial_arts().size(), "무공 버튼이 조종 중인 유닛 기준")
+		var ap_before: int = ally.action_points
+		var target_tile: Vector2i = c._get_reachable(ally).keys()[0]
+		c._try_move(ally, target_tile)
+		_check(ally.grid_pos == target_tile and ally.action_points < ap_before, "아군 이동")
+
+	# 적은 가장 가까운 아군을 노린다
+	var player: CombatUnit = c._get_player()
+	var bandit: CombatUnit = c._get_alive_enemies()[0]
+	var disciple: CombatUnit = null
+	for unit in c._get_alive_friendlies():
+		if unit.is_ally:
+			disciple = unit
+	player.grid_pos = Vector2i(0, 0)
+	disciple.grid_pos = Vector2i(10, 4)
+	bandit.grid_pos = Vector2i(10, 5)
+	bandit.action_points = bandit.max_action_points
+	var disciple_hp: int = disciple.hp
+	var player_hp: int = player.hp
+	c._run_enemy_ai(bandit)
+	_check(disciple.hp < disciple_hp and player.hp == player_hp, "적은 가장 가까운 아군을 공격")
+
+	# 회복 무공으로 아군 치료
+	player.grid_pos = disciple.grid_pos + Vector2i(0, -1)
+	player.action_points = player.max_action_points
+	player.character.restore_internal_energy()
+	var hurt: int = disciple.hp
+	c._perform_art(player, disciple, player.get_martial_arts()[0])
+	_check(disciple.hp > hurt, "회복 무공으로 아군 치료")
+
+	# 제자가 쓰러져도 전투는 계속되고, 승리 후 문파 제자가 준다
+	disciple.take_damage(99999)
+	c._after_hit(disciple)
+	_check(not c._combat_over, "제자가 쓰러져도 전투 계속")
+	var disciples_before: int = gm.player_sect.disciple_count
+	for enemy in c._get_alive_enemies():
+		enemy.take_damage(99999)
+	c._check_victory()
+	_check(c._combat_over and gm.player_sect.disciple_count == disciples_before - 1, "승리 후 전사한 제자 1명 반영")
+	c._on_back_pressed()
+	await process_frame
+	_completed["_test_ally_combat"] = true
