@@ -24,6 +24,8 @@ extends RefCounted
 ##   turns_since_flag flag, op, value — 플래그가 켜진 뒤 지난 계절 수 비교 (켜진 적 없으면 거짓)
 ##   relationship_type target, bond_type — 해당 인물과의 관계 유형이 일치
 ##   role_history role, value       — 그 역할을 거쳐 왔는지 (value 생략 시 true)
+##   scenario   in: [시나리오 id]   — 현재 시나리오가 목록에 있음
+##   years_left op, value          — 시나리오 제한까지 남은 연수 (제한 없으면 9999)
 ##   op: ">=" "<=" ">" "<" "==" "!="
 ##
 ## ■ 효과 (type별 필드)
@@ -156,33 +158,37 @@ static func get_event(event_id: String) -> EventData:
 	return null
 
 
-## 기연 폴더를 다시 읽는다. 잘못된 파일은 경고를 남기고 건너뛴다.
-static func reload_definitions(dir_path: String = EVENTS_DIR) -> void:
+## 기연 폴더를 다시 읽는다. extra_dirs(시나리오 전용 기연 등)가 있으면 이어서 읽는다.
+## 잘못된 파일과 중복 id는 경고를 남기고 건너뛴다.
+static func reload_definitions(dir_path: String = EVENTS_DIR, extra_dirs: Array = []) -> void:
 	_definitions.clear()
 	_loaded = true
-	var dir := DirAccess.open(dir_path)
-	if dir == null:
-		push_warning("기연 폴더를 열 수 없습니다: %s" % dir_path)
-		return
-	var files: PackedStringArray = dir.get_files()
-	files.sort()
 	var seen_ids: Dictionary = {}
-	for file_name in files:
-		if not file_name.ends_with(".json"):
+	for i in extra_dirs.size() + 1:
+		var current_dir: String = dir_path if i == 0 else str(extra_dirs[i - 1])
+		if i > 0 and not DirAccess.dir_exists_absolute(current_dir):
 			continue
-		var path: String = dir_path.path_join(file_name)
-		var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
-		if not data is Dictionary:
-			push_warning("기연 JSON 파싱 실패: %s" % path)
+		if not DirAccess.dir_exists_absolute(current_dir):
+			push_warning("기연 폴더를 열 수 없습니다: %s" % current_dir)
 			continue
-		var errors: PackedStringArray = validate_event_dict(data)
-		if seen_ids.has(data.get("id")):
-			errors.append("중복된 id: %s" % data.get("id"))
-		if not errors.is_empty():
-			push_warning("기연 정의 오류 (%s): %s" % [path, "; ".join(errors)])
-			continue
-		seen_ids[data["id"]] = true
-		_definitions.append(_to_event_data(data))
+		var files: PackedStringArray = DirAccess.get_files_at(current_dir)
+		files.sort()
+		for file_name in files:
+			if not file_name.ends_with(".json"):
+				continue
+			var path: String = current_dir.path_join(file_name)
+			var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+			if not data is Dictionary:
+				push_warning("기연 JSON 파싱 실패: %s" % path)
+				continue
+			var errors: PackedStringArray = validate_event_dict(data)
+			if seen_ids.has(data.get("id")):
+				errors.append("중복된 id: %s" % data.get("id"))
+			if not errors.is_empty():
+				push_warning("기연 정의 오류 (%s): %s" % [path, "; ".join(errors)])
+				continue
+			seen_ids[data["id"]] = true
+			_definitions.append(_to_event_data(data))
 
 
 ## 기연 정의 하나를 검사해 오류 메시지 목록을 돌려준다. 비어 있으면 정상이다.
@@ -263,6 +269,11 @@ static func _validate_condition(condition: Variant, errors: PackedStringArray) -
 		"role_history":
 			if not CharacterData.Role.has(c.get("role", "")):
 				errors.append("알 수 없는 역할: %s" % c.get("role"))
+		"scenario":
+			if not c.get("in") is Array or (c.get("in") as Array).is_empty():
+				errors.append("scenario 조건에 in 목록 필요")
+		"years_left":
+			_validate_compare(c, errors)
 		_:
 			errors.append("알 수 없는 조건 type: %s" % c.get("type"))
 
@@ -313,7 +324,7 @@ static func _validate_effect(effect: Variant, errors: PackedStringArray) -> void
 				errors.append("알 수 없는 무공: %s" % e.get("art"))
 		"end_game":
 			var ending: String = str(e.get("ending", ""))
-			if not (EndingManager.ENDINGS.has(ending) or EndingManager.GAME_OVERS.has(ending)):
+			if not (EndingManager.has_ending(ending) or EndingManager.GAME_OVERS.has(ending)):
 				errors.append("알 수 없는 엔딩: %s" % ending)
 		_:
 			errors.append("알 수 없는 효과 type: %s" % e.get("type"))
@@ -408,6 +419,10 @@ static func _condition_met(
 			return rel != null and rel.bond_type == RelationshipData.BondType.get(c["bond_type"])
 		"role_history":
 			return role_history.has(c["role"]) == c.get("value", true)
+		"scenario":
+			return ScenarioManager.current_id in c["in"]
+		"years_left":
+			return _compare(ScenarioRules.years_left(current_year), c["op"], c["value"])
 	return false
 
 

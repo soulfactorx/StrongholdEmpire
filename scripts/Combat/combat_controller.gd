@@ -75,7 +75,8 @@ func _setup_combat() -> void:
 	for i in _setup.enemies.size():
 		var enemy_unit := CombatUnit.new(_setup.enemies[i], false)
 		enemy_unit.grid_pos = _setup.enemy_positions[i]
-		enemy_unit.scale_stats(_setup.enemy_hp_scale, _setup.enemy_damage_scale)
+		var strength: float = ScenarioRules.enemy_strength_scale()
+		enemy_unit.scale_stats(_setup.enemy_hp_scale * strength, _setup.enemy_damage_scale * strength)
 		_units.append(enemy_unit)
 
 	_turn_manager.setup(_units)

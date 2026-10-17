@@ -31,26 +31,43 @@ static func get_description(sect_id: String) -> String:
 	return get_sect_info(sect_id).get("description", "")
 
 
-static func create_player_sect() -> SectData:
+## is_player_sect인 문파 id (없으면 빈 문자열)
+static func get_player_sect_id() -> String:
 	_ensure_loaded()
 	for id in _sects:
 		if _sects[id].get("is_player_sect", false):
-			return create_sect(id)
-	push_warning("플레이어 문파 데이터가 없습니다. 기본값을 씁니다.")
-	return SectData.new()
+			return id
+	return ""
 
 
-## 플레이어 문파를 제외한 강호의 세력들
-static func create_rival_sects() -> Array[SectData]:
+## sect_id가 비어 있으면 is_player_sect인 문파를 쓴다. overrides로 수치를 덮어쓴다.
+static func create_player_sect(sect_id: String = "", overrides: Dictionary = {}) -> SectData:
+	_ensure_loaded()
+	if sect_id.is_empty():
+		sect_id = get_player_sect_id()
+	if not _sects.has(sect_id):
+		push_warning("플레이어 문파 데이터가 없습니다. 기본값을 씁니다.")
+		return SectData.new()
+	return create_sect(sect_id, overrides)
+
+
+## 강호의 세력들. ids가 비어 있으면 플레이어 문파를 뺀 전부.
+## overrides: { 문파 id: { 필드: 값 } }
+static func create_rival_sects(ids: Array = [], overrides: Dictionary = {}) -> Array[SectData]:
 	_ensure_loaded()
 	var result: Array[SectData] = []
-	for id in _sects:
-		if not _sects[id].get("is_player_sect", false):
-			result.append(create_sect(id))
+	var sect_ids: Array = ids.duplicate()
+	if sect_ids.is_empty():
+		for id in _sects:
+			if not _sects[id].get("is_player_sect", false):
+				sect_ids.append(id)
+	for id in sect_ids:
+		if _sects.has(id):
+			result.append(create_sect(id, overrides.get(id, {})))
 	return result
 
 
-static func create_sect(sect_id: String) -> SectData:
+static func create_sect(sect_id: String, overrides: Dictionary = {}) -> SectData:
 	var data: Dictionary = get_sect_info(sect_id)
 	var sect := SectData.new()
 	sect.id = sect_id
@@ -61,6 +78,9 @@ static func create_sect(sect_id: String) -> SectData:
 	for key in NUMERIC_FIELDS:
 		if data.has(key):
 			sect.set(key, int(data[key]))
+	for key in overrides:
+		if key in NUMERIC_FIELDS:
+			sect.set(key, int(overrides[key]))
 	return sect
 
 
@@ -81,10 +101,15 @@ static func validate_sect_dict(data: Dictionary) -> PackedStringArray:
 	return errors
 
 
-static func reload(dir_path: String = SECT_DIR) -> void:
+## extra_dirs(시나리오 전용 문파 등)가 있으면 이어서 읽는다.
+static func reload_data(dir_path: String = SECT_DIR, extra_dirs: Array = []) -> void:
 	_sects.clear()
 	_loaded = true
-	for data in ModLoader.load_json_dir(dir_path):
+	var entries: Array[Dictionary] = ModLoader.load_json_dir(dir_path)
+	for extra in extra_dirs:
+		if DirAccess.dir_exists_absolute(str(extra)):
+			entries.append_array(ModLoader.load_json_dir(str(extra)))
+	for data in entries:
 		var errors: PackedStringArray = validate_sect_dict(data)
 		if _sects.has(data.get("id")):
 			errors.append("중복된 id")
@@ -96,4 +121,4 @@ static func reload(dir_path: String = SECT_DIR) -> void:
 
 static func _ensure_loaded() -> void:
 	if not _loaded:
-		reload()
+		reload_data()

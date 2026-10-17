@@ -1,0 +1,24 @@
+{
+  "id": "winter_defended",
+  "title": "흑풍이 그치다",
+  "weight": 20,
+  "description": "마진이 무릎을 꿇었습니다. 흑풍채 무리는 산채를 버리고 흩어졌습니다.",
+  "conditions": [
+    {
+      "type": "flag",
+      "flag": "subjugated_heukpung"
+    }
+  ],
+  "choices": [
+    {
+      "label": "문파로 돌아간다",
+      "message": "혹독한 겨울이 끝났습니다.",
+      "effects": [
+        {
+          "type": "end_game",
+          "ending": "winter_defended"
+        }
+      ]
+    }
+  ]
+}

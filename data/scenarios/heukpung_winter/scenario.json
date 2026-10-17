@@ -1,0 +1,42 @@
+{
+  "id": "heukpung_winter",
+  "title": "흑풍의 겨울",
+  "order": 2,
+  "era_name": "흑풍",
+  "description": "세를 불린 흑풍채가 청운검파를 노립니다. 5년 안에 흑풍채를 굴복시켜 문파를 지키세요.\n성장이 빠르고 습격이 잦은 단기전입니다.",
+  "start_roles": [
+    "young_disciple",
+    "leader"
+  ],
+  "sects": [
+    "heukpung",
+    "namgung"
+  ],
+  "sect_overrides": {
+    "heukpung": {
+      "disciple_count": 22,
+      "max_disciples": 36,
+      "attitude": -80
+    },
+    "namgung": {
+      "attitude": 20
+    }
+  },
+  "parameters": {
+    "time_limit_years": 5,
+    "legacy_enabled": false,
+    "exp_scale": 1.5,
+    "income_scale": 0.9,
+    "world_growth_scale": 1.5,
+    "end_on_victory": true
+  },
+  "victory_endings": [
+    "winter_defended"
+  ],
+  "endings": {
+    "winter_defended": {
+      "title": "흑풍을 잠재우다",
+      "description": "흑풍채의 깃발이 내려지고, 관도에 다시 상단의 방울 소리가 울립니다.\n청운검파는 혹독한 겨울을 견뎌 냈습니다."
+    }
+  }
+}

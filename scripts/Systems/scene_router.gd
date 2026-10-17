@@ -18,6 +18,9 @@ static var _return_path: String = ""
 
 
 static func goto(tree: SceneTree, path: String) -> void:
+	# 트리를 떠난 노드가 부르면 무시한다.
+	if tree == null:
+		return
 	var current: Node = tree.current_scene
 	_return_path = current.scene_file_path if current else ""
 	tree.change_scene_to_file(path)

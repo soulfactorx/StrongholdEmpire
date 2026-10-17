@@ -21,7 +21,7 @@ static func create_art(art_id: String) -> MartialArtData:
 	return art.duplicate(true) if art else null
 
 
-static func reload() -> void:
+static func reload_data() -> void:
 	_arts.clear()
 	_loaded = true
 	for file_name in DirAccess.get_files_at(PRESET_DIR):
@@ -38,4 +38,4 @@ static func reload() -> void:
 
 static func _ensure_loaded() -> void:
 	if not _loaded:
-		reload()
+		reload_data()

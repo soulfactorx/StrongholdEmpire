@@ -1,0 +1,25 @@
+{
+  "id": "gangho_100",
+  "title": "강호백년",
+  "order": 3,
+  "era_name": "강호",
+  "description": "시간 제한 없이 대를 이어 문파를 키웁니다. 세력들이 더 빠르게 자라고,\n15년이 지나면 천마신교가 중원 침공을 시작합니다. 최대 5세대.",
+  "parameters": {
+    "time_limit_years": 0,
+    "legacy_enabled": true,
+    "max_generations": 5,
+    "world_growth_scale": 1.2
+  },
+  "victory_endings": [
+    "unify_righteous",
+    "new_sect_founder",
+    "wanderer_legend",
+    "cheonma_repelled"
+  ],
+  "endings": {
+    "cheonma_repelled": {
+      "title": "마교를 물리치다",
+      "description": "정파 연합의 선봉에서 천마신교를 몰아냈습니다.\n백 년이 지나도 강호는 이 싸움을 노래할 것입니다."
+    }
+  }
+}

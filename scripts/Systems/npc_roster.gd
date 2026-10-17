@@ -99,10 +99,15 @@ static func validate_npc_dict(data: Dictionary) -> PackedStringArray:
 	return errors
 
 
-static func reload(dir_path: String = NPC_DIR) -> void:
+## extra_dirs(시나리오 전용 인물 등)가 있으면 이어서 읽는다.
+static func reload_data(dir_path: String = NPC_DIR, extra_dirs: Array = []) -> void:
 	_npcs.clear()
 	_loaded = true
-	for data in ModLoader.load_json_dir(dir_path):
+	var entries: Array[Dictionary] = ModLoader.load_json_dir(dir_path)
+	for extra in extra_dirs:
+		if DirAccess.dir_exists_absolute(str(extra)):
+			entries.append_array(ModLoader.load_json_dir(str(extra)))
+	for data in entries:
 		var errors: PackedStringArray = validate_npc_dict(data)
 		if _npcs.has(data.get("id")):
 			errors.append("중복된 id")
@@ -114,4 +119,4 @@ static func reload(dir_path: String = NPC_DIR) -> void:
 
 static func _ensure_loaded() -> void:
 	if not _loaded:
-		reload()
+		reload_data()

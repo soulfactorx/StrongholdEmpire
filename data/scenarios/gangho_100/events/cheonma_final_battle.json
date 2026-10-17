@@ -1,0 +1,54 @@
+{
+  "id": "cheonma_final_battle",
+  "title": "마교와의 결전",
+  "weight": 10,
+  "can_repeat": true,
+  "description": "정파 연합과 천마신교가 대치했습니다. 결전의 날이 밝았습니다.",
+  "conditions": [
+    {
+      "type": "turns_since_flag",
+      "flag": "cheonma_invasion",
+      "op": ">=",
+      "value": 4
+    },
+    {
+      "type": "flag",
+      "flag": "righteous_alliance"
+    }
+  ],
+  "choices": [
+    {
+      "label": "선봉에 선다",
+      "message": "결전에서 밀렸습니다. 제자 -5, 명성 -10. 다시 힘을 모아야 합니다.",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "disciple_count",
+          "add": -5
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": -10
+        }
+      ],
+      "branches": [
+        {
+          "chance": 60,
+          "message": "위무량이 쓰러지고 마교의 깃발이 꺾였습니다!",
+          "effects": [
+            {
+              "type": "end_game",
+              "ending": "cheonma_repelled"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "때를 기다린다",
+      "message": "연합군을 정비하며 다음 기회를 엿봅니다.",
+      "effects": []
+    }
+  ]
+}

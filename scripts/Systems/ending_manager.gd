@@ -41,7 +41,69 @@ const GAME_OVERS: Dictionary = {
 		"title": "명성 실추",
 		"description": "문파의 이름이 땅에 떨어졌습니다.\n더 이상 누구도 문하에 들어오려 하지 않습니다.",
 	},
+	## 시나리오 제한 연수가 끝났을 때. 실패가 아니라 시대의 마무리다.
+	"era_end": {
+		"title": "시대의 끝",
+		"description": "정해진 시대가 저물었습니다. 강호는 당신이 남긴 자취를 기억할 것입니다.",
+		"prefix": "시대 종결",
+	},
+	## 승리 엔딩으로 시나리오를 마쳤을 때 (end_on_victory)
+	"scenario_complete": {
+		"title": "시나리오 완수",
+		"description": "이 시대에 주어진 사명을 이루었습니다.",
+		"prefix": "승리",
+	},
 }
+
+## 현재 시나리오가 데이터로 더한 엔딩 (ScenarioManager가 등록)
+static var scenario_endings: Dictionary = {}
+
+
+static func register_scenario_endings(endings: Dictionary) -> void:
+	scenario_endings = endings.duplicate(true)
+
+
+static func has_ending(ending_id: String) -> bool:
+	return ENDINGS.has(ending_id) or scenario_endings.has(ending_id)
+
+
+## 그 판의 평가. 점수와 등급, 항목별 내역을 돌려준다.
+static func evaluate(
+	character: CharacterData,
+	sect: SectData,
+	world_sects: Array[SectData],
+	generation: int,
+	ending_id: String,
+	victory: bool
+) -> Dictionary:
+	var subjugated: int = 0
+	for world_sect in world_sects:
+		if world_sect.subjugated:
+			subjugated += 1
+	var parts: Array = [
+		["문파 명성", sect.reputation],
+		["주인공 경지 (Lv.%d)" % character.level, character.level * _Balance.SCORE_PER_LEVEL],
+		["창조·습득 무공 %d개" % character.martial_arts.size(), character.martial_arts.size() * _Balance.SCORE_PER_ART],
+		["굴복시킨 세력 %d곳" % subjugated, subjugated * _Balance.SCORE_PER_SUBJUGATION],
+		["제자 %d명" % sect.disciple_count, sect.disciple_count * _Balance.SCORE_PER_DISCIPLE],
+		["%d세대에 걸친 이야기" % generation, (generation - 1) * _Balance.SCORE_PER_GENERATION],
+	]
+	if not ending_id.is_empty():
+		parts.append(["엔딩 「%s」" % get_ending(ending_id)["title"], _Balance.SCORE_ENDING])
+	if victory:
+		parts.append(["시나리오 승리", _Balance.SCORE_VICTORY])
+
+	var score: int = 0
+	var lines: PackedStringArray = []
+	for part in parts:
+		score += int(part[1])
+		lines.append("%s: %+d" % [part[0], part[1]])
+	var grade: String = "이름 없는 문파"
+	for entry in _Balance.SCORE_GRADES:
+		if score >= entry[0]:
+			grade = entry[1]
+			break
+	return {"score": score, "grade": grade, "lines": lines}
 
 
 static func check_game_over(sect: SectData) -> String:
@@ -55,9 +117,10 @@ static func check_game_over(sect: SectData) -> String:
 
 
 static func get_game_over(game_over_id: String) -> Dictionary:
+	var info: Dictionary = {"title": "게임 오버", "description": "이야기가 끝났습니다.", "prefix": "게임 오버"}
 	if GAME_OVERS.has(game_over_id):
-		return GAME_OVERS[game_over_id]
-	return {"title": "게임 오버", "description": "이야기가 끝났습니다."}
+		info.merge(GAME_OVERS[game_over_id], true)
+	return info
 
 
 static func check_endings(
@@ -103,4 +166,6 @@ static func check_endings(
 static func get_ending(ending_id: String) -> Dictionary:
 	if ENDINGS.has(ending_id):
 		return ENDINGS[ending_id]
+	if scenario_endings.has(ending_id):
+		return scenario_endings[ending_id]
 	return {"title": "미완의 서사", "description": "이야기가 아직 끝나지 않았습니다."}

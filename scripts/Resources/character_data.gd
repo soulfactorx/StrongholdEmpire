@@ -75,7 +75,8 @@ func get_next_level_experience() -> int:
 func gain_experience(amount: int) -> int:
 	if amount <= 0:
 		return 0
-	experience += amount
+	# 시나리오의 성장 속도 배율
+	experience += maxi(1, roundi(amount * ScenarioRules.exp_scale()))
 	var levels_gained: int = 0
 	while level < _Balance.MAX_LEVEL and experience >= get_next_level_experience():
 		level += 1

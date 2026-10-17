@@ -28,6 +28,22 @@ const SUBJUGATE_REPUTATION_BONUS := 15
 const SUBJUGATE_GOLD_BONUS := 100
 const WORLD_SECT_YEARLY_GROWTH := 2
 
+# 판 평가 (시대 종결·엔딩 화면)
+const SCORE_PER_LEVEL := 10
+const SCORE_PER_ART := 15
+const SCORE_PER_SUBJUGATION := 60
+const SCORE_PER_DISCIPLE := 3
+const SCORE_PER_GENERATION := 30
+const SCORE_ENDING := 100
+const SCORE_VICTORY := 150
+## 점수 이상이면 해당 등급 (높은 순)
+const SCORE_GRADES: Array = [
+	[500, "강호제패"],
+	[350, "일대종사"],
+	[220, "명문의 기틀"],
+	[120, "이름 있는 문파"],
+]
+
 # 게임오버
 const SHORTAGE_GAME_OVER_SEASONS := 3
 

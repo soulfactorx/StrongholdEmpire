@@ -26,22 +26,38 @@ const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
 
 func _ready() -> void:
 	_UiTheme.apply_to_control(self)
-	EventBus.turn_advanced.connect(_on_turn_advanced)
-	EventBus.resources_changed.connect(_on_resources_changed)
-	EventBus.character_updated.connect(_on_character_updated)
-	EventBus.relationships_changed.connect(_on_relationships_changed)
-	EventBus.action_message.connect(_on_action_message)
-	EventBus.event_triggered.connect(_on_event_triggered)
-	EventBus.role_transitions_available.connect(_on_role_transitions_available)
-	EventBus.role_changed.connect(_on_role_changed)
-	EventBus.ending_reached.connect(_on_ending_reached)
-	EventBus.game_over.connect(_on_game_over)
+	_connect_bus(EventBus.turn_advanced, _on_turn_advanced)
+	_connect_bus(EventBus.resources_changed, _on_resources_changed)
+	_connect_bus(EventBus.character_updated, _on_character_updated)
+	_connect_bus(EventBus.relationships_changed, _on_relationships_changed)
+	_connect_bus(EventBus.action_message, _on_action_message)
+	_connect_bus(EventBus.event_triggered, _on_event_triggered)
+	_connect_bus(EventBus.role_transitions_available, _on_role_transitions_available)
+	_connect_bus(EventBus.role_changed, _on_role_changed)
+	_connect_bus(EventBus.ending_reached, _on_ending_reached)
+	_connect_bus(EventBus.game_over, _on_game_over)
 	if GameManager.is_game_over():
 		_on_game_over.call_deferred(GameManager.game_over_id)
 		return
 	_refresh_all()
 	if not GameManager.pending_event.is_empty():
 		event_popup.show_event(GameManager.pending_event)
+
+
+## 전역 EventBus 연결. 화면이 트리를 떠나면 모두 끊어, 떠난 화면이 신호에 반응하지 않게 한다.
+var _bus_connections: Array = []
+
+
+func _connect_bus(bus_signal: Signal, handler: Callable) -> void:
+	bus_signal.connect(handler)
+	_bus_connections.append([bus_signal, handler])
+
+
+func _exit_tree() -> void:
+	for connection in _bus_connections:
+		if connection[0].is_connected(connection[1]):
+			connection[0].disconnect(connection[1])
+	_bus_connections.clear()
 
 
 func _refresh_all() -> void:
@@ -52,9 +68,12 @@ func _refresh_all() -> void:
 
 
 func _update_time_display() -> void:
-	year_label.text = "천하대란 %d년" % GameManager.current_year
+	var year_text: String = "%s %d년" % [ScenarioManager.get_era_name(), GameManager.current_year]
+	if ScenarioRules.has_time_limit():
+		year_text += " (남은 %d년)" % ScenarioRules.years_left(GameManager.current_year)
+	year_label.text = year_text
 	season_label.text = GameManager.get_current_season()
-	generation_label.text = "제%d세대" % GameManager.generation
+	generation_label.text = "「%s」 제%d세대" % [ScenarioManager.current.get("title", ""), GameManager.generation]
 
 
 func _update_sect_display(sect: SectData) -> void:

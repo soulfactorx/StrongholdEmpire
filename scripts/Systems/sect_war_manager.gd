@@ -59,7 +59,7 @@ static func simulate_round(
 ## 적 문파의 전력. 문주 NPC의 능력치와 문파 규모로 계산한다.
 static func get_sect_power(sect: SectData) -> int:
 	var leader: CharacterData = NpcRoster.create_character(sect.leader_id)
-	return get_military_power(sect, leader)
+	return roundi(get_military_power(sect, leader) * ScenarioRules.enemy_strength_scale())
 
 
 static func resolve_battle(
@@ -134,7 +134,8 @@ static func grow_world_sects(sects: Array[SectData]) -> void:
 	for sect in sects:
 		if sect.subjugated:
 			continue
-		sect.disciple_count = mini(sect.max_disciples, sect.disciple_count + _Balance.WORLD_SECT_YEARLY_GROWTH)
+		var growth: int = roundi(_Balance.WORLD_SECT_YEARLY_GROWTH * ScenarioRules.world_growth_scale())
+		sect.disciple_count = mini(sect.max_disciples, sect.disciple_count + growth)
 		sect.reputation += 1
 
 

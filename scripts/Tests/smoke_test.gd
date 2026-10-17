@@ -99,6 +99,14 @@ func _run_runtime_tests() -> void:
 	_check(_completed.has("_test_ally_combat"), "_test_ally_combat 끝까지 실행")
 	_test_event_progress_tracking()
 	_check(_completed.has("_test_event_progress_tracking"), "_test_event_progress_tracking 끝까지 실행")
+	_test_scenario_data()
+	_check(_completed.has("_test_scenario_data"), "_test_scenario_data 끝까지 실행")
+	_test_scenario_parameters()
+	_check(_completed.has("_test_scenario_parameters"), "_test_scenario_parameters 끝까지 실행")
+	_test_scenario_flow()
+	_check(_completed.has("_test_scenario_flow"), "_test_scenario_flow 끝까지 실행")
+	await _test_new_game_screen_scenarios()
+	_check(_completed.has("_test_new_game_screen_scenarios"), "_test_new_game_screen_scenarios 끝까지 실행")
 
 	print("스모크 테스트: %d개 검사, %d개 실패" % [_checks, _failures])
 	quit(1 if _failures > 0 else 0)
@@ -1440,3 +1448,205 @@ func _test_event_progress_tracking() -> void:
 	EventManager.reload_definitions()
 	gm.start_new_game("정리", "young_disciple")
 	_completed["_test_event_progress_tracking"] = true
+
+
+func _test_scenario_data() -> void:
+	var scenarios: Array[Dictionary] = ScenarioManager.list_scenarios()
+	var dir_count: int = DirAccess.get_directories_at(ScenarioManager.SCENARIO_DIR).size()
+	_check(scenarios.size() == dir_count and dir_count >= 3, "시나리오 %d개 모두 검증 통과" % dir_count)
+	_check(scenarios[0]["id"] == ScenarioManager.DEFAULT_ID, "기본 시나리오가 목록 첫 번째")
+
+	var base: Dictionary = {"id": "x", "title": "x", "description": "x"}
+	_check(ScenarioManager.validate_scenario_dict(base).is_empty(), "최소 시나리오 정의 통과")
+	var bad_cases: Dictionary = {
+		"알 수 없는 파라미터": {"parameters": {"speed": 2}},
+		"범위 밖 파라미터": {"parameters": {"event_rate": 1.5}},
+		"bool 파라미터에 숫자": {"parameters": {"legacy_enabled": 1}},
+		"알 수 없는 시작 역할": {"start_roles": ["emperor"]},
+		"알 수 없는 승리 엔딩": {"victory_endings": ["no_ending"]},
+		"알 수 없는 문파": {"sects": ["shaolin"]},
+		"제목 없는 전용 엔딩": {"endings": {"e": {"description": "x"}}},
+	}
+	for label in bad_cases:
+		var data: Dictionary = base.duplicate(true)
+		data.merge(bad_cases[label], true)
+		_check(not ScenarioManager.validate_scenario_dict(data).is_empty(), "시나리오 오류 검출: %s" % label)
+
+	# 흑풍의 겨울: 전용 세력 구성·기연·엔딩·파라미터
+	ScenarioManager.activate("heukpung_winter")
+	var rivals: Array[SectData] = ScenarioManager.create_rival_sects()
+	var rival_ids: Array = rivals.map(func(x: SectData) -> String: return x.id)
+	_check(rival_ids == ["heukpung", "namgung"], "시나리오 등장 세력만 생성 %s" % [rival_ids])
+	_check(rivals[0].disciple_count == 22 and rivals[0].attitude == -80, "시나리오 세력 수치 덮어쓰기")
+	_check(EventManager.get_event("heukpung_raid") != null and EventManager.get_event("night_bandits") != null, "공용 기연 + 시나리오 전용 기연 로드")
+	_check(EndingManager.has_ending("winter_defended"), "시나리오 전용 엔딩 등록")
+	_check(
+		ScenarioRules.time_limit_years() == 5 and not ScenarioRules.legacy_enabled()
+		and is_equal_approx(ScenarioRules.exp_scale(), 1.5) and ScenarioRules.end_on_victory(),
+		"시나리오 파라미터 적용"
+	)
+	_check(ScenarioManager.get_start_role_ids() == ["young_disciple", "leader"], "시나리오 시작 역할 제한")
+
+	ScenarioManager.activate(ScenarioManager.DEFAULT_ID)
+	_check(EventManager.get_event("heukpung_raid") == null and not EndingManager.has_ending("winter_defended"), "시나리오를 바꾸면 전용 데이터 해제")
+	_check(ScenarioRules.time_limit_years() == 20 and ScenarioRules.legacy_enabled(), "기본 시나리오 파라미터")
+	var errors: PackedStringArray = ScenarioManager.activate("no_such_scenario")
+	_check(not errors.is_empty() and ScenarioManager.current_id == ScenarioManager.DEFAULT_ID, "없는 시나리오는 기본 시나리오로")
+	_check(ScenarioManager.describe_length(ScenarioManager.get_scenario("gangho_100")) == "제한 없음 · 최대 5세대", "시나리오 길이 요약")
+	_completed["_test_scenario_data"] = true
+
+
+func _test_scenario_parameters() -> void:
+	ScenarioManager.activate(ScenarioManager.DEFAULT_ID, {"exp_scale": 1.5, "upkeep_scale": 0.5, "world_growth_scale": 1.5})
+	var character := CharacterData.new()
+	character.gain_experience(10)
+	_check(character.experience == 15, "경험치 배율 1.5")
+	var sect := SectData.new()
+	sect.disciple_count = 10
+	_check(sect.get_food_upkeep() == 10, "유지비 배율 0.5")
+	var world: Array[SectData] = SectRegistry.create_rival_sects(["namgung"])
+	var before: int = world[0].disciple_count
+	SectWarManager.grow_world_sects(world)
+	_check(world[0].disciple_count == before + 3, "세력 성장 배율 1.5 (2 → 3)")
+	_check(ScenarioManager.user_overrides.has("exp_scale"), "세부 설정 값 보관")
+
+	var bad: PackedStringArray = ScenarioManager.activate(ScenarioManager.DEFAULT_ID, {"exp_scale": 99})
+	_check(not bad.is_empty() and is_equal_approx(ScenarioRules.exp_scale(), 1.0) and ScenarioManager.user_overrides.is_empty(), "잘못된 세부 설정은 무시")
+
+	ScenarioRules.reset()
+	var normal_power: int = SectWarManager.get_sect_power(world[0])
+	ScenarioRules.apply({"enemy_strength_scale": 1.25})
+	_check(SectWarManager.get_sect_power(world[0]) == roundi(normal_power * 1.25), "적 강도 배율이 세력 전력에 반영")
+	ScenarioRules.apply({"time_limit_years": 10})
+	_check(ScenarioRules.years_left(7) == 3 and ScenarioRules.has_time_limit(), "남은 연수 계산")
+	ScenarioRules.apply({"time_limit_years": 0})
+	_check(ScenarioRules.years_left(7) == 9999, "제한 없음이면 남은 연수 무한")
+
+	# 기연 조건: scenario, years_left
+	ScenarioManager.activate("heukpung_winter")
+	EventManager.current_year = 3
+	var st: Dictionary = _make_combat_state()
+	_check(_condition_holds({"type": "scenario", "in": ["heukpung_winter"]}, st), "scenario 조건 충족")
+	_check(not _condition_holds({"type": "scenario", "in": ["cheonha"]}, st), "scenario 조건 불충족")
+	_check(_condition_holds({"type": "years_left", "op": "==", "value": 2}, st), "years_left 조건 (5년 중 3년차 → 2)")
+	_check(not EventManager.validate_event_dict(_event_with({"conditions": [{"type": "scenario", "in": []}]})).is_empty(), "빈 scenario 조건 검출")
+	ScenarioManager.activate(ScenarioManager.DEFAULT_ID)
+	_completed["_test_scenario_parameters"] = true
+
+
+func _test_scenario_flow() -> void:
+	var gm: Node = root.get_node("GameManager")
+
+	# 기연 빈도 0이면 기연이 일어나지 않는다
+	gm.start_new_game("고요", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
+	for i in 8:
+		gm.advance_turn()
+		gm.pending_combat = null
+	_check(gm.triggered_event_ids.is_empty() and gm.pending_event.is_empty(), "기연 빈도 0: 기연 없음")
+
+	# 수입 배율
+	gm.start_new_game("부유", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
+	var gold_before: int = gm.player_sect.gold
+	var upkeep: int = gm.player_sect.get_gold_upkeep()
+	gm.advance_turn()
+	var normal_income: int = gm.player_sect.gold - gold_before + upkeep
+	gm.start_new_game("부유", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0, "income_scale": 1.25})
+	gold_before = gm.player_sect.gold
+	gm.advance_turn()
+	_check(gm.player_sect.gold - gold_before + upkeep == roundi(normal_income * 1.25), "수입 배율 1.25")
+
+	# 흑풍의 겨울: 제한 연수 5년이 끝나면 시대 종결
+	gm.start_new_game("겨울", "leader", "heukpung_winter", {"event_rate": 0.0})
+	_check(gm.world_sects.size() == 2 and gm.player_sect.id == "qingyun", "시나리오로 새 게임: 세력 2개")
+	gm.player_sect.gold = 99999
+	gm.player_sect.food = 99999
+	var guard: int = 0
+	while not gm.is_game_over() and guard < 40:
+		guard += 1
+		gm.advance_turn()
+		gm.pending_event.clear()
+		gm.pending_combat = null
+	_check(gm.game_over_id == "era_end" and guard == 20, "5년(20계절) 뒤 시대 종결 (%d계절)" % guard)
+	_check(gm.current_year == 5 and gm.get_current_season() == "겨울", "마지막 해 겨울에서 멈춤")
+	_check(gm.get_date_text() == "흑풍 5년 겨울", "시나리오 연호 표시")
+	var eval: Dictionary = gm.get_evaluation()
+	_check(eval["score"] > 0 and not eval["grade"].is_empty() and eval["lines"].size() >= 6, "시대 종결 평가")
+
+	# 세대 전승 제한
+	gm.start_new_game("겨울", "leader", "heukpung_winter")
+	gm.player_character.age = 60
+	_check(not gm.start_legacy_succession()["success"], "세대 전승 없는 시나리오")
+	gm.start_new_game("백년", "leader", "gangho_100")
+	gm.player_character.age = 60
+	gm.generation = 5
+	_check(not gm.start_legacy_succession()["success"], "최대 세대 도달 시 전승 불가")
+	gm.generation = 1
+	_check(gm.start_legacy_succession()["success"], "최대 세대 전에는 전승 가능")
+
+	# 승리 엔딩으로 시나리오 완수
+	gm.start_new_game("토벌", "leader", "heukpung_winter")
+	EventManager.set_flag(gm.story_flags, "subjugated_heukpung")
+	gm.pending_event = {"id": "winter_defended"}
+	gm.resolve_pending_event(0)
+	_check(gm.current_ending_id == "winter_defended" and gm.game_over_id == "scenario_complete", "승리 엔딩 도달 시 시나리오 완수")
+	_check(gm.get_evaluation()["lines"].has("시나리오 승리: +%d" % _Balance.SCORE_VICTORY), "평가에 시나리오 승리 반영")
+
+	# 저장/불러오기
+	gm.start_new_game("저장", "leader", "heukpung_winter", {"time_limit_years": 10})
+	var state: Dictionary = JSON.parse_string(JSON.stringify({
+		"scenario_id": ScenarioManager.current_id,
+		"scenario_overrides": ScenarioManager.user_overrides,
+		"character": _SaveManager.serialize_character(gm.player_character),
+		"sect": _SaveManager.serialize_sect(gm.player_sect),
+		"world_sects": _SaveManager.serialize_sects(gm.world_sects),
+	}))
+	gm.start_new_game("다른 판", "young_disciple")
+	gm._apply_save_data(state)
+	_check(
+		ScenarioManager.current_id == "heukpung_winter" and ScenarioRules.time_limit_years() == 10
+		and EventManager.get_event("heukpung_raid") != null,
+		"시나리오·세부 설정 저장/복원"
+	)
+	state.erase("scenario_id")
+	state.erase("scenario_overrides")
+	gm._apply_save_data(state)
+	_check(ScenarioManager.current_id == ScenarioManager.DEFAULT_ID, "구버전 세이브는 기본 시나리오")
+
+	gm.start_new_game("정리", "young_disciple")
+	_completed["_test_scenario_flow"] = true
+
+
+func _test_new_game_screen_scenarios() -> void:
+	SceneRouter.goto(self, SceneRouter.NEW_GAME)
+	await process_frame
+	await process_frame
+	var screen: Node = current_scene
+	_check(screen.scenario_list.item_count == ScenarioManager.list_scenarios().size(), "새 게임 화면: 시나리오 목록")
+	var winter_index: int = ScenarioManager.list_scenarios().map(func(x): return x["id"]).find("heukpung_winter")
+	screen.scenario_list.select(winter_index)
+	screen._on_scenario_selected(winter_index)
+	_check(screen.role_list.item_count == 2, "새 게임 화면: 시나리오별 시작 역할")
+	_check(ScenarioManager.current_id == ScenarioManager.DEFAULT_ID, "시나리오를 둘러봐도 현재 게임은 그대로")
+	var option: OptionButton = screen._setting_options["time_limit_years"]
+	option.select(2)  # 10년
+	option.item_selected.emit(2)
+	_check(screen.get_overrides() == {"time_limit_years": 10}, "세부 설정 값 수집")
+	_check(screen.scenario_length_label.text.contains("10년"), "길이 요약에 세부 설정 반영")
+	screen._on_start_pressed()
+	await process_frame
+	await process_frame
+	_check(
+		ScenarioManager.current_id == "heukpung_winter" and ScenarioRules.time_limit_years() == 10
+		and current_scene.scene_file_path == SceneRouter.HUB,
+		"새 게임 화면에서 시나리오로 시작"
+	)
+	_check(current_scene.year_label.text.contains("흑풍 1년") and current_scene.year_label.text.contains("남은 9년"), "경영 화면에 연호와 남은 연수")
+	# 경영 화면을 떠나면 전역 신호 연결이 끊긴다 (떠난 화면이 게임오버 등에 반응하지 않음)
+	var bus: Node = root.get_node("EventBus")
+	_check(bus.game_over.get_connections().size() == 1, "경영 화면이 게임오버 신호에 연결됨")
+	SceneRouter.goto(self, SceneRouter.MAIN_MENU)
+	await process_frame
+	await process_frame
+	_check(bus.game_over.get_connections().is_empty() and bus.turn_advanced.get_connections().is_empty(), "경영 화면을 떠나면 신호 연결 해제")
+	root.get_node("GameManager").start_new_game("정리", "young_disciple")
+	_completed["_test_new_game_screen_scenarios"] = true

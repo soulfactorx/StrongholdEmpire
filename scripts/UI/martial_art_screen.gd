@@ -27,8 +27,24 @@ func _ready() -> void:
 	_setup_options()
 	_load_presets()
 	_refresh_display()
-	EventBus.martial_art_learned.connect(func(_art): _refresh_display())
-	EventBus.character_updated.connect(func(_c): _refresh_display())
+	EventBus.martial_art_learned.connect(_on_martial_art_learned)
+	EventBus.character_updated.connect(_on_character_updated)
+
+
+## 전역 EventBus 연결은 화면이 트리를 떠날 때 끊는다.
+func _exit_tree() -> void:
+	if EventBus.martial_art_learned.is_connected(_on_martial_art_learned):
+		EventBus.martial_art_learned.disconnect(_on_martial_art_learned)
+	if EventBus.character_updated.is_connected(_on_character_updated):
+		EventBus.character_updated.disconnect(_on_character_updated)
+
+
+func _on_martial_art_learned(_art: MartialArtData) -> void:
+	_refresh_display()
+
+
+func _on_character_updated(_character: CharacterData) -> void:
+	_refresh_display()
 
 
 func _setup_options() -> void:

@@ -49,13 +49,15 @@ func spend_resources(gold_cost: int, food_cost: int = 0) -> bool:
 	return true
 
 
+## 계절 식량 유지비 (시나리오 유지비 배율 반영)
 func get_food_upkeep() -> int:
-	return disciple_count * _Balance.FOOD_PER_DISCIPLE
+	return roundi(disciple_count * _Balance.FOOD_PER_DISCIPLE * ScenarioRules.upkeep_scale())
 
 
 func get_gold_upkeep() -> int:
 	var facility_steps: int = (library_level - 1) + (training_ground_level - 1) + (treasury_level - 1)
-	return disciple_count * _Balance.GOLD_PER_DISCIPLE + facility_steps * _Balance.FACILITY_UPKEEP_GOLD
+	var base: int = disciple_count * _Balance.GOLD_PER_DISCIPLE + facility_steps * _Balance.FACILITY_UPKEEP_GOLD
+	return roundi(base * ScenarioRules.upkeep_scale())
 
 
 func get_alignment_name() -> String:
