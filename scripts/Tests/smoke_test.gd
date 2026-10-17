@@ -59,6 +59,7 @@ const RUNTIME_SEQUENCE: Array = [
 	["combat", "_test_combat_effects"],
 	["combat", "_test_ally_combat"],
 	["combat", "_test_basic_attack_limit"],
+	["combat", "_test_grid_cursor"],
 	["events", "_test_event_progress_tracking"],
 	["scenario", "_test_scenario_data"],
 	["scenario", "_test_scenario_parameters"],

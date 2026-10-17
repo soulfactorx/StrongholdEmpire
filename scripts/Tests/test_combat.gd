@@ -771,3 +771,85 @@ func _test_basic_attack_limit() -> void:
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
 	await process_frame
 	_completed["_test_basic_attack_limit"] = true
+
+
+## 격자 커서: 방향키·게임패드로 칸을 고르고 실행한다.
+func _test_grid_cursor() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_new_quiet_game(gm, "young_disciple")
+	gm.pending_combat = CombatManager.create_sparring(gm.player_character)
+	SceneRouter.goto(tree, SceneRouter.COMBAT)
+	await process_frame
+	await process_frame
+	var c: Node = current_scene
+	var player: CombatUnit = c._get_player()
+	var enemy: CombatUnit = c._get_alive_enemies()[0]
+	_check(not c.cursor_visible, "커서는 처음에 숨어 있음")
+	c.move_cursor(Vector2i.RIGHT)
+	_check(c.cursor_visible and c.cursor == player.grid_pos, "처음 방향 입력: 조종 중인 유닛 자리에 커서")
+	c.move_cursor(Vector2i.RIGHT)
+	_check(c.cursor == player.grid_pos + Vector2i.RIGHT, "방향 입력으로 한 칸 이동")
+	_check(c.get_node("CursorLayer").get_child_count() > 0, "커서 테두리 표시")
+
+	# 이동: 커서 칸으로
+	var target: Vector2i = c.cursor
+	_check(c._get_reachable(player).has(target), "(준비) 커서 칸은 이동 가능")
+	c._on_mode_move_pressed()
+	c.confirm_cursor()
+	_check(player.grid_pos == target, "Enter·A: 커서 칸으로 이동")
+
+	# 가장자리에서는 멈춘다
+	c.cursor = Vector2i(c.GRID_WIDTH - 1, 0)
+	c.move_cursor(Vector2i.RIGHT)
+	c.move_cursor(Vector2i.UP)
+	_check(c.cursor == Vector2i(c.GRID_WIDTH - 1, 0), "격자 밖으로 나가지 않음")
+
+	# 게임패드 십자키와 스틱 (스틱은 기울인 순간 한 칸)
+	c.cursor = Vector2i(5, 5)
+	var dpad := InputEventJoypadButton.new()
+	dpad.button_index = JOY_BUTTON_DPAD_LEFT
+	dpad.pressed = true
+	_check(c._handle_gamepad(dpad) and c.cursor == Vector2i(4, 5), "십자키로 커서 이동")
+	var stick := InputEventJoypadMotion.new()
+	stick.axis = JOY_AXIS_LEFT_Y
+	stick.axis_value = 1.0
+	c._handle_gamepad(stick)
+	c._handle_gamepad(stick)
+	_check(c.cursor == Vector2i(4, 6), "스틱은 기울인 채로 있으면 한 칸만")
+	stick.axis_value = 0.0
+	c._handle_gamepad(stick)
+	stick.axis_value = 1.0
+	c._handle_gamepad(stick)
+	_check(c.cursor == Vector2i(4, 7), "스틱을 놓았다 다시 기울이면 다음 칸")
+
+	# 무공 고르기 (LB·RB): 무공 → … → 기본 공격 순환
+	var art: MartialArtData = MartialArtLibrary.create_art("preset_soul_chase_sword")
+	gm.player_character.learn_martial_art(art)
+	c.cycle_art(1)
+	_check(c._action_mode == c.ActionMode.MARTIAL_ART and c._selected_art == art, "RB: 첫 무공 고르기")
+	c.cycle_art(1)
+	_check(c._action_mode == c.ActionMode.ATTACK, "RB: 마지막 무공 다음은 기본 공격")
+	c.cycle_art(-1)
+	_check(c._selected_art == art and c._action_mode == c.ActionMode.MARTIAL_ART, "LB: 거꾸로 고르기")
+
+	# 공격: 커서를 적에게 두고 실행
+	enemy.grid_pos = player.grid_pos + Vector2i.RIGHT
+	enemy.max_hp = 9999
+	enemy.hp = 9999
+	player.restore_action_points()
+	var attack := InputEventJoypadButton.new()
+	attack.button_index = JOY_BUTTON_X
+	attack.pressed = true
+	c._handle_gamepad(attack)
+	c.cursor = enemy.grid_pos
+	var confirm := InputEventJoypadButton.new()
+	confirm.button_index = JOY_BUTTON_A
+	confirm.pressed = true
+	c._handle_gamepad(confirm)
+	_check(enemy.hp < 9999, "X로 공격 모드, A로 커서의 적 공격")
+	_check(c._describe_tile(enemy.grid_pos).contains(enemy.display_name), "커서 칸 설명에 유닛 이름")
+
+	gm.pending_combat = null
+	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
+	await process_frame
+	_completed["_test_grid_cursor"] = true

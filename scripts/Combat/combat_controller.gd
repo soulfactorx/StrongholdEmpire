@@ -53,6 +53,12 @@ var _enemy_acting: bool = false
 const _ConfirmPopup = preload("res://scripts/UI/confirm_popup.gd")
 ## 후퇴 확인 대화상자 (처음 쓸 때 만든다)
 var confirm_popup: Control
+## 격자 커서 (키보드 방향키·게임패드로 칸을 고른다). 터치·마우스를 쓰면 숨긴다.
+var cursor: Vector2i = Vector2i.ZERO
+var cursor_visible: bool = false
+var _cursor_layer: Node2D
+## 왼쪽 스틱을 한 번 기울일 때 한 칸만 움직이도록 직전 방향을 기억한다
+var _stick_dir: Vector2i = Vector2i.ZERO
 
 
 func _ready() -> void:
@@ -207,6 +213,7 @@ func _get_reachable(unit: CombatUnit) -> Dictionary:
 func _refresh_all() -> void:
 	_draw_grid()
 	_refresh_units_visual()
+	_draw_cursor()
 	_update_hud()
 
 
@@ -323,6 +330,30 @@ func _make_token(unit: CombatUnit, controlled: bool) -> Control:
 	return holder
 
 
+## 격자 커서: 금빛 테두리. 커서를 쓰는 동안에만 보인다.
+func _draw_cursor() -> void:
+	if _cursor_layer == null:
+		_cursor_layer = Node2D.new()
+		_cursor_layer.name = "CursorLayer"
+		add_child(_cursor_layer)
+		move_child(_cursor_layer, units_layer.get_index() + 1)
+	for child in _cursor_layer.get_children():
+		child.queue_free()
+	if not cursor_visible:
+		return
+	var frame := Panel.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(_UiTheme.COLORS["accent_gold"], 0.2)
+	style.border_color = _UiTheme.COLORS["accent_gold"]
+	style.set_border_width_all(4)
+	style.set_corner_radius_all(4)
+	frame.add_theme_stylebox_override("panel", style)
+	frame.position = Vector2(cursor.x * GRID_SIZE - 1, cursor.y * GRID_SIZE - 1)
+	frame.size = Vector2(GRID_SIZE + 2, GRID_SIZE + 2)
+	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_cursor_layer.add_child(frame)
+
+
 func _update_hud() -> void:
 	var current := _turn_manager.get_current_unit()
 	var controlled := _get_controlled()
@@ -415,7 +446,7 @@ func _log(message: String) -> void:
 
 # ─── 플레이어 입력 ───────────────────────────────────
 
-## 키보드 단축키: M 이동, A 공격, 1~9 무공, Z 이동 취소, Space·E 턴 종료, Esc 후퇴(확인)
+## 키보드 단축키: 방향키 커서, Enter 실행, M 이동, A 공격, 1~9 무공, Z 이동 취소, Space·E 턴 종료, Esc 후퇴(확인)
 func _unhandled_key_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
 	if key == null or not key.pressed or key.echo:
@@ -425,6 +456,16 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			confirm_popup._answer(false)
 		return
 	match key.keycode:
+		KEY_LEFT:
+			move_cursor(Vector2i.LEFT)
+		KEY_RIGHT:
+			move_cursor(Vector2i.RIGHT)
+		KEY_UP:
+			move_cursor(Vector2i.UP)
+		KEY_DOWN:
+			move_cursor(Vector2i.DOWN)
+		KEY_ENTER, KEY_KP_ENTER:
+			confirm_cursor()
 		KEY_M:
 			_on_mode_move_pressed()
 		KEY_A:
@@ -448,6 +489,10 @@ func _unhandled_key_input(event: InputEvent) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if _combat_over:
 		return
+	if event is InputEventJoypadButton or event is InputEventJoypadMotion:
+		if _handle_gamepad(event):
+			get_viewport().set_input_as_handled()
+		return
 	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
 		return
 
@@ -459,7 +504,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	var target := Vector2i(int(local_pos.x / GRID_SIZE), int(local_pos.y / GRID_SIZE))
 	if not _in_bounds(target):
 		return
+	# 터치·마우스로 고르면 커서는 숨기고 그 칸으로 옮겨 둔다.
+	cursor = target
+	cursor_visible = false
+	_act_on_tile(current, target)
 
+
+## 고른 칸에 지금 행동 방식(이동·공격·무공)을 실행한다. 터치·마우스·커서가 함께 쓴다.
+func _act_on_tile(current: CombatUnit, target: Vector2i) -> void:
 	match _action_mode:
 		ActionMode.MOVE:
 			_try_move(current, target)
@@ -467,6 +519,121 @@ func _unhandled_input(event: InputEvent) -> void:
 			_try_attack(current, target)
 		ActionMode.MARTIAL_ART:
 			_try_martial_art(current, target)
+
+
+## 게임패드: 십자키·왼쪽 스틱 커서, A 실행, B 이동 취소, X 공격, Y 이동, LB·RB 무공 고르기,
+## Start 턴 종료, Back 후퇴. 처리했으면 true.
+func _handle_gamepad(event: InputEvent) -> bool:
+	if confirm_popup and confirm_popup.visible:
+		return false
+	var motion := event as InputEventJoypadMotion
+	if motion:
+		if motion.axis != JOY_AXIS_LEFT_X and motion.axis != JOY_AXIS_LEFT_Y:
+			return false
+		var dir := Vector2i.ZERO
+		if absf(motion.axis_value) > 0.6:
+			var step: int = signi(int(signf(motion.axis_value)))
+			dir = Vector2i(step, 0) if motion.axis == JOY_AXIS_LEFT_X else Vector2i(0, step)
+		# 기울인 순간에만 한 칸 움직이고, 중앙으로 돌아오면 다시 받는다.
+		if dir != Vector2i.ZERO and dir != _stick_dir:
+			move_cursor(dir)
+		_stick_dir = dir
+		return true
+	var button := event as InputEventJoypadButton
+	if button == null or not button.pressed:
+		return false
+	match button.button_index:
+		JOY_BUTTON_DPAD_LEFT:
+			move_cursor(Vector2i.LEFT)
+		JOY_BUTTON_DPAD_RIGHT:
+			move_cursor(Vector2i.RIGHT)
+		JOY_BUTTON_DPAD_UP:
+			move_cursor(Vector2i.UP)
+		JOY_BUTTON_DPAD_DOWN:
+			move_cursor(Vector2i.DOWN)
+		JOY_BUTTON_A:
+			confirm_cursor()
+		JOY_BUTTON_B:
+			_on_undo_move_pressed()
+		JOY_BUTTON_X:
+			_on_mode_attack_pressed()
+		JOY_BUTTON_Y:
+			_on_mode_move_pressed()
+		JOY_BUTTON_LEFT_SHOULDER:
+			cycle_art(-1)
+		JOY_BUTTON_RIGHT_SHOULDER:
+			cycle_art(1)
+		JOY_BUTTON_START:
+			_on_end_turn_pressed()
+		JOY_BUTTON_BACK:
+			_on_back_pressed()
+		_:
+			return false
+	return true
+
+
+## 커서를 한 칸 옮긴다. 처음 쓰면 조종 중인 유닛 자리에서 나타난다.
+func move_cursor(dir: Vector2i) -> void:
+	if _combat_over:
+		return
+	if not cursor_visible:
+		cursor_visible = true
+		var controlled := _get_controlled()
+		if controlled:
+			cursor = controlled.grid_pos
+	else:
+		var next: Vector2i = cursor + dir
+		if _in_bounds(next):
+			cursor = next
+	# 버튼에 포커스가 있으면 방향 입력을 버튼이 가져가므로 놓는다.
+	var focused: Control = get_viewport().gui_get_focus_owner()
+	if focused:
+		focused.release_focus()
+	_draw_cursor()
+	_log(_describe_tile(cursor))
+
+
+## 커서가 있는 칸에 지금 행동 방식을 실행한다.
+func confirm_cursor() -> void:
+	var current := _get_controlled()
+	if current == null or not cursor_visible:
+		return
+	_act_on_tile(current, cursor)
+
+
+## 조종 중인 유닛의 무공을 차례로 고른다 (dir: 1 다음, -1 이전). 마지막 다음은 기본 공격.
+func cycle_art(dir: int) -> void:
+	var current := _get_controlled()
+	if current == null:
+		return
+	var arts: Array[MartialArtData] = current.get_martial_arts()
+	if arts.is_empty():
+		_on_mode_attack_pressed()
+		return
+	# -1은 기본 공격 자리
+	var index: int = arts.find(_selected_art) if _action_mode == ActionMode.MARTIAL_ART else -1
+	index += dir
+	if index >= arts.size():
+		index = -1
+	elif index < -1:
+		index = arts.size() - 1
+	if index == -1:
+		_on_mode_attack_pressed()
+	else:
+		_on_art_pressed(arts[index])
+
+
+## 커서 칸 설명: 좌표·지형과 그 칸의 유닛
+func _describe_tile(coord: Vector2i) -> String:
+	var parts: PackedStringArray = ["커서 (%d, %d)" % [coord.x, coord.y]]
+	if _setup.blocked_tiles.has(coord):
+		parts.append("막힌 칸")
+	else:
+		parts.append(CombatRules.TERRAIN_NAMES[_terrain_at(coord)])
+	for unit in _units:
+		if unit.is_alive() and unit.grid_pos == coord:
+			parts.append("%s %s 체력 %d/%d" % ["아군" if unit.is_friendly() else "적", unit.display_name, unit.hp, unit.max_hp])
+	return " · ".join(parts)
 
 
 func _try_move(unit: CombatUnit, target: Vector2i) -> void:
@@ -814,6 +981,10 @@ func _on_end_turn_pressed() -> void:
 		await _advance_turns()
 		var next := _get_controlled()
 		if next:
+			# 커서를 쓰는 중이면 다음 아군 자리로 옮긴다.
+			if cursor_visible:
+				cursor = next.grid_pos
+				_draw_cursor()
 			_log("%s의 차례입니다." % next.display_name)
 
 
