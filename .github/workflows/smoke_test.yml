@@ -1,0 +1,57 @@
+# 헤드리스 Godot으로 클래스 캐시를 갱신하고 스모크 테스트를 돌린다.
+# 기연·인물·문파·전투·엔딩 JSON 검증도 스모크 테스트 안에서 한다.
+name: 스모크 테스트
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # project.godot의 config/features와 맞춘다
+      GODOT_VERSION: "4.7.1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Godot 캐시
+        id: godot-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/godot
+          key: godot-${{ env.GODOT_VERSION }}-linux
+
+      - name: Godot 받기
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/godot
+          curl -sSL -o /tmp/godot.zip \
+            "https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q /tmp/godot.zip -d ~/godot
+          mv ~/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64 ~/godot/godot
+          chmod +x ~/godot/godot
+
+      - name: 클래스 캐시 갱신
+        run: ~/godot/godot --headless --editor --quit
+
+      - name: 스모크 테스트
+        run: |
+          set -o pipefail
+          timeout 900 ~/godot/godot --headless --path . -s res://scripts/Tests/smoke_test.gd 2>&1 | tee smoke.log
+
+      - name: 데이터 정의 오류·스크립트 오류 검사
+        # 테스트가 일부러 만드는 잘못된 파일(user://)의 경고는 제외한다.
+        run: |
+          if grep -E "정의 오류|파싱 실패|SCRIPT ERROR" smoke.log | grep -v "user://"; then
+            echo "::error::데이터 정의 오류나 스크립트 오류가 있습니다."
+            exit 1
+          fi
+
+      - name: 테스트 기록 보관
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-log
+          path: smoke.log
