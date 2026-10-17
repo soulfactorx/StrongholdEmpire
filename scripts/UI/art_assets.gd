@@ -38,6 +38,11 @@ const TERRAIN_TILES: Dictionary = {
 static var _cache: Dictionary = {}
 
 
+## 불러 둔 그림·글꼴 캐시를 비운다.
+static func clear_cache() -> void:
+	_cache.clear()
+
+
 ## 텍스처를 불러온다. 없으면 null (그림 없이도 게임은 돌아간다).
 static func texture(rel_path: String) -> Texture2D:
 	var path: String = ART_DIR + rel_path

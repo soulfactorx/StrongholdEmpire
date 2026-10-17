@@ -427,3 +427,11 @@ func _test_economy_flow() -> void:
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
 	await process_frame
 	_completed["_test_economy_flow"] = true
+
+
+## 내보낸 빌드 자체 점검(--self-check)이 편집기 환경에서도 통과한다.
+func _test_self_check() -> void:
+	var result: Dictionary = SelfCheck.run()
+	_check(result["ok"], "자체 점검 통과\n    %s" % "\n    ".join(result["lines"]))
+	_check(not SelfCheck.requested(), "테스트 실행에는 --self-check 인자가 없음")
+	_completed["_test_self_check"] = true

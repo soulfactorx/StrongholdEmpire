@@ -478,3 +478,22 @@ func _test_audio() -> void:
 	_check(audio.current_music == "main", "같은 곡이면 다시 시작하지 않음")
 	_clear_test_saves()
 	_completed["_test_audio"] = true
+
+
+## 앱이 백그라운드로 가면(모바일 일시정지·창 닫기·포커스 잃음) 자동 저장한다.
+func _test_suspend_autosave() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_clear_test_saves()
+	_new_quiet_game(gm, "young_disciple")
+	_check(not SaveManager.has_save(SaveManager.AUTO_SLOT), "(준비) 자동 저장 없음")
+	gm._notification(Node.NOTIFICATION_APPLICATION_PAUSED)
+	_check(SaveManager.has_save(SaveManager.AUTO_SLOT), "앱 일시정지: 자동 저장")
+	SaveManager.delete_save(SaveManager.AUTO_SLOT)
+	gm._notification(Node.NOTIFICATION_APPLICATION_FOCUS_OUT)
+	_check(SaveManager.has_save(SaveManager.AUTO_SLOT), "포커스를 잃음(웹 탭 전환): 자동 저장")
+	SaveManager.delete_save(SaveManager.AUTO_SLOT)
+	gm.is_game_active = false
+	_check(not gm.save_on_suspend() and not SaveManager.has_save(SaveManager.AUTO_SLOT), "진행 중인 게임이 없으면 저장하지 않음")
+	_clear_test_saves()
+	_new_quiet_game(gm, "young_disciple")
+	_completed["_test_suspend_autosave"] = true

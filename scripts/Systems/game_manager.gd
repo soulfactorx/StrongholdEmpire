@@ -61,6 +61,24 @@ func _ready() -> void:
 	_load_mod_data()
 	ScenarioManager.activate(ScenarioManager.DEFAULT_ID)
 	_initialize_new_game()
+	if SelfCheck.requested():
+		_run_self_check.call_deferred()
+
+
+## 내보낸 빌드 자체 점검 (--self-check): 결과를 출력하고 종료 코드로 알린다.
+func _run_self_check() -> void:
+	# 첫 화면의 배경음악이 시작된 뒤에 멈추도록 한 프레임 기다린다.
+	await get_tree().process_frame
+	var result: Dictionary = SelfCheck.run()
+	for line in result["lines"]:
+		print(line)
+	print("자체 점검: %s" % ("통과" if result["ok"] else "실패"))
+	AudioManager.stop_all()
+	# 정적 캐시가 쥔 그림·글꼴을 놓아 종료 시 "사용 중인 자원" 경고가 나지 않게 한다.
+	ArtAssets.clear_cache()
+	# 오디오 스레드가 재생 객체를 놓을 때까지 잠시 기다린다 (종료 시 누수 경고 방지)
+	await get_tree().create_timer(0.3).timeout
+	get_tree().quit(0 if result["ok"] else 1)
 
 
 ## 새 게임을 시작한다. role_id는 StartingRoles.ROLES의 id.
@@ -985,6 +1003,19 @@ func save_game(slot: int = 1) -> Dictionary:
 ## 계절이 바뀔 때마다 자동 저장 슬롯에 저장한다.
 func autosave() -> Dictionary:
 	return _SaveManager.save_game(_build_save_state(), _SaveManager.AUTO_SLOT)
+
+
+## 앱이 백그라운드로 가거나(모바일 홈 버튼·전화), 창을 닫거나, 웹 탭을 떠날 때 자동 저장한다.
+func _notification(what: int) -> void:
+	if what in [NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_WM_CLOSE_REQUEST, NOTIFICATION_APPLICATION_FOCUS_OUT]:
+		save_on_suspend()
+
+
+## 진행 중인 게임이 있으면 자동 저장 슬롯에 저장한다. 저장했으면 true.
+func save_on_suspend() -> bool:
+	if not is_game_active:
+		return false
+	return autosave().get("success", false)
 
 
 func _build_save_state() -> Dictionary:
