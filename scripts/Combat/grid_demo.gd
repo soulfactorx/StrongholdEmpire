@@ -19,6 +19,7 @@ var _blocked_tiles: Array[Vector2i] = []
 
 
 func _ready() -> void:
+	$Background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_setup_blocked_tiles()
 	_draw_grid()
 	_update_player_visual()
@@ -41,6 +42,7 @@ func _draw_grid() -> void:
 	for x in GRID_WIDTH:
 		for y in GRID_HEIGHT:
 			var tile := ColorRect.new()
+			tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			tile.size = Vector2(GRID_SIZE - 2, GRID_SIZE - 2)
 			tile.position = Vector2(x * GRID_SIZE + 1, y * GRID_SIZE + 1)
 			var grid_coord := Vector2i(x, y)
@@ -68,7 +70,7 @@ func _update_hud() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		var local_pos := get_global_mouse_position() - global_position
+		var local_pos: Vector2 = (make_input_local(event) as InputEventMouseButton).position
 		var target := Vector2i(
 			int(local_pos.x / GRID_SIZE),
 			int(local_pos.y / GRID_SIZE)
