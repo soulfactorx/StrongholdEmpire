@@ -1,0 +1,36 @@
+{
+  "id": "npc_haomun_master",
+  "display_name": "묵영",
+  "title": "하오문주",
+  "sect_id": "haomun",
+  "role": "LEADER",
+  "description": "저잣거리의 눈과 귀를 모두 쥔 하오문의 주인. 칼보다 소문으로 싸운다.",
+  "level": 6,
+  "stats": {
+    "strength": 12,
+    "agility": 17,
+    "wisdom": 20,
+    "charisma": 18,
+    "internal_energy_max": 150,
+    "age": 42,
+    "morality": 35
+  },
+  "war_specialty": "FLANK",
+  "dialogue": {
+    "talk": [
+      "강호에 비밀은 없소. 값이 맞지 않을 뿐이지.",
+      "귀하의 이야기는 벌써 저잣거리에 파다하오.",
+      "정보가 필요하면 하오문을 찾으시오."
+    ],
+    "gift": [
+      "허허, 하오문은 받은 만큼 돌려주오.",
+      "좋은 거래의 시작이로군."
+    ],
+    "spar": [
+      "하오문주가 직접 칼을 들 줄은 몰랐겠지."
+    ],
+    "hatred": [
+      "하오문을 적으로 돌린 자는 잠을 편히 못 자오."
+    ]
+  }
+}

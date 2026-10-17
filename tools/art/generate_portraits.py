@@ -9,6 +9,7 @@
 
 같은 이름·크기 파일로 덮어쓰면 코드 수정 없이 바뀐다 (AI로 그린 초상화 등).
 실행: python3 tools/art/generate_portraits.py   (PIL, numpy 필요)
+     일부만: python3 tools/art/generate_portraits.py --only=npc_tang_head,tang
 """
 
 from __future__ import annotations
@@ -41,6 +42,9 @@ TINTS = {
 	"black": (52, 50, 52),
 	"rose": (178, 92, 86),
 	"green": (70, 96, 60),
+	"wudang": (96, 112, 136),
+	"tang": (62, 100, 72),
+	"haomun": (112, 88, 120),
 }
 
 # 인물 모습: hair(머리) · headwear(관·띠·두건) · robe(옷 색) · weapon · face(표정) · beard · 기타
@@ -63,6 +67,11 @@ NPCS = {
 	"npc_scholar": dict(hair="topknot", headwear="scholar_cap", robe="white", weapon="fan", face="gentle", young=True),
 	"npc_senior_brother": dict(hair="topknot", robe="qingyun", weapon="sword", face="neutral"),
 	"npc_shadow_blade": dict(hair="none", headwear="hood_mask", robe="black", hood_color="black", weapon="dagger", face="stern"),
+	"npc_wudang_head": dict(hair="topknot", headwear="crown", robe="wudang", accent="white", weapon="sword", face="gentle", beard="long", age=65),
+	"npc_wudang_disciple": dict(hair="topknot", headwear="crown", robe="wudang", weapon="sword", face="neutral", young=True),
+	"npc_tang_head": dict(hair="long", headwear="headband", robe="tang", weapon="dagger", face="sly", beard="short", age=48),
+	"npc_tang_poisoner": dict(hair="topknot", headwear="hood", hood_color="tang", robe="tang", weapon="dagger", face="stern"),
+	"npc_haomun_master": dict(hair="long", headwear="scholar_cap", robe="haomun", weapon="fan", face="sly", beard="stubble", age=42),
 	"npc_swallow": dict(hair="ponytail", female=True, robe="rose", accent="white", weapon="sword", face="proud"),
 }
 
@@ -82,6 +91,9 @@ SECT_EMBLEMS = {
 	"namgung": ("남궁", "square", "namgung"),
 	"heukpung": ("흑풍", "octagon", "black"),
 	"cheonma": ("천마", "circle_double", "cheonma"),
+	"wudang": ("무당", "circle", "wudang"),
+	"tang": ("당가", "octagon", "tang"),
+	"haomun": ("하오", "square", "haomun"),
 }
 
 
@@ -405,10 +417,17 @@ def emblem(text: str, shape: str, tint: str, seed: int) -> Image.Image:
 
 
 def main() -> None:
+	"""인자로 id를 주면(쉼표로 여럿) 그것만 그린다: --only npc_tang_head,tang"""
 	import json
+	only = set()
+	for arg in sys.argv[1:]:
+		if arg.startswith("--only="):
+			only = set(arg.split("=", 1)[1].split(","))
 	os.makedirs(os.path.join(OUT, "portraits"), exist_ok=True)
 	os.makedirs(os.path.join(OUT, "emblems"), exist_ok=True)
 	for i, (npc_id, spec) in enumerate(NPCS.items()):
+		if only and npc_id not in only:
+			continue
 		with open(os.path.join(ga.ROOT, "data", "npcs", npc_id + ".json"), encoding="utf-8") as f:
 			name = json.load(f)["display_name"]
 		# 이름이 긴 졸개는 짧게 쓴다
@@ -417,10 +436,14 @@ def main() -> None:
 		img.save(os.path.join(OUT, "portraits", npc_id + ".jpg"), quality=88, optimize=True)
 		print("  ", npc_id, name)
 	for i, (role, (name, spec)) in enumerate(ROLES.items()):
+		if only and role not in only:
+			continue
 		img = portrait(name, spec, 5000 + i)
 		img.save(os.path.join(OUT, "portraits", "role_%s.jpg" % role.lower()), quality=88, optimize=True)
 		print("  ", role)
 	for i, (sect_id, (text, shape, tint)) in enumerate(SECT_EMBLEMS.items()):
+		if only and sect_id not in only:
+			continue
 		emblem(text, shape, tint, 6000 + i).save(os.path.join(OUT, "emblems", sect_id + ".png"), optimize=True)
 		print("  ", sect_id)
 

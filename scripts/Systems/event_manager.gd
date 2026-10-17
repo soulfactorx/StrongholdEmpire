@@ -27,6 +27,7 @@ extends RefCounted
 ##   scenario   in: [시나리오 id]   — 현재 시나리오가 목록에 있음
 ##   years_left op, value          — 시나리오 제한까지 남은 연수 (제한 없으면 9999)
 ##   subjugated_count op, value    — 굴복시킨 강호 세력 수
+##   regions_owned op, value       — 강호 지도에서 우리 문파가 가진 땅 수 (본거지 포함)
 ##   generation op, value          — 현재 세대 (1세대부터)
 ##   role_state field, op, value   — 역할 자원 비교 (RoleActions.NUMERIC_FIELDS: discontent, trust, exposure, bounty ...)
 ##   (world_sect의 field에는 subjugated(0/1)도 쓸 수 있다)
@@ -87,6 +88,9 @@ static var role_history: Array[String] = []
 static var flag_turns: Dictionary = {}
 ## 역할 자원 (GameManager.role_state와 같은 객체)
 static var role_state: Dictionary = {}
+## 강호 지도 상태 (GameManager.map_state)와 플레이어 문파 id — regions_owned 조건
+static var map_state: Dictionary = {}
+static var player_sect_id: String = ""
 
 
 ## 스토리 플래그를 설정하고 켜진 계절을 기록한다. 플래그는 항상 이 함수로 설정한다.
@@ -317,7 +321,7 @@ static func _validate_condition(condition: Variant, errors: PackedStringArray) -
 		"scenario":
 			if not c.get("in") is Array or (c.get("in") as Array).is_empty():
 				errors.append("scenario 조건에 in 목록 필요")
-		"years_left", "subjugated_count", "generation":
+		"years_left", "subjugated_count", "generation", "regions_owned":
 			_validate_compare(c, errors)
 		"role_state":
 			if not c.get("field") in RoleActions.NUMERIC_FIELDS:
@@ -524,6 +528,8 @@ static func _condition_met(
 			return ScenarioManager.current_id in c["in"]
 		"years_left":
 			return _compare(ScenarioRules.years_left(current_year), c["op"], c["value"])
+		"regions_owned":
+			return _compare(WorldMap.count(map_state, player_sect_id), c["op"], c["value"])
 		"subjugated_count":
 			var count: int = 0
 			for world_sect in world_sects:

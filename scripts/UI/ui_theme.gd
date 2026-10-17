@@ -11,6 +11,7 @@ static var COLORS: Dictionary = {
 	"text_primary": Color("#1e1e1e"),
 	"text_muted": Color("#6b655b"),
 	"text_on_ink": Color("#f2ead8"),
+	"highlight": Color("#ecd9a8"),
 }
 
 
@@ -54,16 +55,18 @@ static func apply_root_theme(theme: Theme) -> void:
 			theme.set_stylebox(state, type, _button_style(state))
 	# 목록·입력칸·펼침 메뉴도 한지 바탕에 먹 글씨로
 	var field := _field_style(COLORS["bg_panel"].lightened(0.3), COLORS["text_muted"])
-	var selected := _field_style(COLORS["accent_jade"], COLORS["accent_jade"])
+	# 선택한 항목: 밝은 황토 바탕에 먹 글씨와 금색 테 (짙은 바탕에 흰 글씨는 휴대폰에서 잘 안 보인다)
+	var selected := _field_style(COLORS["highlight"], COLORS["accent_gold"])
+	selected.set_border_width_all(2)
 	theme.set_stylebox("panel", "ItemList", field)
 	theme.set_stylebox("focus", "ItemList", _field_style(Color.TRANSPARENT, COLORS["accent_gold"]))
 	for state in ["selected", "selected_focus", "cursor", "cursor_unfocused"]:
 		theme.set_stylebox(state, "ItemList", selected if state.begins_with("selected") else _field_style(Color.TRANSPARENT, COLORS["accent_gold"]))
-	theme.set_stylebox("hovered", "ItemList", _field_style(Color("#e9d9b4"), Color("#e9d9b4")))
+	theme.set_stylebox("hovered", "ItemList", _field_style(Color("#f0e4c4"), Color("#f0e4c4")))
 	theme.set_color("font_color", "ItemList", COLORS["text_primary"])
 	theme.set_color("font_hovered_color", "ItemList", COLORS["text_primary"])
-	theme.set_color("font_selected_color", "ItemList", COLORS["text_on_ink"])
-	theme.set_color("font_hovered_selected_color", "ItemList", COLORS["text_on_ink"])
+	theme.set_color("font_selected_color", "ItemList", COLORS["text_primary"])
+	theme.set_color("font_hovered_selected_color", "ItemList", COLORS["text_primary"])
 	for type in ["LineEdit", "TextEdit", "SpinBox"]:
 		theme.set_stylebox("normal", type, field)
 		theme.set_stylebox("focus", type, _field_style(Color.TRANSPARENT, COLORS["accent_gold"]))
@@ -73,9 +76,15 @@ static func apply_root_theme(theme: Theme) -> void:
 		theme.set_color("caret_color", type, COLORS["text_primary"])
 		theme.set_color("selection_color", type, Color(COLORS["accent_jade"], 0.4))
 	theme.set_stylebox("panel", "PopupMenu", create_panel_style())
-	theme.set_stylebox("hover", "PopupMenu", _field_style(Color("#e9d9b4"), Color("#e9d9b4")))
+	theme.set_stylebox("hover", "PopupMenu", _field_style(COLORS["highlight"], COLORS["accent_gold"]))
 	theme.set_color("font_color", "PopupMenu", COLORS["text_primary"])
 	theme.set_color("font_hover_color", "PopupMenu", COLORS["text_primary"])
+	theme.set_color("font_accelerator_color", "PopupMenu", COLORS["text_muted"])
+	theme.set_color("font_separator_color", "PopupMenu", COLORS["text_muted"])
+	# 체크·토글 버튼도 눌림·포커스 상태에서 먹 글씨
+	for type in ["CheckBox", "CheckButton"]:
+		for key in ["font_pressed_color", "font_hover_pressed_color", "font_focus_color", "font_hover_color"]:
+			theme.set_color(key, type, COLORS["text_primary"])
 	theme.set_color("font_disabled_color", "PopupMenu", COLORS["text_muted"])
 	theme.set_stylebox("panel", "PanelContainer", create_panel_style())
 	theme.set_stylebox("panel", "TooltipPanel", create_panel_style())
@@ -172,6 +181,9 @@ static func _button_style(state: String) -> StyleBox:
 static func style_button(button: Button) -> void:
 	for state in ["normal", "hover", "pressed", "disabled"]:
 		button.add_theme_stylebox_override(state, _button_style(state))
+	# 기능 설명 말풍선 (길게 누르기·마우스 올림)
+	if not ButtonHelp.text_for(button).is_empty():
+		ButtonHelp.attach(button)
 	button.add_theme_color_override("font_disabled_color", COLORS["text_muted"])
 	button.add_theme_color_override("font_color", COLORS["text_primary"])
 	# 키보드·게임패드 포커스가 있을 때도 먹 글씨로 (기본값은 흰 글씨라 한지 바탕에서 안 보인다)
@@ -215,6 +227,10 @@ static func _scale_font(control: Control) -> void:
 static func _style_recursive(node: Node) -> void:
 	if node is Button:
 		style_button(node as Button)
+		# 펼침 버튼도 터치 목표 48px을 지킨다
+		if node is OptionButton:
+			var option := node as OptionButton
+			option.custom_minimum_size.y = maxf(option.custom_minimum_size.y, 48)
 	elif node is PanelContainer:
 		(node as PanelContainer).add_theme_stylebox_override("panel", create_panel_style())
 	elif node is Label:

@@ -194,6 +194,36 @@ static func calculate_damage(
 	return {"damage": maxi(1, int(damage)), "notes": notes}
 
 
+## 피해 예측 (미리보기용): 흔들림을 뺀 기준 피해와 최소·최대, 회심 시 최대, 회심 확률, 요인.
+## {base, min, max, crit_max, crit_chance, notes}
+static func preview_damage(
+	attacker: CombatUnit,
+	defender: CombatUnit,
+	art: MartialArtData,
+	attacker_terrain: Terrain,
+	defender_terrain: Terrain,
+	relationship_bonus: float = 1.0,
+	relationship_defense: float = 1.0
+) -> Dictionary:
+	var saved: bool = randomness
+	randomness = false
+	var result: Dictionary = calculate_damage(
+		attacker, defender, art, attacker_terrain, defender_terrain, relationship_bonus, relationship_defense
+	)
+	randomness = saved
+	var base: int = result["damage"]
+	var spread: float = _Balance.DAMAGE_SPREAD if saved else 0.0
+	var high: int = maxi(1, int(base * (1.0 + spread)))
+	return {
+		"base": base,
+		"min": maxi(1, int(base * (1.0 - spread))),
+		"max": high,
+		"crit_max": maxi(1, int(high * _Balance.CRIT_MULTIPLIER)) if saved else high,
+		"crit_chance": crit_chance(attacker) if saved else 0.0,
+		"notes": result["notes"],
+	}
+
+
 ## 회심(치명타) 확률: 신법이 높을수록 오른다.
 static func crit_chance(attacker: CombatUnit) -> float:
 	return minf(_Balance.CRIT_MAX, _Balance.CRIT_BASE + attacker.character.agility * _Balance.CRIT_PER_AGILITY)

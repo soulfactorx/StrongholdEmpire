@@ -13,6 +13,7 @@ const SCREEN_BACKGROUNDS: Dictionary = {
 	"main": "main_menu",
 	"management_screen": "hub",
 	"world_screen": "world",
+	"map_screen": "world",
 	"sect_war_screen": "war",
 	"ending_screen": "ending",
 	"martial_art_screen": "study",

@@ -18,6 +18,12 @@ static var music_volume: float = 0.6
 static var fullscreen: bool = false
 static var text_scale: float = 1.0
 static var combat_delay: float = 0.3
+## 공격·무공 전에 예상 결과를 보여 주고 확인받는다
+static var combat_preview: bool = true
+## 경영 행동(수련·영약·시설·유대 등) 전에 수치 변화를 보여 주고 확인받는다
+static var action_preview: bool = true
+## 계절을 넘기면 강호 세력이 무엇을 했는지 보고 창을 띄운다
+static var faction_report: bool = true
 
 
 static func load_settings() -> void:
@@ -28,6 +34,9 @@ static func load_settings() -> void:
 		fullscreen = config.get_value("display", "fullscreen", false) == true
 		text_scale = float(config.get_value("display", "text_scale", 1.0))
 		combat_delay = float(config.get_value("combat", "delay", 0.3))
+		combat_preview = config.get_value("combat", "preview", true) == true
+		action_preview = config.get_value("game", "action_preview", true) == true
+		faction_report = config.get_value("game", "faction_report", true) == true
 	if not TEXT_SCALES.any(func(entry: Array) -> bool: return is_equal_approx(entry[1], text_scale)):
 		text_scale = 1.0
 	if not COMBAT_DELAYS.any(func(entry: Array) -> bool: return is_equal_approx(entry[1], combat_delay)):
@@ -41,6 +50,9 @@ static func save_settings() -> void:
 	config.set_value("display", "fullscreen", fullscreen)
 	config.set_value("display", "text_scale", text_scale)
 	config.set_value("combat", "delay", combat_delay)
+	config.set_value("combat", "preview", combat_preview)
+	config.set_value("game", "action_preview", action_preview)
+	config.set_value("game", "faction_report", faction_report)
 	config.save(settings_path)
 
 
@@ -75,6 +87,12 @@ static func set_and_save(key: String, value: Variant, tree: SceneTree = null) ->
 			text_scale = float(value)
 		"combat_delay":
 			combat_delay = float(value)
+		"combat_preview":
+			combat_preview = value == true
+		"action_preview":
+			action_preview = value == true
+		"faction_report":
+			faction_report = value == true
 	save_settings()
 	apply(tree)
 

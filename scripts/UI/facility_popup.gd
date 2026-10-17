@@ -97,6 +97,13 @@ func _refresh() -> void:
 
 
 func _on_upgrade_pressed(facility: String) -> void:
+	ActionPreview.confirm(
+		self, "%s 확장" % SectManager.FACILITY_INFO[facility]["name"],
+		GameManager.upgrade_facility.bind(facility), _upgrade.bind(facility)
+	)
+
+
+func _upgrade(facility: String) -> void:
 	var result: Dictionary = GameManager.upgrade_facility(facility)
 	upgraded.emit(result)
 	_refresh()

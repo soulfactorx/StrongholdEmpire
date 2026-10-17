@@ -1,0 +1,16 @@
+{
+  "id": "tang",
+  "sect_name": "사천당가",
+  "alignment": "UNORTHODOX",
+  "leader_id": "npc_tang_head",
+  "description": "독과 암기로 강호를 떨게 하는 사천의 세가. 정파도 사파도 아닌 제 길을 간다.",
+  "optional": true,
+  "strategy": "opportunist",
+  "reputation": 55,
+  "disciple_count": 18,
+  "max_disciples": 35,
+  "training_ground_level": 2,
+  "attitude": -5,
+  "soldier_npc": "npc_tang_poisoner",
+  "war_formation": "CRANE"
+}

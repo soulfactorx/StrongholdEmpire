@@ -1,0 +1,385 @@
+{
+ "_comment": "강호 지도. 형식은 docs/지도_데이터_형식.md",
+ "size": [
+  900,
+  700
+ ],
+ "spare_homes": [
+  "xian",
+  "kaifeng",
+  "yangzhou",
+  "wuchang",
+  "chengdu",
+  "luoyang"
+ ],
+ "regions": [
+  {
+   "id": "tianshan",
+   "name": "천산",
+   "pos": [
+    60,
+    170
+   ],
+   "home": "cheonma",
+   "gold": 12,
+   "food": 6,
+   "defense": 90,
+   "description": "서역의 험준한 설산. 천마신교의 총단이 있다.",
+   "neighbors": [
+    "lanzhou"
+   ]
+  },
+  {
+   "id": "lanzhou",
+   "name": "난주",
+   "pos": [
+    190,
+    215
+   ],
+   "home": "",
+   "gold": 12,
+   "food": 8,
+   "defense": 50,
+   "description": "서역과 중원을 잇는 관문 도시.",
+   "neighbors": [
+    "tianshan",
+    "xian",
+    "hanzhong"
+   ]
+  },
+  {
+   "id": "xian",
+   "name": "장안",
+   "pos": [
+    320,
+    280
+   ],
+   "home": "",
+   "gold": 20,
+   "food": 10,
+   "defense": 80,
+   "description": "옛 도읍. 상단과 무관이 모여든다.",
+   "neighbors": [
+    "lanzhou",
+    "taiyuan",
+    "luoyang",
+    "hanzhong"
+   ]
+  },
+  {
+   "id": "taiyuan",
+   "name": "태원",
+   "pos": [
+    440,
+    150
+   ],
+   "home": "",
+   "gold": 14,
+   "food": 10,
+   "defense": 60,
+   "description": "북방의 요새 도시.",
+   "neighbors": [
+    "xian",
+    "taihang",
+    "beijing"
+   ]
+  },
+  {
+   "id": "taihang",
+   "name": "태항산",
+   "pos": [
+    490,
+    240
+   ],
+   "home": "heukpung",
+   "gold": 10,
+   "food": 6,
+   "defense": 60,
+   "description": "관도를 굽어보는 험산. 흑풍채의 산채가 있다.",
+   "neighbors": [
+    "taiyuan",
+    "luoyang",
+    "kaifeng"
+   ]
+  },
+  {
+   "id": "luoyang",
+   "name": "낙양",
+   "pos": [
+    430,
+    330
+   ],
+   "home": "",
+   "gold": 20,
+   "food": 10,
+   "defense": 80,
+   "description": "천년 고도. 무림 명숙이 많이 산다.",
+   "neighbors": [
+    "xian",
+    "taihang",
+    "kaifeng",
+    "qingyun",
+    "wudang"
+   ]
+  },
+  {
+   "id": "qingyun",
+   "name": "청운산",
+   "pos": [
+    530,
+    420
+   ],
+   "home": "qingyun",
+   "gold": 10,
+   "food": 8,
+   "defense": 60,
+   "description": "구름이 감도는 검산. 청운검파의 산문이 있다.",
+   "neighbors": [
+    "luoyang",
+    "kaifeng",
+    "hefei",
+    "wudang",
+    "wuchang"
+   ]
+  },
+  {
+   "id": "kaifeng",
+   "name": "개봉",
+   "pos": [
+    590,
+    300
+   ],
+   "home": "",
+   "gold": 20,
+   "food": 8,
+   "defense": 80,
+   "description": "번화한 상업 도시.",
+   "neighbors": [
+    "taihang",
+    "luoyang",
+    "jinan",
+    "hefei",
+    "qingyun"
+   ]
+  },
+  {
+   "id": "jinan",
+   "name": "제남",
+   "pos": [
+    690,
+    190
+   ],
+   "home": "haomun",
+   "gold": 14,
+   "food": 8,
+   "defense": 60,
+   "description": "샘이 많은 도시. 하오문의 총타가 숨어 있다.",
+   "neighbors": [
+    "kaifeng",
+    "beijing",
+    "yangzhou"
+   ]
+  },
+  {
+   "id": "beijing",
+   "name": "북경",
+   "pos": [
+    640,
+    60
+   ],
+   "home": "",
+   "gold": 24,
+   "food": 6,
+   "defense": 110,
+   "description": "황성이 있는 북방의 대도시.",
+   "neighbors": [
+    "taiyuan",
+    "jinan"
+   ]
+  },
+  {
+   "id": "hefei",
+   "name": "합비",
+   "pos": [
+    690,
+    420
+   ],
+   "home": "namgung",
+   "gold": 12,
+   "food": 10,
+   "defense": 70,
+   "description": "안휘의 중심. 남궁세가의 본가가 있다.",
+   "neighbors": [
+    "kaifeng",
+    "yangzhou",
+    "qingyun",
+    "wuchang",
+    "nanchang"
+   ]
+  },
+  {
+   "id": "yangzhou",
+   "name": "양주",
+   "pos": [
+    800,
+    350
+   ],
+   "home": "",
+   "gold": 24,
+   "food": 10,
+   "defense": 90,
+   "description": "운하가 지나는 부유한 도시.",
+   "neighbors": [
+    "jinan",
+    "hefei",
+    "hangzhou"
+   ]
+  },
+  {
+   "id": "hangzhou",
+   "name": "항주",
+   "pos": [
+    840,
+    490
+   ],
+   "home": "",
+   "gold": 20,
+   "food": 14,
+   "defense": 90,
+   "description": "서호의 도시. 비단과 차가 넘쳐난다.",
+   "neighbors": [
+    "yangzhou",
+    "nanchang"
+   ]
+  },
+  {
+   "id": "wudang",
+   "name": "무당산",
+   "pos": [
+    420,
+    460
+   ],
+   "home": "wudang",
+   "gold": 10,
+   "food": 10,
+   "defense": 70,
+   "description": "도교의 성지. 무당파의 도관이 있다.",
+   "neighbors": [
+    "luoyang",
+    "qingyun",
+    "hanzhong",
+    "wuchang"
+   ]
+  },
+  {
+   "id": "hanzhong",
+   "name": "한중",
+   "pos": [
+    280,
+    400
+   ],
+   "home": "",
+   "gold": 10,
+   "food": 12,
+   "defense": 50,
+   "description": "촉으로 가는 길목의 분지.",
+   "neighbors": [
+    "lanzhou",
+    "xian",
+    "wudang",
+    "chengdu"
+   ]
+  },
+  {
+   "id": "chengdu",
+   "name": "성도",
+   "pos": [
+    180,
+    500
+   ],
+   "home": "tang",
+   "gold": 14,
+   "food": 14,
+   "defense": 70,
+   "description": "천부지국 사천. 당가의 본가가 있다.",
+   "neighbors": [
+    "hanzhong",
+    "kunming"
+   ]
+  },
+  {
+   "id": "wuchang",
+   "name": "무창",
+   "pos": [
+    580,
+    540
+   ],
+   "home": "",
+   "gold": 16,
+   "food": 14,
+   "defense": 70,
+   "description": "장강 중류의 나루 도시.",
+   "neighbors": [
+    "hefei",
+    "qingyun",
+    "wudang",
+    "changsha",
+    "nanchang"
+   ]
+  },
+  {
+   "id": "changsha",
+   "name": "장사",
+   "pos": [
+    520,
+    650
+   ],
+   "home": "",
+   "gold": 10,
+   "food": 16,
+   "defense": 60,
+   "description": "호남의 곡창.",
+   "neighbors": [
+    "kunming",
+    "wuchang",
+    "nanchang"
+   ]
+  },
+  {
+   "id": "nanchang",
+   "name": "남창",
+   "pos": [
+    710,
+    610
+   ],
+   "home": "",
+   "gold": 12,
+   "food": 14,
+   "defense": 60,
+   "description": "강서의 중심. 도자기와 쌀이 난다.",
+   "neighbors": [
+    "hefei",
+    "hangzhou",
+    "wuchang",
+    "changsha"
+   ]
+  },
+  {
+   "id": "kunming",
+   "name": "곤명",
+   "pos": [
+    170,
+    640
+   ],
+   "home": "",
+   "gold": 8,
+   "food": 12,
+   "defense": 40,
+   "description": "남만과 맞닿은 변경 도시.",
+   "neighbors": [
+    "chengdu",
+    "changsha"
+   ]
+  }
+ ]
+}

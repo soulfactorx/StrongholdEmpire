@@ -75,8 +75,17 @@ func _on_diplomacy_pressed(sect_id: String) -> void:
 
 
 func _on_diplomacy_chosen(action_id: String) -> void:
-	var result: Dictionary = GameManager.do_diplomacy(_diplomacy_target, action_id)
-	log_label.text = result["message"]
+	var sect_id: String = _diplomacy_target
+	ActionPreview.confirm(
+		self, "외교: %s" % DiplomacyManager.ACTIONS.get(action_id, action_id),
+		DiplomacyManager.perform.bind(GameManager, sect_id, action_id), _do_diplomacy.bind(sect_id, action_id)
+	)
+
+
+func _do_diplomacy(sect_id: String, action_id: String) -> void:
+	var result: Dictionary = GameManager.do_diplomacy(sect_id, action_id)
+	var lines: PackedStringArray = result.get("dialogue", PackedStringArray())
+	log_label.text = result["message"] + ("\n" + "\n".join(lines) if not lines.is_empty() else "")
 	if result["success"]:
 		AudioManager.play_success()
 	else:
@@ -114,13 +123,17 @@ func _build_sect_list() -> void:
 		_add_entry(
 			sect_list,
 			"%s (%s) — %s" % [sect.sect_name, sect.get_alignment_name(), status],
-			"문주 %s | 제자 %d | 명성 %d | 태도 %+d | 전력 %d\n%s" % [
+			"문주 %s | 제자 %d | 명성 %d | 태도 %+d | 전력 %d | 땅 %d\n전략: %s — %s\n%s%s" % [
 				sect.leader_name,
 				sect.disciple_count,
 				sect.reputation,
 				sect.attitude,
 				SectWarManager.get_sect_power(sect),
+				WorldMap.count(GameManager.map_state, sect.id),
+				FactionStrategy.get_title(FactionStrategy.of(sect)),
+				FactionStrategy.get_description(FactionStrategy.of(sect)),
 				SectRegistry.get_description(sect.id),
+				_last_report_line(sect.id),
 			],
 			ArtAssets.emblem(sect.id), EMBLEM_SIZE
 		)
@@ -131,6 +144,14 @@ func _build_sect_list() -> void:
 		button.pressed.connect(_on_diplomacy_pressed.bind(sect.id))
 		_UiTheme.style_button(button)
 		sect_list.add_child(button)
+
+
+## 지난 계절 이 세력이 한 일 (세력 동향)
+func _last_report_line(sect_id: String) -> String:
+	for report in GameManager.last_faction_report:
+		if report.get("sect_id", "") == sect_id:
+			return "\n지난 계절: %s — %s" % [report.get("action", ""), report.get("detail", "")]
+	return ""
 
 
 func _build_npc_list() -> void:

@@ -277,6 +277,8 @@ func _test_every_ending_reachable() -> void:
 	var saved_world: Array[SectData] = EventManager.world_sects
 	var saved_history: Array[String] = EventManager.role_history
 	var saved_generation: int = EventManager.current_generation
+	var saved_map: Dictionary = EventManager.map_state
+	var saved_player_sect: String = EventManager.player_sect_id
 
 	var art := func(id: String) -> MartialArtData:
 		var a := MartialArtData.new()
@@ -329,6 +331,14 @@ func _test_every_ending_reachable() -> void:
 		"three_generations": func(st: Dictionary) -> void:
 			EventManager.current_generation = 3
 			st["sect"].reputation = 90,
+		"conquer_world": func(st: Dictionary) -> void:
+			st["character"].role = CharacterData.Role.LEADER
+			st["sect"].id = "qingyun"
+			EventManager.player_sect_id = st["sect"].id
+			var state: Dictionary = WorldMap.create_state([st["sect"].id])
+			for region in WorldMap.get_regions().slice(0, 12):
+				state["owners"][region["id"]] = st["sect"].id
+			EventManager.map_state = state,
 		"golden_sect": func(st: Dictionary) -> void:
 			st["sect"].gold = 3000
 			st["sect"].treasury_level = 5,
@@ -343,6 +353,7 @@ func _test_every_ending_reachable() -> void:
 		EventManager.world_sects = SectRegistry.create_rival_sects()
 		EventManager.role_history = ["YOUNG_DISCIPLE"] as Array[String]
 		EventManager.current_generation = 1
+		EventManager.map_state = {}
 		setups[ending_id].call(st)
 		var result: String = EndingManager.check_endings(st["character"], st["sect"], st["flags"], st["relationships"])
 		_check(result == ending_id, "엔딩 도달: %s (판정 %s)" % [ending_id, result])
@@ -356,6 +367,8 @@ func _test_every_ending_reachable() -> void:
 	EventManager.world_sects = saved_world
 	EventManager.role_history = saved_history
 	EventManager.current_generation = saved_generation
+	EventManager.map_state = saved_map
+	EventManager.player_sect_id = saved_player_sect
 	_completed["_test_every_ending_reachable"] = true
 
 

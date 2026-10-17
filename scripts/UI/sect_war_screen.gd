@@ -39,6 +39,8 @@ func _ready() -> void:
 	_fill_targets()
 	if not GameManager.can_wage_war():
 		log_label.text = "이번 계절에는 이미 문파전을 치렀습니다. 다음 계절을 기다리세요."
+	elif not GameManager.pending_region_target.is_empty():
+		log_label.text = "%s 공략: 이기면 이 땅을 차지합니다." % WorldMap.get_region(GameManager.pending_region_target).get("name", "")
 	_update_display()
 
 
@@ -49,6 +51,13 @@ func _fill_targets() -> void:
 		target_option.add_item("%s (%s)" % [sect.sect_name, sect.get_alignment_name()])
 	if not _targets.is_empty():
 		target_option.select(0)
+	# 지도에서 [공략]으로 왔으면 그 땅의 주인을 먼저 고른다.
+	var region_id: String = GameManager.pending_region_target
+	if not region_id.is_empty():
+		var owner: String = WorldMap.get_owner(GameManager.map_state, region_id)
+		for i in _targets.size():
+			if _targets[i].id == owner:
+				target_option.select(i)
 	_fill_generals()
 
 

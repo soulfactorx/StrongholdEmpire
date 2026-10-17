@@ -56,7 +56,9 @@ func _test_sect_registry() -> void:
 	_check(player_sect.id == "qingyun" and player_sect.sect_name == "청운검파" and player_sect.gold == 500, "플레이어 문파 데이터 로드")
 	_check(player_sect.leader_name == "청운검선", "문주 이름을 명부에서 가져옴")
 	var rivals: Array[SectData] = SectRegistry.create_rival_sects()
-	_check(rivals.size() == _count_json(SectRegistry.SECT_DIR) - 1, "플레이어 문파 외 세력 %d개 생성" % rivals.size())
+	var optional: Array = SectRegistry.get_optional_ids()
+	_check(rivals.size() == _count_json(SectRegistry.SECT_DIR) - 1 - optional.size(), "플레이어 문파 외 세력 %d개 생성 (골라 넣는 세력 %d개는 빼고)" % [rivals.size(), optional.size()])
+	_check(optional.size() >= 3 and rivals.all(func(x: SectData) -> bool: return not x.id in optional), "골라 넣는 세력은 기본으로 나오지 않음")
 	var alignments: Dictionary = {}
 	for sect in rivals:
 		alignments[sect.alignment] = true
@@ -686,3 +688,163 @@ func _test_invasion_flow() -> void:
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
 	await process_frame
 	_completed["_test_invasion_flow"] = true
+
+
+## 강호 지도와 세력 전략: 본거지, 평정·공략으로 땅 넓히기, 땅 수입, 세력 AI의 확장과 계절 보고, 저장
+func _test_world_map_and_factions() -> void:
+	var gm: Node = root.get_node("GameManager")
+	var file := FileAccess.open(WorldMap.MAP_PATH, FileAccess.READ)
+	_check(WorldMap.validate_map_dict(JSON.parse_string(file.get_as_text())).is_empty() and WorldMap.get_regions().size() >= 18, "지도 데이터 검증 (지역 %d곳)" % WorldMap.get_regions().size())
+	_check(WorldMap.validate_map_dict({"regions": [{"id": "a", "name": "가", "pos": [0, 0], "neighbors": ["b"]}, {"id": "b", "name": "나", "pos": [1, 1]}]}).size() == 1, "지도 검증: 한쪽 이웃 관계")
+
+	# 새 판: 등장 세력마다 본거지, 골라 넣는 세력은 기본으로 없음
+	_new_quiet_game(gm, "leader")
+	var state: Dictionary = gm.map_state
+	_check(WorldMap.get_home(state, "qingyun") == "qingyun" and WorldMap.get_home(state, "namgung") == "hefei" and WorldMap.get_home(state, "wudang").is_empty(), "본거지: 등장 세력만")
+	_check(gm.get_player_regions().size() == 1 and gm.get_world_sect("wudang") == null, "시작: 우리 땅은 본거지 하나")
+
+	# 평정: 맞닿은 빈 땅, 계절에 한 번, 수입·정원 증가
+	gm.player_sect.gold = 1000
+	gm.player_sect.food = 500
+	var max_disciples: int = gm.player_sect.max_disciples
+	var forecast: int = gm.estimate_next_season()["gold"]
+	_check(gm.get_region_action("beijing")["kind"] == "none", "맞닿지 않은 땅은 노릴 수 없음")
+	_check(gm.get_region_action("hefei")["kind"] == "attack" and not gm.get_region_action("hefei")["reason"].is_empty(), "본거지는 빼앗을 수 없음")
+	var action: Dictionary = gm.get_region_action("luoyang")
+	_check(action["kind"] == "pacify" and action["reason"].is_empty(), "맞닿은 빈 땅: 평정 가능")
+	var result: Dictionary = gm.pacify_region("luoyang")
+	_check(result["success"] and WorldMap.get_owner(gm.map_state, "luoyang") == "qingyun" and gm.player_sect.gold == 1000 - action["cost"]["gold"], "평정: 땅 차지, 비용")
+	_check(gm.player_sect.max_disciples == max_disciples + _Balance.REGION_MAX_DISCIPLES, "평정: 제자 정원 증가")
+	_check(gm.estimate_next_season()["gold"] == forecast + int(WorldMap.get_region("luoyang")["gold"]), "땅 수입이 다음 계절 예상에 들어감")
+	_check(not gm.pacify_region("kaifeng")["success"], "평정은 계절에 한 번")
+	_check(gm.chronicle[-1]["kind"] == "영토", "평정은 연대기에 남음")
+
+	# 공략: 남의 땅은 문파전에서 이기면 차지 (공략으로 고른 땅이 먼저)
+	var namgung: SectData = gm.get_world_sect("namgung")
+	gm.map_state["owners"]["kaifeng"] = "namgung"
+	action = gm.get_region_action("kaifeng")
+	_check(action["kind"] == "attack" and action["reason"].is_empty(), "맞닿은 남의 땅: 공략 가능")
+	_check(gm.prepare_region_attack("kaifeng")["success"] and gm.pending_region_target == "kaifeng", "공략: 문파전 대상 지정")
+	_check(gm._capture_region_from(namgung) == "kaifeng" and WorldMap.get_owner(gm.map_state, "kaifeng") == "qingyun", "문파전 승리: 공략한 땅 차지")
+	# 침공을 막지 못하면 맞닿은 땅부터 잃는다 (본거지는 빼고)
+	gm.pending_invasion = "namgung"
+	gm.resolve_invasion("yield")
+	_check(WorldMap.get_owner(gm.map_state, "kaifeng") == "namgung" and WorldMap.get_owner(gm.map_state, "qingyun") == "qingyun", "산문을 내주면 땅을 잃음 (본거지는 그대로)")
+
+	# 문주가 아니면 땅을 넓히지 못한다
+	_new_quiet_game(gm, "wanderer")
+	_check(gm.get_region_action("luoyang")["kind"] == "none" and gm.get_region_action("luoyang")["reason"].contains("문주"), "문주만 땅을 넓힘")
+
+	# 세력 설정: 골라 넣는 세력과 전략
+	gm.start_new_game("세력", "leader", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0}, false, false, {
+		"extra": ["wudang", "tang"], "strategies": {"namgung": "military", "heukpung": FactionStrategy.RANDOM},
+	})
+	_check(gm.get_world_sect("wudang") != null and gm.get_world_sect("tang") != null and gm.get_world_sect("haomun") == null, "골라 넣은 세력만 등장")
+	_check(WorldMap.get_home(gm.map_state, "wudang") == "wudang" and gm.get_world_sect("namgung").strategy == "military", "새 세력의 본거지와 고른 전략")
+	_check(FactionStrategy.is_valid(gm.get_world_sect("heukpung").strategy), "무작위 전략은 실제 전략으로")
+	_check(FactionStrategy.of(gm.get_world_sect("wudang")) == "economy", "데이터의 기본 전략")
+
+	# 세력 AI: 계절마다 세력별 보고, 확장 전략은 빈 땅을 차지한다
+	seed(7)
+	var expanded: bool = false
+	var reports_ok: bool = true
+	for season in 12:
+		var outcome: Dictionary = SectAI.run_season(gm.world_sects, 8 + season, 3, 0.0, gm.map_state)
+		reports_ok = reports_ok and outcome["reports"].size() == gm.world_sects.size() and Array(outcome["reports"]).all(
+			func(r: Dictionary) -> bool: return not r["action"].is_empty() and not r["detail"].is_empty() and not r["strategy"].is_empty()
+		)
+		if WorldMap.count(gm.map_state, "namgung") + WorldMap.count(gm.map_state, "cheonma") + WorldMap.count(gm.map_state, "wudang") > 3:
+			expanded = true
+	_check(reports_ok, "세력 동향: 세력마다 전략·행동·내용")
+	_check(expanded, "세력 AI가 땅을 넓힘")
+	_check(SectAI.format_reports(gm.last_faction_report).contains("움직이지") and SectAI.format_reports([{"sect_name": "가", "strategy": "나", "action": "다", "detail": "라"}]).contains("가 [나 전략] 다"), "세력 동향 글")
+	var economy: SectData = gm.get_world_sect("wudang")
+	economy.gold = _Balance.AI_FORTIFY_GOLD
+	economy.training_ground_level = 1
+	var weights: Array[float] = SectAI.get_weights(economy, gm.world_sects, 10, 3, 1.0, gm.map_state)
+	_check(weights[SectAI.Action.FORTIFY] > weights[SectAI.Action.ATTACK], "내실 전략: 무술장 확장을 공격보다 자주")
+	economy.gold = 0
+	_check(SectAI.get_weights(economy, gm.world_sects, 10, 3, 1.0, gm.map_state)[SectAI.Action.FORTIFY] == 0.0, "금화가 모자라면 내실 없음")
+
+	# 계절 진행: 세력 동향을 남기고, 저장·불러오기 뒤에도 지도·전략·동향이 남는다
+	SectAI.active = true
+	gm.advance_turn()
+	SectAI.active = false
+	_check(gm.last_faction_report.size() == gm.world_sects.size(), "계절 진행: 세력 동향 기록")
+	gm.map_state["owners"]["luoyang"] = "qingyun"
+	gm.save_game(3)
+	_new_quiet_game(gm, "leader")
+	gm.load_game(3)
+	SaveManager.delete_save(3)
+	_check(WorldMap.get_owner(gm.map_state, "luoyang") == "qingyun" and gm.get_world_sect("wudang") != null and gm.get_world_sect("namgung").strategy == "military", "지도·세력·전략 저장·불러오기")
+	_check(gm.last_faction_report.size() == gm.world_sects.size(), "세력 동향 저장·불러오기")
+	_check(EventManager.conditions_met([{"type": "regions_owned", "op": ">=", "value": 2}], gm.player_character, gm.player_sect, gm.player_relationships, "봄", gm.story_flags), "regions_owned 조건")
+	_completed["_test_world_map_and_factions"] = true
+
+
+## 지도 화면·세력 동향 창·새 게임 세력 설정
+func _test_map_screens() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_new_quiet_game(gm, "leader")
+	gm.player_sect.gold = 1000
+	gm.player_sect.food = 500
+	SceneRouter.goto(tree, SceneRouter.MAP)
+	await process_frame
+	await process_frame
+	var screen: Node = current_scene
+	_check(screen._region_buttons.size() == WorldMap.get_regions().size() and screen.get_selected() == "qingyun", "지도 화면: 지역 버튼, 본거지 선택")
+	_check(screen._region_buttons.values().all(func(b: Button) -> bool: return b.custom_minimum_size.y >= 48), "지역 버튼은 48px 이상")
+	screen.select_region("luoyang")
+	_check(screen.action_button.visible and not screen.action_button.disabled and screen.action_button.text.begins_with("평정"), "빈 땅: 평정 버튼")
+	screen._on_action_pressed()
+	_check(WorldMap.get_owner(gm.map_state, "luoyang") == "qingyun" and screen.summary_label.text.contains("땅 2"), "지도 화면에서 평정")
+	screen.select_region("beijing")
+	_check(not screen.action_button.visible and not screen.log_label.text.is_empty(), "닿지 않는 땅: 까닭 안내")
+	screen.open_report()
+	_check(screen.report_popup.visible, "지도 화면: 세력 동향 창")
+	screen.report_popup.visible = false
+	# 공략: 문파전 화면으로, 그 땅의 주인을 먼저 고른다
+	gm.map_state["owners"]["kaifeng"] = "heukpung"
+	screen.refresh()
+	screen.select_region("kaifeng")
+	screen._on_action_pressed()
+	await process_frame
+	await process_frame
+	_check(current_scene.scene_file_path == SceneRouter.SECT_WAR and current_scene._get_target().id == "heukpung", "공략: 문파전 화면에서 그 땅의 주인을 고름")
+	gm.pending_region_target = ""
+
+	# 경영 화면: 계절을 넘기면 세력 동향 창 (설정)
+	SceneRouter.goto(tree, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	var hub: Node = current_scene
+	GameSettings.faction_report = true
+	SectAI.active = true
+	hub._on_advance_turn_pressed()
+	SectAI.active = false
+	GameSettings.faction_report = false
+	_check(hub.faction_popup.visible and hub.faction_popup._message.text.contains("전략"), "계절을 넘기면 세력 동향 창")
+	hub.faction_popup.visible = false
+
+	# 새 게임 화면: 세력 설정
+	SceneRouter.goto(tree, SceneRouter.NEW_GAME)
+	await process_frame
+	await process_frame
+	var new_game: Node = current_scene
+	for i in new_game._scenarios.size():
+		if new_game._scenarios[i]["id"] == "cheonha":
+			new_game.scenario_list.select(i)
+			new_game._on_scenario_selected(i)
+	_check(new_game._faction_rows.size() == SectRegistry.get_default_rival_ids().size() + SectRegistry.get_optional_ids().size(), "새 게임: 세력 줄 (기본 + 골라 넣는 세력)")
+	new_game.set_faction("tang", true, "military")
+	new_game.set_faction("namgung", false, FactionStrategy.RANDOM)
+	var setup: Dictionary = new_game.get_faction_setup()
+	_check(setup["extra"] == ["tang"] and setup["strategies"] == {"tang": "military", "namgung": FactionStrategy.RANDOM}, "새 게임: 세력 설정 모으기")
+	_check(new_game._faction_rows["namgung"]["check"].disabled, "시나리오 세력은 뺄 수 없음")
+	new_game._on_start_pressed()
+	await process_frame
+	await process_frame
+	_check(gm.get_world_sect("tang") != null and gm.get_world_sect("tang").strategy == "military", "새 게임 시작: 세력 설정 적용")
+	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
+	await process_frame
+	_completed["_test_map_screens"] = true

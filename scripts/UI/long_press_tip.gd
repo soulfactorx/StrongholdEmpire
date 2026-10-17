@@ -2,7 +2,8 @@ class_name LongPressTip
 extends Node
 
 ## 길게 눌러(터치) 또는 마우스를 올려 두면(PC) 설명 말풍선을 보여 준다. 다시 누르면 닫힌다.
-## 버튼에는 붙이지 않는다 (길게 눌러도 버튼이 눌리므로). 라벨 등 정보 표시에 쓴다.
+## 라벨 등 정보 표시에는 attach, 버튼에는 attach_button을 쓴다.
+## 버튼은 길게 눌러 설명이 뜨면 손을 떼도 눌리지 않는다 (설명만 보고 취소).
 
 const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
 ## 길게 누르기·마우스 올림 판정 시간(초)
@@ -14,6 +15,9 @@ var provider: Callable
 var _target: Control
 var _pending: bool = false
 var _hold_id: int = 0
+## 버튼에 붙었는지, 지금 누르고 있는 중인지 (마우스 올림과 구분)
+var _is_button: bool = false
+var _pressing: bool = false
 
 
 ## control에 설명을 붙인다. 라벨은 입력을 받도록 mouse_filter를 바꾼다.
@@ -29,11 +33,26 @@ static func attach(control: Control, text_provider: Callable) -> LongPressTip:
 	return tip
 
 
+## 버튼에 설명을 붙인다. 버튼의 입력 설정은 그대로 두고, 길게 누르면 누름을 취소한다.
+static func attach_button(button: BaseButton, text_provider: Callable) -> LongPressTip:
+	var tip := LongPressTip.new()
+	tip.provider = text_provider
+	tip._target = button
+	tip._is_button = true
+	button.add_child(tip)
+	button.gui_input.connect(tip._on_gui_input)
+	button.mouse_entered.connect(tip._on_hover.bind(true))
+	button.mouse_exited.connect(tip._on_hover.bind(false))
+	return tip
+
+
 func _on_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
+			_pressing = true
 			_start_hold()
 		else:
+			_pressing = false
 			_pending = false
 
 
@@ -51,7 +70,29 @@ func _start_hold() -> void:
 	var my_id: int = _hold_id
 	await get_tree().create_timer(HOLD_TIME).timeout
 	if _pending and my_id == _hold_id and is_inside_tree():
+		# 마우스 올림은 터치 화면이 아니고 마우스가 실제로 위에 있을 때만 (터치는 탭만 해도 올림으로 잡힌다)
+		if not _pressing and not _hover_allowed():
+			return
 		show_now()
+		if _is_button and _pressing:
+			_cancel_press()
+
+
+func _hover_allowed() -> bool:
+	if DisplayServer.is_touchscreen_available():
+		return false
+	return _target.get_global_rect().has_point(_target.get_global_mouse_position())
+
+
+## 길게 눌러 설명을 연 버튼은 손을 떼도 눌리지 않게 누름 상태를 지운다.
+## (비활성으로 바꾸면 BaseButton이 누르던 중이던 상태를 초기화한다)
+func _cancel_press() -> void:
+	var button := _target as BaseButton
+	if button == null or button.disabled:
+		return
+	button.disabled = true
+	button.disabled = false
+	_pressing = false
 
 
 ## 바로 말풍선을 연다 (테스트·키보드용)

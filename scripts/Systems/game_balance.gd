@@ -202,6 +202,19 @@ const INVASION_REPEL_LOSS := 4
 ## 외교: 태도가 이 이상인 세력은 플레이어에게 사절을 보내 태도를 올린다
 const AI_DIPLOMACY_MIN_ATTITUDE := -50
 const AI_DIPLOMACY_ATTITUDE := 5
+## 확장(주인 없는 땅 차지)·내실(무술장 확장) 기본 가중치. 세력 전략(FactionStrategy) 배율을 곱한다
+const AI_EXPAND_WEIGHT := 0.12
+const AI_FORTIFY_WEIGHT := 0.15
+## 내실: 무술장을 한 단계 넓히는 금화와 최대 단계 (확장은 세력 전력이 그 땅의 주둔 병력 이상이어야 한다)
+const AI_FORTIFY_GOLD := 150
+const AI_FORTIFY_MAX_LEVEL := 5
+
+# 강호 지도
+## 땅 하나마다 늘어나는 제자 정원
+const REGION_MAX_DISCIPLES := 3
+## 주인 없는 땅 평정 비용: 금화 = 이 값 + 주둔 병력 / 2, 식량
+const REGION_PACIFY_GOLD := 60
+const REGION_PACIFY_FOOD := 30
 ## 강호 소식은 최근 이만큼 보관한다
 const WORLD_NEWS_LIMIT := 20
 

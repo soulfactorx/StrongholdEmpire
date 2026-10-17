@@ -1,0 +1,26 @@
+{
+  "id": "npc_wudang_disciple",
+  "display_name": "무당 도사",
+  "title": "무당파 제자",
+  "sect_id": "wudang",
+  "role": "WANDERER",
+  "description": "태극검을 익힌 무당의 도사. 여럿이 검진을 이루어 싸운다.",
+  "level": 1,
+  "stats": {
+    "strength": 10,
+    "agility": 12,
+    "wisdom": 11,
+    "charisma": 8,
+    "internal_energy_max": 80,
+    "age": 24,
+    "morality": 70
+  },
+  "scaling": {
+    "base_level": 1,
+    "level_offset": 0,
+    "per_level": {
+      "agility": 1,
+      "wisdom": 1
+    }
+  }
+}

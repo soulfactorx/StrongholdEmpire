@@ -60,6 +60,7 @@ const RUNTIME_SEQUENCE: Array = [
 	["combat", "_test_ally_combat"],
 	["combat", "_test_basic_attack_limit"],
 	["combat", "_test_grid_cursor"],
+	["combat", "_test_combat_preview_and_history"],
 	["events", "_test_event_progress_tracking"],
 	["scenario", "_test_scenario_data"],
 	["scenario", "_test_scenario_parameters"],
@@ -88,12 +89,17 @@ const RUNTIME_SEQUENCE: Array = [
 	["world", "_test_diplomacy"],
 	["world", "_test_diplomacy_screen"],
 	["world", "_test_sect_ai"],
+	["world", "_test_world_map_and_factions"],
+	["world", "_test_map_screens"],
 	["ui", "_test_save_slots"],
 	["world", "_test_invasion_flow"],
 	["ui", "_test_save_screens"],
 	["ui", "_test_settings_and_reports"],
 	["ui", "_test_ui_flows"],
 	["ui", "_test_input_and_tips"],
+	["ui", "_test_action_preview"],
+	["ui", "_test_chronicle_and_dialogue"],
+	["ui", "_test_role_dashboard"],
 	["ui", "_test_art_assets"],
 	["ui", "_test_audio"],
 	["core", "_test_self_check"],
@@ -113,6 +119,11 @@ func _initialize() -> void:
 	GameSettings.settings_path = TEST_SAVE_DIR.path_join("settings.cfg")
 	# 적 차례 간격 없이 바로 진행 (간격은 test_ui의 _test_input_and_tips에서 따로 시험)
 	GameSettings.combat_delay = 0.0
+	# 공격 미리보기는 끄고 바로 실행한다 (켠 상태는 test_combat의 _test_combat_preview_and_history에서 따로)
+	GameSettings.combat_preview = false
+	# 경영 행동 미리보기도 끈다 (켠 상태는 test_ui의 _test_action_preview에서 따로)
+	GameSettings.action_preview = false
+	GameSettings.faction_report = false
 	# 세력 AI는 계절마다 강호 세력 수치를 바꾸므로, 그 영향을 시험하는 곳에서만 켠다.
 	SectAI.active = false
 	# 피해 흔들림·회심은 끄고 정확한 값으로 시험한다 (켠 상태는 test_combat의 _test_damage_randomness에서 따로)
@@ -128,6 +139,11 @@ func _initialize() -> void:
 
 
 func _run_runtime_tests() -> void:
+	# GameManager가 준비되며 설정 파일을 읽으므로, 시험용 전투 설정을 다시 맞춘다.
+	GameSettings.combat_delay = 0.0
+	GameSettings.combat_preview = false
+	GameSettings.action_preview = false
+	GameSettings.faction_report = false
 	# 각 검사가 끝까지 실행됐는지 확인한다. 스크립트 오류로 중단되면 완료 표시가 남지 않는다.
 	for entry in RUNTIME_SEQUENCE:
 		await _suites[entry[0]].call(entry[1])

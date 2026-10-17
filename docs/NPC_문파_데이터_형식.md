@@ -40,6 +40,7 @@
 | (선택) `war_specialty` | 문파전 장수로 참전할 때 보너스를 주는 명령: `CHARGE`(돌격) · `DEFEND`(방어) · `FLANK`(측면) |
 | (선택) `portrait` | 초상화 그림 경로 (`assets/art/` 아래, 예: `"portraits/npc_rival.jpg"`). 없으면 `portraits/<id>.jpg`. 256×320 권장 |
 | (선택) `martial_arts` | `[{ "id": 무공 id, "min_level": 레벨 }]` — 그 레벨 이상이면 전투에서 해당 무공을 씁니다. 무공 id는 `resources/MartialArts/`의 프리셋 또는 `data/martial_arts/`의 모드 무공 |
+| (선택) `dialogue` | 인연 상호작용 때 이 인물이 하는 말. `{ "talk": [...], "gift": [...], "spar": [...], "hatred": [...] }` — 각각 대화·선물·비무 신청·원한 관계일 때 고를 대사 문자열 배열. 없는 종류는 관계 유형과 유대에 맞는 기본 대사(`scripts/Systems/dialogue_lines.gd`)를 씁니다. 오간 대사는 연대기에 남습니다. |
 
 특수 용도 인물:
 - `npc_bandit`: 도적 전투의 적 템플릿
@@ -76,6 +77,8 @@
 | `soldier_npc` | (선택) 이 세력이 침공할 때 오는 졸개 인물 id. 없으면 `npc_bandit` |
 | `champion_npc` | (선택) 침공을 이끄는 우두머리 인물 id. 없으면 졸개만 온다 |
 | `emblem` | (선택) 문장 그림 경로 (`assets/art/` 아래). 없으면 `emblems/<id>.png`. 256×256 투명 PNG 권장 |
+| `strategy` | (선택) 세력 AI 전략: `expansion`(영토 확장) · `military`(무력 강병) · `economy`(내실 부강) · `diplomacy`(합종연횡) · `opportunist`(기회주의). 없으면 성향별 기본값(정파 합종연횡, 사파 기회주의, 마교 무력 강병). 새 게임 화면에서 바꿀 수 있다 |
+| `optional` | (선택) `true`면 기본으로 나오지 않고, 새 게임 화면의 "강호 세력 설정"에서 켜야 나오는 세력 |
 
 ## 문파전과의 관계
 

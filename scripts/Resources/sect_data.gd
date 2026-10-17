@@ -29,6 +29,8 @@ enum Alignment { RIGHTEOUS, UNORTHODOX, DEMONIC }
 @export var last_diplomacy_turn: int = -1
 ## 세력 AI: 마지막으로 플레이어를 침공한 계절 (-1이면 없음)
 @export var last_invasion_turn: int = -1
+## 세력 AI 전략 (FactionStrategy id). 비면 성향별 기본값
+@export var strategy: String = ""
 
 @export_group("자원")
 @export var gold: int = 500

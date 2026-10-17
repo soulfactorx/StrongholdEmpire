@@ -1,0 +1,21 @@
+{
+  "id": "conquer_world",
+  "title": "천하 제패",
+  "description": "문주로서 강호 지도의 대부분을 손에 넣었습니다.\n산과 강, 도시와 관문마다 문파의 깃발이 나부끼고, 누구도 그 이름 앞에서 고개를 들지 못합니다.",
+  "priority": 72,
+  "tone": "victory",
+  "final": false,
+  "conditions": [
+    {
+      "type": "role",
+      "in": [
+        "LEADER"
+      ]
+    },
+    {
+      "type": "regions_owned",
+      "op": ">=",
+      "value": 12
+    }
+  ]
+}

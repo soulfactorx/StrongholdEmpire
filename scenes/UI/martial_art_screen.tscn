@@ -51,29 +51,95 @@ unique_name_in_owner = true
 layout_mode = 2
 placeholder_text = "무공 이름 (예: 청풍무영검)"
 
-[node name="CategoryOption" type="OptionButton" parent="Margin/RootHBox/CreatePanel"]
-unique_name_in_owner = true
+[node name="CategoryRow" type="HBoxContainer" parent="Margin/RootHBox/CreatePanel"]
 layout_mode = 2
+theme_override_constants/separation = 8
 
-[node name="ElementOption" type="OptionButton" parent="Margin/RootHBox/CreatePanel"]
-unique_name_in_owner = true
+[node name="CategoryLabel" type="Label" parent="Margin/RootHBox/CreatePanel/CategoryRow"]
+custom_minimum_size = Vector2(110, 0)
 layout_mode = 2
+text = "범주"
 
-[node name="YinYangOption" type="OptionButton" parent="Margin/RootHBox/CreatePanel"]
+[node name="CategoryOption" type="OptionButton" parent="Margin/RootHBox/CreatePanel/CategoryRow"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
+size_flags_horizontal = 3
 
-[node name="Effect1Option" type="OptionButton" parent="Margin/RootHBox/CreatePanel"]
-unique_name_in_owner = true
+[node name="ElementRow" type="HBoxContainer" parent="Margin/RootHBox/CreatePanel"]
 layout_mode = 2
+theme_override_constants/separation = 8
 
-[node name="Effect2Option" type="OptionButton" parent="Margin/RootHBox/CreatePanel"]
-unique_name_in_owner = true
+[node name="ElementLabel" type="Label" parent="Margin/RootHBox/CreatePanel/ElementRow"]
+custom_minimum_size = Vector2(110, 0)
 layout_mode = 2
+text = "오행 속성"
 
-[node name="Effect3Option" type="OptionButton" parent="Margin/RootHBox/CreatePanel"]
+[node name="ElementOption" type="OptionButton" parent="Margin/RootHBox/CreatePanel/ElementRow"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="YinYangRow" type="HBoxContainer" parent="Margin/RootHBox/CreatePanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="YinYangLabel" type="Label" parent="Margin/RootHBox/CreatePanel/YinYangRow"]
+custom_minimum_size = Vector2(110, 0)
+layout_mode = 2
+text = "음양"
+
+[node name="YinYangOption" type="OptionButton" parent="Margin/RootHBox/CreatePanel/YinYangRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Effect1Row" type="HBoxContainer" parent="Margin/RootHBox/CreatePanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Effect1Label" type="Label" parent="Margin/RootHBox/CreatePanel/Effect1Row"]
+custom_minimum_size = Vector2(110, 0)
+layout_mode = 2
+text = "특수 효과 1"
+
+[node name="Effect1Option" type="OptionButton" parent="Margin/RootHBox/CreatePanel/Effect1Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Effect2Row" type="HBoxContainer" parent="Margin/RootHBox/CreatePanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Effect2Label" type="Label" parent="Margin/RootHBox/CreatePanel/Effect2Row"]
+custom_minimum_size = Vector2(110, 0)
+layout_mode = 2
+text = "특수 효과 2"
+
+[node name="Effect2Option" type="OptionButton" parent="Margin/RootHBox/CreatePanel/Effect2Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Effect3Row" type="HBoxContainer" parent="Margin/RootHBox/CreatePanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Effect3Label" type="Label" parent="Margin/RootHBox/CreatePanel/Effect3Row"]
+custom_minimum_size = Vector2(110, 0)
+layout_mode = 2
+text = "특수 효과 3"
+
+[node name="Effect3Option" type="OptionButton" parent="Margin/RootHBox/CreatePanel/Effect3Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="SuccessRateLabel" type="Label" parent="Margin/RootHBox/CreatePanel"]
 unique_name_in_owner = true
@@ -84,6 +150,28 @@ text = "예상 성공률"
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 text = "무공 창조 (연구)"
+
+[node name="BlueprintRow" type="HBoxContainer" parent="Margin/RootHBox/CreatePanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SaveBlueprintButton" type="Button" parent="Margin/RootHBox/CreatePanel/BlueprintRow"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "설정 저장"
+
+[node name="LoadBlueprintButton" type="Button" parent="Margin/RootHBox/CreatePanel/BlueprintRow"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "저장한 설정"
+
+[node name="DeleteBlueprintButton" type="Button" parent="Margin/RootHBox/CreatePanel/BlueprintRow"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "설정 지우기"
 
 [node name="PresetPanel" type="VBoxContainer" parent="Margin/RootHBox"]
 layout_mode = 2
@@ -159,6 +247,9 @@ custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 text = "문파로 돌아가기"
 
+[connection signal="pressed" from="Margin/RootHBox/CreatePanel/BlueprintRow/SaveBlueprintButton" to="." method="_on_save_blueprint_pressed"]
+[connection signal="pressed" from="Margin/RootHBox/CreatePanel/BlueprintRow/LoadBlueprintButton" to="." method="_on_load_blueprint_pressed"]
+[connection signal="pressed" from="Margin/RootHBox/CreatePanel/BlueprintRow/DeleteBlueprintButton" to="." method="_on_delete_blueprint_pressed"]
 [connection signal="pressed" from="Margin/RootHBox/CreatePanel/CreateButton" to="." method="_on_create_pressed"]
 [connection signal="pressed" from="Margin/RootHBox/PresetPanel/ResearchPresetButton" to="." method="_on_research_preset_pressed"]
 [connection signal="pressed" from="Margin/RootHBox/PresetPanel/BackButton" to="." method="_on_back_pressed"]

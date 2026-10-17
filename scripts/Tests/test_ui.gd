@@ -153,6 +153,9 @@ func _test_settings_and_reports() -> void:
 	GameSettings.set_and_save("text_scale", 1.0, tree)
 	# 불러오기로 기본값(0.3)이 된 전투 간격을 다시 시험용 0으로
 	GameSettings.combat_delay = 0.0
+	GameSettings.combat_preview = false
+	GameSettings.action_preview = false
+	GameSettings.faction_report = false
 	_check(ProjectSettings.get_setting("display/window/stretch/aspect") == "expand", "화면 비율: 넓은 화면은 보이는 영역을 넓힘")
 
 	# 연간 보고서
@@ -254,6 +257,172 @@ func _test_ui_flows() -> void:
 	_completed["_test_ui_flows"] = true
 
 
+## 경영 행동 미리보기: 수치 변화를 보여 주고, 취소하면 아무것도 바뀌지 않는다.
+func _test_action_preview() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_new_quiet_game(gm, "leader")
+	gm.player_sect.gold = 500
+	gm.player_sect.food = 300
+	var character: CharacterData = gm.player_character
+	var strength: int = character.strength
+	var disciples: int = gm.player_sect.disciple_count
+	var news: int = gm.world_news.size()
+
+	# 시뮬레이션 뒤 상태는 그대로
+	var train := func() -> Dictionary: return SectManager.train_disciples(gm.player_sect, gm.player_character)
+	var preview: Dictionary = ActionPreview.simulate_action(gm, train)
+	_check(gm.player_sect.gold == 500 and character.strength == strength and gm.player_sect.disciple_count == disciples, "미리보기: 돌려 본 뒤 상태 되돌림")
+	_check(gm.player_sect.disciples.size() == disciples, "미리보기: 제자 명단도 되돌림")
+	var text: String = ActionPreview.format(preview)
+	_check(text.contains("금화  500 → %d (-%d)" % [500 - GameBalance.TRAIN_GOLD, GameBalance.TRAIN_GOLD]), "미리보기: 금화 변화량")
+	_check(text.contains("무력") and text.contains("제자 수") and not text.contains("운에 따라"), "미리보기: 능력치·제자 수, 운 없음")
+	_check(not preview["random"] and gm.player_sect.disciples.size() == disciples, "운이 끼지 않는 행동: 결과 하나")
+
+	# 운이 끼는 역할 행동 (막내 제자의 외출: 금화 또는 경험치) — 범위·확률
+	_new_quiet_game(gm, "young_disciple")
+	var gold: int = gm.player_sect.gold
+	# 기연이 걸려 있으면 외출에서 새 기연을 찾지 않는다 (금화·경험치 둘 중 하나만)
+	gm.pending_event = {"id": "dummy"}
+	var outing := func() -> Dictionary: return RoleActions.perform(gm, "outing", "")
+	preview = ActionPreview.simulate_action(gm, outing)
+	text = ActionPreview.format(preview)
+	_check(gm.player_sect.gold == gold and RoleActions.can_act(gm.role_state, gm._get_turn_index()), "역할 행동 미리보기 뒤 금화·행동 횟수 그대로")
+	_check(preview["random"] and text.contains("운에 따라") and text.contains("금화") and text.contains("경험치"), "운이 끼는 행동: 범위와 결과별 확률")
+	gm.pending_event = {}
+
+	# 경영 화면: 켜 두면 확인창, 취소하면 그대로, 실행하면 적용
+	_new_quiet_game(gm, "leader")
+	gm.player_sect.gold = 500
+	GameSettings.action_preview = true
+	SceneRouter.goto(tree, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	var hub: Node = current_scene
+	hub._on_feast_pressed()
+	var popup: Control = ActionPreview.get_popup(hub)
+	_check(popup.visible and popup._message.text.contains("명성") and gm.player_sect.gold == 500, "연회 미리보기: 확인창, 아직 그대로")
+	popup._answer(false)
+	_check(gm.player_sect.gold == 500 and gm.can_do_seasonal("last_feast_turn"), "취소: 아무것도 바뀌지 않음")
+	hub._on_feast_pressed()
+	popup._answer(true)
+	_check(gm.player_sect.gold == 500 - GameBalance.FEAST_GOLD and not gm.can_do_seasonal("last_feast_turn"), "실행: 미리 본 대로 적용")
+	# 이미 한 행동(모두 실패)은 확인 없이 까닭만 알린다.
+	hub._on_feast_pressed()
+	_check(not popup.visible, "할 수 없는 행동은 미리보기 없이 안내")
+	var date: String = gm.get_date_text()
+	hub._on_advance_turn_pressed()
+	_check(popup.visible and popup._message.text.contains("금화") and gm.get_date_text() == date, "계절 넘기기 미리보기: 예상 수입·유지비")
+	popup._answer(false)
+	_check(gm.get_date_text() == date and gm.world_news.size() >= news, "계절 넘기기 취소")
+	GameSettings.action_preview = false
+	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
+	await process_frame
+	_completed["_test_action_preview"] = true
+
+
+## 강호 연대기와 인물 대사: 기연 선택·대화·외교·역할 행동이 기록되고, 저장·불러오기 뒤에도 남는다.
+func _test_chronicle_and_dialogue() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_clear_test_saves()
+	_new_quiet_game(gm, "leader")
+	_check(gm.chronicle.size() == 1 and gm.chronicle[0]["kind"] == "시작", "연대기: 시작 기록")
+
+	# 대화: 주인공과 상대의 대사, 인물 JSON의 고유 대사
+	var result: Dictionary = gm.interact_with("npc_master", "talk")
+	var lines: PackedStringArray = result.get("dialogue", PackedStringArray())
+	var own: Array = NpcRoster.get_npc("npc_master")["dialogue"]["talk"]
+	_check(lines.size() == 2 and lines[0].begins_with(gm.player_character.display_name + ":"), "대화: 주인공 대사")
+	_check(lines[1].begins_with("청운검선:") and own.has(lines[1].trim_prefix("청운검선: ")), "대화: 인물 고유 대사")
+	_check(gm.chronicle[-1]["kind"] == "대화" and Array(gm.chronicle[-1]["lines"]) == Array(lines), "연대기: 대화와 오간 대사")
+	# 고유 대사가 없는 관계는 관계 유형에 맞는 기본 대사
+	var rel := RelationshipData.new()
+	rel.target_id = "npc_unknown"
+	rel.target_name = "무명객"
+	rel.bond_type = RelationshipData.BondType.BLOOD_OATH
+	var default_lines: PackedStringArray = DialogueLines.for_interaction(rel, "gift", "나", true)
+	_check(default_lines.size() == 2 and default_lines[1].begins_with("무명객:"), "기본 대사")
+	_check(not DialogueLines.validate({"talk": ["좋소"]}).size() and DialogueLines.validate({"shout": ["!"]}).size() == 1 and DialogueLines.validate({"talk": [1]}).size() == 1, "인물 대사 형식 검사")
+
+	# 외교: 사절과 문주의 대사
+	result = gm.do_diplomacy("namgung", "envoy")
+	_check(result["success"] and result["dialogue"].size() == 2 and gm.chronicle[-1]["kind"] == "외교", "외교: 사절·문주 대사와 연대기")
+
+	# 역할 행동: 문파 회의
+	result = gm.do_role_action("council")
+	_check(result["dialogue"].size() == 2 and gm.chronicle[-1]["kind"] == "행동", "역할 행동: 대사와 연대기")
+
+	# 기연: 상황·선택·결과
+	var event: EventData = EventManager.get_definitions()[0]
+	gm.pending_event = event.to_popup_dict()
+	gm.resolve_pending_event(0)
+	var entry: Dictionary = gm.chronicle[-1]
+	_check(entry["kind"] == "기연" and entry["text"].contains(event.title) and Array(entry["lines"]).any(func(line: String) -> bool: return line.begins_with("▶ 선택: ")), "연대기: 기연 제목과 고른 선택지")
+
+	# 저장·불러오기 뒤에도 남는다
+	var count: int = gm.chronicle.size()
+	gm.save_game(1)
+	_new_quiet_game(gm, "leader")
+	gm.load_game(1)
+	_check(gm.chronicle.size() == count and gm.chronicle[1]["kind"] == "대화", "연대기 저장·불러오기")
+
+	# 경영 화면의 연대기 창: 갈래별로 골라 보기
+	SceneRouter.goto(tree, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	var hub: Node = current_scene
+	hub._on_chronicle_pressed()
+	var popup: Control = hub.chronicle_popup
+	_check(popup.visible and popup.get_entry_count() == count, "연대기 창: 모든 기록")
+	popup.set_filter(2)
+	_check(popup.get_entry_count() == 3, "연대기 창: 대화·외교·행동만")
+	popup.set_filter(3)
+	_check(popup.get_entry_count() == 1, "연대기 창: 기록이 없으면 안내 한 줄")
+	popup.visible = false
+	# 인연 창: 방금 오간 대사
+	hub.bond_popup.open()
+	hub.bond_popup._interact("npc_master", "gift")
+	_check(hub.bond_popup.dialogue_label.visible and hub.bond_popup.dialogue_label.text.contains("청운검선:"), "인연 창: 오간 대사 표시")
+	hub.bond_popup.visible = false
+	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
+	await process_frame
+	_clear_test_saves()
+	_completed["_test_chronicle_and_dialogue"] = true
+
+
+## 역할별 경영 화면: 시작 역할이 7가지이고, 역할마다 보이는 버튼·칸·안내가 다르다.
+func _test_role_dashboard() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_check(StartingRoles.ROLES.size() >= 7, "시작 역할 7가지")
+	_new_quiet_game(gm, "spy")
+	_check(gm.player_character.role == CharacterData.Role.SPY and gm.story_flags.get("spy_recruitment", false), "간자로 시작: 포섭 플래그")
+	_new_quiet_game(gm, "assassin")
+	_check(gm.player_character.role == CharacterData.Role.ASSASSIN and gm.story_flags.get("assassin_path", false), "자객으로 시작")
+	SceneRouter.goto(tree, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	var hub: Node = current_scene
+	var grid: Node = hub.action_grid
+	_check(not grid.get_node("TrainButton").visible and not grid.get_node("SectWarButton").visible and grid.get_node("ElixirButton").visible, "자객: 문파 운영 버튼 숨김")
+	_check(not hub.get_node("Margin/RootHBox/LeftPanel/FacilityPanel").visible and hub.sect_name_label.text.contains("내 몫"), "자객: 시설 칸 숨김, 개인 재산")
+	_check(hub.role_resource_label.text.contains("표적") and hub.role_action_box.get_child_count() == 2, "자객: 역할 안내와 고유 행동")
+	var key := InputEventKey.new()
+	key.keycode = KEY_F
+	key.pressed = true
+	hub._unhandled_key_input(key)
+	_check(not hub.facility_popup.visible, "숨긴 버튼은 단축키로도 열리지 않음")
+	# 역할이 바뀌면 화면도 바뀐다
+	gm.apply_role_transition(CharacterData.Role.LEADER)
+	await process_frame
+	_check(grid.get_node("TrainButton").visible and grid.get_node("SectWarButton").visible and hub.get_node("Margin/RootHBox/LeftPanel/FacilityPanel").visible, "문주가 되면 모든 버튼")
+	hub._unhandled_key_input(key)
+	_check(hub.facility_popup.visible, "문주: 시설 단축키")
+	hub.facility_popup.visible = false
+	_check(RoleDashboard.describe_role(CharacterData.Role.MANAGER).contains("문주에게 건의"), "새 게임 화면 역할 소개: 고유 행동")
+	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
+	await process_frame
+	_completed["_test_role_dashboard"] = true
+
+
 func _test_input_and_tips() -> void:
 	var gm: Node = root.get_node("GameManager")
 	_clear_test_saves()
@@ -281,6 +450,23 @@ func _test_input_and_tips() -> void:
 		hub.tips[key].show_now()
 		_check(LongPressTip.is_bubble_visible(hub.gold_label) and not hub.get_node("TipLayer/Bubble").get_child(0).text.is_empty(), "설명: %s" % key)
 		LongPressTip.hide_bubble(hub.gold_label)
+
+	# 버튼 설명: 길게 누르면 설명이 뜨고, 손을 떼도 버튼은 눌리지 않는다
+	var feast: Button = hub.find_child("FeastButton", true, false)
+	_check(feast.has_meta("help_attached") and ButtonHelp.text_for(feast).contains("명성"), "버튼 설명이 붙음 (문파 연회)")
+	var feast_presses: Array = [0]
+	var count_press := func() -> void: feast_presses[0] += 1
+	feast.pressed.connect(count_press)
+	feast.gui_input.emit(_mouse(true))
+	await create_timer(LongPressTip.HOLD_TIME + 0.15).timeout
+	_check(LongPressTip.is_bubble_visible(feast) and hub.get_node("TipLayer/Bubble").get_child(0).text == ButtonHelp.text_for(feast), "버튼을 길게 누르면 기능 설명")
+	_check(not feast.button_pressed and feast_presses[0] == 0, "길게 눌러 설명을 보면 버튼이 실행되지 않음")
+	feast.pressed.disconnect(count_press)
+	LongPressTip.hide_bubble(feast)
+	var unknown := Button.new()
+	unknown.text = "설명 없는 버튼"
+	_check(ButtonHelp.text_for(unknown).is_empty(), "설명이 없는 버튼은 말풍선을 붙이지 않음")
+	unknown.free()
 
 	# 단축키
 	hub._unhandled_key_input(_key(KEY_F))

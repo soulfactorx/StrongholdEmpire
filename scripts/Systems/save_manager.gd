@@ -180,6 +180,7 @@ static func serialize_sect(sect: SectData) -> Dictionary:
 		"married": sect.married,
 		"last_diplomacy_turn": sect.last_diplomacy_turn,
 		"last_invasion_turn": sect.last_invasion_turn,
+		"strategy": sect.strategy,
 		"sect_name": sect.sect_name,
 		"leader_name": sect.leader_name,
 		"gold": sect.gold,
@@ -348,6 +349,7 @@ static func deserialize_sect(data: Dictionary) -> SectData:
 	sect.married = data.get("married", false)
 	sect.last_diplomacy_turn = int(data.get("last_diplomacy_turn", -1))
 	sect.last_invasion_turn = int(data.get("last_invasion_turn", -1))
+	sect.strategy = str(data.get("strategy", ""))
 	for command in data.get("observed_commands", []):
 		sect.observed_commands.append(int(command))
 	var secret: Array[MartialArtData] = deserialize_martial_arts(data.get("secret_art", []))

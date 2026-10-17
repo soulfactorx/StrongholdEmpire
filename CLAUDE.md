@@ -23,6 +23,7 @@
 - 기연에서 이어지는 전투는 `data/combats/*.json`으로 정의한다. 형식은 `docs/전투_데이터_형식.md` 참고.
 - 인물은 `data/npcs/*.json`, 문파는 `data/sects/*.json`으로 정의한다.
   형식은 `docs/NPC_문파_데이터_형식.md` 참고.
+- 강호 지도는 `data/map/regions.json`으로 정의한다. 형식은 `docs/지도_데이터_형식.md` 참고.
 - 엔딩은 `data/endings/*.json`으로 정의한다. 형식은 `docs/엔딩_데이터_형식.md` 참고.
   새 자동 엔딩을 추가하면 스모크 테스트의 도달 시험 상태도 함께 추가한다.
 - 시나리오는 `data/scenarios/<id>/`로 정의한다. 형식은 `docs/시나리오_데이터_형식.md` 참고.

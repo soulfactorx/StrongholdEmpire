@@ -8,6 +8,7 @@ const _DisciplePopup = preload("res://scripts/UI/disciple_popup.gd")
 const _BondPopup = preload("res://scripts/UI/bond_popup.gd")
 const _ConfirmPopup = preload("res://scripts/UI/confirm_popup.gd")
 const _OptionsPopup = preload("res://scripts/UI/options_popup.gd")
+const _ChroniclePopup = preload("res://scripts/UI/chronicle_popup.gd")
 
 @onready var year_label: Label = %YearLabel
 @onready var season_label: Label = %SeasonLabel
@@ -28,8 +29,12 @@ const _OptionsPopup = preload("res://scripts/UI/options_popup.gd")
 @onready var role_resource_label: Label = %RoleResourceLabel
 @onready var role_action_box: HBoxContainer = %RoleActionBox
 @onready var event_popup: Control = %EventPopup
+@onready var action_grid: GridContainer = $Margin/RootHBox/RightPanel/ActionPanel/ActionGrid
 @onready var role_popup: Control = %RolePopup
 var facility_popup: Control
+var chronicle_popup: Control
+## 계절마다 강호 세력 동향
+var faction_popup: Control
 ## 역할 행동의 대상을 고르는 팝업
 var choice_popup: Control
 ## 제자 명단 팝업
@@ -78,6 +83,10 @@ func _ready() -> void:
 	add_child(options_popup)
 	report_popup = _ConfirmPopup.new()
 	add_child(report_popup)
+	chronicle_popup = _ChroniclePopup.new()
+	add_child(chronicle_popup)
+	faction_popup = _ConfirmPopup.new()
+	add_child(faction_popup)
 	_connect_bus(EventBus.turn_advanced, _on_turn_advanced)
 	_connect_bus(EventBus.resources_changed, _on_resources_changed)
 	_connect_bus(EventBus.character_updated, _on_character_updated)
@@ -149,7 +158,7 @@ func _food_tip() -> String:
 
 
 ## 키보드 단축키: Space 계절 진행, F 시설, M 무공 연구소, W 강호 정세, D 제자 명단, B 인연,
-## R 역할 전환, S 저장, O 설정, Esc 팝업 닫기(없으면 메인 메뉴로)
+## R 역할 전환, C 연대기, G 강호 지도, S 저장, O 설정, Esc 팝업 닫기(없으면 메인 메뉴로)
 const HUB_SHORTCUTS: Dictionary = {
 	KEY_SPACE: "_on_advance_turn_pressed",
 	KEY_F: "_on_facility_pressed",
@@ -158,6 +167,8 @@ const HUB_SHORTCUTS: Dictionary = {
 	KEY_D: "_on_disciple_pressed",
 	KEY_B: "_on_bond_pressed",
 	KEY_R: "_on_role_pressed",
+	KEY_C: "_on_chronicle_pressed",
+	KEY_G: "_on_map_pressed",
 	KEY_S: "_on_save_pressed",
 	KEY_O: "_on_options_pressed",
 }
@@ -165,9 +176,13 @@ const HUB_SHORTCUTS: Dictionary = {
 
 func _get_open_popups() -> Array[Control]:
 	var result: Array[Control] = []
-	for popup in [role_popup, facility_popup, choice_popup, disciple_popup, bond_popup, invasion_popup, save_popup, confirm_popup, options_popup, report_popup]:
+	for popup in [role_popup, facility_popup, choice_popup, disciple_popup, bond_popup, invasion_popup, save_popup, confirm_popup, options_popup, report_popup, chronicle_popup, faction_popup]:
 		if popup and popup.visible:
 			result.append(popup)
+	# 행동 미리보기 확인창은 맨 위에 뜬다.
+	var preview: Node = get_node_or_null("PreviewLayer/PreviewPopup")
+	if preview and preview.visible:
+		result.append(preview)
 	return result
 
 
@@ -186,7 +201,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			open[-1].visible = false
 		get_viewport().set_input_as_handled()
 		return
-	if open.is_empty() and HUB_SHORTCUTS.has(key.keycode):
+	if open.is_empty() and HUB_SHORTCUTS.has(key.keycode) and _shortcut_allowed(HUB_SHORTCUTS[key.keycode]):
 		call(HUB_SHORTCUTS[key.keycode])
 		get_viewport().set_input_as_handled()
 
@@ -208,6 +223,7 @@ func _exit_tree() -> void:
 
 
 func _refresh_all() -> void:
+	_apply_role_layout()
 	_update_time_display()
 	_update_sect_display(GameManager.player_sect)
 	_update_character_display(GameManager.player_character)
@@ -215,10 +231,32 @@ func _refresh_all() -> void:
 	_update_role_actions()
 
 
+## 역할마다 할 일이 없는 버튼과 칸을 숨긴다 (RoleDashboard)
+func _apply_role_layout() -> void:
+	var role: CharacterData.Role = GameManager.player_character.role
+	for button_name in RoleDashboard.ACTION_BUTTONS:
+		var button: Control = action_grid.get_node_or_null(button_name)
+		if button:
+			button.visible = RoleDashboard.is_button_visible(role, button_name)
+	$Margin/RootHBox/LeftPanel/FacilityPanel.visible = RoleDashboard.get_layout(role)["sect"]
+
+
+## 버튼이 숨겨진 행동은 단축키로도 열지 않는다.
+func _shortcut_allowed(method: String) -> bool:
+	for button in action_grid.get_children():
+		if button is BaseButton and not button.visible:
+			for connection in button.pressed.get_connections():
+				if connection["callable"].get_method() == method:
+					return false
+	return true
+
+
 ## 역할별 고유 행동 버튼과 역할 자원 표시
 func _update_role_actions() -> void:
 	var character: CharacterData = GameManager.player_character
-	role_resource_label.text = "[%s 고유 행동] %s" % [character.get_role_name(), RoleActions.describe(GameManager)]
+	role_resource_label.text = "%s\n[%s 고유 행동] %s" % [
+		RoleDashboard.get_layout(character.role)["focus"], character.get_role_name(), RoleActions.describe(GameManager),
+	]
 	for child in role_action_box.get_children():
 		role_action_box.remove_child(child)
 		child.queue_free()
@@ -255,8 +293,23 @@ func _on_role_target_chosen(target_id: String) -> void:
 
 
 func _run_role_action(action_id: String, target_id: String) -> void:
+	ActionPreview.confirm(
+		self, RoleActions.ACTIONS[action_id]["title"],
+		_simulate_role_action.bind(action_id, target_id), _do_role_action.bind(action_id, target_id)
+	)
+
+
+## 미리보기용: 전투·기연은 시작하지 않고 행동과 그 여파만 적용한다.
+func _simulate_role_action(action_id: String, target_id: String) -> Dictionary:
+	var result: Dictionary = RoleActions.perform(GameManager, action_id, target_id)
+	GameManager._apply_role_consequences()
+	return result
+
+
+func _do_role_action(action_id: String, target_id: String) -> void:
 	var result: Dictionary = GameManager.do_role_action(action_id, target_id)
-	_on_action_message(result["message"])
+	var lines: PackedStringArray = result.get("dialogue", PackedStringArray())
+	_on_action_message(result["message"] + ("\n" + "\n".join(lines) if not lines.is_empty() else ""))
 	if result["success"]:
 		AudioManager.play_success()
 	else:
@@ -276,7 +329,7 @@ func _update_time_display() -> void:
 
 
 func _update_sect_display(sect: SectData) -> void:
-	sect_name_label.text = sect.sect_name
+	sect_name_label.text = RoleDashboard.get_sect_title(GameManager.player_character.role, sect)
 	# 다음 계절 예상 수지 (수입 − 유지비)
 	var forecast: Dictionary = GameManager.estimate_next_season()
 	gold_label.text = "금화: %d (다음 계절 %+d, 유지비 %d)" % [sect.gold, forecast["gold"], sect.get_gold_upkeep()]
@@ -375,6 +428,14 @@ func _on_turn_advanced(_year: int, _season: String) -> void:
 	_on_action_message(GameManager.last_turn_report)
 	_show_invasion()
 	_show_year_report()
+	_show_faction_report()
+
+
+## 계절을 넘기면 강호 세력마다 어떤 전략으로 무엇을 했는지 보여 준다. (설정에서 끌 수 있다)
+func _show_faction_report() -> void:
+	if not GameSettings.faction_report or GameManager.last_faction_report.is_empty():
+		return
+	faction_popup.open("강호 세력 동향 — %s" % GameManager.get_date_text(), SectAI.format_reports(GameManager.last_faction_report), Callable(), "확인", "")
 
 
 ## 해가 바뀌면 1년 결산을 보여 준다.
@@ -469,11 +530,37 @@ func _execute_action(result: Dictionary) -> void:
 
 func _on_advance_turn_pressed() -> void:
 	AudioManager.play_click()
-	GameManager.advance_turn()
+	if not GameSettings.action_preview:
+		GameManager.advance_turn()
+		return
+	ActionPreview.get_popup(self).open("계절 넘기기 — 미리보기", _advance_preview_text(), GameManager.advance_turn, "넘기기", "취소")
+
+
+## 계절을 넘기면 확실히 바뀌는 것(수입·유지비)과 넘긴 뒤에야 알 수 있는 것을 알려 준다.
+func _advance_preview_text() -> String:
+	var sect: SectData = GameManager.player_sect
+	var estimate: Dictionary = GameManager.estimate_next_season()
+	var lines: PackedStringArray = ["예상 변화 (수입 - 유지비)"]
+	lines.append("금화  %d → %d (%+d)" % [sect.gold, maxi(0, sect.gold + estimate["gold"]), estimate["gold"]])
+	lines.append("식량  %d → %d (%+d)" % [sect.food, maxi(0, sect.food + estimate["food"]), estimate["food"]])
+	if sect.food + estimate["food"] < 0 or sect.gold + estimate["gold"] < 0:
+		lines.append("자원이 모자라 유지비를 다 내지 못하면 제자가 떠납니다.")
+	lines.append("")
+	lines.append("나이·시설 효과·역할 자원도 계절에 맞춰 바뀌고, 기연·강호 세력의 움직임·침공은 넘긴 뒤에 알 수 있습니다.")
+	var left: PackedStringArray = []
+	for flag in [["last_elixir_turn", "영약"], ["last_feast_turn", "연회"], ["last_spar_turn", "연습 비무"]]:
+		if GameManager.can_do_seasonal(flag[0]):
+			left.append(flag[1])
+	if not left.is_empty():
+		lines.append("이번 계절에 아직 하지 않은 일: " + ", ".join(left))
+	return "\n".join(lines)
 
 
 func _on_train_pressed() -> void:
-	_execute_action(SectManager.train_disciples(GameManager.player_sect, GameManager.player_character))
+	ActionPreview.confirm(self, "제자 수련",
+		func() -> Dictionary: return SectManager.train_disciples(GameManager.player_sect, GameManager.player_character),
+		func() -> void: _execute_action(SectManager.train_disciples(GameManager.player_sect, GameManager.player_character))
+	)
 
 
 func _on_bond_pressed() -> void:
@@ -499,11 +586,11 @@ func _on_facility_pressed() -> void:
 
 
 func _on_elixir_pressed() -> void:
-	_execute_action(GameManager.buy_elixir())
+	ActionPreview.confirm(self, "영약 구매", GameManager.buy_elixir, func() -> void: _execute_action(GameManager.buy_elixir()))
 
 
 func _on_feast_pressed() -> void:
-	_execute_action(GameManager.hold_feast())
+	ActionPreview.confirm(self, "문파 연회", GameManager.hold_feast, func() -> void: _execute_action(GameManager.hold_feast()))
 
 
 func _on_martial_art_pressed() -> void:
@@ -563,6 +650,16 @@ func _on_save_slot_chosen(slot: String) -> void:
 		AudioManager.play_success()
 	else:
 		AudioManager.play_failure()
+
+
+func _on_map_pressed() -> void:
+	AudioManager.play_click()
+	SceneRouter.goto(get_tree(), SceneRouter.MAP)
+
+
+func _on_chronicle_pressed() -> void:
+	AudioManager.play_click()
+	chronicle_popup.open()
 
 
 func _on_help_pressed() -> void:

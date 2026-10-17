@@ -10,5 +10,6 @@
   "training_ground_level": 4,
   "attitude": -60,
   "soldier_npc": "npc_cheonma_cultist",
-  "champion_npc": "npc_cheonma_envoy"
+  "champion_npc": "npc_cheonma_envoy",
+  "strategy": "military"
 }
