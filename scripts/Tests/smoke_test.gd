@@ -36,6 +36,8 @@ func _initialize() -> void:
 	_test_event_conditions()
 	_test_event_branches()
 	_test_event_mod_folder()
+	_test_upkeep()
+	_test_game_over_conditions()
 	# 오토로드의 _ready()는 첫 프레임에 실행되므로 런타임 검사는 그 뒤로 미룬다.
 	process_frame.connect(_run_runtime_tests, CONNECT_ONE_SHOT)
 
@@ -46,6 +48,7 @@ func _run_runtime_tests() -> void:
 	await _test_scene_navigation()
 	await _test_combat_flow()
 	await _test_event_popup_choices()
+	await _test_game_over_flow()
 
 	print("스모크 테스트: %d개 검사, %d개 실패" % [_checks, _failures])
 	quit(1 if _failures > 0 else 0)
@@ -497,3 +500,127 @@ func _test_event_popup_choices() -> void:
 		func(n: Node) -> bool: return n is Button and not n.is_queued_for_deletion()
 	)
 	_check(buttons.size() == 3 and popup.visible, "기연 팝업: 선택지 3개 버튼 생성")
+
+
+func _test_upkeep() -> void:
+	var sect := SectData.new()
+	sect.disciple_count = 10
+	sect.library_level = 2
+	sect.treasury_level = 3
+	_check(sect.get_food_upkeep() == 10 * _Balance.FOOD_PER_DISCIPLE, "식량 유지비 = 제자 수 × 단가")
+	_check(
+		sect.get_gold_upkeep() == 10 * _Balance.GOLD_PER_DISCIPLE + 3 * _Balance.FACILITY_UPKEEP_GOLD,
+		"금화 유지비 = 제자 + 시설 단계"
+	)
+
+	# 정상 납부: 차감, 연속 부족 초기화
+	sect.food = 100
+	sect.gold = 100
+	sect.shortage_seasons = 2
+	var result: Dictionary = SectManager.pay_upkeep(sect)
+	_check(
+		not result["shortage"] and sect.food == 80 and sect.gold == 100 - sect.get_gold_upkeep()
+		and sect.shortage_seasons == 0,
+		"유지비 정상 납부"
+	)
+
+	# 식량 부족: 식량 0, 부족분에 비례한 제자 이탈
+	sect.food = 2  # 유지비 20 → 18 부족 → 18/6 = 3명 이탈
+	sect.gold = 100
+	result = SectManager.pay_upkeep(sect)
+	_check(
+		result["shortage"] and sect.food == 0 and result["deserted"] == 3 and sect.disciple_count == 7
+		and sect.shortage_seasons == 1,
+		"식량 부족: 제자 3명 이탈, 연속 부족 1"
+	)
+
+	# 금화 부족: 금화 0, 명성 하락
+	sect.food = 1000
+	sect.gold = 0
+	var rep_before: int = sect.reputation
+	result = SectManager.pay_upkeep(sect)
+	_check(
+		result["shortage"] and sect.gold == 0
+		and sect.reputation == rep_before - _Balance.GOLD_SHORTAGE_REPUTATION_LOSS
+		and sect.shortage_seasons == 2,
+		"금화 부족: 명성 하락, 연속 부족 2"
+	)
+
+	# 저장/불러오기에 연속 부족 계절 유지
+	var restored: SectData = _SaveManager.deserialize_sect(
+		JSON.parse_string(JSON.stringify(_SaveManager.serialize_sect(sect)))
+	)
+	_check(restored.shortage_seasons == 2, "연속 부족 계절 저장/복원")
+
+
+func _test_game_over_conditions() -> void:
+	var sect := SectData.new()
+	_check(EndingManager.check_game_over(sect).is_empty(), "기본 문파는 게임오버 아님")
+	sect.disciple_count = 0
+	_check(EndingManager.check_game_over(sect) == "sect_disbanded", "제자 0명: 문파 해산")
+	sect = SectData.new()
+	sect.shortage_seasons = _Balance.SHORTAGE_GAME_OVER_SEASONS
+	_check(EndingManager.check_game_over(sect) == "famine_collapse", "연속 부족: 곳간이 비다")
+	sect = SectData.new()
+	sect.reputation = 0
+	_check(EndingManager.check_game_over(sect) == "disgraced", "명성 0: 명성 실추")
+
+
+func _test_game_over_flow() -> void:
+	var gm: Node = root.get_node("GameManager")
+	gm.start_new_game("궁핍", "young_disciple")
+	SceneRouter.goto(self, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+
+	# 이미 2계절 연속 부족인 상태에서 식량이 바닥난 채 여름을 맞는다
+	# (여름 식량 수입 ~35 < 제자 30명 유지비 60 → 세 번째 부족)
+	var signalled: Array[String] = []
+	var on_over := func(id: String) -> void: signalled.append(id)
+	var bus: Node = root.get_node("EventBus")
+	bus.game_over.connect(on_over)
+	gm.player_sect.disciple_count = 30
+	gm.player_sect.max_disciples = 30
+	gm.player_sect.food = 0
+	gm.player_sect.shortage_seasons = _Balance.SHORTAGE_GAME_OVER_SEASONS - 1
+	_check(not gm.is_game_over(), "부족 2계절까지는 진행 중")
+	gm.advance_turn()
+	bus.game_over.disconnect(on_over)
+
+	_check(gm.is_game_over() and gm.game_over_id == "famine_collapse", "3계절 연속 부족 시 게임오버")
+	_check(signalled == ["famine_collapse"], "game_over 시그널 1회 발생")
+	_check(not gm.is_game_active, "게임오버 후 진행 중 상태 해제")
+	_check(gm.last_turn_report.contains("유지비"), "계절 보고에 유지비 표시")
+
+	var year: int = gm.current_year
+	var season: int = gm.current_season_index
+	gm.advance_turn()
+	_check(gm.current_year == year and gm.current_season_index == season, "게임오버 후 계절 진행 불가")
+	_check(not gm.start_legacy_succession()["success"], "게임오버 후 세대 전승 불가")
+
+	await process_frame
+	await process_frame
+	_check(current_scene.scene_file_path == SceneRouter.ENDING, "게임오버 시 엔딩 화면으로 이동")
+	_check(
+		not current_scene.get_node("%SuccessionButton").visible
+		and current_scene.get_node("%BackButton").text == "메인 메뉴로",
+		"게임오버 화면: 전승 버튼 숨김, 메인 메뉴로 이동"
+	)
+
+	# 경영 화면으로 돌아가려 해도 엔딩 화면으로 되돌린다
+	SceneRouter.goto(self, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	await process_frame
+	_check(current_scene.scene_file_path == SceneRouter.ENDING, "게임오버 상태에서 경영 화면 진입 차단")
+
+	# 세이브에도 게임오버가 남는다
+	gm._apply_save_data(JSON.parse_string(JSON.stringify({
+		"game_over_id": gm.game_over_id,
+		"character": _SaveManager.serialize_character(gm.player_character),
+		"sect": _SaveManager.serialize_sect(gm.player_sect),
+	})))
+	_check(gm.game_over_id == "famine_collapse", "게임오버 상태 저장/복원")
+
+	gm.start_new_game("재시작", "young_disciple")
+	_check(not gm.is_game_over() and gm.is_game_active, "새 게임으로 게임오버 해제")

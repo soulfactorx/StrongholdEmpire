@@ -85,6 +85,7 @@ static func serialize_sect(sect: SectData) -> Dictionary:
 		"library_level": sect.library_level,
 		"training_ground_level": sect.training_ground_level,
 		"treasury_level": sect.treasury_level,
+		"shortage_seasons": sect.shortage_seasons,
 	}
 
 
@@ -170,6 +171,7 @@ static func deserialize_sect(data: Dictionary) -> SectData:
 	sect.library_level = data.get("library_level", 1)
 	sect.training_ground_level = data.get("training_ground_level", 1)
 	sect.treasury_level = data.get("treasury_level", 1)
+	sect.shortage_seasons = data.get("shortage_seasons", 0)
 	return sect
 
 

@@ -27,6 +27,39 @@ const ENDINGS: Dictionary = {
 }
 
 
+## 게임오버: 이야기가 끝나며 세대 전승도 할 수 없다.
+const GAME_OVERS: Dictionary = {
+	"sect_disbanded": {
+		"title": "문파 해산",
+		"description": "마지막 제자마저 떠났습니다.\n텅 빈 연무장에 바람만 불고, 문파의 이름은 강호에서 잊혔습니다.",
+	},
+	"famine_collapse": {
+		"title": "곳간이 비다",
+		"description": "몇 계절째 이어진 궁핍을 견디지 못하고 문파가 무너졌습니다.\n남은 이들은 뿔뿔이 흩어졌습니다.",
+	},
+	"disgraced": {
+		"title": "명성 실추",
+		"description": "문파의 이름이 땅에 떨어졌습니다.\n더 이상 누구도 문하에 들어오려 하지 않습니다.",
+	},
+}
+
+
+static func check_game_over(sect: SectData) -> String:
+	if sect.disciple_count <= 0:
+		return "sect_disbanded"
+	if sect.shortage_seasons >= _Balance.SHORTAGE_GAME_OVER_SEASONS:
+		return "famine_collapse"
+	if sect.reputation <= 0:
+		return "disgraced"
+	return ""
+
+
+static func get_game_over(game_over_id: String) -> Dictionary:
+	if GAME_OVERS.has(game_over_id):
+		return GAME_OVERS[game_over_id]
+	return {"title": "게임 오버", "description": "이야기가 끝났습니다."}
+
+
 static func check_endings(
 	character: CharacterData,
 	sect: SectData,

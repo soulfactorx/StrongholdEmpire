@@ -17,6 +17,10 @@ var pending_event: Dictionary = {}
 var story_flags: Dictionary = {}
 var legacy_records: Array[LegacyData] = []
 var current_ending_id: String = ""
+## 게임오버 id. 비어 있지 않으면 이야기가 끝난 상태다.
+var game_over_id: String = ""
+## 직전 계절 진행의 수입·유지비 요약
+var last_turn_report: String = ""
 var pending_role_transitions: Array[Dictionary] = []
 var mod_martial_arts: Array[MartialArtData] = []
 ## 새 게임을 시작했거나 세이브를 불러와 진행 중인 게임이 있는지 여부
@@ -52,6 +56,8 @@ func _initialize_new_game(
 	story_flags.clear()
 	legacy_records.clear()
 	current_ending_id = ""
+	game_over_id = ""
+	last_turn_report = ""
 	pending_role_transitions.clear()
 	pending_combat = null
 	generation = 1
@@ -85,19 +91,26 @@ func get_current_season() -> String:
 
 
 func advance_turn() -> void:
+	if is_game_over():
+		return
 	current_season_index = (current_season_index + 1) % SEASONS.size()
 	if current_season_index == 0:
 		current_year += 1
 		_process_yearly_events()
-	_process_seasonal_income()
+	var income: String = _process_seasonal_income()
+	var upkeep: Dictionary = SectManager.pay_upkeep(player_sect)
+	last_turn_report = "%s %s — %s | %s" % [
+		"천하대란 %d년" % current_year, get_current_season(), income, upkeep["message"],
+	]
 	refresh_role_transitions()
-	_try_trigger_event()
-	_check_ending()
+	_check_end_states()
+	if not is_game_over():
+		_try_trigger_event()
 	EventBus.turn_advanced.emit(current_year, get_current_season())
 	EventBus.resources_changed.emit(player_sect)
 
 
-func _process_seasonal_income() -> void:
+func _process_seasonal_income() -> String:
 	var season := get_current_season()
 	var role_bonus: float = RoleManager.get_role_management_bonus(player_character.role)
 	var gold_income: int = int((20 + player_sect.treasury_level * 10) * role_bonus)
@@ -121,6 +134,7 @@ func _process_seasonal_income() -> void:
 	player_sect.food += food_income
 	player_sect.research_points += research_income
 	player_sect.reputation += 1
+	return "수입: 금화 +%d, 식량 +%d, 연구점 +%d" % [gold_income, food_income, research_income]
 
 
 func _process_yearly_events() -> void:
@@ -158,6 +172,24 @@ func _try_trigger_event() -> void:
 
 	pending_event = event
 	EventBus.event_triggered.emit(event)
+
+
+func is_game_over() -> bool:
+	return not game_over_id.is_empty()
+
+
+## 게임오버를 먼저 확인하고, 아니면 엔딩을 확인한다.
+func _check_end_states() -> void:
+	if is_game_over():
+		return
+	var over_id: String = EndingManager.check_game_over(player_sect)
+	if not over_id.is_empty():
+		game_over_id = over_id
+		is_game_active = false
+		pending_event.clear()
+		EventBus.game_over.emit(over_id)
+		return
+	_check_ending()
 
 
 func _check_ending() -> void:
@@ -198,11 +230,13 @@ func apply_role_transition(role: CharacterData.Role) -> Dictionary:
 	EventBus.resources_changed.emit(player_sect)
 	EventBus.role_changed.emit(player_character.role)
 	refresh_role_transitions()
-	_check_ending()
+	_check_end_states()
 	return result
 
 
 func start_legacy_succession() -> Dictionary:
+	if is_game_over():
+		return {"success": false, "message": "이야기가 끝나 전승할 수 없습니다."}
 	if not LegacyManager.can_retire(player_character):
 		return {
 			"success": false,
@@ -251,7 +285,7 @@ func resolve_sect_war(commands: Array) -> Dictionary:
 		story_flags["won_sect_war"] = true
 	EventBus.character_updated.emit(player_character)
 	EventBus.resources_changed.emit(player_sect)
-	_check_ending()
+	_check_end_states()
 	return result
 
 
@@ -299,7 +333,7 @@ func finish_combat(outcome: CombatManager.Outcome) -> Dictionary:
 	EventBus.resources_changed.emit(player_sect)
 	EventBus.relationships_changed.emit(player_relationships)
 	refresh_role_transitions()
-	_check_ending()
+	_check_end_states()
 	if result["success"]:
 		AudioManager.play_success()
 	else:
@@ -324,6 +358,7 @@ func save_game() -> Dictionary:
 		"story_flags": story_flags,
 		"triggered_event_ids": triggered_event_ids,
 		"current_ending_id": current_ending_id,
+		"game_over_id": game_over_id,
 		"character": _SaveManager.serialize_character(player_character),
 		"sect": _SaveManager.serialize_sect(player_sect),
 		"relationships": _SaveManager.serialize_relationships(player_relationships),
@@ -337,7 +372,7 @@ func load_game() -> Dictionary:
 	if not result["success"]:
 		return result
 	_apply_save_data(result["data"])
-	is_game_active = true
+	is_game_active = not is_game_over()
 	EventBus.character_updated.emit(player_character)
 	EventBus.resources_changed.emit(player_sect)
 	EventBus.relationships_changed.emit(player_relationships)
@@ -353,6 +388,7 @@ func _apply_save_data(data: Dictionary) -> void:
 	for event_id in data.get("triggered_event_ids", []):
 		triggered_event_ids.append(event_id)
 	current_ending_id = data.get("current_ending_id", "")
+	game_over_id = data.get("game_over_id", "")
 	pending_event.clear()
 	_set_player_character(_SaveManager.deserialize_character(data.get("character", {})))
 	player_sect = _SaveManager.deserialize_sect(data.get("sect", {}))
@@ -372,7 +408,7 @@ func _apply_event_result(result: Dictionary) -> void:
 	EventBus.character_updated.emit(player_character)
 	EventBus.relationships_changed.emit(player_relationships)
 	refresh_role_transitions()
-	_check_ending()
+	_check_end_states()
 	if result.get("success", false):
 		AudioManager.play_success()
 	else:

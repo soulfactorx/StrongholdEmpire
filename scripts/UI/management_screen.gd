@@ -35,6 +35,10 @@ func _ready() -> void:
 	EventBus.role_transitions_available.connect(_on_role_transitions_available)
 	EventBus.role_changed.connect(_on_role_changed)
 	EventBus.ending_reached.connect(_on_ending_reached)
+	EventBus.game_over.connect(_on_game_over)
+	if GameManager.is_game_over():
+		_on_game_over.call_deferred(GameManager.game_over_id)
+		return
 	_refresh_all()
 	if not GameManager.pending_event.is_empty():
 		event_popup.show_event(GameManager.pending_event)
@@ -55,14 +59,24 @@ func _update_time_display() -> void:
 
 func _update_sect_display(sect: SectData) -> void:
 	sect_name_label.text = sect.sect_name
-	gold_label.text = "금화: %d" % sect.gold
-	food_label.text = "식량: %d" % sect.food
+	gold_label.text = "금화: %d (계절 유지비 -%d)" % [sect.gold, sect.get_gold_upkeep()]
+	food_label.text = "식량: %d (계절 유지비 -%d)" % [sect.food, sect.get_food_upkeep()]
+	# 보유량이 다음 계절 유지비보다 적으면 경고 색으로 표시한다.
+	_set_warning(gold_label, sect.gold < sect.get_gold_upkeep())
+	_set_warning(food_label, sect.food < sect.get_food_upkeep())
 	reputation_label.text = "명성: %d" % sect.reputation
 	research_label.text = "연구점: %d" % sect.research_points
 	disciple_label.text = "제자: %d / %d" % [sect.disciple_count, sect.max_disciples]
 	library_label.text = "서고 Lv.%d" % sect.library_level
 	training_label.text = "무술장 Lv.%d" % sect.training_ground_level
 	treasury_label.text = "금고 Lv.%d" % sect.treasury_level
+
+
+func _set_warning(label: Label, warn: bool) -> void:
+	if warn:
+		label.add_theme_color_override("font_color", _UiTheme.COLORS["accent_red"])
+	else:
+		label.add_theme_color_override("font_color", _UiTheme.COLORS["text_primary"])
 
 
 func _update_character_display(character: CharacterData) -> void:
@@ -93,8 +107,7 @@ func _update_relationships_display(relationships: Array[RelationshipData]) -> vo
 
 func _on_turn_advanced(_year: int, _season: String) -> void:
 	_update_time_display()
-	if GameManager.pending_event.is_empty():
-		_on_action_message("계절이 지나갔습니다. 자원이 갱신되었습니다.")
+	_on_action_message(GameManager.last_turn_report)
 
 
 func _on_resources_changed(sect: SectData) -> void:
@@ -130,6 +143,11 @@ func _on_role_changed(_new_role: CharacterData.Role) -> void:
 func _on_ending_reached(ending_id: String) -> void:
 	var ending: Dictionary = EndingManager.get_ending(ending_id)
 	_on_action_message("엔딩 도달: %s — [엔딩/레거시] 메뉴에서 확인하세요." % ending["title"])
+
+
+func _on_game_over(_game_over_id: String) -> void:
+	AudioManager.play_failure()
+	SceneRouter.goto(get_tree(), SceneRouter.ENDING)
 
 
 func _execute_action(result: Dictionary) -> void:

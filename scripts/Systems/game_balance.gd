@@ -8,6 +8,19 @@ const UPGRADE_LIBRARY_GOLD := 80
 const UPGRADE_TRAINING_GOLD := 60
 const UPGRADE_TREASURY_GOLD := 70
 
+# 유지비 (계절마다)
+const FOOD_PER_DISCIPLE := 2
+const GOLD_PER_DISCIPLE := 1
+## 시설 레벨 1을 넘는 단계마다 드는 금화
+const FACILITY_UPKEEP_GOLD := 3
+## 식량이 모자라면 모자란 식량 이 값마다 제자 1명이 떠난다 (최소 1명)
+const DESERTION_FOOD_PER_DISCIPLE := 6
+## 금화가 모자라면 명성이 떨어진다
+const GOLD_SHORTAGE_REPUTATION_LOSS := 3
+
+# 게임오버
+const SHORTAGE_GAME_OVER_SEASONS := 3
+
 # 무공 연구
 const BASE_RESEARCH_COST := 20
 const RESEARCH_COST_PER_COMPLEXITY := 8

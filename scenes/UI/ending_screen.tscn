@@ -57,10 +57,12 @@ text = "레거시"
 autowrap_mode = 3
 
 [node name="SuccessionButton" type="Button" parent="Center/Panel/VBox"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "세대 전승 (레거시)"
 
 [node name="BackButton" type="Button" parent="Center/Panel/VBox"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "문파로 돌아가기"
 
