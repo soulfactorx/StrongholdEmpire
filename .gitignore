@@ -1,0 +1,13 @@
+# Godot 4 editor/import cache
+.godot/
+
+# Godot export artifacts
+/android/
+/build/
+*.tmp
+export_presets.cfg
+export_credentials.cfg
+
+# OS
+.DS_Store
+Thumbs.db
