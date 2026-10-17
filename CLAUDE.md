@@ -1,7 +1,7 @@
 # 강호제패 (StrongholdEmpire)
 
 무협 전략 시뮬레이션 RPG. Godot 4 (GDScript), 렌더러는 GL Compatibility.
-기획 문서는 `docs/`에 있다.
+기획 문서는 `docs/`에 있다. 남은 작업과 진행 순서는 `docs/구현_계획.md`를 따른다.
 
 ## 언어 규칙
 
