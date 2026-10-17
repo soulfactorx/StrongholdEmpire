@@ -1,0 +1,67 @@
+{
+  "id": "arc_succession_illness",
+  "title": "장문인의 병환",
+  "description": "청운검선이 병석에 누웠습니다. 문파에는 후계를 두고 수군거림이 돕니다.\n대사형 진무겸이 은밀히 제자들을 모으고 있다는 소문입니다.",
+  "can_repeat": false,
+  "weight": 5,
+  "conditions": [
+    {
+      "type": "role",
+      "in": [
+        "YOUNG_DISCIPLE",
+        "MANAGER"
+      ]
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 3
+    },
+    {
+      "type": "flag",
+      "flag": "defected",
+      "value": false
+    }
+  ],
+  "choices": [
+    {
+      "label": "대사형을 따른다",
+      "message": "진무겸이 당신의 어깨를 두드립니다. 「현명한 선택이다, 사제.」",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_succession_start",
+          "value": true
+        },
+        {
+          "type": "add_relationship",
+          "target": "npc_senior_brother",
+          "bond_type": "BLOOD_OATH",
+          "strength": 20
+        }
+      ]
+    },
+    {
+      "label": "대사형을 경계한다",
+      "message": "진무겸의 움직임을 지켜보기로 했습니다. 스승과의 유대 +3",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_succession_start",
+          "value": true
+        },
+        {
+          "type": "add_relationship",
+          "target": "npc_senior_brother",
+          "bond_type": "RIVALRY",
+          "strength": 20
+        },
+        {
+          "type": "bond",
+          "target": "npc_master",
+          "add": 3
+        }
+      ]
+    }
+  ]
+}

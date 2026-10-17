@@ -1,0 +1,59 @@
+{
+  "id": "arc_succession_heir",
+  "title": "후계 지명",
+  "description": "반란은 진압되었습니다. 기운을 차린 청운검선이 제자들 앞에서 당신을 불러 세웁니다.\n「청운의 검은 이 아이가 잇는다.」",
+  "can_repeat": false,
+  "weight": 4,
+  "conditions": [
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_succession_won",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "후계자의 자리를 받든다",
+      "message": "청운검파의 후계자로 지명되었습니다. 명성 +10, 스승과의 유대 +10 (역할 전환의 승진·승계 조건이 완화됩니다)",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_succession_heir",
+          "value": true
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 10
+        },
+        {
+          "type": "bond",
+          "target": "npc_master",
+          "add": 10
+        }
+      ]
+    },
+    {
+      "label": "진무겸의 목숨을 구명한다",
+      "message": "당신의 간청으로 진무겸은 파문만 당하고 목숨을 건졌습니다. 후계자로 지명되었습니다. 도덕 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_succession_heir",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 10
+        },
+        {
+          "type": "bond",
+          "target": "npc_master",
+          "add": 5
+        }
+      ]
+    }
+  ]
+}

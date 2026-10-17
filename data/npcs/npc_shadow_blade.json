@@ -1,0 +1,28 @@
+{
+  "id": "npc_shadow_blade",
+  "display_name": "귀영",
+  "title": "흑의 자객",
+  "sect_id": "heukpung",
+  "role": "ASSASSIN",
+  "description": "돈만 주면 누구든 벤다는 흑의 자객. 병든 누이를 홀로 돌본다는 소문이 있다.",
+  "level": 3,
+  "stats": {
+    "strength": 13,
+    "agility": 17,
+    "wisdom": 10,
+    "charisma": 7,
+    "internal_energy_max": 110,
+    "age": 30,
+    "morality": 35
+  },
+  "scaling": {
+    "base_level": 3,
+    "level_offset": 1,
+    "per_level": {
+      "strength": 1,
+      "agility": 1,
+      "internal_energy_max": 8
+    }
+  },
+  "war_specialty": "FLANK"
+}

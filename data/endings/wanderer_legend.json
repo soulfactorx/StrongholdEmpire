@@ -1,0 +1,28 @@
+{
+  "id": "wanderer_legend",
+  "title": "낭인 전설",
+  "description": "문파와 굴레를 벗어나 자유롭게 강호를 누볐습니다.\n당신의 이름은 전설이 되어 후대에 전해집니다.",
+  "priority": 40,
+  "tone": "victory",
+  "final": false,
+  "conditions": [
+    {
+      "type": "role",
+      "in": [
+        "WANDERER"
+      ]
+    },
+    {
+      "type": "character",
+      "field": "martial_arts_count",
+      "op": ">=",
+      "value": 2
+    },
+    {
+      "type": "character",
+      "field": "level",
+      "op": ">=",
+      "value": 6
+    }
+  ]
+}

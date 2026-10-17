@@ -1,0 +1,14 @@
+{
+  "id": "heukpung",
+  "sect_name": "흑풍채",
+  "alignment": "UNORTHODOX",
+  "leader_id": "npc_heukpung_chief",
+  "description": "관도를 장악한 사파 산채. 주변 문파와 상단을 약탈한다.",
+  "reputation": 35,
+  "disciple_count": 16,
+  "max_disciples": 30,
+  "training_ground_level": 1,
+  "attitude": -30,
+  "soldier_npc": "npc_bandit",
+  "champion_npc": "npc_heukpung_second"
+}

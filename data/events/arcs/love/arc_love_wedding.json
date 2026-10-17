@@ -1,0 +1,60 @@
+{
+  "id": "arc_love_wedding",
+  "title": "혼례",
+  "description": "남궁천이 약속을 지켰습니다. 청운검파와 남궁세가가 혼례로 맺어집니다.\n붉은 비단 너머로 남궁설이 웃고 있습니다.",
+  "can_repeat": false,
+  "weight": 4,
+  "conditions": [
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_love_trial_won",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "두 가문의 맹약으로 이야기를 맺는다",
+      "message": "두 가문이 하나가 되었습니다.",
+      "effects": [
+        {
+          "type": "world_sect",
+          "sect": "namgung",
+          "field": "attitude",
+          "add": 40
+        },
+        {
+          "type": "end_game",
+          "ending": "marriage_alliance"
+        }
+      ]
+    },
+    {
+      "label": "혼례를 올리고 강호행을 이어 간다",
+      "message": "혼례를 올렸습니다. 남궁세가 태도 +40, 명성 +10, 유대 +20",
+      "effects": [
+        {
+          "type": "world_sect",
+          "sect": "namgung",
+          "field": "attitude",
+          "add": 40
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 10
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lady",
+          "add": 20
+        },
+        {
+          "type": "flag",
+          "flag": "arc_love_married",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

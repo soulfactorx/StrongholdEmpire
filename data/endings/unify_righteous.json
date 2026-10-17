@@ -1,0 +1,33 @@
+{
+  "id": "unify_righteous",
+  "title": "정파 통일",
+  "description": "문주로서 청운검파를 이끌고 강호에 새 질서를 세웠습니다.\n사파와 마교를 꺾고 정파가 하나로 모였습니다.",
+  "priority": 70,
+  "tone": "victory",
+  "final": false,
+  "conditions": [
+    {
+      "type": "role",
+      "in": [
+        "LEADER"
+      ]
+    },
+    {
+      "type": "sect",
+      "field": "reputation",
+      "op": ">=",
+      "value": 100
+    },
+    {
+      "type": "character",
+      "field": "morality",
+      "op": ">=",
+      "value": 65
+    },
+    {
+      "type": "subjugated_count",
+      "op": ">=",
+      "value": 2
+    }
+  ]
+}

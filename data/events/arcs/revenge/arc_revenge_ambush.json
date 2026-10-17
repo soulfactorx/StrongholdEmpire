@@ -1,0 +1,83 @@
+{
+  "id": "arc_revenge_ambush",
+  "title": "스승 피습",
+  "description": "깊은 밤, 장문인 처소에서 비명이 울렸습니다. 검은 옷의 자객이 청운검선의 등에 비수를 꽂고 담을 넘어 사라졌습니다.\n스승은 목숨을 건졌지만 오랫동안 검을 들 수 없게 되었습니다.",
+  "can_repeat": false,
+  "weight": 5,
+  "conditions": [
+    {
+      "type": "role",
+      "in": [
+        "YOUNG_DISCIPLE",
+        "MANAGER"
+      ]
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 2
+    },
+    {
+      "type": "bond",
+      "target": "npc_master",
+      "op": ">=",
+      "value": 30
+    },
+    {
+      "type": "flag",
+      "flag": "defected",
+      "value": false
+    }
+  ],
+  "choices": [
+    {
+      "label": "자객을 찾아 복수하겠다고 맹세한다",
+      "message": "스승의 병상 앞에서 복수를 맹세했습니다. 자객에 대한 원한이 가슴에 새겨졌습니다. 유대 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_revenge_start",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_master",
+          "add": 5
+        },
+        {
+          "type": "add_relationship",
+          "target": "npc_shadow_blade",
+          "bond_type": "HATRED",
+          "strength": 30
+        }
+      ]
+    },
+    {
+      "label": "스승의 곁을 지키며 간호한다",
+      "message": "밤낮으로 스승을 간호했습니다. 스승이 희미하게 웃으며 자객의 단서를 일러 줍니다. 유대 +10, 지혜 +1",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_revenge_start",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_master",
+          "add": 10
+        },
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 1
+        },
+        {
+          "type": "add_relationship",
+          "target": "npc_shadow_blade",
+          "bond_type": "HATRED",
+          "strength": 15
+        }
+      ]
+    }
+  ]
+}

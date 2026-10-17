@@ -1,0 +1,37 @@
+{
+  "id": "night_bandits",
+  "title": "야습 도적",
+  "description": "문파 외곽에서 도적 무리가 습격해옵니다!",
+  "can_repeat": false,
+  "conditions": [
+    {
+      "type": "season",
+      "in": [
+        "가을"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "맞서 싸운다",
+      "message": "도적 무리를 막아서기 위해 검을 뽑습니다!",
+      "effects": [
+        {
+          "type": "combat",
+          "combat": "night_bandits"
+        }
+      ]
+    },
+    {
+      "label": "은밀히 피한다",
+      "message": "은밀히 피해 신법 +1.",
+      "effects": [
+        {
+          "type": "character",
+          "field": "agility",
+          "add": 1
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "id": "arc_cheonma_omen",
+  "title": "검은 깃발",
+  "description": "서역에서 검은 깃발이 일어났다는 소식입니다. 천마신교의 선봉이 국경 마을을 불태웠습니다.\n혈영의 밀서를 거절한 대가가 다가오고 있습니다.",
+  "can_repeat": false,
+  "weight": 5,
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "cheonha"
+      ]
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 5
+    },
+    {
+      "type": "flag",
+      "flag": "cheonma_letter_refused",
+      "value": true
+    },
+    {
+      "type": "flag",
+      "flag": "cheonma_pact",
+      "value": false
+    }
+  ],
+  "choices": [
+    {
+      "label": "정파 연합 회의를 제안한다",
+      "message": "남궁세가에 서신을 보냈습니다. 남궁세가 태도 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_cheonma_start",
+          "value": true
+        },
+        {
+          "type": "world_sect",
+          "sect": "namgung",
+          "field": "attitude",
+          "add": 10
+        }
+      ]
+    },
+    {
+      "label": "홀로 산문을 지킨다",
+      "message": "누구에게도 기대지 않기로 했습니다. 산문을 보강합니다. 금화 -80",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_cheonma_start",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "arc_cheonma_alone",
+          "value": true
+        },
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -80
+        }
+      ]
+    }
+  ]
+}

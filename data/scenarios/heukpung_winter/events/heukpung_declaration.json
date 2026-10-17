@@ -1,0 +1,60 @@
+{
+  "id": "heukpung_declaration",
+  "title": "흑풍채의 선전포고",
+  "weight": 10,
+  "description": "흑풍채 채주 마진이 피 묻은 깃발을 보내왔습니다.\n「겨울이 오기 전에 청운검파의 곳간을 비워 주마.」",
+  "conditions": [
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "결전을 준비한다",
+      "message": "제자들과 함께 방비를 다졌습니다. 금화 -30, 무력 +1",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -30
+        },
+        {
+          "type": "character",
+          "field": "strength",
+          "add": 1
+        },
+        {
+          "type": "flag",
+          "flag": "heukpung_declared"
+        }
+      ]
+    },
+    {
+      "label": "남궁세가에 도움을 청한다",
+      "message": "남궁세가에 사신을 보냈습니다. 체면이 조금 깎였습니다. 명성 -3",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": -3
+        },
+        {
+          "type": "world_sect",
+          "sect": "namgung",
+          "field": "attitude",
+          "add": 15
+        },
+        {
+          "type": "flag",
+          "flag": "heukpung_declared"
+        },
+        {
+          "type": "flag",
+          "flag": "asked_namgung"
+        }
+      ]
+    }
+  ]
+}

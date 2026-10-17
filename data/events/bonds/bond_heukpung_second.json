@@ -1,0 +1,58 @@
+{
+  "id": "bond_heukpung_second",
+  "title": "독사의 제안",
+  "description": "흑풍채 부채주 위청이 몰래 사람을 보냈습니다.\n「마진을 치워 주면 흑풍채는 당신 편이 되겠소.」",
+  "can_repeat": false,
+  "weight": 2,
+  "conditions": [
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 3
+    },
+    {
+      "type": "world_sect",
+      "sect": "heukpung",
+      "field": "subjugated",
+      "op": "==",
+      "value": 0
+    }
+  ],
+  "choices": [
+    {
+      "label": "손을 잡는다",
+      "message": "위청과 은밀한 거래를 맺었습니다. 흑풍채 태도 +15, 도덕 -5",
+      "effects": [
+        {
+          "type": "add_relationship",
+          "target": "npc_heukpung_second",
+          "bond_type": "ACQUAINTANCE",
+          "strength": 25
+        },
+        {
+          "type": "world_sect",
+          "sect": "heukpung",
+          "field": "attitude",
+          "add": 15
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -5
+        }
+      ]
+    },
+    {
+      "label": "사자를 돌려보낸다",
+      "message": "독사의 혀는 믿을 수 없습니다. 위청이 앙심을 품었다는 소문입니다.",
+      "effects": [
+        {
+          "type": "add_relationship",
+          "target": "npc_heukpung_second",
+          "bond_type": "HATRED",
+          "strength": 20
+        }
+      ]
+    }
+  ]
+}

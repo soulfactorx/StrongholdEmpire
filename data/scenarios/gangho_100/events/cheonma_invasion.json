@@ -1,0 +1,60 @@
+{
+  "id": "cheonma_invasion",
+  "title": "천마신교 대침공",
+  "weight": 10,
+  "description": "서역에서 검은 깃발이 일어났습니다. 천마신교가 중원을 향해 진군을 시작했습니다.",
+  "conditions": [
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 15
+    },
+    {
+      "type": "flag",
+      "flag": "cheonma_pact",
+      "value": false
+    }
+  ],
+  "choices": [
+    {
+      "label": "정파 연합을 결성한다",
+      "message": "정파 문파들이 청운검파의 깃발 아래 모였습니다. 명성 +10, 남궁세가 태도 +30",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 10
+        },
+        {
+          "type": "world_sect",
+          "sect": "namgung",
+          "field": "attitude",
+          "add": 30
+        },
+        {
+          "type": "flag",
+          "flag": "righteous_alliance"
+        },
+        {
+          "type": "flag",
+          "flag": "cheonma_invasion"
+        }
+      ]
+    },
+    {
+      "label": "문을 닫고 버틴다",
+      "message": "문을 걸어 잠갔지만 강호의 비웃음을 샀습니다. 명성 -10",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": -10
+        },
+        {
+          "type": "flag",
+          "flag": "cheonma_invasion"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "id": "cheonha",
+  "title": "천하대란",
+  "order": 1,
+  "era_name": "천하대란",
+  "description": "황실이 기울고 문파들이 일어선 혼란의 시대. 정파·사파·마교가 얽힌 강호에서 20년 안에 자신만의 이야기를 완성하세요.\n표준 시나리오입니다.",
+  "parameters": {
+    "time_limit_years": 20,
+    "legacy_enabled": true,
+    "max_generations": 3
+  },
+  "victory_endings": [
+    "unify_righteous",
+    "new_sect_founder",
+    "wanderer_legend",
+    "shadow_empire",
+    "demon_slayer",
+    "marriage_alliance"
+  ]
+}

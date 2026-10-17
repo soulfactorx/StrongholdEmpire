@@ -1,0 +1,169 @@
+[gd_scene load_steps=2 format=3 uid="uid://new_game_screen"]
+
+[ext_resource type="Script" path="res://scripts/UI/new_game_screen.gd" id="1_new"]
+
+[node name="NewGameScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_new")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.1, 0.14, 1)
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 20
+
+[node name="VBox" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "새 강호행"
+horizontal_alignment = 1
+
+[node name="Columns" type="HBoxContainer" parent="Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="ScenarioPanel" type="PanelContainer" parent="Margin/VBox/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ScenarioVBox" type="VBoxContainer" parent="Margin/VBox/Columns/ScenarioPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ScenarioLabel" type="Label" parent="Margin/VBox/Columns/ScenarioPanel/ScenarioVBox"]
+layout_mode = 2
+text = "시나리오"
+
+[node name="ScenarioList" type="ItemList" parent="Margin/VBox/Columns/ScenarioPanel/ScenarioVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+theme_override_constants/v_separation = 14
+
+[node name="ScenarioLengthLabel" type="Label" parent="Margin/VBox/Columns/ScenarioPanel/ScenarioVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "길이"
+
+[node name="ScenarioDescLabel" type="Label" parent="Margin/VBox/Columns/ScenarioPanel/ScenarioVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+text = "시나리오 설명"
+autowrap_mode = 3
+
+[node name="CharacterPanel" type="PanelContainer" parent="Margin/VBox/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Scroll" type="ScrollContainer" parent="Margin/VBox/Columns/CharacterPanel"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="CharacterVBox" type="VBoxContainer" parent="Margin/VBox/Columns/CharacterPanel/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="NameLabel" type="Label" parent="Margin/VBox/Columns/CharacterPanel/Scroll/CharacterVBox"]
+layout_mode = 2
+text = "이름"
+
+[node name="NameEdit" type="LineEdit" parent="Margin/VBox/Columns/CharacterPanel/Scroll/CharacterVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+placeholder_text = "주인공 이름"
+max_length = 12
+
+[node name="RoleLabel" type="Label" parent="Margin/VBox/Columns/CharacterPanel/Scroll/CharacterVBox"]
+layout_mode = 2
+text = "시작 역할"
+
+[node name="RoleList" type="ItemList" parent="Margin/VBox/Columns/CharacterPanel/Scroll/CharacterVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+theme_override_constants/v_separation = 14
+
+[node name="RoleDescLabel" type="Label" parent="Margin/VBox/Columns/CharacterPanel/Scroll/CharacterVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 66)
+layout_mode = 2
+text = "역할 설명"
+autowrap_mode = 3
+
+[node name="TutorialCheck" type="CheckButton" parent="Margin/VBox/Columns/CharacterPanel/Scroll/CharacterVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+button_pressed = true
+text = "길잡이 — 처음 하는 분께 권합니다"
+
+[node name="IronmanCheck" type="CheckButton" parent="Margin/VBox/Columns/CharacterPanel/Scroll/CharacterVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "철인 모드 — 자동 저장만, 되돌릴 수 없음"
+
+[node name="SettingsToggle" type="Button" parent="Margin/VBox/Columns/CharacterPanel/Scroll/CharacterVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "세부 설정 ▼"
+
+[node name="SettingsGrid" type="GridContainer" parent="Margin/VBox/Columns/CharacterPanel/Scroll/CharacterVBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+columns = 2
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 8
+
+[node name="ButtonHBox" type="HBoxContainer" parent="Margin/VBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 16
+
+[node name="BackButton" type="Button" parent="Margin/VBox/ButtonHBox"]
+custom_minimum_size = Vector2(220, 52)
+layout_mode = 2
+text = "돌아가기"
+
+[node name="StartButton" type="Button" parent="Margin/VBox/ButtonHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 52)
+layout_mode = 2
+text = "강호에 나선다"
+
+[connection signal="item_selected" from="Margin/VBox/Columns/ScenarioPanel/ScenarioVBox/ScenarioList" to="." method="_on_scenario_selected"]
+[connection signal="item_selected" from="Margin/VBox/Columns/CharacterPanel/Scroll/CharacterVBox/RoleList" to="." method="_on_role_selected"]
+[connection signal="text_submitted" from="Margin/VBox/Columns/CharacterPanel/Scroll/CharacterVBox/NameEdit" to="." method="_on_name_submitted"]
+[connection signal="pressed" from="Margin/VBox/Columns/CharacterPanel/Scroll/CharacterVBox/SettingsToggle" to="." method="_on_settings_toggle_pressed"]
+[connection signal="pressed" from="Margin/VBox/ButtonHBox/BackButton" to="." method="_on_back_pressed"]
+[connection signal="pressed" from="Margin/VBox/ButtonHBox/StartButton" to="." method="_on_start_pressed"]

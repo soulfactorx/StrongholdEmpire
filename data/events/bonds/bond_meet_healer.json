@@ -1,0 +1,45 @@
+{
+  "id": "bond_meet_healer",
+  "title": "약방의 등불",
+  "description": "수련 중 다친 팔을 싸매러 약방을 찾았습니다. 의녀 백소하가 등불 아래서 묵묵히 약을 달이고 있습니다.",
+  "can_repeat": false,
+  "weight": 2,
+  "conditions": [
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 1
+    },
+    {
+      "type": "character",
+      "field": "internal_energy_current",
+      "op": "<",
+      "value": 200
+    }
+  ],
+  "choices": [
+    {
+      "label": "고맙다고 말을 건넨다",
+      "message": "백소하가 수줍게 웃습니다. 약방에 들를 핑계가 하나 늘었습니다.",
+      "effects": [
+        {
+          "type": "add_relationship",
+          "target": "npc_healer",
+          "bond_type": "ACQUAINTANCE",
+          "strength": 20
+        }
+      ]
+    },
+    {
+      "label": "치료만 받고 나온다",
+      "message": "상처는 금방 나았습니다.",
+      "effects": [
+        {
+          "type": "character",
+          "field": "internal_energy_current",
+          "add": 20
+        }
+      ]
+    }
+  ]
+}

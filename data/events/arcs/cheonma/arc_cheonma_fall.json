@@ -1,0 +1,59 @@
+{
+  "id": "arc_cheonma_fall",
+  "title": "무너진 산문",
+  "description": "산문이 불타고 있습니다. 살아남은 제자들이 잿더미 속에서 당신을 바라봅니다.",
+  "can_repeat": false,
+  "weight": 5,
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "cheonha"
+      ]
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_cheonma_siege_lost",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "무너진 문파와 함께 이야기를 맺는다",
+      "message": "청운산의 연기가 사흘 밤낮 꺼지지 않았습니다.",
+      "effects": [
+        {
+          "type": "end_game",
+          "ending": "fallen_sect"
+        }
+      ]
+    },
+    {
+      "label": "잿더미에서 다시 일어선다",
+      "message": "재건을 다짐했습니다. 명성 -15, 제자 -4, 금화 -100",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": -15
+        },
+        {
+          "type": "sect",
+          "field": "disciple_count",
+          "add": -4
+        },
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -100
+        },
+        {
+          "type": "flag",
+          "flag": "arc_cheonma_rebuild",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

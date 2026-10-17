@@ -1,0 +1,58 @@
+{
+  "id": "assassin_contract",
+  "title": "암살 의뢰",
+  "description": "정체불명의 의뢰인이 표적 제거를 요청합니다.",
+  "can_repeat": false,
+  "conditions": [
+    {
+      "type": "role",
+      "in": [
+        "SPY"
+      ]
+    },
+    {
+      "type": "character",
+      "field": "morality",
+      "op": "<=",
+      "value": 50
+    }
+  ],
+  "choices": [
+    {
+      "label": "받아들인다",
+      "message": "암살 의뢰 완료. 도덕 -15, 암살자의 길이 열렸습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "assassin_path",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -15
+        },
+        {
+          "type": "character",
+          "field": "strength",
+          "add": 1
+        },
+        {
+          "type": "experience",
+          "amount": 25
+        }
+      ]
+    },
+    {
+      "label": "거절한다",
+      "message": "의뢰를 거절했습니다. 도덕 +5",
+      "effects": [
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "id": "arc_spy_choice",
+  "title": "이중첩자의 선택",
+  "description": "세 번의 위기를 넘겼습니다. 이제 정해야 합니다. 누구의 첩자로 살 것인가.",
+  "can_repeat": false,
+  "weight": 5,
+  "conditions": [
+    {
+      "type": "role",
+      "in": [
+        "SPY"
+      ]
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_spy_crisis3",
+      "op": ">=",
+      "value": 1
+    },
+    {
+      "type": "flag",
+      "flag": "spy_exposed",
+      "value": false
+    }
+  ],
+  "choices": [
+    {
+      "label": "청운검파에 충성한다",
+      "message": "모든 기밀을 들고 복귀를 준비합니다. 명성 +15 (역할 전환에서 문파로 복귀할 수 있습니다)",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "spy_mission_complete",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "arc_spy_loyal",
+          "value": true
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 15
+        }
+      ]
+    },
+    {
+      "label": "남궁세가에 진짜로 붙는다",
+      "message": "남궁철에게 청운검파의 기밀을 넘겼습니다. 남궁세가 태도 +30, 도덕 -10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_spy_turned",
+          "value": true
+        },
+        {
+          "type": "world_sect",
+          "sect": "namgung",
+          "field": "attitude",
+          "add": 30
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -10
+        }
+      ]
+    },
+    {
+      "label": "양쪽을 모두 속인다",
+      "message": "두 문파 모두에게서 대가를 받습니다. 금화 +200, 노출도 +20",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_spy_double",
+          "value": true
+        },
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": 200
+        },
+        {
+          "type": "role_state",
+          "field": "exposure",
+          "add": 20
+        }
+      ]
+    }
+  ]
+}

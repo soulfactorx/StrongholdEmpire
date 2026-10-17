@@ -1,0 +1,128 @@
+# 내보내기: Android(디버그 APK)·웹·윈도우·리눅스 빌드를 만들어 아티팩트로 올린다.
+# 리눅스 빌드로 자체 점검(--self-check)을 돌려 데이터·그림·소리가 패키지에 들어갔는지 확인한다.
+# Android SDK는 GitHub의 ubuntu 러너에 미리 깔려 있다. 디버그 키는 실행마다 새로 만든다(개인 시험용).
+name: 내보내기
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # project.godot의 config/features, smoke_test.yml과 맞춘다
+      GODOT_VERSION: "4.7.1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Godot 캐시
+        id: godot-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/godot
+          key: godot-${{ env.GODOT_VERSION }}-linux
+
+      - name: Godot 받기
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/godot
+          curl -sSL -o /tmp/godot.zip \
+            "https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q /tmp/godot.zip -d ~/godot
+          mv ~/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64 ~/godot/godot
+          chmod +x ~/godot/godot
+
+      - name: 내보내기 템플릿 캐시
+        id: templates-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/godot/export_templates
+          key: godot-templates-${{ env.GODOT_VERSION }}-v1
+
+      - name: 내보내기 템플릿 받기 (쓰는 것만 푼다)
+        if: steps.templates-cache.outputs.cache-hit != 'true'
+        run: |
+          DEST=~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mkdir -p "$DEST"
+          curl -sSL -o /tmp/templates.tpz \
+            "https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          unzip -o -j -q /tmp/templates.tpz \
+            templates/version.txt \
+            templates/android_debug.apk templates/android_release.apk \
+            templates/web_nothreads_debug.zip templates/web_nothreads_release.zip \
+            templates/windows_release_x86_64.exe templates/windows_debug_x86_64.exe \
+            templates/linux_release.x86_64 templates/linux_debug.x86_64 \
+            -d "$DEST"
+          rm /tmp/templates.tpz
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: 가져오기와 Android 편집기 설정
+        run: |
+          ~/godot/godot --headless --editor --quit
+          keytool -genkeypair -v -keystore ~/debug.keystore -storepass android -keypass android \
+            -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+          SETTINGS=$(ls ~/.config/godot/editor_settings-*.tres | head -1)
+          # 기존 값을 지우고 러너의 경로로 다시 쓴다
+          sed -i '/^export\/android\//d' "$SETTINGS"
+          cat >> "$SETTINGS" <<EOF
+          export/android/android_sdk_path = "${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          export/android/java_sdk_path = "${JAVA_HOME}"
+          export/android/debug_keystore = "${HOME}/debug.keystore"
+          export/android/debug_keystore_user = "androiddebugkey"
+          export/android/debug_keystore_pass = "android"
+          EOF
+
+      - name: 내보내기
+        run: |
+          set -o pipefail
+          mkdir -p build/android build/web build/windows build/linux
+          ~/godot/godot --headless --path . --export-debug "Android" build/android/StrongholdEmpire.apk 2>&1 | grep -v "Storing File" | tee export.log
+          ~/godot/godot --headless --path . --export-release "Web" build/web/index.html 2>&1 | grep -v "Storing File" | tee -a export.log
+          ~/godot/godot --headless --path . --export-release "Windows" build/windows/StrongholdEmpire.exe 2>&1 | grep -v "Storing File" | tee -a export.log
+          ~/godot/godot --headless --path . --export-release "Linux" build/linux/StrongholdEmpire.x86_64 2>&1 | grep -v "Storing File" | tee -a export.log
+          ls -la build/*
+
+      - name: 빌드 확인
+        run: |
+          for f in build/android/StrongholdEmpire.apk build/web/index.pck build/web/index.wasm \
+                   build/windows/StrongholdEmpire.exe build/linux/StrongholdEmpire.x86_64; do
+            if [ ! -s "$f" ]; then echo "::error::내보내기 결과가 없습니다: $f"; exit 1; fi
+          done
+
+      - name: 자체 점검 (내보낸 리눅스 빌드)
+        # 프로젝트 폴더에서 실행하면 project.godot을 먼저 찾으므로 다른 폴더에서 돌린다.
+        run: |
+          cd /tmp
+          timeout 120 "$GITHUB_WORKSPACE/build/linux/StrongholdEmpire.x86_64" --headless -- --self-check
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: build/android/StrongholdEmpire.apk
+          retention-days: 14
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web
+          path: build/web
+          retention-days: 14
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: build/windows
+          retention-days: 14
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: export-log
+          path: export.log
+          retention-days: 7

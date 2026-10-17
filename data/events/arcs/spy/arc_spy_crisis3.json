@@ -1,0 +1,77 @@
+{
+  "id": "arc_spy_crisis3",
+  "title": "세 번째 위기 — 집법당의 함정",
+  "description": "남궁철이 거짓 기밀을 흘려 누가 그것을 빼돌리는지 지켜보고 있습니다. 함정이라는 것을 눈치챘습니다.",
+  "can_repeat": false,
+  "weight": 5,
+  "conditions": [
+    {
+      "type": "role",
+      "in": [
+        "SPY"
+      ]
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_spy_crisis2",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "함정을 역이용한다",
+      "message": "거짓 기밀에 진짜 기밀을 섞어 남궁철을 속였습니다. 노출도 -15, 연구점 +15",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_spy_crisis3",
+          "value": true
+        },
+        {
+          "type": "role_state",
+          "field": "exposure",
+          "add": -15
+        },
+        {
+          "type": "sect",
+          "field": "research_points",
+          "add": 15
+        }
+      ],
+      "branches": [
+        {
+          "chance": 30,
+          "message": "남궁철이 한발 앞서 있었습니다! 노출도 +40",
+          "effects": [
+            {
+              "type": "flag",
+              "flag": "arc_spy_crisis3",
+              "value": true
+            },
+            {
+              "type": "role_state",
+              "field": "exposure",
+              "add": 40
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "남궁철과 결판을 낸다",
+      "message": "더는 숨지 않기로 했습니다. 집법당으로 향합니다. (패배하면 정체가 드러납니다)",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_spy_crisis3",
+          "value": true
+        },
+        {
+          "type": "combat",
+          "combat": "arc_spy_enforcer"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "id": "arc_revenge_confrontation",
+  "title": "귀영과의 대면",
+  "description": "폐사찰에서 귀영을 찾아냈습니다. 그는 놀라지도 않고 칼을 뽑아 듭니다.\n「청운검선의 제자인가. 올 줄 알았다.」",
+  "can_repeat": false,
+  "weight": 4,
+  "conditions": [
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_revenge_clue",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "홀로 칼을 뽑는다",
+      "message": "귀영과 단둘이 맞섭니다.",
+      "effects": [
+        {
+          "type": "combat",
+          "combat": "arc_revenge_duel"
+        }
+      ]
+    },
+    {
+      "label": "남궁휘에게 도움을 청한다",
+      "message": "남궁휘가 말없이 검을 뽑아 곁에 섭니다. 귀영의 수하도 모습을 드러냅니다. 남궁휘와의 유대 +5",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "npc_rival",
+          "add": 5
+        },
+        {
+          "type": "combat",
+          "combat": "arc_revenge_duel_allied"
+        }
+      ]
+    }
+  ]
+}

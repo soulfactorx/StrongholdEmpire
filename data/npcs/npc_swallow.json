@@ -1,0 +1,29 @@
+{
+  "id": "npc_swallow",
+  "display_name": "연소화",
+  "title": "비연검 여협",
+  "sect_id": "none",
+  "role": "WANDERER",
+  "named": true,
+  "description": "제비처럼 날랜 검을 쓰는 여협. 불의를 보면 참지 못해 늘 일에 휘말린다.",
+  "level": 3,
+  "stats": {
+    "strength": 11,
+    "agility": 17,
+    "wisdom": 12,
+    "charisma": 14,
+    "internal_energy_max": 110,
+    "age": 23,
+    "morality": 70
+  },
+  "scaling": {
+    "base_level": 3,
+    "level_offset": 0,
+    "per_level": {
+      "strength": 1,
+      "agility": 1,
+      "internal_energy_max": 8
+    }
+  },
+  "war_specialty": "FLANK"
+}

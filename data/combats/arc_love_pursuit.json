@@ -1,0 +1,104 @@
+{
+  "id": "arc_love_pursuit",
+  "title": "추격 — 남궁세가 무사들",
+  "player_position": [
+    3,
+    5
+  ],
+  "allies": [
+    {
+      "npc": "npc_namgung_lady",
+      "position": [
+        2,
+        4
+      ]
+    }
+  ],
+  "enemy_damage_scale": 0.7,
+  "enemies": [
+    {
+      "npc": "npc_namgung_guard",
+      "position": [
+        13,
+        3
+      ],
+      "name": "남궁 무사 갑"
+    },
+    {
+      "npc": "npc_namgung_guard",
+      "position": [
+        13,
+        5
+      ],
+      "name": "남궁 무사 을"
+    },
+    {
+      "npc": "npc_namgung_guard",
+      "position": [
+        13,
+        7
+      ],
+      "name": "남궁 무사 병"
+    }
+  ],
+  "terrain": {
+    "WATER": [
+      [
+        8,
+        0
+      ],
+      [
+        8,
+        1
+      ],
+      [
+        8,
+        2
+      ],
+      [
+        8,
+        3
+      ],
+      [
+        8,
+        6
+      ],
+      [
+        8,
+        7
+      ],
+      [
+        8,
+        8
+      ],
+      [
+        8,
+        9
+      ]
+    ],
+    "FOREST": [
+      [
+        5,
+        2
+      ],
+      [
+        5,
+        3
+      ],
+      [
+        5,
+        7
+      ]
+    ]
+  },
+  "enemy_hp_scale": 0.65,
+  "rewards": {
+    "experience": 40
+  },
+  "defeat_penalty": {
+    "reputation": 5,
+    "injury_ratio": 0.3
+  },
+  "victory_flag": "arc_love_escaped",
+  "defeat_flag": "arc_love_captured"
+}

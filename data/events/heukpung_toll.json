@@ -1,0 +1,97 @@
+{
+  "id": "heukpung_toll",
+  "title": "흑풍채의 통행세",
+  "description": "흑풍채 졸개들이 문파의 물자 수레를 막아섰습니다.\n「채주님께 통행세를 바치면 무사히 지나가게 해 주지.」",
+  "can_repeat": false,
+  "conditions": [
+    {
+      "type": "flag",
+      "flag": "subjugated_heukpung",
+      "value": false
+    },
+    {
+      "type": "world_sect",
+      "sect": "heukpung",
+      "field": "attitude",
+      "op": "<",
+      "value": 0
+    },
+    {
+      "type": "sect",
+      "field": "gold",
+      "op": ">=",
+      "value": 50
+    }
+  ],
+  "choices": [
+    {
+      "label": "통행세를 낸다",
+      "message": "금화 50을 내주었습니다. 흑풍채의 태도가 누그러졌습니다.",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -50
+        },
+        {
+          "type": "world_sect",
+          "sect": "heukpung",
+          "field": "attitude",
+          "add": 15
+        }
+      ]
+    },
+    {
+      "label": "거절하고 맞선다",
+      "message": "수레를 지키기 위해 검을 뽑습니다!",
+      "effects": [
+        {
+          "type": "world_sect",
+          "sect": "heukpung",
+          "field": "attitude",
+          "add": -10
+        },
+        {
+          "type": "combat",
+          "combat": "night_bandits"
+        }
+      ]
+    },
+    {
+      "label": "사신을 보내 협상한다",
+      "message": "협상이 결렬되어 금화 20을 빼앗겼습니다.",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -20
+        },
+        {
+          "type": "world_sect",
+          "sect": "heukpung",
+          "field": "attitude",
+          "add": -5
+        }
+      ],
+      "branches": [
+        {
+          "chance": 50,
+          "message": "말솜씨로 통행세를 면했습니다. 명성 +2, 흑풍채 태도 상승.",
+          "effects": [
+            {
+              "type": "sect",
+              "field": "reputation",
+              "add": 2
+            },
+            {
+              "type": "world_sect",
+              "sect": "heukpung",
+              "field": "attitude",
+              "add": 10
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

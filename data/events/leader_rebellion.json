@@ -1,0 +1,38 @@
+{
+  "id": "leader_rebellion",
+  "title": "원로들의 반발",
+  "description": "문주의 처사에 불만을 품은 원로와 고참 제자들이 대전에 모였습니다.\n\"이대로는 문파가 무너집니다. 문주께서 답을 주셔야겠습니다.\"",
+  "can_repeat": true,
+  "weight": 5,
+  "conditions": [
+    {"type": "role", "in": ["LEADER"]},
+    {"type": "role_state", "field": "discontent", "op": ">=", "value": 70}
+  ],
+  "choices": [
+    {
+      "label": "재물을 풀어 달랜다 (금화 -120)",
+      "message": "원로들에게 재물을 나누어 주었습니다. 불만이 크게 가라앉았습니다.",
+      "effects": [
+        {"type": "sect", "field": "gold", "add": -120},
+        {"type": "role_state", "field": "discontent", "add": -40}
+      ]
+    },
+    {
+      "label": "주동자를 내친다",
+      "message": "주동자와 그를 따르던 제자들이 산문을 떠났습니다. 남은 이들은 입을 다물었습니다.",
+      "effects": [
+        {"type": "sect", "field": "disciple_count", "add": -3},
+        {"type": "sect", "field": "reputation", "add": -5},
+        {"type": "role_state", "field": "discontent", "add": -30}
+      ]
+    },
+    {
+      "label": "물러서지 않는다",
+      "message": "문주는 뜻을 굽히지 않았습니다. 대전을 나서는 원로들의 눈빛이 싸늘합니다.",
+      "success": false,
+      "effects": [
+        {"type": "role_state", "field": "discontent", "add": 10}
+      ]
+    }
+  ]
+}

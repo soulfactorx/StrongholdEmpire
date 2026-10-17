@@ -1,0 +1,18 @@
+{
+  "id": "qingyun",
+  "sect_name": "청운검파",
+  "alignment": "RIGHTEOUS",
+  "leader_id": "npc_master",
+  "is_player_sect": true,
+  "description": "작지만 유서 깊은 정파 검문. 천하대란 속에서 살아남기 위해 몸부림치고 있다.",
+  "reputation": 50,
+  "disciple_count": 12,
+  "max_disciples": 30,
+  "gold": 500,
+  "food": 300,
+  "library_level": 1,
+  "training_ground_level": 1,
+  "treasury_level": 1,
+  "soldier_npc": "npc_disciple",
+  "champion_npc": "npc_senior_brother"
+}

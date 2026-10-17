@@ -1,0 +1,33 @@
+{
+  "id": "bond_meet_iron_blade",
+  "title": "철검객과의 술자리",
+  "description": "객잔 구석에서 철검을 등에 멘 사내가 홀로 술을 마시고 있습니다. 시비를 걸던 왈패들이 그의 눈빛 한 번에 물러납니다.",
+  "can_repeat": false,
+  "weight": 2,
+  "conditions": [
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "술잔을 들고 합석한다",
+      "message": "고무진과 밤새 술을 마셨습니다. 말수는 적지만 믿을 만한 사내입니다.",
+      "effects": [
+        {
+          "type": "add_relationship",
+          "target": "npc_iron_blade",
+          "bond_type": "ACQUAINTANCE",
+          "strength": 20
+        }
+      ]
+    },
+    {
+      "label": "조용히 지나친다",
+      "message": "철검객은 다음 날 아침 사라졌습니다.",
+      "effects": []
+    }
+  ]
+}

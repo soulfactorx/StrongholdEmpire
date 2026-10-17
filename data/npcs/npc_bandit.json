@@ -1,0 +1,26 @@
+{
+  "id": "npc_bandit",
+  "display_name": "도적",
+  "title": "흑풍채 졸개",
+  "sect_id": "heukpung",
+  "role": "WANDERER",
+  "description": "흑풍채에 몸담은 떠돌이 도적. 전투에서는 여럿이 함께 나타난다.",
+  "level": 1,
+  "stats": {
+    "strength": 8,
+    "agility": 10,
+    "wisdom": 5,
+    "charisma": 5,
+    "internal_energy_max": 60,
+    "age": 25,
+    "morality": 30
+  },
+  "scaling": {
+    "base_level": 1,
+    "level_offset": -1,
+    "per_level": {
+      "strength": 1,
+      "agility": 1
+    }
+  }
+}

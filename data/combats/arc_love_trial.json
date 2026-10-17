@@ -1,0 +1,74 @@
+{
+  "id": "arc_love_trial",
+  "title": "가주의 시험 — 남궁휘와의 진검승부",
+  "player_position": [
+    3,
+    5
+  ],
+  "enemy_hp_scale": 0.8,
+  "enemy_damage_scale": 0.75,
+  "enemies": [
+    {
+      "npc": "npc_rival",
+      "position": [
+        12,
+        5
+      ],
+      "stats": {
+        "strength": 2,
+        "internal_energy_max": 20
+      }
+    }
+  ],
+  "blocked": [
+    [
+      7,
+      3
+    ],
+    [
+      7,
+      4
+    ],
+    [
+      7,
+      5
+    ],
+    [
+      7,
+      6
+    ]
+  ],
+  "terrain": {
+    "HIGH": [
+      [
+        10,
+        2
+      ],
+      [
+        11,
+        2
+      ]
+    ],
+    "FOREST": [
+      [
+        4,
+        7
+      ],
+      [
+        5,
+        7
+      ]
+    ]
+  },
+  "relationship_target": "npc_rival",
+  "rewards": {
+    "experience": 50,
+    "reputation": 5,
+    "bond": 5
+  },
+  "defeat_penalty": {
+    "injury_ratio": 0.4
+  },
+  "victory_flag": "arc_love_trial_won",
+  "defeat_flag": "arc_love_captured"
+}

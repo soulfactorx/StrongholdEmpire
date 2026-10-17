@@ -1,0 +1,66 @@
+{
+  "id": "arc_revenge_chief_aftermath",
+  "title": "주인 잃은 산채",
+  "description": "마진이 쓰러지자 흑풍채 무리가 뿔뿔이 흩어졌습니다. 산채에는 약탈한 재물과 갈 곳 없는 졸개들이 남았습니다.",
+  "can_repeat": false,
+  "weight": 4,
+  "conditions": [
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_revenge_chief_slain",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "산채를 불태운다",
+      "message": "약탈의 소굴을 불태웠습니다. 흑풍채 제자 -6, 명성 +5",
+      "effects": [
+        {
+          "type": "world_sect",
+          "sect": "heukpung",
+          "field": "disciple_count",
+          "add": -6
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 5
+        },
+        {
+          "type": "flag",
+          "flag": "arc_revenge_closed",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "남은 무리를 거두어 문하에 들인다",
+      "message": "갈 곳 없는 졸개 셋이 고개를 숙였습니다. 제자 +3, 흑풍채 제자 -6, 도덕 +3",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "disciple_count",
+          "add": 3
+        },
+        {
+          "type": "world_sect",
+          "sect": "heukpung",
+          "field": "disciple_count",
+          "add": -6
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 3
+        },
+        {
+          "type": "flag",
+          "flag": "arc_revenge_closed",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

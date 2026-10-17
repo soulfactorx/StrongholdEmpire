@@ -1,0 +1,26 @@
+{
+  "id": "npc_cheonma_cultist",
+  "display_name": "천마신교 교도",
+  "title": "천마신교 광신도",
+  "sect_id": "cheonma",
+  "role": "WANDERER",
+  "description": "교주를 신으로 섬기는 마교의 교도. 무리를 지어 싸운다.",
+  "level": 1,
+  "stats": {
+    "strength": 11,
+    "agility": 11,
+    "wisdom": 7,
+    "charisma": 6,
+    "internal_energy_max": 80,
+    "age": 26,
+    "morality": 20
+  },
+  "scaling": {
+    "base_level": 1,
+    "level_offset": 0,
+    "per_level": {
+      "strength": 1,
+      "agility": 1
+    }
+  }
+}

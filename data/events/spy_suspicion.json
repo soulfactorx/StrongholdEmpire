@@ -1,0 +1,29 @@
+{
+  "id": "spy_suspicion",
+  "title": "의심의 눈초리",
+  "description": "잠입한 세력의 집법당이 내부 첩자를 찾기 시작했습니다.\n당신이 머물던 방을 누군가 뒤진 흔적이 있습니다.",
+  "can_repeat": true,
+  "weight": 4,
+  "conditions": [
+    {"type": "role", "in": ["SPY"]},
+    {"type": "role_state", "field": "exposure", "op": ">=", "value": 60}
+  ],
+  "choices": [
+    {
+      "label": "증거를 없앤다 (금화 -50)",
+      "message": "밀서를 태우고 연락책을 바꾸었습니다. 의심이 조금 걷혔습니다.",
+      "effects": [
+        {"type": "sect", "field": "gold", "add": -50},
+        {"type": "role_state", "field": "exposure", "add": -25}
+      ]
+    },
+    {
+      "label": "대담하게 밀고 나간다",
+      "message": "의심을 역이용해 더 깊은 기밀에 다가갔습니다. 그만큼 위험도 커졌습니다.",
+      "effects": [
+        {"type": "sect", "field": "research_points", "add": 15},
+        {"type": "role_state", "field": "exposure", "add": 15}
+      ]
+    }
+  ]
+}

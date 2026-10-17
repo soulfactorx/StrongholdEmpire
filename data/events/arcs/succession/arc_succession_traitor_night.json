@@ -1,0 +1,53 @@
+{
+  "id": "arc_succession_traitor_night",
+  "title": "피의 밤",
+  "description": "약속한 밤입니다. 진무겸이 장문인 처소의 문을 열라고 눈짓합니다.\n문 너머에서 스승의 기침 소리가 들립니다.",
+  "can_repeat": false,
+  "weight": 4,
+  "conditions": [
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_succession_joined",
+      "op": ">=",
+      "value": 1
+    },
+    {
+      "type": "flag",
+      "flag": "arc_succession_defend",
+      "value": false
+    }
+  ],
+  "choices": [
+    {
+      "label": "문을 연다",
+      "message": "문을 열었습니다. 진무겸이 먼저 뛰어듭니다.",
+      "effects": [
+        {
+          "type": "combat",
+          "combat": "arc_succession_coup_traitor"
+        }
+      ]
+    },
+    {
+      "label": "마지막 순간 칼끝을 돌린다",
+      "message": "진무겸의 등 뒤에서 칼을 뽑아 들고 외쳤습니다. 「반역이다!」 도덕 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_succession_defend",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 10
+        },
+        {
+          "type": "set_bond_type",
+          "target": "npc_senior_brother",
+          "bond_type": "HATRED"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "id": "arc_spy_enforcer",
+  "title": "결판 — 집법당주 남궁철",
+  "player_position": [
+    3,
+    5
+  ],
+  "enemy_hp_scale": 0.7,
+  "enemy_damage_scale": 0.7,
+  "enemies": [
+    {
+      "npc": "npc_namgung_enforcer",
+      "position": [
+        12,
+        5
+      ]
+    },
+    {
+      "npc": "npc_namgung_guard",
+      "position": [
+        13,
+        3
+      ],
+      "name": "집법당 무사"
+    }
+  ],
+  "blocked": [
+    [
+      7,
+      3
+    ],
+    [
+      7,
+      4
+    ],
+    [
+      7,
+      6
+    ],
+    [
+      7,
+      7
+    ]
+  ],
+  "rewards": {
+    "experience": 60,
+    "gold": 80
+  },
+  "defeat_penalty": {
+    "injury_ratio": 0.2
+  },
+  "victory_flag": "arc_spy_enforcer_slain",
+  "defeat_flag": "spy_exposed"
+}

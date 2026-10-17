@@ -1,0 +1,58 @@
+{
+  "id": "arc_revenge_duel",
+  "title": "결투 — 흑의 자객 귀영",
+  "player_position": [
+    3,
+    5
+  ],
+  "enemies": [
+    {
+      "npc": "npc_shadow_blade",
+      "position": [
+        12,
+        5
+      ]
+    }
+  ],
+  "terrain": {
+    "FOREST": [
+      [
+        6,
+        2
+      ],
+      [
+        6,
+        3
+      ],
+      [
+        9,
+        6
+      ],
+      [
+        9,
+        7
+      ]
+    ],
+    "HIGH": [
+      [
+        4,
+        8
+      ],
+      [
+        5,
+        8
+      ]
+    ]
+  },
+  "relationship_target": "npc_shadow_blade",
+  "rewards": {
+    "experience": 50,
+    "reputation": 5
+  },
+  "defeat_penalty": {
+    "reputation": 3,
+    "injury_ratio": 0.3
+  },
+  "victory_flag": "arc_revenge_won",
+  "defeat_flag": "arc_revenge_lost"
+}

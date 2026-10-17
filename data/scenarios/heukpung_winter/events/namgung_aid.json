@@ -1,0 +1,51 @@
+{
+  "id": "namgung_aid",
+  "title": "남궁세가의 원군",
+  "weight": 5,
+  "description": "남궁세가가 청을 받아들여 무사들을 보내왔습니다.",
+  "conditions": [
+    {
+      "type": "turns_since_flag",
+      "flag": "asked_namgung",
+      "op": ">=",
+      "value": 2
+    },
+    {
+      "type": "world_sect",
+      "sect": "namgung",
+      "field": "attitude",
+      "op": ">=",
+      "value": 30
+    }
+  ],
+  "choices": [
+    {
+      "label": "원군을 맞아들인다",
+      "message": "남궁세가 무사 4명이 문파에 합류했습니다. 제자 +4",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "disciple_count",
+          "add": 4
+        },
+        {
+          "type": "world_sect",
+          "sect": "namgung",
+          "field": "attitude",
+          "add": -5
+        }
+      ]
+    },
+    {
+      "label": "정중히 돌려보낸다",
+      "message": "「스스로 지켜 내겠습니다.」 남궁세가가 그 기개를 높이 샀습니다. 명성 +5",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 5
+        }
+      ]
+    }
+  ]
+}

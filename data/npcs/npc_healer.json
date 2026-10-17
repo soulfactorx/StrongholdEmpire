@@ -1,0 +1,35 @@
+{
+  "id": "npc_healer",
+  "display_name": "백소하",
+  "title": "청운검파 약방 의녀",
+  "sect_id": "qingyun",
+  "role": "YOUNG_DISCIPLE",
+  "named": true,
+  "description": "약방을 맡은 의녀. 다친 제자를 밤새 돌보며, 검보다 침이 빠르다는 말을 듣는다.",
+  "level": 2,
+  "stats": {
+    "strength": 8,
+    "agility": 12,
+    "wisdom": 17,
+    "charisma": 15,
+    "internal_energy_max": 120,
+    "age": 22,
+    "morality": 80
+  },
+  "scaling": {
+    "base_level": 2,
+    "level_offset": 0,
+    "per_level": {
+      "wisdom": 1,
+      "agility": 1,
+      "internal_energy_max": 10
+    }
+  },
+  "martial_arts": [
+    {
+      "id": "preset_earth_life_palm",
+      "min_level": 2
+    }
+  ],
+  "war_specialty": "DEFEND"
+}

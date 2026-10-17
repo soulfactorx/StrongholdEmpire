@@ -1,0 +1,63 @@
+{
+  "id": "arc_succession_retake",
+  "title": "빼앗긴 산문",
+  "description": "진무겸이 장문인을 자처하며 산문을 틀어쥐었습니다. 흩어진 제자들이 당신을 바라봅니다.",
+  "can_repeat": true,
+  "weight": 4,
+  "conditions": [
+    {
+      "type": "flag",
+      "flag": "arc_succession_lost",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_succession_lost",
+      "op": ">=",
+      "value": 2
+    },
+    {
+      "type": "flag",
+      "flag": "arc_succession_won",
+      "value": false
+    },
+    {
+      "type": "flag",
+      "flag": "arc_succession_exiled",
+      "value": false
+    }
+  ],
+  "choices": [
+    {
+      "label": "산문을 되찾는다",
+      "message": "남은 제자들을 모아 산문으로 진격합니다.",
+      "effects": [
+        {
+          "type": "combat",
+          "combat": "arc_succession_coup"
+        }
+      ]
+    },
+    {
+      "label": "청운검파를 떠난다",
+      "message": "무너진 산문을 등지고 떠났습니다. 명성 -10, 제자 -4",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_succession_exiled",
+          "value": true
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": -10
+        },
+        {
+          "type": "sect",
+          "field": "disciple_count",
+          "add": -4
+        }
+      ]
+    }
+  ]
+}

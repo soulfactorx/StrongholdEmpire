@@ -1,0 +1,80 @@
+{
+  "id": "arc_succession_conspiracy",
+  "title": "밀담",
+  "description": "한밤중 후원에서 진무겸과 흑풍채 무사가 나누는 밀담을 엿들었습니다.\n「장문인이 쓰러지는 날 산문을 열어 주겠소. 대가는 약속대로…」",
+  "can_repeat": false,
+  "weight": 4,
+  "conditions": [
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_succession_start",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "스승께 고한다",
+      "message": "병석의 스승이 눈을 감고 오래 침묵했습니다. 「…문파를 지켜다오.」 스승과의 유대 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_succession_defend",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_master",
+          "add": 10
+        },
+        {
+          "type": "set_bond_type",
+          "target": "npc_senior_brother",
+          "bond_type": "RIVALRY"
+        }
+      ]
+    },
+    {
+      "label": "진무겸에게 가담한다",
+      "message": "진무겸이 웃으며 술잔을 건넵니다. 「이제 청운검파는 우리 것이다.」 도덕 -15",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_succession_joined",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -15
+        },
+        {
+          "type": "set_bond_type",
+          "target": "npc_senior_brother",
+          "bond_type": "BLOOD_OATH"
+        },
+        {
+          "type": "bond",
+          "target": "npc_senior_brother",
+          "add": 20
+        }
+      ]
+    },
+    {
+      "label": "모른 척한다",
+      "message": "보지 못한 척 돌아섰습니다. 그러나 피바람은 피할 수 없을 것입니다. 도덕 -3",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_succession_defend",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -3
+        }
+      ]
+    }
+  ]
+}

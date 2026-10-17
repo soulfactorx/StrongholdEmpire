@@ -1,0 +1,38 @@
+{
+  "id": "spy_recruitment",
+  "title": "비밀 제의",
+  "description": "문주가 몰래 당신을 불러 남궁세가 잠입을 제안합니다.\n위험하지만 문파에 큰 공을 세울 기회입니다.",
+  "can_repeat": false,
+  "conditions": [
+    {
+      "type": "role",
+      "in": [
+        "YOUNG_DISCIPLE"
+      ]
+    },
+    {
+      "type": "character",
+      "field": "agility",
+      "op": ">=",
+      "value": 14
+    }
+  ],
+  "choices": [
+    {
+      "label": "임무를 수락한다",
+      "message": "스파이 임무를 수락했습니다. 역할 전환 메뉴에서 전향할 수 있습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "spy_recruitment",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "거절한다",
+      "message": "문주가 고개를 끄덕이며 다른 제자를 찾습니다.",
+      "effects": []
+    }
+  ]
+}

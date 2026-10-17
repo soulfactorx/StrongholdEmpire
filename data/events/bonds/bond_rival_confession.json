@@ -1,0 +1,61 @@
+{
+  "id": "bond_rival_confession",
+  "title": "라이벌의 고백",
+  "description": "비무가 끝난 뒤 남궁휘가 검을 거두며 처음으로 고개를 숙입니다.\n「…인정하지. 네가 있어서 나도 여기까지 왔다.」",
+  "can_repeat": false,
+  "weight": 4,
+  "priority": true,
+  "conditions": [
+    {
+      "type": "relationship_type",
+      "target": "npc_rival",
+      "bond_type": "RIVALRY"
+    },
+    {
+      "type": "bond",
+      "target": "npc_rival",
+      "op": ">=",
+      "value": 60
+    }
+  ],
+  "choices": [
+    {
+      "label": "의형제를 청한다",
+      "message": "남궁휘가 손을 맞잡습니다. 남궁휘와 혈맹이 되었습니다. 남궁세가 태도 +10",
+      "effects": [
+        {
+          "type": "set_bond_type",
+          "target": "npc_rival",
+          "bond_type": "BLOOD_OATH"
+        },
+        {
+          "type": "world_sect",
+          "sect": "namgung",
+          "field": "attitude",
+          "add": 10
+        }
+      ]
+    },
+    {
+      "label": "평생의 맞수로 남자고 한다",
+      "message": "남궁휘가 웃습니다. 「좋다, 언젠가 꼭 이긴다.」 무력 +1, 신법 +1",
+      "effects": [
+        {
+          "type": "character",
+          "field": "strength",
+          "add": 1
+        },
+        {
+          "type": "character",
+          "field": "agility",
+          "add": 1
+        },
+        {
+          "type": "bond",
+          "target": "npc_rival",
+          "add": 5
+        }
+      ]
+    }
+  ]
+}

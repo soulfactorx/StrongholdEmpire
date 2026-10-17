@@ -1,0 +1,66 @@
+{
+  "id": "arc_cheonma_blood_shadow",
+  "title": "혈영의 습격",
+  "player_position": [
+    3,
+    5
+  ],
+  "enemies": [
+    {
+      "npc": "npc_cheonma_envoy",
+      "position": [
+        12,
+        5
+      ]
+    },
+    {
+      "npc": "npc_cheonma_cultist",
+      "position": [
+        13,
+        3
+      ],
+      "name": "혈영대원 갑"
+    },
+    {
+      "npc": "npc_cheonma_cultist",
+      "position": [
+        13,
+        7
+      ],
+      "name": "혈영대원 을"
+    }
+  ],
+  "terrain": {
+    "FOREST": [
+      [
+        9,
+        2
+      ],
+      [
+        9,
+        3
+      ],
+      [
+        10,
+        7
+      ],
+      [
+        10,
+        8
+      ]
+    ]
+  },
+  "relationship_target": "npc_cheonma_envoy",
+  "enemy_hp_scale": 0.55,
+  "enemy_damage_scale": 0.6,
+  "rewards": {
+    "experience": 60,
+    "reputation": 8
+  },
+  "defeat_penalty": {
+    "reputation": 5,
+    "injury_ratio": 0.3
+  },
+  "victory_flag": "arc_cheonma_envoy_slain",
+  "defeat_flag": "arc_cheonma_envoy_escaped"
+}

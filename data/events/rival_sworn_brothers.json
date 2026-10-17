@@ -1,0 +1,70 @@
+{
+  "id": "rival_sworn_brothers",
+  "title": "남궁휘와의 결의",
+  "description": "진검 승부를 겨룬 지 한 해가 지났습니다. 남궁휘가 술병을 들고 찾아왔습니다.\n「너와 싸우며 나도 강해졌다. 이제 등을 맡길 수 있겠나?」",
+  "can_repeat": false,
+  "weight": 3,
+  "conditions": [
+    {
+      "type": "relationship_type",
+      "target": "npc_rival",
+      "bond_type": "RIVALRY"
+    },
+    {
+      "type": "bond",
+      "target": "npc_rival",
+      "op": ">=",
+      "value": 40
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "won_rival_duel",
+      "op": ">=",
+      "value": 4
+    }
+  ],
+  "choices": [
+    {
+      "label": "의형제를 맺는다",
+      "message": "남궁휘와 의형제를 맺었습니다. 관계가 혈맹으로 바뀌고 남궁세가의 태도가 좋아졌습니다.",
+      "effects": [
+        {
+          "type": "set_bond_type",
+          "target": "npc_rival",
+          "bond_type": "BLOOD_OATH"
+        },
+        {
+          "type": "bond",
+          "target": "npc_rival",
+          "add": 10
+        },
+        {
+          "type": "world_sect",
+          "sect": "namgung",
+          "field": "attitude",
+          "add": 20
+        },
+        {
+          "type": "flag",
+          "flag": "sworn_with_rival"
+        }
+      ]
+    },
+    {
+      "label": "라이벌로 남는다",
+      "message": "「다음에도 지지 않겠다.」 서로를 향한 투지가 더 뜨거워졌습니다. 무력 +1",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "npc_rival",
+          "add": 5
+        },
+        {
+          "type": "character",
+          "field": "strength",
+          "add": 1
+        }
+      ]
+    }
+  ]
+}

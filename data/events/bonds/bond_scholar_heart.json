@@ -1,0 +1,50 @@
+{
+  "id": "bond_scholar_heart",
+  "title": "강물에 띄운 시",
+  "description": "서문결이 시 한 수를 적어 건넵니다. 끝 구절에 당신의 이름이 숨어 있습니다.\n「…알아보셨다면, 대답을 주시오.」",
+  "can_repeat": false,
+  "weight": 4,
+  "priority": true,
+  "conditions": [
+    {
+      "type": "relationship_type",
+      "target": "npc_scholar",
+      "bond_type": "ACQUAINTANCE"
+    },
+    {
+      "type": "bond",
+      "target": "npc_scholar",
+      "op": ">=",
+      "value": 40
+    }
+  ],
+  "choices": [
+    {
+      "label": "화답시를 써 준다",
+      "message": "서문결과 연인이 되었습니다.",
+      "effects": [
+        {
+          "type": "set_bond_type",
+          "target": "npc_scholar",
+          "bond_type": "ROMANCE"
+        },
+        {
+          "type": "bond",
+          "target": "npc_scholar",
+          "add": 10
+        }
+      ]
+    },
+    {
+      "label": "지음(知音)으로 남자고 한다",
+      "message": "서문결이 웃습니다. 「지음이라, 그 또한 귀하오.」 혈맹이 되었습니다.",
+      "effects": [
+        {
+          "type": "set_bond_type",
+          "target": "npc_scholar",
+          "bond_type": "BLOOD_OATH"
+        }
+      ]
+    }
+  ]
+}

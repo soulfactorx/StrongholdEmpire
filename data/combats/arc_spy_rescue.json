@@ -1,0 +1,98 @@
+{
+  "id": "arc_spy_rescue",
+  "title": "동료 구출 — 지하 감옥",
+  "player_position": [
+    2,
+    2
+  ],
+  "enemies": [
+    {
+      "npc": "npc_namgung_guard",
+      "position": [
+        11,
+        4
+      ],
+      "name": "옥졸 갑"
+    },
+    {
+      "npc": "npc_namgung_guard",
+      "position": [
+        11,
+        6
+      ],
+      "name": "옥졸 을"
+    },
+    {
+      "npc": "npc_namgung_guard",
+      "position": [
+        13,
+        5
+      ],
+      "name": "옥졸 병"
+    }
+  ],
+  "blocked": [
+    [
+      6,
+      0
+    ],
+    [
+      6,
+      1
+    ],
+    [
+      6,
+      3
+    ],
+    [
+      6,
+      4
+    ],
+    [
+      6,
+      6
+    ],
+    [
+      6,
+      7
+    ],
+    [
+      6,
+      9
+    ]
+  ],
+  "terrain": {
+    "FOREST": [
+      [
+        1,
+        1
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        2
+      ],
+      [
+        3,
+        2
+      ]
+    ]
+  },
+  "enemy_hp_scale": 0.55,
+  "enemy_damage_scale": 0.6,
+  "rewards": {
+    "experience": 40
+  },
+  "defeat_penalty": {
+    "injury_ratio": 0.3
+  },
+  "victory_flag": "arc_spy_rescued",
+  "defeat_flag": "arc_spy_rescue_failed"
+}

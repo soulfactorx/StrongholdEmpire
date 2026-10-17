@@ -1,0 +1,48 @@
+{
+  "id": "tutorial_3_combat",
+  "title": "길잡이 ③ 전술 전투",
+  "description": "강호에서는 결국 칼로 말해야 할 때가 옵니다. [비무]는 남궁휘와 겨루는 연습 전투입니다.\n\n· [이동 모드]에서 옥색 칸을 눌러 움직이고, [공격 모드]에서 인접한 적을 누릅니다. 기본 공격은 차례에 한 번입니다.\n· 무공 버튼을 누른 뒤 붉은 칸의 적을 고르면 무공을 씁니다. 내공과 행동력이 남는 만큼 거듭 쓸 수 있습니다.\n· 수풀은 받는 피해를 줄이고, 고지는 주는 피해를 늘립니다. 오행 상극도 피해에 영향을 줍니다.\n· 불리하면 [후퇴]로 손실을 절반으로 줄일 수 있습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "conditions": [
+    {
+      "type": "flag",
+      "flag": "tutorial",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "tutorial_step2",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "지금 비무를 청한다",
+      "message": "남궁휘가 웃으며 검을 뽑습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "tutorial_step3",
+          "value": true
+        },
+        {
+          "type": "combat",
+          "combat": "sparring"
+        }
+      ]
+    },
+    {
+      "label": "나중에 해 보겠다",
+      "message": "경영 화면의 [비무]로 언제든 겨룰 수 있습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "tutorial_step3",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

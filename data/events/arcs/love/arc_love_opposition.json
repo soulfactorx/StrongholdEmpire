@@ -1,0 +1,88 @@
+{
+  "id": "arc_love_opposition",
+  "title": "가문의 반대",
+  "description": "남궁천이 두 사람의 서신을 알게 되었습니다.\n「청운검파의 애송이에게 내 딸을 줄 수는 없다!」 남궁세가의 공기가 싸늘해졌습니다.",
+  "can_repeat": false,
+  "weight": 4,
+  "conditions": [
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_love_deepened",
+      "op": ">=",
+      "value": 2
+    },
+    {
+      "type": "flag",
+      "flag": "arc_love_ended",
+      "value": false
+    },
+    {
+      "type": "bond",
+      "target": "npc_namgung_lady",
+      "op": ">=",
+      "value": 35
+    }
+  ],
+  "choices": [
+    {
+      "label": "정식으로 청혼한다",
+      "message": "남궁천 앞에 무릎을 꿇고 청혼했습니다. 가주가 차갑게 웃습니다. 「검으로 증명해 보아라.」 남궁세가 태도 -10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_love_proposed",
+          "value": true
+        },
+        {
+          "type": "world_sect",
+          "sect": "namgung",
+          "field": "attitude",
+          "add": -10
+        }
+      ]
+    },
+    {
+      "label": "함께 도주한다",
+      "message": "달 없는 밤, 남궁설의 손을 잡고 담을 넘었습니다. 남궁세가 태도 -30, 유대 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_love_elope",
+          "value": true
+        },
+        {
+          "type": "world_sect",
+          "sect": "namgung",
+          "field": "attitude",
+          "add": -30
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lady",
+          "add": 10
+        }
+      ]
+    },
+    {
+      "label": "그녀를 위해 물러선다",
+      "message": "남궁설의 앞날을 위해 물러서기로 했습니다. 가슴 한쪽이 무너져 내립니다. 지혜 +1",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_love_ended",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lady",
+          "add": -20
+        },
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 1
+        }
+      ]
+    }
+  ]
+}

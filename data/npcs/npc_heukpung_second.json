@@ -1,0 +1,29 @@
+{
+  "id": "npc_heukpung_second",
+  "display_name": "위청",
+  "title": "흑풍채 부채주 '독사'",
+  "sect_id": "heukpung",
+  "role": "MANAGER",
+  "named": true,
+  "description": "마진의 오른팔. 칼보다 독과 계략을 즐겨 쓴다. 채주의 자리를 노린다는 소문이 있다.",
+  "level": 4,
+  "stats": {
+    "strength": 13,
+    "agility": 16,
+    "wisdom": 15,
+    "charisma": 9,
+    "internal_energy_max": 120,
+    "age": 35,
+    "morality": 20
+  },
+  "scaling": {
+    "base_level": 4,
+    "level_offset": 1,
+    "per_level": {
+      "strength": 1,
+      "agility": 1,
+      "internal_energy_max": 6
+    }
+  },
+  "war_specialty": "FLANK"
+}

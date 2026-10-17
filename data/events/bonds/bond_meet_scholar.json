@@ -1,0 +1,44 @@
+{
+  "id": "bond_meet_scholar",
+  "title": "시를 읊는 검객",
+  "description": "다리 위에서 검을 든 서생이 강물을 보며 시를 읊고 있습니다. 당신을 보더니 대구를 청합니다.",
+  "can_repeat": false,
+  "weight": 2,
+  "conditions": [
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 1
+    },
+    {
+      "type": "character",
+      "field": "wisdom",
+      "op": ">=",
+      "value": 12
+    }
+  ],
+  "choices": [
+    {
+      "label": "대구로 답한다",
+      "message": "서문결이 무릎을 칩니다. 「검과 붓을 아는 벗을 만났구려!」 지혜 +1",
+      "effects": [
+        {
+          "type": "add_relationship",
+          "target": "npc_scholar",
+          "bond_type": "ACQUAINTANCE",
+          "strength": 20
+        },
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 1
+        }
+      ]
+    },
+    {
+      "label": "못 들은 척 지나간다",
+      "message": "서생의 시가 등 뒤로 흩어졌습니다.",
+      "effects": []
+    }
+  ]
+}

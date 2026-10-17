@@ -48,6 +48,8 @@ enum SpecialEffect {
 @export_group("연구")
 @export var research_cost: int = 30
 @export var complexity: int = 1
+## 문파 공동 연구로 강화한 단계 (0~ENHANCE_MAX_LEVEL)
+@export var enhance_level: int = 0
 
 @export_group("전투")
 @export var internal_cost: int = 15

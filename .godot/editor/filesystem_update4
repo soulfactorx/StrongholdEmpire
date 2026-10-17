@@ -1,7 +1,0 @@
-res://scripts/Systems/event_manager.gd
-res://scripts/UI/martial_art_screen.gd
-res://scripts/Resources/character_data.gd
-res://scripts/Systems/event_bus.gd
-res://scripts/Systems/game_manager.gd
-res://scripts/Systems/martial_art_manager.gd
-res://scripts/UI/main_menu.gd

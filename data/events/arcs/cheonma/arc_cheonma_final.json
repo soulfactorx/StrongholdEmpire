@@ -1,0 +1,65 @@
+{
+  "id": "arc_cheonma_final",
+  "title": "천마와의 결전",
+  "description": "산문을 지켜 냈습니다. 퇴각하는 마교 진영 한가운데, 교주 위무량이 홀로 남아 당신을 기다립니다.",
+  "can_repeat": true,
+  "weight": 5,
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "cheonha"
+      ]
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_cheonma_siege_won",
+      "op": ">=",
+      "value": 1
+    },
+    {
+      "type": "flag",
+      "flag": "arc_cheonma_repelled",
+      "value": false
+    },
+    {
+      "type": "flag",
+      "flag": "arc_cheonma_held",
+      "value": false
+    }
+  ],
+  "choices": [
+    {
+      "label": "위무량에게 도전한다",
+      "message": "남궁휘가 곁에 섭니다. 천마의 기세가 산을 누릅니다.",
+      "effects": [
+        {
+          "type": "combat",
+          "combat": "arc_cheonma_final"
+        }
+      ]
+    },
+    {
+      "label": "연합군에 맡기고 물러선다",
+      "message": "연합군이 마교를 서역으로 밀어냈습니다. 명성 +10, 천마신교 제자 -10",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 10
+        },
+        {
+          "type": "world_sect",
+          "sect": "cheonma",
+          "field": "disciple_count",
+          "add": -10
+        },
+        {
+          "type": "flag",
+          "flag": "arc_cheonma_held",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

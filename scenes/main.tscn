@@ -57,69 +57,95 @@ horizontal_alignment = 1
 custom_minimum_size = Vector2(0, 16)
 layout_mode = 2
 
-[node name="ManagementButton" type="Button" parent="CenterContainer/VBox"]
+[node name="ContinueButton" type="Button" parent="CenterContainer/VBox"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(320, 48)
 layout_mode = 2
-text = "문파 경영 (내정)"
+text = "계속하기"
 
-[node name="MartialArtButton" type="Button" parent="CenterContainer/VBox"]
+[node name="NewGameButton" type="Button" parent="CenterContainer/VBox"]
 custom_minimum_size = Vector2(320, 48)
 layout_mode = 2
-text = "무공 창조 / 연구"
+text = "새 게임"
 
-[node name="CombatButton" type="Button" parent="CenterContainer/VBox"]
+[node name="LoadButton" type="Button" parent="CenterContainer/VBox"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(320, 48)
 layout_mode = 2
-text = "전술 전투 (1:1 결투)"
+text = "불러오기"
 
-[node name="SectWarButton" type="Button" parent="CenterContainer/VBox"]
+[node name="OptionsButton" type="Button" parent="CenterContainer/VBox"]
 custom_minimum_size = Vector2(320, 48)
 layout_mode = 2
-text = "문파전 지휘"
-
-[node name="EndingButton" type="Button" parent="CenterContainer/VBox"]
-custom_minimum_size = Vector2(320, 48)
-layout_mode = 2
-text = "엔딩 / 레거시"
+text = "설정"
 
 [node name="HelpButton" type="Button" parent="CenterContainer/VBox"]
 custom_minimum_size = Vector2(320, 48)
 layout_mode = 2
 text = "플레이 가이드"
 
-[node name="SaveHBox" type="HBoxContainer" parent="CenterContainer/VBox"]
-layout_mode = 2
-alignment = 1
-theme_override_constants/separation = 12
-
-[node name="SaveButton" type="Button" parent="CenterContainer/VBox/SaveHBox"]
-custom_minimum_size = Vector2(154, 40)
-layout_mode = 2
-text = "저장"
-
-[node name="LoadButton" type="Button" parent="CenterContainer/VBox/SaveHBox"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(154, 40)
-layout_mode = 2
-text = "불러오기"
-
-[node name="GridButton" type="Button" parent="CenterContainer/VBox"]
-custom_minimum_size = Vector2(320, 48)
-layout_mode = 2
-text = "그리드 이동 데모"
-
 [node name="QuitButton" type="Button" parent="CenterContainer/VBox"]
 custom_minimum_size = Vector2(320, 48)
 layout_mode = 2
 text = "종료"
 
-[connection signal="pressed" from="CenterContainer/VBox/ManagementButton" to="." method="_on_management_pressed"]
-[connection signal="pressed" from="CenterContainer/VBox/MartialArtButton" to="." method="_on_martial_art_pressed"]
-[connection signal="pressed" from="CenterContainer/VBox/CombatButton" to="." method="_on_combat_pressed"]
-[connection signal="pressed" from="CenterContainer/VBox/SectWarButton" to="." method="_on_sect_war_pressed"]
-[connection signal="pressed" from="CenterContainer/VBox/EndingButton" to="." method="_on_ending_pressed"]
+[node name="DevToggleButton" type="Button" parent="CenterContainer/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(320, 32)
+layout_mode = 2
+text = "개발자 메뉴 ▼"
+
+[node name="DevPanel" type="PanelContainer" parent="CenterContainer/VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="DevVBox" type="GridContainer" parent="CenterContainer/VBox/DevPanel"]
+layout_mode = 2
+columns = 3
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+
+[node name="DevManagementButton" type="Button" parent="CenterContainer/VBox/DevPanel/DevVBox"]
+custom_minimum_size = Vector2(150, 32)
+layout_mode = 2
+text = "문파 경영"
+
+[node name="DevMartialArtButton" type="Button" parent="CenterContainer/VBox/DevPanel/DevVBox"]
+custom_minimum_size = Vector2(150, 32)
+layout_mode = 2
+text = "무공 연구"
+
+[node name="DevCombatButton" type="Button" parent="CenterContainer/VBox/DevPanel/DevVBox"]
+custom_minimum_size = Vector2(150, 32)
+layout_mode = 2
+text = "1:1 결투"
+
+[node name="DevSectWarButton" type="Button" parent="CenterContainer/VBox/DevPanel/DevVBox"]
+custom_minimum_size = Vector2(150, 32)
+layout_mode = 2
+text = "문파전 지휘"
+
+[node name="DevEndingButton" type="Button" parent="CenterContainer/VBox/DevPanel/DevVBox"]
+custom_minimum_size = Vector2(150, 32)
+layout_mode = 2
+text = "엔딩 / 레거시"
+
+[node name="DevGridButton" type="Button" parent="CenterContainer/VBox/DevPanel/DevVBox"]
+custom_minimum_size = Vector2(150, 32)
+layout_mode = 2
+text = "그리드 이동 데모"
+
+[connection signal="pressed" from="CenterContainer/VBox/ContinueButton" to="." method="_on_continue_pressed"]
+[connection signal="pressed" from="CenterContainer/VBox/NewGameButton" to="." method="_on_new_game_pressed"]
+[connection signal="pressed" from="CenterContainer/VBox/LoadButton" to="." method="_on_load_pressed"]
+[connection signal="pressed" from="CenterContainer/VBox/OptionsButton" to="." method="_on_options_pressed"]
 [connection signal="pressed" from="CenterContainer/VBox/HelpButton" to="." method="_on_help_pressed"]
-[connection signal="pressed" from="CenterContainer/VBox/SaveHBox/SaveButton" to="." method="_on_save_pressed"]
-[connection signal="pressed" from="CenterContainer/VBox/SaveHBox/LoadButton" to="." method="_on_load_pressed"]
-[connection signal="pressed" from="CenterContainer/VBox/GridButton" to="." method="_on_grid_demo_pressed"]
 [connection signal="pressed" from="CenterContainer/VBox/QuitButton" to="." method="_on_quit_pressed"]
+[connection signal="pressed" from="CenterContainer/VBox/DevToggleButton" to="." method="_on_dev_toggle_pressed"]
+[connection signal="pressed" from="CenterContainer/VBox/DevPanel/DevVBox/DevManagementButton" to="." method="_on_dev_management_pressed"]
+[connection signal="pressed" from="CenterContainer/VBox/DevPanel/DevVBox/DevMartialArtButton" to="." method="_on_dev_martial_art_pressed"]
+[connection signal="pressed" from="CenterContainer/VBox/DevPanel/DevVBox/DevCombatButton" to="." method="_on_dev_combat_pressed"]
+[connection signal="pressed" from="CenterContainer/VBox/DevPanel/DevVBox/DevSectWarButton" to="." method="_on_dev_sect_war_pressed"]
+[connection signal="pressed" from="CenterContainer/VBox/DevPanel/DevVBox/DevEndingButton" to="." method="_on_dev_ending_pressed"]
+[connection signal="pressed" from="CenterContainer/VBox/DevPanel/DevVBox/DevGridButton" to="." method="_on_dev_grid_pressed"]

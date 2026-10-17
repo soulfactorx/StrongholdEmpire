@@ -1,0 +1,61 @@
+{
+  "id": "heukpung_raid",
+  "title": "흑풍채의 습격",
+  "can_repeat": true,
+  "weight": 2,
+  "description": "흑풍채 무리가 문파 외곽을 덮쳤습니다!",
+  "conditions": [
+    {
+      "type": "flag",
+      "flag": "subjugated_heukpung",
+      "value": false
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "heukpung_declared",
+      "op": ">=",
+      "value": 2
+    },
+    {
+      "type": "season",
+      "in": [
+        "가을",
+        "겨울"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "맞서 싸운다",
+      "message": "제자들과 함께 습격을 막아섭니다!",
+      "effects": [
+        {
+          "type": "combat",
+          "combat": "night_bandits"
+        }
+      ]
+    },
+    {
+      "label": "성문을 걸어 잠근다",
+      "message": "피해는 막았지만 외곽의 곡식을 빼앗겼습니다. 식량 -30, 명성 -2",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "food",
+          "add": -30
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": -2
+        },
+        {
+          "type": "world_sect",
+          "sect": "heukpung",
+          "field": "attitude",
+          "add": -5
+        }
+      ]
+    }
+  ]
+}

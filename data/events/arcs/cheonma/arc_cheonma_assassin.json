@@ -1,0 +1,54 @@
+{
+  "id": "arc_cheonma_assassin",
+  "title": "혈영의 습격",
+  "description": "연합의 움직임을 눈치챈 혈영이 직접 찾아왔습니다. 그림자 속에서 붉은 눈이 빛납니다.",
+  "can_repeat": false,
+  "weight": 5,
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "cheonha"
+      ]
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_cheonma_start",
+      "op": ">=",
+      "value": 2
+    }
+  ],
+  "choices": [
+    {
+      "label": "혈영을 상대한다",
+      "message": "칼을 뽑아 그림자를 향해 섭니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_cheonma_assassin_done",
+          "value": true
+        },
+        {
+          "type": "combat",
+          "combat": "arc_cheonma_blood_shadow"
+        }
+      ]
+    },
+    {
+      "label": "몸을 피한다",
+      "message": "혈영을 피했지만 제자 둘이 목숨을 잃었습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_cheonma_assassin_done",
+          "value": true
+        },
+        {
+          "type": "sect",
+          "field": "disciple_count",
+          "add": -2
+        }
+      ]
+    }
+  ]
+}

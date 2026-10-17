@@ -1,0 +1,54 @@
+{
+  "id": "arc_revenge_mastermind",
+  "title": "채주 마진",
+  "description": "귀영의 안내로 흑풍채 산채의 뒷길에 닿았습니다. 마진은 술에 취해 부하들과 떠들고 있습니다.",
+  "can_repeat": false,
+  "weight": 4,
+  "conditions": [
+    {
+      "type": "turns_since_flag",
+      "flag": "arc_revenge_mastermind",
+      "op": ">=",
+      "value": 1
+    },
+    {
+      "type": "flag",
+      "flag": "arc_revenge_chief_slain",
+      "value": false
+    }
+  ],
+  "choices": [
+    {
+      "label": "산채로 쳐들어간다",
+      "message": "칼을 뽑아 들고 산채의 문을 걷어찼습니다.",
+      "effects": [
+        {
+          "type": "combat",
+          "combat": "arc_revenge_chief"
+        }
+      ]
+    },
+    {
+      "label": "관아에 증거를 넘긴다",
+      "message": "관병이 산채를 덮쳤고 마진은 달아났습니다. 명성 +5, 흑풍채 제자 -4",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 5
+        },
+        {
+          "type": "world_sect",
+          "sect": "heukpung",
+          "field": "disciple_count",
+          "add": -4
+        },
+        {
+          "type": "flag",
+          "flag": "arc_revenge_closed",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

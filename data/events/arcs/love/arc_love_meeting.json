@@ -1,0 +1,56 @@
+{
+  "id": "arc_love_meeting",
+  "title": "매화 아래의 만남",
+  "description": "남궁세가를 찾은 길, 매화나무 아래에서 검무를 추는 여인을 보았습니다.\n남궁세가 가주의 딸 남궁설. 그녀가 검을 거두고 당신을 돌아봅니다.",
+  "can_repeat": false,
+  "weight": 3,
+  "conditions": [
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 2
+    },
+    {
+      "type": "season",
+      "in": [
+        "봄"
+      ]
+    },
+    {
+      "type": "character",
+      "field": "age",
+      "op": "<=",
+      "value": 40
+    }
+  ],
+  "choices": [
+    {
+      "label": "말을 건넨다",
+      "message": "짧은 대화였지만 오래 기억에 남았습니다. 남궁설과 인연을 맺었습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_love_start",
+          "value": true
+        },
+        {
+          "type": "add_relationship",
+          "target": "npc_namgung_lady",
+          "bond_type": "ROMANCE",
+          "strength": 25
+        }
+      ]
+    },
+    {
+      "label": "고개를 숙이고 지나친다",
+      "message": "스쳐 가는 인연이었습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_love_declined",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "id": "hermit_master",
+  "title": "은거 고수",
+  "description": "수많은 무공을 깨친 끝에 속세를 떠나 깊은 산으로 들어갔습니다.\n훗날 사람들은 운무 속의 고수를 전설처럼 이야기합니다.",
+  "priority": 80,
+  "tone": "victory",
+  "final": true,
+  "conditions": [
+    {
+      "type": "role",
+      "in": [
+        "WANDERER"
+      ]
+    },
+    {
+      "type": "character",
+      "field": "level",
+      "op": ">=",
+      "value": 12
+    },
+    {
+      "type": "character",
+      "field": "martial_arts_count",
+      "op": ">=",
+      "value": 4
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+# Godot 4 editor/import cache
+.godot/
+
+# Godot export artifacts
+/android/
+/build/
+*.tmp
+export_credentials.cfg
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 파이썬 캐시
+__pycache__/
