@@ -4,27 +4,19 @@
 - **나눔명조** (본문), **나눔손글씨 붓** (제목·장기말 글자) — NAVER, SIL Open Font License 1.1.
   Google Fonts 저장소에서 받았다. 라이선스 전문: `assets/fonts/OFL.txt`
 
-## 배경 (`assets/art/bg/`)
-- 산수화 밑그림: Lingdong Huang의 **shan-shui-inf** (MIT License,
-  https://github.com/LingDong-/shan-shui-inf) 로 시드별로 그렸다. 라이선스 전문: `assets/art/LICENSE_shan-shui-inf.txt`
-- 그 위의 담채 색·해·낙관은 `tools/art/generate_art.py`가 더했다.
+## 그림 (`assets/art/`)
+- 배경 8장·초상화 26장·세력 문장 4개·지형 타일·장기말·UI 텍스처는 프로젝트 소유자가 제작해 넣은 수묵담채 세트다 (2026년 10월).
+  - 초상화에는 이름을 넣지 않았다. 이름은 게임 UI가 옆이나 아래에 쓴다.
+  - 문장은 글자 대신 문양이다. 청운은 학과 검, 남궁은 검과 매화, 흑풍은 매, 천마는 마두.
+  - 크게 쓸 원본(hires)은 저장소에 넣지 않고 따로 보관한다.
+- 규격: 배경 1920×1080 JPG, 초상화 256×320 JPG, 문장 256×256 PNG(바깥 투명), 타일 96px, 장기말 128px(가운데 비움),
+  버튼 96×48·패널 96px(9분할 여백 10·16px). 같은 이름·크기로 덮어쓰면 코드 수정 없이 바뀐다.
 
-## 지형 타일·장기말·UI 텍스처 (`assets/art/tiles`, `tokens`, `ui`)
-- `tools/art/generate_art.py`로 만든 절차적 그림이다. (이 저장소 소유)
-
-## 다시 만들기
-```
-curl -sSfL -o <작업폴더>/index.html https://raw.githubusercontent.com/LingDong-/shan-shui-inf/master/index.html
-node tools/art/render_shanshui.js <작업폴더>/index.html <밑그림폴더> 123 1003 2024 42 888 520 1001 1592
-python3 tools/art/generate_art.py <밑그림폴더>
-```
-같은 이름·크기의 파일로 덮어쓰면(예: AI로 그린 그림) 코드 수정 없이 바뀐다.
-배경 1920×1080 JPG, 타일 96px, 장기말 128px(가운데 비움), 버튼 96×48·패널 96px(9분할 여백 10·16px).
-
-## 초상화·문장 (`assets/art/portraits`, `emblems`)
-- `tools/art/generate_portraits.py`로 그린 절차적 수묵 초상화(NPC 19명·주인공 역할 7종)와 세력 문장 4개다. (이 저장소 소유)
-- 인물별 모습(머리·관·옷 색·무기·표정·수염)은 생성기의 `NPCS`·`ROLES` 표에서 바꾼다.
-  같은 이름·크기(초상화 256×320 JPG, 문장 256×256 PNG)로 덮어쓰면 코드 수정 없이 바뀐다
+## 예전 절차적 그림 도구 (`tools/art/`)
+- 그림 세트가 들어오기 전에 쓰던 생성기다. **실행하면 `assets/art/`의 지금 그림을 덮어쓴다.** 새 그림을 시험 삼아 만들 때만
+  다른 폴더로 옮겨 쓰거나, 덮어쓴 뒤 git으로 되돌린다.
+  - `generate_art.py`: 배경(shan-shui-inf 밑그림, MIT, `assets/art/LICENSE_shan-shui-inf.txt`)·타일·장기말·UI
+  - `generate_portraits.py`: 초상화·문장
 
 ## 소리 (`assets/audio/`)
 - 배경음악 4곡·효과음 10종 모두 `tools/audio/generate_audio.py`로 합성했다. (이 저장소 소유)

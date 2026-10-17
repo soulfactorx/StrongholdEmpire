@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """수묵 인물 초상화·세력 문장 생성기.
 
+주의: 지금 assets/art/에는 프로젝트 소유자가 넣은 그림 세트가 있다. 이 스크립트는 그 그림을 덮어쓴다.
+
 - 초상화: 한지 바탕에 담채 후광, 먹선 상반신(머리 모양·관·두건·수염·옷깃·무기), 세로 붓글씨 이름과 낙관.
   NPC는 assets/art/portraits/<npc_id>.jpg, 주인공 역할은 assets/art/portraits/role_<역할>.jpg (256×320)
 - 문장: assets/art/emblems/<sect_id>.png (256×256, 투명 바탕)
