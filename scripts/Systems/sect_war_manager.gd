@@ -257,11 +257,13 @@ static func resolve_battle(
 	commands: Array[Command],
 	plan: Dictionary = {},
 	player_formation: Formation = Formation.NONE,
-	general: Dictionary = {}
+	general: Dictionary = {},
+	ally_power: int = 0
 ) -> Dictionary:
 	if plan.is_empty() or plan.get("target") != enemy_sect.id:
 		plan = plan_battle(enemy_sect)
-	var player_power: int = get_military_power(player_sect, player_character) + int(general.get("power", 0))
+	# 동맹 세력의 원군(ally_power)도 아군 전력에 더한다.
+	var player_power: int = get_military_power(player_sect, player_character) + int(general.get("power", 0)) + ally_power
 	var enemy_power: int = get_sect_power(enemy_sect)
 	var wins: int = 0
 	var losses: int = 0

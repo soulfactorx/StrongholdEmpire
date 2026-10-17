@@ -85,9 +85,11 @@ func _update_display() -> void:
 	var target: SectData = _get_target()
 	var general: Dictionary = get_selected_general()
 	var power: int = SectWarManager.get_military_power(GameManager.player_sect, GameManager.player_character)
-	power_label.text = "아군 전력: %d%s | %s (%s)" % [
-		power + int(general.get("power", 0)),
+	var ally_power: int = DiplomacyManager.get_ally_support(GameManager.world_sects)
+	power_label.text = "아군 전력: %d%s%s | %s (%s)" % [
+		power + int(general.get("power", 0)) + ally_power,
 		" (장수 +%d)" % general["power"] if not general.is_empty() else "",
+		" (동맹 원군 +%d)" % ally_power if ally_power > 0 else "",
 		GameManager.player_character.display_name,
 		GameManager.player_character.get_role_name(),
 	]

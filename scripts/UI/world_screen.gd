@@ -3,15 +3,61 @@ extends Control
 ## 강호 정세: 문파 세력과 주요 인물을 한눈에 보여 준다.
 
 const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
+const _ChoicePopup = preload("res://scripts/UI/choice_popup.gd")
 
 @onready var sect_list: VBoxContainer = %SectList
 @onready var npc_list: VBoxContainer = %NpcList
+@onready var log_label: Label = %LogLabel
+## 외교 행동을 고르는 팝업과, 교섭 중인 세력 id
+var choice_popup: Control
+var _diplomacy_target: String = ""
 
 
 func _ready() -> void:
 	_UiTheme.apply_to_control(self)
+	choice_popup = _ChoicePopup.new()
+	add_child(choice_popup)
+	choice_popup.chosen.connect(_on_diplomacy_chosen)
 	_build_sect_list()
 	_build_npc_list()
+
+
+func _rebuild_sect_list() -> void:
+	for child in sect_list.get_children():
+		sect_list.remove_child(child)
+		child.queue_free()
+	_build_sect_list()
+
+
+func _on_diplomacy_pressed(sect_id: String) -> void:
+	AudioManager.play_click()
+	if not DiplomacyManager.can_negotiate(GameManager.player_character):
+		log_label.text = "외교는 문파를 대표하는 문주나 중간관리자만 할 수 있습니다."
+		return
+	var sect: SectData = GameManager.get_world_sect(sect_id)
+	var options: Array[Dictionary] = []
+	for option in DiplomacyManager.get_options(GameManager, sect):
+		options.append({
+			"id": option["id"], "title": option["title"], "description": option["description"],
+			"disabled": not option["available"],
+		})
+	_diplomacy_target = sect_id
+	var done: bool = sect.last_diplomacy_turn == GameManager._get_turn_index()
+	choice_popup.open(
+		"%s와(과)의 외교" % sect.sect_name,
+		"세력마다 계절에 한 번 교섭할 수 있습니다.%s" % (" (이번 계절에는 이미 교섭했습니다)" if done else ""),
+		options
+	)
+
+
+func _on_diplomacy_chosen(action_id: String) -> void:
+	var result: Dictionary = GameManager.do_diplomacy(_diplomacy_target, action_id)
+	log_label.text = result["message"]
+	if result["success"]:
+		AudioManager.play_success()
+	else:
+		AudioManager.play_failure()
+	_rebuild_sect_list()
 
 
 func _build_sect_list() -> void:
@@ -29,6 +75,17 @@ func _build_sect_list() -> void:
 	)
 	for sect in GameManager.get_world_sects_by_power():
 		var status: String = "굴복" if sect.subjugated else sect.get_attitude_text()
+		var tags: PackedStringArray = []
+		if sect.allied:
+			tags.append("동맹")
+		if sect.married:
+			tags.append("사돈")
+		if sect.tribute:
+			tags.append("공물")
+		if GameManager.challenge_target == sect.id:
+			tags.append("도전장")
+		if not tags.is_empty():
+			status += " · " + " · ".join(tags)
 		_add_entry(
 			sect_list,
 			"%s (%s) — %s" % [sect.sect_name, sect.get_alignment_name(), status],
@@ -41,6 +98,13 @@ func _build_sect_list() -> void:
 				SectRegistry.get_description(sect.id),
 			]
 		)
+		var button := Button.new()
+		button.text = "외교"
+		button.custom_minimum_size = Vector2(160, 48)
+		button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		button.pressed.connect(_on_diplomacy_pressed.bind(sect.id))
+		_UiTheme.style_button(button)
+		sect_list.add_child(button)
 
 
 func _build_npc_list() -> void:

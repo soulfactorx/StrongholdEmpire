@@ -26,6 +26,8 @@ var role_state: Dictionary = RoleActions.create_state()
 var legacy_records: Array[LegacyData] = []
 ## 전투에서 본 상대 무공 {무공 id: {id, name, element}} — 무공 연구소에서 분석한다. 세대를 넘어 남는다.
 var observed_arts: Dictionary = {}
+## 도전장을 보낸 세력 id (문파전 승패에 명성이 더 걸린다). 없으면 ""
+var challenge_target: String = ""
 ## 분석을 마친 오행 속성 (MartialArtData.FiveElement). 상극 무공 창조 성공률이 오른다.
 var analyzed_elements: Array = []
 var current_ending_id: String = ""
@@ -85,6 +87,7 @@ func _initialize_new_game(
 	legacy_records.clear()
 	observed_arts = {}
 	analyzed_elements = []
+	challenge_target = ""
 	current_ending_id = ""
 	game_over_id = ""
 	last_turn_report = ""
@@ -166,9 +169,10 @@ func advance_turn() -> void:
 	var facility_report: String = _apply_facility_effects()
 	var role_report: String = RoleActions.on_season(self)
 	var disciple_report: String = DiscipleRoster.on_season(player_sect)
+	var tribute_report: String = DiplomacyManager.on_season(player_sect, world_sects)
 	var consequence: String = _apply_role_consequences()
 	var report_parts: PackedStringArray = [income, upkeep["message"]]
-	for part in [facility_report, disciple_report, role_report, consequence, yearly_report]:
+	for part in [facility_report, disciple_report, tribute_report, role_report, consequence, yearly_report]:
 		if not part.is_empty():
 			report_parts.append(part)
 	last_turn_report = "%s — %s" % [get_date_text(), " | ".join(report_parts)]
@@ -194,6 +198,10 @@ func estimate_next_season() -> Dictionary:
 	var next_season: String = SEASONS[(current_season_index + 1) % SEASONS.size()]
 	var income: Dictionary = SectManager.compute_seasonal_income(player_sect, player_character, next_season)
 	income["gold"] += RoleActions.get_income_gold_bonus(role_state, player_character.role, income["gold"])
+	# 공물 (끊길 세력은 빼고)
+	for sect in world_sects:
+		if sect.tribute and sect.subjugated and sect.attitude > _Balance.TRIBUTE_REVOLT_ATTITUDE:
+			income["gold"] += _Balance.TRIBUTE_GOLD
 	return {
 		"gold": income["gold"] - player_sect.get_gold_upkeep(),
 		"food": income["food"] - player_sect.get_food_upkeep(),
@@ -439,6 +447,12 @@ func _switch_player_sect(sect_id: String, kind: String) -> String:
 	var old_sect: SectData = player_sect
 	var betrayal: bool = kind == "betray"
 	world_sects.erase(new_sect)
+	# 플레이어 문파가 되면 외교 상태는 의미가 없다. 떠나온 문파와도 새로 시작한다.
+	for sect in [new_sect, old_sect]:
+		sect.allied = false
+		sect.tribute = false
+	if challenge_target == new_sect.id:
+		challenge_target = ""
 	old_sect.attitude = _Balance.BETRAY_OLD_SECT_ATTITUDE if betrayal else _Balance.DEFECT_OLD_SECT_ATTITUDE
 	old_sect.subjugated = false
 	old_sect.observed_commands.clear()
@@ -471,6 +485,14 @@ func _switch_player_sect(sect_id: String, kind: String) -> String:
 		]
 	EventManager.set_flag(story_flags, "defected")
 	return "%s에 객경으로 들어갔습니다." % new_sect.sect_name
+
+
+## 외교 행동 (강호 정세 화면)
+func do_diplomacy(sect_id: String, action_id: String) -> Dictionary:
+	var result: Dictionary = DiplomacyManager.perform(self, sect_id, action_id)
+	EventBus.resources_changed.emit(player_sect)
+	_check_end_states()
+	return result
 
 
 ## 인연 상호작용 (대화·선물·비무). 비무면 전투를 시작한다.
@@ -579,11 +601,11 @@ func get_world_sects_by_power() -> Array[SectData]:
 	return result
 
 
-## 문파전을 걸 수 있는 세력 (굴복하지 않은 세력, 약한 순서)
+## 문파전을 걸 수 있는 세력 (굴복하지 않았고 동맹이 아닌 세력, 약한 순서)
 func get_war_targets() -> Array[SectData]:
 	var result: Array[SectData] = []
 	for sect in get_world_sects_by_power():
-		if not sect.subjugated:
+		if not sect.subjugated and not sect.allied:
 			result.append(sect)
 	return result
 
@@ -652,6 +674,8 @@ func resolve_sect_war(
 	var enemy: SectData = get_world_sect(target_id)
 	if enemy == null or enemy.subjugated:
 		return {"success": false, "victory": false, "message": "공격할 수 없는 상대입니다."}
+	if enemy.allied:
+		return {"success": false, "victory": false, "message": "동맹 세력은 공격할 수 없습니다. 먼저 동맹을 깨야 합니다."}
 	var typed_commands: Array[SectWarManager.Command] = []
 	for cmd in commands:
 		typed_commands.append(cmd as SectWarManager.Command)
@@ -662,9 +686,19 @@ func resolve_sect_war(
 	var plan: Dictionary = prepare_war(target_id)
 	EventManager.set_flag(story_flags, "last_war_turn", _get_turn_index())
 	var result: Dictionary = SectWarManager.resolve_battle(
-		player_sect, player_character, enemy, typed_commands, plan, formation, general
+		player_sect, player_character, enemy, typed_commands, plan, formation, general,
+		DiplomacyManager.get_ally_support(world_sects)
 	)
 	pending_war_plan = {}
+	# 도전장을 보낸 상대와의 결판에는 명성이 더 걸린다.
+	if challenge_target == enemy.id:
+		challenge_target = ""
+		if result.get("victory", false):
+			player_sect.reputation += _Balance.CHALLENGE_WIN_REPUTATION
+			result["message"] += "\n도전장의 결판을 냈습니다! 명성 +%d" % _Balance.CHALLENGE_WIN_REPUTATION
+		else:
+			player_sect.reputation = maxi(0, player_sect.reputation - _Balance.CHALLENGE_LOSS_REPUTATION)
+			result["message"] += "\n도전장을 보내 놓고 졌습니다. 명성 -%d" % _Balance.CHALLENGE_LOSS_REPUTATION
 	if result.get("victory", false):
 		EventManager.set_flag(story_flags, "won_sect_war")
 		EventManager.set_flag(story_flags, "defeated_%s" % enemy.id)
@@ -819,6 +853,7 @@ func save_game() -> Dictionary:
 		"role_history": role_history,
 		"role_state": role_state,
 		"observed_arts": observed_arts,
+		"challenge_target": challenge_target,
 		"analyzed_elements": analyzed_elements,
 		"triggered_event_ids": triggered_event_ids,
 		"current_ending_id": current_ending_id,
@@ -862,6 +897,7 @@ func _apply_save_data(data: Dictionary) -> void:
 		role_history.append(str(role_name))
 	# 역할 자원이 없는 구버전 세이브는 기본값으로 시작한다.
 	role_state = RoleActions.restore_state(data.get("role_state", {}))
+	challenge_target = str(data.get("challenge_target", ""))
 	observed_arts = {}
 	var saved_arts: Dictionary = data.get("observed_arts", {})
 	for art_id in saved_arts:

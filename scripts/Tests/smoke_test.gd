@@ -146,6 +146,10 @@ func _run_runtime_tests() -> void:
 	_check(_completed.has("_test_bond_evolution"), "_test_bond_evolution 끝까지 실행")
 	await _test_bond_flow()
 	_check(_completed.has("_test_bond_flow"), "_test_bond_flow 끝까지 실행")
+	_test_diplomacy()
+	_check(_completed.has("_test_diplomacy"), "_test_diplomacy 끝까지 실행")
+	await _test_diplomacy_screen()
+	_check(_completed.has("_test_diplomacy_screen"), "_test_diplomacy_screen 끝까지 실행")
 
 	print("스모크 테스트: %d개 검사, %d개 실패" % [_checks, _failures])
 	# 재생 중인 효과음을 멈추고, 오디오 스레드가 재생 객체를 놓을 때까지 잠시 기다린다.
@@ -3306,3 +3310,135 @@ func _test_bond_flow() -> void:
 	SceneRouter.goto(self, SceneRouter.MAIN_MENU)
 	await process_frame
 	_completed["_test_bond_flow"] = true
+
+
+func _test_diplomacy() -> void:
+	var gm: Node = root.get_node("GameManager")
+
+	# 문주·중간관리자만 외교
+	_new_quiet_game(gm, "young_disciple")
+	_check(not gm.do_diplomacy("namgung", "envoy")["success"], "막내 제자는 외교 불가")
+
+	_new_quiet_game(gm, "leader")
+	var namgung: SectData = gm.get_world_sect("namgung")
+	var heukpung: SectData = gm.get_world_sect("heukpung")
+	namgung.attitude = 0
+
+	# 사절: 금화 소모, 태도 상승, 세력마다 계절에 한 번
+	var gold: int = gm.player_sect.gold
+	_check(gm.do_diplomacy("namgung", "envoy")["success"] and namgung.attitude == _Balance.DIPLOMAT_ENVOY_ATTITUDE, "사절: 태도 +%d" % _Balance.DIPLOMAT_ENVOY_ATTITUDE)
+	_check(gm.player_sect.gold == gold - _Balance.DIPLOMAT_ENVOY_GOLD, "사절: 금화 소모")
+	_check(not gm.do_diplomacy("namgung", "envoy")["success"], "같은 세력과는 계절에 한 번")
+	_check(gm.do_diplomacy("heukpung", "envoy")["success"], "다른 세력과는 같은 계절에도 가능")
+
+	# 동맹: 태도 50 이상, 동맹은 공격 불가, 문파전 원군
+	gm.advance_turn()
+	_check(not gm.do_diplomacy("namgung", "alliance")["success"], "태도가 낮으면 동맹 거절")
+	namgung.attitude = _Balance.ALLIANCE_MIN_ATTITUDE
+	var support_before: int = DiplomacyManager.get_ally_support(gm.world_sects)
+	_check(gm.do_diplomacy("namgung", "alliance")["success"] and namgung.allied, "태도 %d: 동맹 성립" % _Balance.ALLIANCE_MIN_ATTITUDE)
+	var support: int = DiplomacyManager.get_ally_support(gm.world_sects)
+	_check(support_before == 0 and support == roundi(SectWarManager.get_sect_power(namgung) * _Balance.ALLY_WAR_SUPPORT_RATIO), "동맹 원군 전력")
+	_check(not gm.get_war_targets().has(namgung), "동맹은 문파전 대상에서 빠짐")
+	_check(not gm.resolve_sect_war("namgung", [0, 0, 0])["success"], "동맹 세력 공격 거부")
+	var options: Array = DiplomacyManager.get_options(gm, namgung).map(func(o: Dictionary) -> String: return o["id"])
+	_check(options.has("break_alliance") and not options.has("alliance") and not options.has("challenge"), "동맹 상태의 외교 선택지")
+	# 원군이 문파전 전력에 들어간다 (복사본으로 시험)
+	var commands: Array[SectWarManager.Command] = [SectWarManager.Command.CHARGE, SectWarManager.Command.FLANK, SectWarManager.Command.DEFEND]
+	var sect_copy: SectData = _SaveManager.deserialize_sect(_SaveManager.serialize_sect(gm.player_sect))
+	var enemy_copy: SectData = _SaveManager.deserialize_sect(_SaveManager.serialize_sect(heukpung))
+	enemy_copy.disciple_count = 60
+	var lost: Dictionary = SectWarManager.resolve_battle(sect_copy, gm.player_character, enemy_copy, commands)
+	var won: Dictionary = SectWarManager.resolve_battle(sect_copy, gm.player_character, enemy_copy, commands, {}, SectWarManager.Formation.NONE, {}, 5000)
+	_check(not lost["victory"] and won["victory"], "동맹 원군 전력이 문파전 승패에 반영")
+	# 동맹 파기
+	gm.advance_turn()
+	var rep: int = gm.player_sect.reputation
+	var attitude: int = namgung.attitude
+	_check(gm.do_diplomacy("namgung", "break_alliance")["success"] and not namgung.allied, "동맹 파기")
+	_check(namgung.attitude == attitude - _Balance.ALLIANCE_BREAK_ATTITUDE and gm.player_sect.reputation == rep - _Balance.ALLIANCE_BREAK_REPUTATION, "동맹 파기: 태도·명성 하락")
+
+	# 도전장: 명성 +, 태도 −, 결판에 명성이 더 걸린다
+	rep = gm.player_sect.reputation
+	attitude = heukpung.attitude
+	_check(gm.do_diplomacy("heukpung", "challenge")["success"] and gm.challenge_target == "heukpung", "도전장 발송")
+	_check(gm.player_sect.reputation == rep + _Balance.CHALLENGE_REPUTATION and heukpung.attitude == attitude - _Balance.CHALLENGE_ATTITUDE, "도전장: 명성 +, 태도 −")
+	gm.advance_turn()
+	_check(not gm.do_diplomacy("heukpung", "challenge")["success"], "도전장은 결판 전까지 한 번")
+	rep = gm.player_sect.reputation
+	var result: Dictionary = gm.resolve_sect_war("heukpung", [0, 1, 2])
+	_check(gm.challenge_target == "" and result["message"].contains("도전장"), "문파전으로 도전장 결판")
+
+	# 공물: 굴복한 세력에게서 계절마다
+	heukpung.subjugated = true
+	heukpung.attitude = -40
+	options = DiplomacyManager.get_options(gm, heukpung).map(func(o: Dictionary) -> String: return o["id"])
+	_check(options.has("tribute") and not options.has("envoy"), "굴복한 세력: 공물 요구 가능")
+	gm.advance_turn()
+	_check(gm.do_diplomacy("heukpung", "tribute")["success"] and heukpung.tribute, "공물 요구")
+	var forecast: int = gm.estimate_next_season()["gold"]
+	gold = gm.player_sect.gold
+	gm.advance_turn()
+	_check(gm.player_sect.gold - gold == forecast and gm.last_turn_report.contains("공물"), "공물: 계절 금화 수입 (예상 수지 반영)")
+	_check(heukpung.attitude == -40 - _Balance.TRIBUTE_ATTITUDE_PER_SEASON, "공물을 바칠 때마다 원망이 쌓임")
+	heukpung.attitude = _Balance.TRIBUTE_REVOLT_ATTITUDE
+	gm.advance_turn()
+	_check(not heukpung.tribute and gm.last_turn_report.contains("끊었습니다"), "원망이 극에 달하면 공물을 끊음")
+	heukpung.tribute = true
+	heukpung.attitude = -40
+	gm.advance_turn()
+	_check(gm.do_diplomacy("heukpung", "release_tribute")["success"] and not heukpung.tribute and heukpung.attitude > -40, "공물 면제: 태도 상승")
+
+	# 혼담: 그 세력의 연인 (유대 60) → 동맹·사돈
+	_new_quiet_game(gm, "leader")
+	namgung = gm.get_world_sect("namgung")
+	_check(not gm.do_diplomacy("namgung", "marriage")["success"], "연인이 없으면 혼담 불가")
+	var lady := RelationshipData.new()
+	lady.target_id = "npc_namgung_lady"
+	lady.target_name = "남궁설"
+	lady.bond_type = RelationshipData.BondType.ROMANCE
+	lady.increase_bond(_Balance.MARRIAGE_MIN_BOND)
+	gm.player_relationships.append(lady)
+	gm.player_sect.gold = 1000
+	_check(gm.do_diplomacy("namgung", "marriage")["success"] and namgung.married and namgung.allied, "혼담 성사: 사돈이자 동맹")
+	_check(gm.story_flags.get("arc_love_married", false) and gm.story_flags.get("married_namgung", false), "혼담: 연애 아크 혼례로 연결")
+	_check(gm.player_sect.gold == 1000 - _Balance.MARRIAGE_GOLD, "혼담 비용")
+
+	# 저장·복원
+	gm.challenge_target = "heukpung"
+	gm.get_world_sect("cheonma").tribute = true
+	gm._apply_save_data(JSON.parse_string(JSON.stringify({
+		"character": _SaveManager.serialize_character(gm.player_character),
+		"sect": _SaveManager.serialize_sect(gm.player_sect),
+		"world_sects": _SaveManager.serialize_sects(gm.world_sects),
+		"challenge_target": gm.challenge_target,
+	})))
+	namgung = gm.get_world_sect("namgung")
+	_check(namgung.allied and namgung.married and gm.get_world_sect("cheonma").tribute and gm.challenge_target == "heukpung", "외교 상태 저장·복원")
+	_completed["_test_diplomacy"] = true
+
+
+func _test_diplomacy_screen() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_new_quiet_game(gm, "leader")
+	gm.get_world_sect("namgung").attitude = _Balance.ALLIANCE_MIN_ATTITUDE
+	SceneRouter.goto(self, SceneRouter.WORLD)
+	await process_frame
+	await process_frame
+	var screen: Node = current_scene
+	var buttons: Array = screen.sect_list.get_children().filter(func(c: Node) -> bool: return c is Button)
+	_check(buttons.size() == gm.world_sects.size() and buttons.all(func(b: Button) -> bool: return b.custom_minimum_size.y >= 48), "강호 정세: 세력마다 외교 버튼(48px)")
+	screen._on_diplomacy_pressed("namgung")
+	_check(screen.choice_popup.visible and screen.choice_popup.get_option_count() >= 3, "외교 선택지 팝업")
+	screen.choice_popup._on_option_pressed("alliance")
+	await process_frame
+	_check(gm.get_world_sect("namgung").allied and screen.log_label.text.contains("동맹"), "화면에서 동맹 체결")
+	var titles: String = ""
+	for child in screen.sect_list.get_children():
+		if child is VBoxContainer:
+			titles += child.get_child(0).text
+	_check(titles.contains("동맹"), "세력 목록에 동맹 표시")
+	gm.start_new_game("정리", "young_disciple")
+	SceneRouter.goto(self, SceneRouter.MAIN_MENU)
+	await process_frame
+	_completed["_test_diplomacy_screen"] = true

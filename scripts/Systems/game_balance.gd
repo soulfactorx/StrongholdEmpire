@@ -166,6 +166,32 @@ const COMPLEXITY_PENALTY := 8
 const MIN_SUCCESS_RATE := 10
 const MAX_SUCCESS_RATE := 95
 
+# 외교 (M6-1). 세력마다 계절에 한 번
+const DIPLOMAT_ENVOY_GOLD := 60
+const DIPLOMAT_ENVOY_ATTITUDE := 10
+## 동맹: 태도가 이 이상이어야 받아들인다. 동맹을 깨면 태도·명성이 떨어진다
+const ALLIANCE_MIN_ATTITUDE := 50
+const ALLIANCE_ATTITUDE_GAIN := 10
+const ALLIANCE_BREAK_ATTITUDE := 30
+const ALLIANCE_BREAK_REPUTATION := 5
+## 동맹 세력은 문파전에 자기 전력의 이 비율만큼 원군을 보낸다
+const ALLY_WAR_SUPPORT_RATIO := 0.2
+## 혼담: 그 세력 인물과 연애 유대가 이 이상이어야 한다. 성사되면 동맹을 맺는다
+const MARRIAGE_MIN_BOND := 60
+const MARRIAGE_GOLD := 150
+const MARRIAGE_ATTITUDE := 30
+const MARRIAGE_REPUTATION := 8
+## 도전장: 보내면 명성 +, 태도 −. 그 세력과의 문파전 승패에 명성이 더 걸린다
+const CHALLENGE_REPUTATION := 3
+const CHALLENGE_ATTITUDE := 15
+const CHALLENGE_WIN_REPUTATION := 10
+const CHALLENGE_LOSS_REPUTATION := 8
+## 공물: 굴복한 세력이 계절마다 바친다. 바칠수록 원망이 쌓이고, 태도가 너무 낮으면 끊는다
+const TRIBUTE_GOLD := 25
+const TRIBUTE_ATTITUDE_PER_SEASON := 2
+const TRIBUTE_REVOLT_ATTITUDE := -80
+const TRIBUTE_RELEASE_ATTITUDE := 20
+
 # 인연 (M5-2)
 ## 인물과의 상호작용(대화·선물·비무)은 계절마다 이만큼
 const INTERACTIONS_PER_SEASON := 2

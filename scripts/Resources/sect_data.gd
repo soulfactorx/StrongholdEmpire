@@ -19,6 +19,14 @@ enum Alignment { RIGHTEOUS, UNORTHODOX, DEMONIC }
 @export var subjugated: bool = false
 ## 지난 문파전에서 플레이어가 쓴 명령 (SectWarManager.Command). 다음 작전 계획에 반영한다
 @export var observed_commands: Array[int] = []
+## 플레이어 문파와 동맹인지 (문파전 원군, 공격 불가)
+@export var allied: bool = false
+## 굴복한 세력이 계절마다 공물을 바치는지
+@export var tribute: bool = false
+## 혼담으로 맺어졌는지
+@export var married: bool = false
+## 마지막으로 외교 행동을 한 계절 (-1이면 없음)
+@export var last_diplomacy_turn: int = -1
 
 @export_group("자원")
 @export var gold: int = 500

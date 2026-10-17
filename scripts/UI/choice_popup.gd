@@ -53,7 +53,7 @@ func _ready() -> void:
 	_UiTheme.apply_to_control(panel)
 
 
-## options: [{id, title, description}]
+## options: [{id, title, description, disabled(선택)}]
 func open(title: String, description: String, options: Array[Dictionary]) -> void:
 	_title.text = title
 	_description.text = description
@@ -64,6 +64,7 @@ func open(title: String, description: String, options: Array[Dictionary]) -> voi
 		var button := Button.new()
 		button.custom_minimum_size = Vector2(0, 56)
 		button.text = "%s\n%s" % [option["title"], option.get("description", "")]
+		button.disabled = option.get("disabled", false)
 		button.pressed.connect(_on_option_pressed.bind(option["id"]))
 		_UiTheme.style_button(button)
 		_rows.add_child(button)
