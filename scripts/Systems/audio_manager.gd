@@ -9,6 +9,12 @@ func _ready() -> void:
 	add_child(_player)
 
 
+## 재생 중인 소리를 멈춘다. (헤드리스 테스트가 끝날 때 재생 중인 스트림이 남지 않게)
+func stop_all() -> void:
+	_player.stop()
+	_player.stream = null
+
+
 func play_click() -> void:
 	_play_tone(440.0, 0.05)
 

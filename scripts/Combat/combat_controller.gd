@@ -125,6 +125,15 @@ func _get_controlled() -> CombatUnit:
 	return current if current and current.is_friendly() else null
 
 
+## 쓰러진 아군의 id (명단 제자를 전사 처리할 때 쓴다)
+func _get_fallen_ally_ids() -> Array:
+	var ids: Array = []
+	for unit in _units:
+		if unit.is_ally and not unit.is_alive():
+			ids.append(unit.character.id)
+	return ids
+
+
 func _count_fallen_allies() -> int:
 	var fallen: int = 0
 	for unit in _units:
@@ -517,7 +526,7 @@ func _end_combat(outcome: CombatManager.Outcome) -> void:
 	if _combat_over:
 		return
 	_combat_over = true
-	var result: Dictionary = GameManager.finish_combat(outcome, _count_fallen_allies())
+	var result: Dictionary = GameManager.finish_combat(outcome, _count_fallen_allies(), _get_fallen_ally_ids())
 	back_button.text = "문파로 돌아가기"
 	_refresh_all()
 	_log(result["message"])

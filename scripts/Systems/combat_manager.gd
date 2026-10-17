@@ -183,13 +183,23 @@ static func apply_outcome(
 	sect: SectData,
 	relationships: Array[RelationshipData],
 	story_flags: Dictionary,
-	fallen_allies: int = 0
+	fallen_allies: int = 0,
+	fallen_ids: Array = []
 ) -> Dictionary:
 	var parts: PackedStringArray = []
 	var lost: int = 0
-	if setup.allies_are_disciples and fallen_allies > 0:
+	var lost_names: PackedStringArray = []
+	if setup.allies_are_disciples and sect.use_roster and (fallen_allies == 0 or not fallen_ids.is_empty()):
+		# 명단 제자: 쓰러진 제자는 빠지고, 살아남은 참전 제자는 경험을 얻는다.
+		var ally_ids: Array = setup.allies.map(func(a: CharacterData) -> String: return a.id)
+		lost_names = DiscipleRoster.apply_battle(sect, ally_ids, fallen_ids)
+		lost = lost_names.size()
+	elif setup.allies_are_disciples and fallen_allies > 0:
 		lost = mini(fallen_allies, sect.disciple_count)
 		sect.disciple_count -= lost
+	var lost_text: String = "제자 %d명 전사" % lost
+	if not lost_names.is_empty():
+		lost_text += " (%s)" % ", ".join(lost_names)
 	var bond: RelationshipData = null
 	if not setup.relationship_target_id.is_empty():
 		bond = RelationshipManager.get_bond_with(relationships, setup.relationship_target_id)
@@ -213,7 +223,7 @@ static func apply_outcome(
 		if not setup.victory_flag.is_empty():
 			EventManager.set_flag(story_flags, setup.victory_flag)
 		if lost > 0:
-			parts.append("제자 %d명 전사" % lost)
+			parts.append(lost_text)
 		return {
 			"success": true,
 			"outcome": outcome,
@@ -243,7 +253,7 @@ static func apply_outcome(
 	if outcome == Outcome.DEFEAT:
 		_change_bond(bond, p.get("bond", 0), parts)
 	if lost > 0:
-		parts.append("제자 %d명 전사" % lost)
+		parts.append(lost_text)
 
 	var head: String = "후퇴했습니다." if outcome == Outcome.RETREAT else "패배했습니다."
 	return {
@@ -287,6 +297,13 @@ static func add_disciple_allies(
 ) -> void:
 	var count: int = mini(mini(_Balance.DEFENSE_ALLY_COUNT, positions.size()), sect.disciple_count)
 	var bonus: int = (sect.training_ground_level - 1) * _Balance.ALLY_TRAINING_STAT_BONUS
+	# 명단이 있으면 출전 지정한 제자와 강한 제자가 나선다.
+	if sect.use_roster:
+		var chosen: Array[DiscipleData] = DiscipleRoster.choose_combat_disciples(sect, count)
+		for i in chosen.size():
+			setup.add_ally(DiscipleRoster.to_character(chosen[i], bonus), positions[i])
+		setup.allies_are_disciples = not chosen.is_empty()
+		return
 	for i in count:
 		var disciple: CharacterData = NpcRoster.create_character("npc_disciple", player)
 		disciple.id = "ally_disciple_%d" % i

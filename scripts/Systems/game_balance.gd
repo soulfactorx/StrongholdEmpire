@@ -42,6 +42,30 @@ const APOTHECARY_INTERNAL_REGEN := 0.15
 ## 연공실: 레벨마다 계절 수련 경험치
 const MEDITATION_EXP_PER_LEVEL := 8
 
+# 제자 명단 (플레이어 문파)
+## 새 제자의 무력·신법·지혜 범위
+const DISCIPLE_STAT_MIN := 8
+const DISCIPLE_STAT_MAX := 12
+## 다음 레벨까지 필요한 경험치 = 이 값 × 현재 레벨
+const DISCIPLE_EXP_PER_LEVEL := 40
+const DISCIPLE_MAX_LEVEL := 10
+const DISCIPLE_BASE_INTERNAL := 60
+const DISCIPLE_INTERNAL_PER_LEVEL := 10
+## 개별 수련: 금화를 내고 경험치를 얻는다 (제자마다 계절에 한 번)
+const DISCIPLE_TRAIN_GOLD := 20
+const DISCIPLE_TRAIN_EXP := 30
+## 방어전에서 살아남은 참전 제자의 경험치
+const DISCIPLE_BATTLE_EXP := 25
+## 배치: 시설 레벨마다 담당 자리 하나
+const DISCIPLE_SLOTS_PER_LEVEL := 1
+## 서고 담당: 지혜 이만큼마다 계절 연구점 +1 / 금고 담당: 지혜 이만큼마다 계절 금화 +1
+const DISCIPLE_LIBRARY_WISDOM_PER_POINT := 5
+const DISCIPLE_TREASURY_WISDOM_PER_GOLD := 4
+## 무술장 담당: 계절마다 수련 경험치
+const DISCIPLE_TRAINING_GROUND_EXP := 15
+## 문파전 전력: 제자 레벨 1을 넘는 단계마다
+const DISCIPLE_LEVEL_WAR_POWER := 1
+
 # 계절 행동 (계절마다 한 번)
 const ELIXIR_GOLD := 100
 const ELIXIR_INTERNAL_GAIN := 10

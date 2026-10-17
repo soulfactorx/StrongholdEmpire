@@ -121,10 +121,12 @@ static func compute_seasonal_income(sect: SectData, character: CharacterData, se
 		+ int(character.wisdom * _Balance.WISDOM_RESEARCH_RATIO)
 	) * role_bonus
 	var scale: float = ScenarioRules.income_scale()
+	# 서고·금고에 배치한 제자의 몫
+	var roster_bonus: Dictionary = DiscipleRoster.get_income_bonus(sect)
 	return {
-		"gold": roundi((int(gold) + bonus[0]) * scale),
+		"gold": roundi((int(gold) + bonus[0]) * scale) + roster_bonus["gold"],
 		"food": roundi((int(food) + bonus[1]) * scale),
-		"research": roundi((int(research) + bonus[2]) * scale),
+		"research": roundi((int(research) + bonus[2]) * scale) + roster_bonus["research"],
 	}
 
 

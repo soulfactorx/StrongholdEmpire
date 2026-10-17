@@ -2,7 +2,7 @@ class_name SaveManager
 extends RefCounted
 
 const SAVE_PATH := "user://save_slot_1.json"
-const SAVE_VERSION := 8
+const SAVE_VERSION := 9
 
 
 static func save_game(state: Dictionary) -> Dictionary:
@@ -94,7 +94,43 @@ static func serialize_sect(sect: SectData) -> Dictionary:
 		"apothecary_level": sect.apothecary_level,
 		"meditation_hall_level": sect.meditation_hall_level,
 		"shortage_seasons": sect.shortage_seasons,
+		"use_roster": sect.use_roster,
+		"next_disciple_id": sect.next_disciple_id,
+		"disciples": serialize_disciples(sect.disciples),
 	}
+
+
+static func serialize_disciples(disciples: Array[DiscipleData]) -> Array:
+	var result: Array = []
+	for disciple in disciples:
+		result.append({
+			"id": disciple.id,
+			"display_name": disciple.display_name,
+			"level": disciple.level,
+			"experience": disciple.experience,
+			"strength": disciple.strength,
+			"agility": disciple.agility,
+			"wisdom": disciple.wisdom,
+			"assignment": disciple.assignment,
+			"deployed": disciple.deployed,
+			"battles": disciple.battles,
+			"last_train_turn": disciple.last_train_turn,
+		})
+	return result
+
+
+static func deserialize_disciples(data: Array) -> Array[DiscipleData]:
+	var result: Array[DiscipleData] = []
+	for entry in data:
+		var disciple := DiscipleData.new()
+		disciple.id = str(entry.get("id", ""))
+		disciple.display_name = str(entry.get("display_name", "무명"))
+		for key in ["level", "experience", "strength", "agility", "wisdom", "battles", "last_train_turn"]:
+			disciple.set(key, int(entry.get(key, disciple.get(key))))
+		disciple.assignment = str(entry.get("assignment", ""))
+		disciple.deployed = bool(entry.get("deployed", false))
+		result.append(disciple)
+	return result
 
 
 static func serialize_sects(sects: Array[SectData]) -> Array:
@@ -203,6 +239,12 @@ static func deserialize_sect(data: Dictionary) -> SectData:
 	sect.subjugated = data.get("subjugated", false)
 	for command in data.get("observed_commands", []):
 		sect.observed_commands.append(int(command))
+	# 제자 명단 (제자 수를 먼저 정한 뒤 켠다. 수가 다르면 명단 쪽에 맞춘다)
+	if data.get("use_roster", false):
+		sect.disciples = deserialize_disciples(data.get("disciples", []))
+		sect.next_disciple_id = int(data.get("next_disciple_id", sect.disciples.size() + 1))
+		sect.disciple_count = sect.disciples.size()
+		sect.use_roster = true
 	return sect
 
 

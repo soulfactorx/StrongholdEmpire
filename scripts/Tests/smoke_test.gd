@@ -134,8 +134,15 @@ func _run_runtime_tests() -> void:
 	_check(_completed.has("_test_combat_library"), "_test_combat_library 끝까지 실행")
 	_test_story_arcs()
 	_check(_completed.has("_test_story_arcs"), "_test_story_arcs 끝까지 실행")
+	_test_disciple_roster()
+	_check(_completed.has("_test_disciple_roster"), "_test_disciple_roster 끝까지 실행")
+	await _test_disciple_roster_flow()
+	_check(_completed.has("_test_disciple_roster_flow"), "_test_disciple_roster_flow 끝까지 실행")
 
 	print("스모크 테스트: %d개 검사, %d개 실패" % [_checks, _failures])
+	# 재생 중인 효과음을 멈추고, 오디오 스레드가 재생 객체를 놓을 때까지 잠시 기다린다.
+	root.get_node("AudioManager").stop_all()
+	await create_timer(0.3).timeout
 	quit(1 if _failures > 0 else 0)
 
 
@@ -2792,3 +2799,180 @@ func _test_story_arcs() -> void:
 	gm._sync_event_context()
 	_check(not EventManager.conditions_met(EventManager.get_event("arc_cheonma_omen").conditions, gm.player_character, gm.player_sect, gm.player_relationships, "봄", gm.story_flags), "마교와 밀약했으면 대침공 아크 없음")
 	_completed["_test_story_arcs"] = true
+
+
+func _roster_matches(sect: SectData) -> bool:
+	return sect.use_roster and sect.disciples.size() == sect.disciple_count
+
+
+func _test_disciple_roster() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_new_quiet_game(gm, "leader")
+	var sect: SectData = gm.player_sect
+
+	# 새 게임: 제자 수만큼 이름·능력치를 가진 제자
+	_check(_roster_matches(sect) and sect.disciple_count == 12, "새 게임: 제자 명단 12명")
+	var ids: Dictionary = {}
+	var stats_ok: bool = true
+	for disciple in sect.disciples:
+		ids[disciple.id] = true
+		for value in [disciple.strength, disciple.agility, disciple.wisdom]:
+			stats_ok = stats_ok and value >= _Balance.DISCIPLE_STAT_MIN and value <= _Balance.DISCIPLE_STAT_MAX
+		stats_ok = stats_ok and disciple.display_name.length() >= 2 and disciple.level == 1
+	_check(ids.size() == 12 and stats_ok, "제자마다 고유 id·이름·능력치")
+	_check(not gm.world_sects[0].use_roster and gm.world_sects[0].disciples.is_empty(), "강호 세력은 제자 수만 씀")
+
+	# 제자 수가 바뀌면 명단도 맞춰진다 (맡은 일이 있는 제자는 나중에 떠난다)
+	var keeper: DiscipleData = sect.disciples[0]
+	keeper.deployed = true
+	var weakest_power: int = 999
+	for disciple in sect.disciples:
+		weakest_power = mini(weakest_power, disciple.get_power())
+	keeper.strength = 1
+	keeper.agility = 1
+	sect.disciple_count += 3
+	_check(_roster_matches(sect) and sect.disciples.size() == 15, "제자 수가 늘면 새 제자 합류")
+	sect.disciple_count -= 5
+	_check(_roster_matches(sect) and sect.disciples.has(keeper), "제자 수가 줄면 맡은 일 없는 제자부터 떠남")
+	keeper.deployed = false
+	gm.pending_event = {"id": "leader_rebellion"}
+	gm.role_state["discontent"] = 80
+	gm.player_sect.gold = 1000
+	gm.resolve_pending_event(1)
+	_check(_roster_matches(sect) and sect.disciple_count == 7, "기연 효과로 제자가 줄어도 명단 일치")
+	sect.food = 0
+	sect.disciple_count = 12
+	SectManager.pay_upkeep(sect)
+	_check(_roster_matches(sect) and sect.disciple_count < 12, "식량 부족 이탈도 명단에 반영")
+
+	# 배치: 시설 레벨만큼 자리, 수입 보너스
+	_new_quiet_game(gm, "leader")
+	sect = gm.player_sect
+	var a: DiscipleData = sect.disciples[0]
+	var b: DiscipleData = sect.disciples[1]
+	var research_before: int = gm.estimate_next_season()["gold"]
+	var plain: Dictionary = SectManager.compute_seasonal_income(sect, gm.player_character, "봄")
+	_check(DiscipleRoster.assign(sect, a.id, "treasury")["success"], "금고에 제자 배치")
+	_check(not DiscipleRoster.assign(sect, b.id, "treasury")["success"], "금고 Lv.1은 한 자리")
+	var with_bonus: Dictionary = SectManager.compute_seasonal_income(sect, gm.player_character, "봄")
+	_check(with_bonus["gold"] == plain["gold"] + a.wisdom / _Balance.DISCIPLE_TREASURY_WISDOM_PER_GOLD, "금고 담당: 지혜만큼 금화 수입")
+	_check(gm.estimate_next_season()["gold"] >= research_before, "예상 수지에 배치 보너스 반영")
+	DiscipleRoster.assign(sect, b.id, "library")
+	with_bonus = SectManager.compute_seasonal_income(sect, gm.player_character, "봄")
+	_check(with_bonus["research"] == plain["research"] + b.wisdom / _Balance.DISCIPLE_LIBRARY_WISDOM_PER_POINT, "서고 담당: 지혜만큼 연구점")
+	sect.treasury_level = 2
+	_check(DiscipleRoster.assign(sect, sect.disciples[2].id, "treasury")["success"], "금고를 확장하면 자리가 늘어남")
+	_check(DiscipleRoster.cycle_assignment(sect, a.id)["success"] and a.assignment == "", "배치 돌리기: 금고 → 없음")
+	_check(DiscipleRoster.cycle_assignment(sect, a.id)["success"] and a.assignment == "training_ground", "배치 돌리기: 서고가 차 있으면 무술장")
+	var exp_before: int = a.experience
+	_check(DiscipleRoster.on_season(sect).contains("무술장") and a.experience == exp_before + _Balance.DISCIPLE_TRAINING_GROUND_EXP, "무술장 담당: 계절 수련")
+
+	# 개별 수련과 경지
+	var gold_before: int = sect.gold
+	var turn: int = gm._get_turn_index()
+	_check(DiscipleRoster.train(sect, b.id, turn)["success"] and sect.gold == gold_before - _Balance.DISCIPLE_TRAIN_GOLD, "개별 수련: 금화 소모")
+	_check(not DiscipleRoster.train(sect, b.id, turn)["success"], "개별 수련은 계절에 한 번")
+	var strength: int = b.strength
+	_check(b.gain_experience(_Balance.DISCIPLE_EXP_PER_LEVEL * 3) >= 1 and b.strength > strength, "경지가 오르면 능력치 상승")
+
+	# 출전 지정과 방어전
+	_check(DiscipleRoster.toggle_deploy(sect, sect.disciples[5].id)["success"], "출전 지정")
+	DiscipleRoster.toggle_deploy(sect, sect.disciples[6].id)
+	_check(not DiscipleRoster.toggle_deploy(sect, sect.disciples[7].id)["success"], "출전은 %d명까지" % _Balance.DEFENSE_ALLY_COUNT)
+	var setup: CombatSetup = CombatManager.create_night_bandits(gm.player_character, sect)
+	var ally_ids: Array = setup.allies.map(func(c: CharacterData) -> String: return c.id)
+	_check(ally_ids.has(sect.disciples[5].id) and ally_ids.has(sect.disciples[6].id), "방어전: 출전 지정한 제자가 나섬")
+	_check(setup.allies[0].display_name == DiscipleRoster.get_disciple(sect, ally_ids[0]).display_name, "아군 이름은 제자 이름")
+	var fallen: DiscipleData = DiscipleRoster.get_disciple(sect, ally_ids[0])
+	var survivor: DiscipleData = DiscipleRoster.get_disciple(sect, ally_ids[1])
+	var count_before: int = sect.disciple_count
+	var outcome: Dictionary = CombatManager.apply_outcome(
+		setup, CombatManager.Outcome.VICTORY, gm.player_character, sect, gm.player_relationships, gm.story_flags, 1, [fallen.id]
+	)
+	_check(not sect.disciples.has(fallen) and sect.disciple_count == count_before - 1 and _roster_matches(sect), "쓰러진 제자는 명단에서 빠짐")
+	_check(outcome["message"].contains(fallen.display_name), "전사한 제자 이름을 알림")
+	_check(survivor.battles == 1, "살아남은 참전 제자: 참전 기록")
+
+	# 문파전 전력: 제자 경지
+	var power: int = SectWarManager.get_military_power(sect, gm.player_character)
+	sect.disciples[0].level += 2
+	_check(SectWarManager.get_military_power(sect, gm.player_character) == power + 2 * _Balance.DISCIPLE_LEVEL_WAR_POWER, "제자 경지가 문파전 전력에 반영")
+
+	# 세이브 왕복과 구버전 변환
+	var restored: SectData = _SaveManager.deserialize_sect(JSON.parse_string(JSON.stringify(_SaveManager.serialize_sect(sect))))
+	var same: bool = _roster_matches(restored) and restored.disciples.size() == sect.disciples.size()
+	for i in sect.disciples.size():
+		var x: DiscipleData = sect.disciples[i]
+		var y: DiscipleData = restored.disciples[i]
+		same = same and x.id == y.id and x.display_name == y.display_name and x.level == y.level and x.assignment == y.assignment and x.deployed == y.deployed and x.wisdom == y.wisdom
+	_check(same and restored.next_disciple_id == sect.next_disciple_id, "제자 명단 저장·복원")
+	var old_sect: Dictionary = _SaveManager.serialize_sect(sect)
+	for key in ["use_roster", "disciples", "next_disciple_id"]:
+		old_sect.erase(key)
+	old_sect["disciple_count"] = 9
+	gm._apply_save_data(JSON.parse_string(JSON.stringify({
+		"character": _SaveManager.serialize_character(gm.player_character),
+		"sect": old_sect,
+	})))
+	_check(_roster_matches(gm.player_sect) and gm.player_sect.disciple_count == 9, "구버전 세이브: 제자 수만큼 무작위 제자")
+
+	# 다른 세력으로 옮겨 가면 그 세력의 명단을 만든다
+	_new_quiet_game(gm, "wanderer")
+	var old_id: String = gm.player_sect.id
+	RoleActions.change_credit(gm.role_state, "namgung", _Balance.DEFECT_CREDIT_REQ)
+	gm.apply_role_transition(CharacterData.Role.MANAGER, {"role": CharacterData.Role.MANAGER, "sect_id": "namgung", "kind": "defect"})
+	_check(_roster_matches(gm.player_sect) and gm.player_sect.id == "namgung", "이적: 새 문파 제자 명단")
+	_check(not gm.get_world_sect(old_id).use_roster, "이적: 옛 문파는 제자 수만 남음")
+	_completed["_test_disciple_roster"] = true
+
+
+func _test_disciple_roster_flow() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_new_quiet_game(gm, "leader")
+	SceneRouter.goto(self, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	var hub: Node = current_scene
+	hub._on_disciple_pressed()
+	await process_frame
+	var popup: Node = hub.disciple_popup
+	_check(popup.visible and popup.get_row_count() == gm.player_sect.disciple_count, "제자 명단 팝업: 제자마다 한 줄")
+	var row: HBoxContainer = popup._rows.get_child(0)
+	var touch_ok: bool = true
+	for i in range(1, row.get_child_count()):
+		touch_ok = touch_ok and row.get_child(i).custom_minimum_size.y >= 48
+	_check(touch_ok, "제자 명단 버튼 높이 48px 이상")
+	var first_id: String = popup._rows.get_child(0).get_child(1).pressed.get_connections()[0]["callable"].get_bound_arguments()[0]
+	row.get_child(1).pressed.emit()
+	await process_frame
+	_check(DiscipleRoster.get_disciple(gm.player_sect, first_id).assignment == "library", "팝업에서 배치 (서고)")
+	_check(hub.log_label.text.contains("서고"), "배치 결과 알림")
+	popup._rows.get_child(0).get_child(3).pressed.emit()
+	await process_frame
+	_check(hub.log_label.text.contains("수련"), "팝업에서 개별 수련")
+	popup.visible = false
+
+	# 실제 전투: 출전 제자가 쓰러지면 명단에서 빠진다
+	var sect: SectData = gm.player_sect
+	DiscipleRoster.toggle_deploy(sect, sect.disciples[3].id)
+	var deployed_id: String = sect.disciples[3].id
+	gm.start_combat(CombatManager.create_night_bandits(gm.player_character, sect))
+	await process_frame
+	await process_frame
+	var controller: Node = current_scene
+	var fallen_unit: CombatUnit = null
+	for unit in controller._units:
+		if unit.is_ally and unit.character.id == deployed_id:
+			fallen_unit = unit
+	_check(fallen_unit != null, "전투: 출전 지정 제자가 아군으로 참전")
+	if fallen_unit:
+		fallen_unit.take_damage(99999)
+		var count_before: int = sect.disciple_count
+		for unit in controller._get_alive_enemies():
+			unit.take_damage(99999)
+		controller._check_victory()
+		_check(DiscipleRoster.get_disciple(sect, deployed_id) == null and sect.disciple_count == count_before - 1, "전투에서 쓰러진 제자가 명단에서 빠짐")
+	gm.start_new_game("정리", "young_disciple")
+	SceneRouter.goto(self, SceneRouter.MAIN_MENU)
+	await process_frame
+	_completed["_test_disciple_roster_flow"] = true

@@ -27,11 +27,23 @@ enum Alignment { RIGHTEOUS, UNORTHODOX, DEMONIC }
 @export var research_points: int = 0
 
 @export_group("문파 규모")
-@export var disciple_count: int = 12
+## 제자 수. 명단을 쓰는 문파(플레이어 문파)는 값이 바뀌면 명단을 같은 수로 맞춘다.
+## 그래서 기연·유지비·문파전처럼 제자 수만 바꾸는 코드도 명단과 어긋나지 않는다.
+@export var disciple_count: int = 12:
+	set(value):
+		disciple_count = maxi(0, value)
+		if use_roster:
+			DiscipleRoster.sync(self)
 @export var max_disciples: int = 30
 
 ## 유지비를 다 내지 못한 계절이 연속으로 몇 번인지
 @export var shortage_seasons: int = 0
+
+## 제자 명단 (use_roster일 때만 쓴다). 강호 세력은 제자 수만 쓴다.
+var disciples: Array[DiscipleData] = []
+var use_roster: bool = false
+## 다음 제자 id 번호
+var next_disciple_id: int = 1
 
 @export_group("시설")
 @export var library_level: int = 1

@@ -44,7 +44,7 @@ const FORMATION_BOOSTS: Dictionary = {
 
 
 static func get_military_power(sect: SectData, character: CharacterData) -> int:
-	var power: int = sect.disciple_count * 3
+	var power: int = sect.disciple_count * 3 + DiscipleRoster.get_war_power_bonus(sect)
 	power += sect.training_ground_level * 8
 	power += int(character.get_combat_power() * RoleManager.get_role_combat_bonus(character.role))
 	power += sect.reputation / 5

@@ -3,6 +3,7 @@ extends Control
 const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
 const _FacilityPopup = preload("res://scripts/UI/facility_popup.gd")
 const _ChoicePopup = preload("res://scripts/UI/choice_popup.gd")
+const _DisciplePopup = preload("res://scripts/UI/disciple_popup.gd")
 
 @onready var year_label: Label = %YearLabel
 @onready var season_label: Label = %SeasonLabel
@@ -27,6 +28,8 @@ const _ChoicePopup = preload("res://scripts/UI/choice_popup.gd")
 var facility_popup: Control
 ## 역할 행동의 대상을 고르는 팝업
 var choice_popup: Control
+## 제자 명단 팝업
+var disciple_popup: Control
 ## 대상을 고르는 중인 역할 행동 id
 var _pending_role_action: String = ""
 
@@ -39,6 +42,9 @@ func _ready() -> void:
 	choice_popup = _ChoicePopup.new()
 	add_child(choice_popup)
 	choice_popup.chosen.connect(_on_role_target_chosen)
+	disciple_popup = _DisciplePopup.new()
+	add_child(disciple_popup)
+	disciple_popup.changed.connect(_execute_action)
 	_connect_bus(EventBus.turn_advanced, _on_turn_advanced)
 	_connect_bus(EventBus.resources_changed, _on_resources_changed)
 	_connect_bus(EventBus.character_updated, _on_character_updated)
@@ -255,6 +261,11 @@ func _on_advance_turn_pressed() -> void:
 
 func _on_train_pressed() -> void:
 	_execute_action(SectManager.train_disciples(GameManager.player_sect, GameManager.player_character))
+
+
+func _on_disciple_pressed() -> void:
+	AudioManager.play_click()
+	disciple_popup.open()
 
 
 func _on_facility_pressed() -> void:

@@ -69,6 +69,7 @@ func _initialize_new_game(
 	player_sect = ScenarioManager.create_player_sect()
 	world_sects = ScenarioManager.create_rival_sects()
 	StartingRoles.apply_sect_setup(role_id, player_sect, player_character)
+	DiscipleRoster.enable(player_sect)
 	player_relationships = RelationshipManager.create_default_relationships()
 	triggered_event_ids.clear()
 	pending_event.clear()
@@ -158,9 +159,10 @@ func advance_turn() -> void:
 	var upkeep: Dictionary = SectManager.pay_upkeep(player_sect)
 	var facility_report: String = _apply_facility_effects()
 	var role_report: String = RoleActions.on_season(self)
+	var disciple_report: String = DiscipleRoster.on_season(player_sect)
 	var consequence: String = _apply_role_consequences()
 	var report_parts: PackedStringArray = [income, upkeep["message"]]
-	for part in [facility_report, role_report, consequence, yearly_report]:
+	for part in [facility_report, disciple_report, role_report, consequence, yearly_report]:
 		if not part.is_empty():
 			report_parts.append(part)
 	last_turn_report = "%s — %s" % [get_date_text(), " | ".join(report_parts)]
@@ -433,7 +435,11 @@ func _switch_player_sect(sect_id: String, kind: String) -> String:
 		old_sect.leader_name = (
 			NpcRoster.get_display_name(old_sect.leader_id) if not old_sect.leader_id.is_empty() else "원로회"
 		)
+	# 옛 문파는 강호 세력이 되어 제자 수만 남고, 새 문파는 명단을 만든다.
+	old_sect.use_roster = false
+	old_sect.disciples.clear()
 	world_sects.append(old_sect)
+	DiscipleRoster.enable(new_sect)
 	new_sect.attitude = 0
 	new_sect.subjugated = false
 	new_sect.observed_commands.clear()
@@ -719,7 +725,7 @@ func start_sparring() -> Dictionary:
 
 
 ## 전투 결과를 반영하고 결과(message, outcome 포함)를 돌려준다.
-func finish_combat(outcome: CombatManager.Outcome, fallen_allies: int = 0) -> Dictionary:
+func finish_combat(outcome: CombatManager.Outcome, fallen_allies: int = 0, fallen_ids: Array = []) -> Dictionary:
 	if pending_combat == null:
 		return {"success": false, "message": "진행 중인 전투가 없습니다."}
 	var result: Dictionary = CombatManager.apply_outcome(
@@ -729,7 +735,8 @@ func finish_combat(outcome: CombatManager.Outcome, fallen_allies: int = 0) -> Di
 		player_sect,
 		player_relationships,
 		story_flags,
-		fallen_allies
+		fallen_allies,
+		fallen_ids
 	)
 	pending_combat = null
 	EventBus.combat_finished.emit(result)
@@ -816,6 +823,9 @@ func _apply_save_data(data: Dictionary) -> void:
 	pending_war_plan = {}
 	_set_player_character(_SaveManager.deserialize_character(data.get("character", {})))
 	player_sect = _SaveManager.deserialize_sect(data.get("sect", {}))
+	# 명단이 없는 구버전 세이브는 제자 수만큼 무작위 제자로 채운다.
+	if not player_sect.use_roster:
+		DiscipleRoster.enable(player_sect)
 	# 강호 세력이 없는 구버전 세이브는 데이터 초기값으로 채운다.
 	if data.has("world_sects"):
 		world_sects = _SaveManager.deserialize_sects(data["world_sects"])
