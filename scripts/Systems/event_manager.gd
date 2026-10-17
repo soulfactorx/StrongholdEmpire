@@ -1,6 +1,52 @@
 class_name EventManager
 extends RefCounted
 
+## 기연(이벤트) 시스템. 기연 내용은 data/events/*.json에 데이터로 정의하고,
+## 이 클래스는 불러오기·검증·조건 판정·효과 적용만 담당한다.
+##
+## ■ 파일 형식
+##   { "id", "title", "description", "can_repeat": bool,
+##     "conditions": [조건...], "choices": [선택지...] }
+##   선택지: { "label", "message", "effects": [효과...],
+##            "branches": [{ "chance": 1~100, "message", "effects" }] (선택),
+##            "success": bool (선택, 기본 true) }
+##   branches는 위에서부터 확률을 굴려 처음 걸린 것을 쓰고, 모두 빗나가면 기본 효과를 쓴다.
+##
+## ■ 조건 (type별 필드)
+##   character  field, op, value   — CHARACTER_FIELDS (martial_arts_count는 습득 무공 수)
+##   sect       field, op, value   — SECT_FIELDS
+##   bond       target, op, value  — 관계 대상의 유대 수치. 관계가 없으면 거짓
+##   role       in: [역할 이름]     — CharacterData.Role 이름 (예: "SPY")
+##   season     in: [계절]          — "봄" "여름" "가을" "겨울"
+##   flag       flag, value        — 스토리 플래그 값 비교 (없으면 false로 간주)
+##   op: ">=" "<=" ">" "<" "==" "!="
+##
+## ■ 효과 (type별 필드)
+##   character   field, add        — 능력치 증감. 내공은 0~최대치로 제한
+##   sect        field, add        — 문파 자원 증감. 0 미만으로 내려가지 않음
+##   experience  amount            — 경험치 (레벨업 포함)
+##   bond        target, add       — 유대 증감
+##   flag        flag, value       — 스토리 플래그 설정
+##   combat      combat            — 전투 시작 (CombatManager.create_by_id)
+
+const EVENTS_DIR := "res://data/events/"
+
+const CHARACTER_FIELDS: PackedStringArray = [
+	"strength", "agility", "wisdom", "charisma", "morality",
+	"internal_energy_current", "internal_energy_max", "level", "age",
+]
+const CHARACTER_COMPUTED_FIELDS: PackedStringArray = ["martial_arts_count"]
+const SECT_FIELDS: PackedStringArray = [
+	"gold", "food", "reputation", "research_points", "disciple_count", "max_disciples",
+	"library_level", "training_ground_level", "treasury_level",
+]
+const OPERATORS: PackedStringArray = [">=", "<=", ">", "<", "==", "!="]
+const SEASON_NAMES: PackedStringArray = ["봄", "여름", "가을", "겨울"]
+
+static var _definitions: Array[EventData] = []
+static var _loaded: bool = false
+
+
 static func check_turn_events(
 	character: CharacterData,
 	sect: SectData,
@@ -9,16 +55,19 @@ static func check_turn_events(
 	triggered_ids: Array[String],
 	story_flags: Dictionary
 ) -> Dictionary:
-	var events: Array[Dictionary] = _build_event_pool(
-		character, sect, relationships, season, triggered_ids, story_flags
-	)
-	if events.is_empty():
+	var pool: Array[EventData] = []
+	for event in get_definitions():
+		if not event.can_repeat and triggered_ids.has(event.id):
+			continue
+		if _conditions_met(event, character, sect, relationships, season, story_flags):
+			pool.append(event)
+	if pool.is_empty():
 		return {}
 
-	var chosen: Dictionary = events[randi() % events.size()]
-	if not chosen.get("can_repeat", false):
-		triggered_ids.append(chosen["id"])
-	return chosen
+	var chosen: EventData = pool[randi() % pool.size()]
+	if not chosen.can_repeat:
+		triggered_ids.append(chosen.id)
+	return chosen.to_popup_dict()
 
 
 static func resolve_choice(
@@ -29,278 +78,268 @@ static func resolve_choice(
 	relationships: Array[RelationshipData],
 	story_flags: Dictionary
 ) -> Dictionary:
-	match event_id:
-		"master_trial":
-			return _resolve_master_trial(choice_index, character, sect, relationships)
-		"night_bandits":
-			return _resolve_night_bandits(choice_index, character, sect)
-		"sect_fellowship":
-			return _resolve_sect_fellowship(choice_index, character, sect, relationships)
-		"ancient_manual":
-			return _resolve_ancient_manual(choice_index, character, sect)
-		"spy_recruitment":
-			return _resolve_spy_recruitment(choice_index, story_flags)
-		"spy_mission":
-			return _resolve_spy_mission(choice_index, character, sect, story_flags)
-		"assassin_contract":
-			return _resolve_assassin_contract(choice_index, character, story_flags)
-		"leader_council":
-			return _resolve_leader_council(choice_index, character, sect)
-		"rival_duel":
-			return _resolve_rival_duel(choice_index, character, relationships)
+	var event: EventData = get_event(event_id)
+	if event == null or choice_index < 0 or choice_index >= event.choices.size():
+		return {"success": false, "message": "알 수 없는 기연입니다."}
+
+	var choice: Dictionary = event.choices[choice_index]
+	var effects: Array = choice.get("effects", [])
+	var message: String = choice.get("message", "")
+	for branch in choice.get("branches", []):
+		if randi_range(1, 100) <= int(branch.get("chance", 0)):
+			effects = branch.get("effects", [])
+			message = branch.get("message", message)
+			break
+
+	var result: Dictionary = {
+		"success": choice.get("success", true),
+		"message": message,
+	}
+	for effect in effects:
+		_apply_effect(effect, character, sect, relationships, story_flags, result)
+	return result
+
+
+static func get_definitions() -> Array[EventData]:
+	if not _loaded:
+		reload_definitions()
+	return _definitions
+
+
+static func get_event(event_id: String) -> EventData:
+	for event in get_definitions():
+		if event.id == event_id:
+			return event
+	return null
+
+
+## 기연 폴더를 다시 읽는다. 잘못된 파일은 경고를 남기고 건너뛴다.
+static func reload_definitions(dir_path: String = EVENTS_DIR) -> void:
+	_definitions.clear()
+	_loaded = true
+	var dir := DirAccess.open(dir_path)
+	if dir == null:
+		push_warning("기연 폴더를 열 수 없습니다: %s" % dir_path)
+		return
+	var files: PackedStringArray = dir.get_files()
+	files.sort()
+	var seen_ids: Dictionary = {}
+	for file_name in files:
+		if not file_name.ends_with(".json"):
+			continue
+		var path: String = dir_path.path_join(file_name)
+		var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+		if not data is Dictionary:
+			push_warning("기연 JSON 파싱 실패: %s" % path)
+			continue
+		var errors: PackedStringArray = validate_event_dict(data)
+		if seen_ids.has(data.get("id")):
+			errors.append("중복된 id: %s" % data.get("id"))
+		if not errors.is_empty():
+			push_warning("기연 정의 오류 (%s): %s" % [path, "; ".join(errors)])
+			continue
+		seen_ids[data["id"]] = true
+		_definitions.append(_to_event_data(data))
+
+
+## 기연 정의 하나를 검사해 오류 메시지 목록을 돌려준다. 비어 있으면 정상이다.
+static func validate_event_dict(data: Dictionary) -> PackedStringArray:
+	var errors: PackedStringArray = []
+	for key in ["id", "title", "description"]:
+		if not data.get(key) is String or String(data.get(key)).is_empty():
+			errors.append("'%s'가 비어 있음" % key)
+	if not data.get("conditions", []) is Array:
+		errors.append("conditions는 배열이어야 함")
+	else:
+		for condition in data.get("conditions", []):
+			_validate_condition(condition, errors)
+	var choices: Variant = data.get("choices")
+	if not choices is Array or (choices as Array).is_empty():
+		errors.append("choices가 비어 있음")
+		return errors
+	for i in (choices as Array).size():
+		var choice: Variant = choices[i]
+		if not choice is Dictionary or not choice.get("label") is String:
+			errors.append("선택지 %d: label 필요" % i)
+			continue
+		for effect in choice.get("effects", []):
+			_validate_effect(effect, errors)
+		for branch in choice.get("branches", []):
+			if not branch is Dictionary or not branch.has("chance"):
+				errors.append("선택지 %d: branch에 chance 필요" % i)
+				continue
+			for effect in branch.get("effects", []):
+				_validate_effect(effect, errors)
+	return errors
+
+
+static func _validate_condition(condition: Variant, errors: PackedStringArray) -> void:
+	if not condition is Dictionary:
+		errors.append("조건은 객체여야 함")
+		return
+	var c: Dictionary = condition
+	match c.get("type", ""):
+		"character":
+			if not (c.get("field") in CHARACTER_FIELDS or c.get("field") in CHARACTER_COMPUTED_FIELDS):
+				errors.append("알 수 없는 캐릭터 필드: %s" % c.get("field"))
+			_validate_compare(c, errors)
+		"sect":
+			if not c.get("field") in SECT_FIELDS:
+				errors.append("알 수 없는 문파 필드: %s" % c.get("field"))
+			_validate_compare(c, errors)
+		"bond":
+			if not c.get("target") is String:
+				errors.append("bond 조건에 target 필요")
+			_validate_compare(c, errors)
+		"role":
+			for role_name in c.get("in", []):
+				if not CharacterData.Role.has(role_name):
+					errors.append("알 수 없는 역할: %s" % role_name)
+		"season":
+			for season in c.get("in", []):
+				if not season in SEASON_NAMES:
+					errors.append("알 수 없는 계절: %s" % season)
+		"flag":
+			if not c.get("flag") is String:
+				errors.append("flag 조건에 flag 필요")
 		_:
-			return {"success": false, "message": "알 수 없는 기연입니다."}
+			errors.append("알 수 없는 조건 type: %s" % c.get("type"))
 
 
-static func _build_event_pool(
+static func _validate_compare(c: Dictionary, errors: PackedStringArray) -> void:
+	if not c.get("op") in OPERATORS:
+		errors.append("알 수 없는 비교 연산자: %s" % c.get("op"))
+	if not (c.get("value") is float or c.get("value") is int):
+		errors.append("비교 값은 숫자여야 함")
+
+
+static func _validate_effect(effect: Variant, errors: PackedStringArray) -> void:
+	if not effect is Dictionary:
+		errors.append("효과는 객체여야 함")
+		return
+	var e: Dictionary = effect
+	match e.get("type", ""):
+		"character":
+			if not e.get("field") in CHARACTER_FIELDS:
+				errors.append("알 수 없는 캐릭터 필드: %s" % e.get("field"))
+		"sect":
+			if not e.get("field") in SECT_FIELDS:
+				errors.append("알 수 없는 문파 필드: %s" % e.get("field"))
+		"experience":
+			if not e.has("amount"):
+				errors.append("experience 효과에 amount 필요")
+		"bond":
+			if not e.get("target") is String:
+				errors.append("bond 효과에 target 필요")
+		"flag":
+			if not e.get("flag") is String:
+				errors.append("flag 효과에 flag 필요")
+		"combat":
+			if not CombatManager.has_combat(e.get("combat", "")):
+				errors.append("알 수 없는 전투: %s" % e.get("combat"))
+		_:
+			errors.append("알 수 없는 효과 type: %s" % e.get("type"))
+
+
+static func _to_event_data(data: Dictionary) -> EventData:
+	var event := EventData.new()
+	event.id = data["id"]
+	event.title = data["title"]
+	event.description = data["description"]
+	event.can_repeat = data.get("can_repeat", false)
+	for condition in data.get("conditions", []):
+		event.conditions.append(condition)
+	for choice in data["choices"]:
+		event.choices.append(choice)
+	return event
+
+
+static func _conditions_met(
+	event: EventData,
 	character: CharacterData,
 	sect: SectData,
 	relationships: Array[RelationshipData],
 	season: String,
-	triggered_ids: Array[String],
 	story_flags: Dictionary
-) -> Array[Dictionary]:
-	var pool: Array[Dictionary] = []
-
-	if not triggered_ids.has("master_trial") and character.martial_arts.is_empty():
-		var trial_desc: String = (
-			"청운검선이 당신을 불러 무공 연구를 격려합니다.\n"
-			+ "「무에서 창조하는 것이 진정한 강호인의 길이니라.」"
-		)
-		pool.append({
-			"id": "master_trial",
-			"title": "스승의 시험",
-			"description": trial_desc,
-			"choices": ["연구에 전념한다", "나중에 하겠다"],
-			"can_repeat": false,
-		})
-
-	if season == "가을" and not triggered_ids.has("night_bandits"):
-		pool.append({
-			"id": "night_bandits",
-			"title": "야습 도적",
-			"description": "문파 외곽에서 도적 무리가 습격해옵니다!",
-			"choices": ["맞서 싸운다", "은밀히 피한다"],
-			"can_repeat": false,
-		})
-
-	var master: RelationshipData = RelationshipManager.get_bond_with(relationships, "npc_master")
-	if master and master.bond_strength >= 30 and not triggered_ids.has("sect_fellowship"):
-		pool.append({
-			"id": "sect_fellowship",
-			"title": "사제의 밤",
-			"description": "스승과 함께 달빛 아래 검을 맞대며 도담합니다.",
-			"choices": ["진심을 털어놓는다", "무공 이론을 토론한다"],
-			"can_repeat": false,
-		})
-
-	if sect.library_level >= 2 and not triggered_ids.has("ancient_manual"):
-		pool.append({
-			"id": "ancient_manual",
-			"title": "고서 발견",
-			"description": "서고 깊은 곳에서 낡은 무공 비급을 발견했습니다.",
-			"choices": ["즉시 연구한다", "보관해 둔다"],
-			"can_repeat": false,
-		})
-
-	if (
-		character.role == CharacterData.Role.YOUNG_DISCIPLE
-		and character.agility >= 14
-		and not triggered_ids.has("spy_recruitment")
-	):
-		var spy_desc: String = (
-			"문주가 몰래 당신을 불러 남궁세가 잠입을 제안합니다.\n"
-			+ "위험하지만 문파에 큰 공을 세울 기회입니다."
-		)
-		pool.append({
-			"id": "spy_recruitment",
-			"title": "비밀 제의",
-			"description": spy_desc,
-			"choices": ["임무를 수락한다", "거절한다"],
-			"can_repeat": false,
-		})
-
-	if character.role == CharacterData.Role.SPY and not triggered_ids.has("spy_mission"):
-		pool.append({
-			"id": "spy_mission",
-			"title": "스파이 임무",
-			"description": "적 문파 내부에서 기밀 문서를 빼내야 합니다.",
-			"choices": ["위험을 감수한다", "신중히 접근한다"],
-			"can_repeat": false,
-		})
-
-	if (
-		character.role == CharacterData.Role.SPY
-		and character.morality <= 50
-		and not triggered_ids.has("assassin_contract")
-	):
-		pool.append({
-			"id": "assassin_contract",
-			"title": "암살 의뢰",
-			"description": "정체불명의 의뢰인이 표적 제거를 요청합니다.",
-			"choices": ["받아들인다", "거절한다"],
-			"can_repeat": false,
-		})
-
-	if character.role == CharacterData.Role.LEADER and season == "여름":
-		pool.append({
-			"id": "leader_council",
-			"title": "문파 회의",
-			"description": "제자들과 강호 정세를 논의할 때입니다.",
-			"choices": ["정파 연합 추진", "세력 확장 우선"],
-			"can_repeat": true,
-		})
-
-	var rival: RelationshipData = RelationshipManager.get_bond_with(relationships, "npc_rival")
-	if rival and rival.bond_strength >= 20 and season == "봄" and not triggered_ids.has("rival_duel"):
-		pool.append({
-			"id": "rival_duel",
-			"title": "라이벌의 도전",
-			"description": "남궁휘가 당신에게 결투를 신청합니다!",
-			"choices": ["맞서 싸운다", "묘한 승부를 피한다"],
-			"can_repeat": false,
-		})
-
-	return pool
+) -> bool:
+	for c in event.conditions:
+		if not _condition_met(c, character, sect, relationships, season, story_flags):
+			return false
+	return true
 
 
-static func _resolve_master_trial(
-	choice_index: int,
+static func _condition_met(
+	c: Dictionary,
 	character: CharacterData,
 	sect: SectData,
-	relationships: Array[RelationshipData]
-) -> Dictionary:
-	if choice_index == 0:
-		sect.research_points += 15
-		character.wisdom += 1
-		var master: RelationshipData = RelationshipManager.get_bond_with(relationships, "npc_master")
-		if master:
-			master.increase_bond(10)
-		return {"success": true, "message": "스승의 가르침으로 연구점 +15, 지혜 +1, 사제 유대 상승."}
-	return {"success": true, "message": "스승이 아쉬운 눈빛으로 고개를 끄덕입니다."}
+	relationships: Array[RelationshipData],
+	season: String,
+	story_flags: Dictionary
+) -> bool:
+	match c["type"]:
+		"character":
+			var value: int
+			if c["field"] == "martial_arts_count":
+				value = character.martial_arts.size()
+			else:
+				value = character.get(c["field"])
+			return _compare(value, c["op"], c["value"])
+		"sect":
+			return _compare(sect.get(c["field"]), c["op"], c["value"])
+		"bond":
+			var bond: RelationshipData = RelationshipManager.get_bond_with(relationships, c["target"])
+			return bond != null and _compare(bond.bond_strength, c["op"], c["value"])
+		"role":
+			return str(CharacterData.Role.find_key(character.role)) in c["in"]
+		"season":
+			return season in c["in"]
+		"flag":
+			return story_flags.get(c["flag"], false) == c.get("value", true)
+	return false
 
 
-static func _resolve_night_bandits(
-	choice_index: int,
-	character: CharacterData,
-	_sect: SectData
-) -> Dictionary:
-	if choice_index == 0:
-		return {
-			"success": true,
-			"message": "도적 무리를 막아서기 위해 검을 뽑습니다!",
-			"combat": CombatManager.create_night_bandits(character),
-		}
-	character.agility += 1
-	return {"success": true, "message": "은밀히 피해 신법 +1."}
+static func _compare(actual: float, op: String, expected: float) -> bool:
+	match op:
+		">=":
+			return actual >= expected
+		"<=":
+			return actual <= expected
+		">":
+			return actual > expected
+		"<":
+			return actual < expected
+		"==":
+			return is_equal_approx(actual, expected)
+		"!=":
+			return not is_equal_approx(actual, expected)
+	return false
 
 
-static func _resolve_sect_fellowship(
-	choice_index: int,
+static func _apply_effect(
+	e: Dictionary,
 	character: CharacterData,
 	sect: SectData,
-	relationships: Array[RelationshipData]
-) -> Dictionary:
-	var master: RelationshipData = RelationshipManager.get_bond_with(relationships, "npc_master")
-	if master == null:
-		return {"success": true, "message": "평온한 밤이 지나갑니다."}
-
-	if choice_index == 0:
-		master.increase_bond(15)
-		character.charisma += 1
-		return {"success": true, "message": "스승과의 유대가 깊어졌습니다. 사제 +15, 매력 +1."}
-
-	master.increase_bond(8)
-	sect.research_points += 10
-	return {"success": true, "message": "무공 이론 토론 완료. 사제 +8, 연구점 +10."}
-
-
-static func _resolve_ancient_manual(
-	choice_index: int,
-	_character: CharacterData,
-	sect: SectData
-) -> Dictionary:
-	if choice_index == 0:
-		sect.research_points += 20
-		return {"success": true, "message": "고서 연구로 연구점 +20."}
-	sect.reputation += 2
-	return {"success": true, "message": "비급을 보관했습니다. 문파 명성 +2."}
-
-
-static func _resolve_spy_recruitment(choice_index: int, story_flags: Dictionary) -> Dictionary:
-	if choice_index == 0:
-		story_flags["spy_recruitment"] = true
-		return {
-			"success": true,
-			"message": "스파이 임무를 수락했습니다. 역할 전환 메뉴에서 전향할 수 있습니다.",
-		}
-	return {"success": true, "message": "문주가 고개를 끄덕이며 다른 제자를 찾습니다."}
-
-
-static func _resolve_spy_mission(
-	choice_index: int,
-	character: CharacterData,
-	sect: SectData,
-	story_flags: Dictionary
-) -> Dictionary:
-	if choice_index == 0:
-		var exposed: bool = randi_range(1, 100) <= 25
-		if exposed:
-			story_flags["spy_exposed"] = true
-			return {
-				"success": true,
-				"message": "정체가 드러났습니다! 비극의 길이 열렸습니다.",
-			}
-		story_flags["spy_mission_complete"] = true
-		sect.reputation += 10
-		character.gain_experience(30)
-		return {"success": true, "message": "임무 성공! 기밀 확보. 명성 +10"}
-	character.agility += 1
-	story_flags["spy_mission_complete"] = true
-	return {"success": true, "message": "신중히 임무 완료. 신법 +1"}
-
-
-static func _resolve_assassin_contract(
-	choice_index: int,
-	character: CharacterData,
-	story_flags: Dictionary
-) -> Dictionary:
-	if choice_index == 0:
-		story_flags["assassin_path"] = true
-		character.morality -= 15
-		character.strength += 1
-		character.gain_experience(25)
-		return {"success": true, "message": "암살 의뢰 완료. 도덕 -15, 암살자의 길이 열렸습니다."}
-	character.morality += 5
-	return {"success": true, "message": "의뢰를 거절했습니다. 도덕 +5"}
-
-
-static func _resolve_leader_council(
-	choice_index: int,
-	character: CharacterData,
-	sect: SectData
-) -> Dictionary:
-	if choice_index == 0:
-		character.morality += 5
-		sect.reputation += 5
-		return {"success": true, "message": "정파 연합 추진. 도덕 +5, 명성 +5"}
-	sect.gold += 30
-	sect.disciple_count += 2
-	return {"success": true, "message": "세력 확장. 금화 +30, 제자 +2"}
-
-
-static func _resolve_rival_duel(
-	choice_index: int,
-	character: CharacterData,
-	relationships: Array[RelationshipData]
-) -> Dictionary:
-	var rival: RelationshipData = RelationshipManager.get_bond_with(relationships, "npc_rival")
-	if choice_index == 0:
-		return {
-			"success": true,
-			"message": "남궁휘의 도전을 받아들입니다.",
-			"combat": CombatManager.create_rival_duel(character),
-		}
-	if rival:
-		rival.decrease_bond(5)
-	return {"success": true, "message": "결투를 피했습니다. 라이벌 유대 -5"}
+	relationships: Array[RelationshipData],
+	story_flags: Dictionary,
+	result: Dictionary
+) -> void:
+	match e["type"]:
+		"character":
+			var field: String = e["field"]
+			var new_value: int = int(character.get(field)) + int(e.get("add", 0))
+			if field == "internal_energy_current":
+				new_value = clampi(new_value, 0, character.internal_energy_max)
+			character.set(field, new_value)
+		"sect":
+			var field: String = e["field"]
+			sect.set(field, maxi(0, int(sect.get(field)) + int(e.get("add", 0))))
+		"experience":
+			character.gain_experience(int(e["amount"]))
+		"bond":
+			var bond: RelationshipData = RelationshipManager.get_bond_with(relationships, e["target"])
+			if bond:
+				bond.increase_bond(int(e.get("add", 0)))
+		"flag":
+			story_flags[e["flag"]] = e.get("value", true)
+		"combat":
+			result["combat"] = CombatManager.create_by_id(e["combat"], character)

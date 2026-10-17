@@ -1,0 +1,54 @@
+{
+  "id": "leader_council",
+  "title": "문파 회의",
+  "description": "제자들과 강호 정세를 논의할 때입니다.",
+  "can_repeat": true,
+  "conditions": [
+    {
+      "type": "role",
+      "in": [
+        "LEADER"
+      ]
+    },
+    {
+      "type": "season",
+      "in": [
+        "여름"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "정파 연합 추진",
+      "message": "정파 연합 추진. 도덕 +5, 명성 +5",
+      "effects": [
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 5
+        }
+      ]
+    },
+    {
+      "label": "세력 확장 우선",
+      "message": "세력 확장. 금화 +30, 제자 +2",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": 30
+        },
+        {
+          "type": "sect",
+          "field": "disciple_count",
+          "add": 2
+        }
+      ]
+    }
+  ]
+}

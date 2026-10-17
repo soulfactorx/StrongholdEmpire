@@ -1,0 +1,48 @@
+{
+  "id": "sect_fellowship",
+  "title": "사제의 밤",
+  "description": "스승과 함께 달빛 아래 검을 맞대며 도담합니다.",
+  "can_repeat": false,
+  "conditions": [
+    {
+      "type": "bond",
+      "target": "npc_master",
+      "op": ">=",
+      "value": 30
+    }
+  ],
+  "choices": [
+    {
+      "label": "진심을 털어놓는다",
+      "message": "스승과의 유대가 깊어졌습니다. 사제 +15, 매력 +1.",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "npc_master",
+          "add": 15
+        },
+        {
+          "type": "character",
+          "field": "charisma",
+          "add": 1
+        }
+      ]
+    },
+    {
+      "label": "무공 이론을 토론한다",
+      "message": "무공 이론 토론 완료. 사제 +8, 연구점 +10.",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "npc_master",
+          "add": 8
+        },
+        {
+          "type": "sect",
+          "field": "research_points",
+          "add": 10
+        }
+      ]
+    }
+  ]
+}

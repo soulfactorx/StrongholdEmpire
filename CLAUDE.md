@@ -17,6 +17,8 @@
 - `scripts/UI/`, `scenes/UI/` — 화면. 문파 경영 화면(`management_screen`)이 게임 허브다.
 - 씬 전환은 `SceneRouter`를 통해서만 한다. 씬 경로 상수도 거기에 있다.
 - 밸런스 수치는 `GameBalance`에 모은다.
+- 기연은 `data/events/*.json` 데이터로 정의한다. 형식은 `docs/기연_데이터_형식.md` 참고.
+  새 기연은 코드가 아니라 JSON으로 추가한다.
 
 ## 테스트
 

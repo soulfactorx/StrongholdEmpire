@@ -1,0 +1,43 @@
+{
+  "id": "rival_duel",
+  "title": "라이벌의 도전",
+  "description": "남궁휘가 당신에게 결투를 신청합니다!",
+  "can_repeat": false,
+  "conditions": [
+    {
+      "type": "bond",
+      "target": "npc_rival",
+      "op": ">=",
+      "value": 20
+    },
+    {
+      "type": "season",
+      "in": [
+        "봄"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "맞서 싸운다",
+      "message": "남궁휘의 도전을 받아들입니다.",
+      "effects": [
+        {
+          "type": "combat",
+          "combat": "rival_duel"
+        }
+      ]
+    },
+    {
+      "label": "묘한 승부를 피한다",
+      "message": "결투를 피했습니다. 라이벌 유대 -5",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "npc_rival",
+          "add": -5
+        }
+      ]
+    }
+  ]
+}

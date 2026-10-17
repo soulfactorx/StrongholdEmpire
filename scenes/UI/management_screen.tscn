@@ -323,18 +323,10 @@ layout_mode = 2
 text = "설명"
 autowrap_mode = 3
 
-[node name="Choice1Button" type="Button" parent="EventPopup/Center/Panel/VBox"]
+[node name="ChoiceBox" type="VBoxContainer" parent="EventPopup/Center/Panel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "선택 1"
-
-[node name="Choice2Button" type="Button" parent="EventPopup/Center/Panel/VBox"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "선택 2"
-
-[connection signal="pressed" from="EventPopup/Center/Panel/VBox/Choice1Button" to="EventPopup" method="_on_choice1_pressed"]
-[connection signal="pressed" from="EventPopup/Center/Panel/VBox/Choice2Button" to="EventPopup" method="_on_choice2_pressed"]
+theme_override_constants/separation = 8
 
 [node name="RolePopup" type="Control" parent="."]
 unique_name_in_owner = true

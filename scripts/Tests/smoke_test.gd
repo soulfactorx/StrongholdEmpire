@@ -31,6 +31,11 @@ func _initialize() -> void:
 	_test_starting_roles()
 	_test_combat_outcomes()
 	_test_combat_events()
+	_test_event_definitions()
+	_test_event_validation()
+	_test_event_conditions()
+	_test_event_branches()
+	_test_event_mod_folder()
 	# 오토로드의 _ready()는 첫 프레임에 실행되므로 런타임 검사는 그 뒤로 미룬다.
 	process_frame.connect(_run_runtime_tests, CONNECT_ONE_SHOT)
 
@@ -40,6 +45,7 @@ func _run_runtime_tests() -> void:
 	_test_start_new_game()
 	await _test_scene_navigation()
 	await _test_combat_flow()
+	await _test_event_popup_choices()
 
 	print("스모크 테스트: %d개 검사, %d개 실패" % [_checks, _failures])
 	quit(1 if _failures > 0 else 0)
@@ -349,3 +355,145 @@ func _test_combat_flow() -> void:
 		and gm.pending_combat != null and gm.pending_combat.id == "rival_duel",
 		"기연 선택으로 결투 시작"
 	)
+
+
+func _test_event_definitions() -> void:
+	var json_count: int = 0
+	for file_name in DirAccess.get_files_at(EventManager.EVENTS_DIR):
+		if file_name.ends_with(".json"):
+			json_count += 1
+	var definitions: Array[EventData] = EventManager.get_definitions()
+	_check(json_count > 0 and definitions.size() == json_count, "기연 JSON %d개 모두 검증 통과" % json_count)
+	for id in [
+		"master_trial", "night_bandits", "sect_fellowship", "ancient_manual", "spy_recruitment",
+		"spy_mission", "assassin_contract", "leader_council", "rival_duel",
+	]:
+		_check(EventManager.get_event(id) != null, "기연 존재: %s" % id)
+
+
+func _test_event_validation() -> void:
+	var good: Dictionary = {
+		"id": "t", "title": "제목", "description": "설명",
+		"conditions": [{"type": "season", "in": ["봄"]}],
+		"choices": [{"label": "확인", "message": "", "effects": []}],
+	}
+	_check(EventManager.validate_event_dict(good).is_empty(), "정상 기연 정의 통과")
+
+	var bad_cases: Dictionary = {
+		"빈 선택지": {"choices": []},
+		"알 수 없는 조건": {"conditions": [{"type": "weather"}]},
+		"알 수 없는 캐릭터 필드": {"conditions": [{"type": "character", "field": "luck", "op": ">=", "value": 1}]},
+		"잘못된 연산자": {"conditions": [{"type": "sect", "field": "gold", "op": "=>", "value": 1}]},
+		"알 수 없는 역할": {"conditions": [{"type": "role", "in": ["NINJA"]}]},
+		"알 수 없는 효과": {"choices": [{"label": "a", "effects": [{"type": "teleport"}]}]},
+		"알 수 없는 전투": {"choices": [{"label": "a", "effects": [{"type": "combat", "combat": "dragon"}]}]},
+		"chance 없는 분기": {"choices": [{"label": "a", "effects": [], "branches": [{"effects": []}]}]},
+	}
+	for label in bad_cases:
+		var data: Dictionary = good.duplicate(true)
+		data.merge(bad_cases[label], true)
+		_check(not EventManager.validate_event_dict(data).is_empty(), "잘못된 정의 검출: %s" % label)
+
+
+func _test_event_conditions() -> void:
+	var st: Dictionary = _make_combat_state()
+	var character: CharacterData = st["character"]
+	var council: EventData = EventManager.get_event("leader_council")
+	character.role = CharacterData.Role.LEADER
+	_check(
+		EventManager._conditions_met(council, character, st["sect"], st["relationships"], "여름", st["flags"]),
+		"문파 회의: 여름 + 문주면 발생"
+	)
+	_check(
+		not EventManager._conditions_met(council, character, st["sect"], st["relationships"], "가을", st["flags"]),
+		"문파 회의: 가을에는 발생하지 않음"
+	)
+	character.role = CharacterData.Role.SPY
+	_check(
+		not EventManager._conditions_met(council, character, st["sect"], st["relationships"], "여름", st["flags"]),
+		"문파 회의: 문주가 아니면 발생하지 않음"
+	)
+
+	# 반복 불가 기연은 한 번 발생하면 다시 나오지 않는다
+	var triggered: Array[String] = []
+	for i in 30:
+		var event: Dictionary = EventManager.check_turn_events(
+			character, st["sect"], st["relationships"], "가을", triggered, st["flags"]
+		)
+		if event.is_empty():
+			break
+	var unique: Dictionary = {}
+	for id in triggered:
+		unique[id] = true
+	_check(unique.size() == triggered.size(), "반복 불가 기연은 중복 발생하지 않음")
+
+
+func _test_event_branches() -> void:
+	var seen_exposed: bool = false
+	var seen_success: bool = false
+	var exposed_clean: bool = true
+	for sd in 60:
+		var st: Dictionary = _make_combat_state()
+		seed(sd)
+		EventManager.resolve_choice("spy_mission", 0, st["character"], st["sect"], st["relationships"], st["flags"])
+		if st["flags"].get("spy_exposed", false):
+			seen_exposed = true
+			exposed_clean = exposed_clean and not st["flags"].has("spy_mission_complete")
+		elif st["flags"].get("spy_mission_complete", false):
+			seen_success = true
+	_check(seen_exposed and seen_success, "확률 분기: 노출·성공 결과가 모두 나옴")
+	_check(exposed_clean, "정체 노출 분기는 기본 효과를 적용하지 않음")
+	randomize()
+
+	var st2: Dictionary = _make_combat_state()
+	var result: Dictionary = EventManager.resolve_choice(
+		"master_trial", 5, st2["character"], st2["sect"], st2["relationships"], st2["flags"]
+	)
+	_check(not result["success"], "범위 밖 선택지는 실패 처리")
+
+
+func _test_event_mod_folder() -> void:
+	var dir_path: String = "user://_test_events"
+	DirAccess.make_dir_recursive_absolute(dir_path)
+	var mod_event: Dictionary = {
+		"id": "mod_three_choices", "title": "갈림길", "description": "세 갈래 길",
+		"conditions": [],
+		"choices": [
+			{"label": "왼쪽", "message": "금화 +5", "effects": [{"type": "sect", "field": "gold", "add": 5}]},
+			{"label": "가운데", "message": "", "effects": []},
+			{"label": "오른쪽", "message": "", "effects": [{"type": "flag", "flag": "went_right"}]},
+		],
+	}
+	var file := FileAccess.open(dir_path.path_join("mod.json"), FileAccess.WRITE)
+	file.store_string(JSON.stringify(mod_event))
+	file.close()
+	# 깨진 JSON은 건너뛰어야 한다. (이 검사 중 출력되는 JSON 파싱 ERROR는 의도된 것)
+	var broken := FileAccess.open(dir_path.path_join("broken.json"), FileAccess.WRITE)
+	broken.store_string("{ 잘못된 json")
+	broken.close()
+
+	EventManager.reload_definitions(dir_path)
+	_check(EventManager.get_definitions().size() == 1, "모드 폴더: 정상 파일만 로드")
+	var st: Dictionary = _make_combat_state()
+	var gold_before: int = st["sect"].gold
+	EventManager.resolve_choice("mod_three_choices", 0, st["character"], st["sect"], st["relationships"], st["flags"])
+	EventManager.resolve_choice("mod_three_choices", 2, st["character"], st["sect"], st["relationships"], st["flags"])
+	_check(st["sect"].gold == gold_before + 5 and st["flags"].get("went_right", false), "모드 기연 효과 적용")
+
+	DirAccess.remove_absolute(dir_path.path_join("mod.json"))
+	DirAccess.remove_absolute(dir_path.path_join("broken.json"))
+	DirAccess.remove_absolute(dir_path)
+	EventManager.reload_definitions()
+
+
+func _test_event_popup_choices() -> void:
+	SceneRouter.goto(self, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	var popup: Node = current_scene.get_node("%EventPopup")
+	popup.show_event({"title": "갈림길", "description": "", "choices": PackedStringArray(["가", "나", "다"])})
+	await process_frame
+	var buttons: Array = popup.get_node("%ChoiceBox").get_children().filter(
+		func(n: Node) -> bool: return n is Button and not n.is_queued_for_deletion()
+	)
+	_check(buttons.size() == 3 and popup.visible, "기연 팝업: 선택지 3개 버튼 생성")

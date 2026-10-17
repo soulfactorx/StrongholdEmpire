@@ -10,6 +10,24 @@ enum Outcome { VICTORY, DEFEAT, RETREAT }
 const RIVAL_ID := "npc_rival"
 
 
+## 기연 데이터 등에서 id로 전투를 만들 때 쓴다.
+const COMBAT_IDS: PackedStringArray = ["sparring", "rival_duel", "night_bandits"]
+
+
+static func has_combat(combat_id: String) -> bool:
+	return combat_id in COMBAT_IDS
+
+
+static func create_by_id(combat_id: String, player: CharacterData) -> CombatSetup:
+	match combat_id:
+		"rival_duel":
+			return create_rival_duel(player)
+		"night_bandits":
+			return create_night_bandits(player)
+		_:
+			return create_sparring(player)
+
+
 ## 경영 화면에서 언제든 할 수 있는 남궁휘와의 비무. 계절당 한 번.
 static func create_sparring(player: CharacterData) -> CombatSetup:
 	var setup := CombatSetup.new()
