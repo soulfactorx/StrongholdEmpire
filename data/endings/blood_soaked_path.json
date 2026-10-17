@@ -1,0 +1,24 @@
+{
+  "id": "blood_soaked_path",
+  "title": "피로 물든 길",
+  "description": "잠입과 암살로 쌓아 올린 길 끝에는 아무도 남지 않았습니다.\n강호는 당신의 이름 대신 핏자국을 기억합니다.",
+  "priority": 95,
+  "tone": "tragedy",
+  "final": true,
+  "conditions": [
+    {
+      "type": "role_history",
+      "role": "SPY"
+    },
+    {
+      "type": "role_history",
+      "role": "ASSASSIN"
+    },
+    {
+      "type": "character",
+      "field": "morality",
+      "op": "<=",
+      "value": 10
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "id": "three_generations",
+  "title": "삼대의 영광",
+  "description": "세 대에 걸쳐 이어진 청운의 이름이 마침내 강호의 명문으로 우뚝 섰습니다.",
+  "priority": 30,
+  "tone": "victory",
+  "final": false,
+  "conditions": [
+    {
+      "type": "generation",
+      "op": ">=",
+      "value": 3
+    },
+    {
+      "type": "sect",
+      "field": "reputation",
+      "op": ">=",
+      "value": 90
+    }
+  ]
+}

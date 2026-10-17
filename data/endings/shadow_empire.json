@@ -1,0 +1,34 @@
+{
+  "id": "shadow_empire",
+  "title": "그림자 제패",
+  "description": "암살과 음모로 강호를 장악했습니다.\n아무도 당신의 이름을 모르지만, 모두가 당신을 두려워합니다.",
+  "priority": 55,
+  "tone": "neutral",
+  "final": false,
+  "conditions": [
+    {
+      "type": "role",
+      "in": [
+        "ASSASSIN",
+        "SPY"
+      ]
+    },
+    {
+      "type": "character",
+      "field": "morality",
+      "op": "<=",
+      "value": 35
+    },
+    {
+      "type": "sect",
+      "field": "reputation",
+      "op": ">=",
+      "value": 70
+    },
+    {
+      "type": "flag",
+      "flag": "assassin_path",
+      "value": true
+    }
+  ]
+}

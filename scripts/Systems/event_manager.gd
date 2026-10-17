@@ -26,6 +26,9 @@ extends RefCounted
 ##   role_history role, value       — 그 역할을 거쳐 왔는지 (value 생략 시 true)
 ##   scenario   in: [시나리오 id]   — 현재 시나리오가 목록에 있음
 ##   years_left op, value          — 시나리오 제한까지 남은 연수 (제한 없으면 9999)
+##   subjugated_count op, value    — 굴복시킨 강호 세력 수
+##   generation op, value          — 현재 세대 (1세대부터)
+##   (world_sect의 field에는 subjugated(0/1)도 쓸 수 있다)
 ##   op: ">=" "<=" ">" "<" "==" "!="
 ##
 ## ■ 효과 (type별 필드)
@@ -56,6 +59,8 @@ const SECT_FIELDS: PackedStringArray = [
 	"library_level", "training_ground_level", "treasury_level",
 ]
 const WORLD_SECT_FIELDS: PackedStringArray = ["attitude", "reputation", "disciple_count"]
+## 조건에서만 쓰는 세력 필드 (효과로는 바꿀 수 없음)
+const WORLD_SECT_CONDITION_FIELDS: PackedStringArray = ["subjugated"]
 const OPERATORS: PackedStringArray = [">=", "<=", ">", "<", "==", "!="]
 const SEASON_NAMES: PackedStringArray = ["봄", "여름", "가을", "겨울"]
 
@@ -68,6 +73,7 @@ static var world_sects: Array[SectData] = []
 static var current_year: int = 1
 ## 연차 × 4 + 계절 순번
 static var current_turn: int = 0
+static var current_generation: int = 1
 ## 거쳐 온 역할 이름 (CharacterData.Role 키)
 static var role_history: Array[String] = []
 ## 플래그 이름 → 켜진 계절(current_turn)
@@ -199,11 +205,7 @@ static func validate_event_dict(data: Dictionary) -> PackedStringArray:
 			errors.append("'%s'가 비어 있음" % key)
 	if data.has("weight") and not ((data["weight"] is float or data["weight"] is int) and data["weight"] > 0):
 		errors.append("weight는 0보다 큰 숫자여야 함")
-	if not data.get("conditions", []) is Array:
-		errors.append("conditions는 배열이어야 함")
-	else:
-		for condition in data.get("conditions", []):
-			_validate_condition(condition, errors)
+	validate_conditions(data.get("conditions", []), errors)
 	var choices: Variant = data.get("choices")
 	if not choices is Array or (choices as Array).is_empty():
 		errors.append("choices가 비어 있음")
@@ -254,7 +256,7 @@ static func _validate_condition(condition: Variant, errors: PackedStringArray) -
 			if not c.get("flag") is String:
 				errors.append("flag 조건에 flag 필요")
 		"world_sect":
-			_validate_world_sect(c, errors)
+			_validate_world_sect(c, errors, true)
 			_validate_compare(c, errors)
 		"year":
 			_validate_compare(c, errors)
@@ -272,7 +274,7 @@ static func _validate_condition(condition: Variant, errors: PackedStringArray) -
 		"scenario":
 			if not c.get("in") is Array or (c.get("in") as Array).is_empty():
 				errors.append("scenario 조건에 in 목록 필요")
-		"years_left":
+		"years_left", "subjugated_count", "generation":
 			_validate_compare(c, errors)
 		_:
 			errors.append("알 수 없는 조건 type: %s" % c.get("type"))
@@ -335,11 +337,14 @@ static func _validate_bond_type(entry: Dictionary, errors: PackedStringArray) ->
 		errors.append("알 수 없는 관계 유형: %s" % entry.get("bond_type"))
 
 
-static func _validate_world_sect(entry: Dictionary, errors: PackedStringArray) -> void:
+static func _validate_world_sect(entry: Dictionary, errors: PackedStringArray, is_condition: bool = false) -> void:
 	var sect_id: String = str(entry.get("sect", ""))
 	if not SectRegistry.has_sect(sect_id) or SectRegistry.get_sect_info(sect_id).get("is_player_sect", false):
 		errors.append("알 수 없는 강호 세력: %s" % sect_id)
-	if not entry.get("field") in WORLD_SECT_FIELDS:
+	var allowed: bool = entry.get("field") in WORLD_SECT_FIELDS
+	if is_condition:
+		allowed = allowed or entry.get("field") in WORLD_SECT_CONDITION_FIELDS
+	if not allowed:
 		errors.append("알 수 없는 세력 필드: %s" % entry.get("field"))
 
 
@@ -372,10 +377,31 @@ static func _conditions_met(
 	season: String,
 	story_flags: Dictionary
 ) -> bool:
-	for c in event.conditions:
+	return conditions_met(event.conditions, character, sect, relationships, season, story_flags)
+
+
+## 조건 목록을 모두 만족하는지. 기연 외에 엔딩 판정에서도 쓴다.
+static func conditions_met(
+	conditions: Array,
+	character: CharacterData,
+	sect: SectData,
+	relationships: Array[RelationshipData],
+	season: String,
+	story_flags: Dictionary
+) -> bool:
+	for c in conditions:
 		if not _condition_met(c, character, sect, relationships, season, story_flags):
 			return false
 	return true
+
+
+## 조건 목록을 검사해 오류를 errors에 더한다. 기연 외에 엔딩 정의 검증에서도 쓴다.
+static func validate_conditions(conditions: Variant, errors: PackedStringArray) -> void:
+	if not conditions is Array:
+		errors.append("conditions는 배열이어야 함")
+		return
+	for condition in conditions:
+		_validate_condition(condition, errors)
 
 
 static func _condition_met(
@@ -407,7 +433,7 @@ static func _condition_met(
 			return story_flags.get(c["flag"], false) == c.get("value", true)
 		"world_sect":
 			var world_sect: SectData = _find_world_sect(c["sect"])
-			return world_sect != null and _compare(world_sect.get(c["field"]), c["op"], c["value"])
+			return world_sect != null and _compare(int(world_sect.get(c["field"])), c["op"], c["value"])
 		"year":
 			return _compare(current_year, c["op"], c["value"])
 		"turns_since_flag":
@@ -423,6 +449,14 @@ static func _condition_met(
 			return ScenarioManager.current_id in c["in"]
 		"years_left":
 			return _compare(ScenarioRules.years_left(current_year), c["op"], c["value"])
+		"subjugated_count":
+			var count: int = 0
+			for world_sect in world_sects:
+				if world_sect.subjugated:
+					count += 1
+			return _compare(count, c["op"], c["value"])
+		"generation":
+			return _compare(current_generation, c["op"], c["value"])
 	return false
 
 

@@ -1,0 +1,31 @@
+{
+  "id": "master_successor",
+  "title": "청운의 계승자",
+  "description": "막내 제자로 들어와 스승의 비전을 이어받고, 마침내 청운검파의 문주가 되었습니다.\n청운검선은 흐뭇한 미소로 문파를 맡겼습니다.",
+  "priority": 65,
+  "tone": "victory",
+  "final": false,
+  "conditions": [
+    {
+      "type": "role",
+      "in": [
+        "LEADER"
+      ]
+    },
+    {
+      "type": "role_history",
+      "role": "YOUNG_DISCIPLE"
+    },
+    {
+      "type": "flag",
+      "flag": "inherited_master_art",
+      "value": true
+    },
+    {
+      "type": "bond",
+      "target": "npc_master",
+      "op": ">=",
+      "value": 80
+    }
+  ]
+}

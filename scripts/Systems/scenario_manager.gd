@@ -1,7 +1,7 @@
 class_name ScenarioManager
 extends RefCounted
 
-## 시나리오: data/scenarios/<id>/scenario.json 과 같은 폴더의 전용 데이터(events/, npcs/, sects/).
+## 시나리오: data/scenarios/<id>/scenario.json 과 같은 폴더의 전용 데이터(events/, endings/, npcs/, sects/).
 ##
 ## scenario.json 필드
 ##   id, title, description, era_name(연호 표시, 예: "천하대란"), order(목록 순서)
@@ -10,8 +10,7 @@ extends RefCounted
 ##   sects         등장하는 강호 세력 id 목록. 생략하면 플레이어 문파를 뺀 전부
 ##   sect_overrides { 문파 id: { 수치 필드: 값 } } — 플레이어 문파도 가능
 ##   parameters    ScenarioRules 파라미터 덮어쓰기
-##   victory_endings 이 시나리오에서 승리로 치는 엔딩 id 목록
-##   endings       { 엔딩 id: { title, description } } — 이 시나리오 전용 엔딩
+##   victory_endings 이 시나리오에서 승리로 치는 엔딩 id 목록 (공용 엔딩 또는 endings/ 폴더의 전용 엔딩)
 
 const SCENARIO_DIR := "res://data/scenarios/"
 const DEFAULT_ID := "cheonha"
@@ -60,9 +59,9 @@ static func activate(scenario_id: String, overrides: Dictionary = {}) -> PackedS
 	current = _scenarios.get(scenario_id, {})
 	var dir: String = get_dir(scenario_id)
 
-	EndingManager.register_scenario_endings(current.get("endings", {}))
 	NpcRoster.reload_data(NpcRoster.NPC_DIR, [dir.path_join("npcs")])
 	SectRegistry.reload_data(SectRegistry.SECT_DIR, [dir.path_join("sects")])
+	EndingManager.reload_data(EndingManager.ENDING_DIR, [dir.path_join("endings")])
 	EventManager.reload_definitions(EventManager.EVENTS_DIR, [dir.path_join("events")])
 
 	ScenarioRules.reset()
@@ -134,13 +133,11 @@ static func validate_scenario_dict(data: Dictionary) -> PackedStringArray:
 	for role_id in data.get("start_roles", []):
 		if not role_ids.has(role_id):
 			errors.append("알 수 없는 시작 역할: %s" % role_id)
-	var endings: Dictionary = data.get("endings", {})
-	for ending_id in endings:
-		var ending: Variant = endings[ending_id]
-		if not ending is Dictionary or not ending.get("title") is String:
-			errors.append("엔딩 %s에 title 필요" % ending_id)
+	if data.has("endings"):
+		errors.append("전용 엔딩은 scenario.json이 아니라 endings/ 폴더의 JSON으로 정의함")
+	var own_endings: Array = _read_ids(SCENARIO_DIR.path_join(str(data.get("id", ""))).path_join("endings"))
 	for ending_id in data.get("victory_endings", []):
-		if not (EndingManager.ENDINGS.has(ending_id) or endings.has(ending_id)):
+		if not (_is_common_ending(ending_id) or own_endings.has(ending_id)):
 			errors.append("알 수 없는 승리 엔딩: %s" % ending_id)
 	# 문파 id는 공용 데이터 기준으로 확인한다. (시나리오 전용 문파는 활성화 후 확인)
 	var scenario_sects_dir: String = SCENARIO_DIR.path_join(str(data.get("id", ""))).path_join("sects")
@@ -153,6 +150,23 @@ static func validate_scenario_dict(data: Dictionary) -> PackedStringArray:
 			if not SectRegistry.has_sect(sect_id):
 				errors.append("알 수 없는 문파: %s" % sect_id)
 	return errors
+
+
+## 공용 엔딩 폴더(data/endings/)에 있는 id인지. 현재 켜진 시나리오와 관계없이 확인한다.
+static func _is_common_ending(ending_id: String) -> bool:
+	return _read_ids(EndingManager.ENDING_DIR).has(ending_id)
+
+
+static func _read_ids(dir_path: String) -> Array:
+	var ids: Array = []
+	if not DirAccess.dir_exists_absolute(dir_path):
+		return ids
+	for file_name in DirAccess.get_files_at(dir_path):
+		if file_name.ends_with(".json"):
+			var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(dir_path.path_join(file_name)))
+			if data is Dictionary and data.has("id"):
+				ids.append(data["id"])
+	return ids
 
 
 static func reload_data() -> void:

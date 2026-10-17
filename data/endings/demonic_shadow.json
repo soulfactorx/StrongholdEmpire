@@ -1,0 +1,27 @@
+{
+  "id": "demonic_shadow",
+  "title": "마교의 그림자",
+  "description": "천마신교와의 밀약은 문파를 지켰지만, 그 대가로 정파의 이름을 잃었습니다.\n청운의 깃발 뒤에는 검은 그림자가 드리워 있습니다.",
+  "priority": 75,
+  "tone": "tragedy",
+  "final": false,
+  "conditions": [
+    {
+      "type": "flag",
+      "flag": "cheonma_pact",
+      "value": true
+    },
+    {
+      "type": "character",
+      "field": "morality",
+      "op": "<=",
+      "value": 30
+    },
+    {
+      "type": "sect",
+      "field": "reputation",
+      "op": ">=",
+      "value": 60
+    }
+  ]
+}

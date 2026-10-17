@@ -1,0 +1,32 @@
+{
+  "id": "sworn_legend",
+  "title": "쌍검의 전설",
+  "description": "한때의 라이벌 남궁휘와 의형제가 되어 강호를 누볐습니다.\n두 자루 검이 나란히 선 곳에 불의는 설 자리가 없었습니다.",
+  "priority": 60,
+  "tone": "victory",
+  "final": false,
+  "conditions": [
+    {
+      "type": "flag",
+      "flag": "sworn_with_rival",
+      "value": true
+    },
+    {
+      "type": "relationship_type",
+      "target": "npc_rival",
+      "bond_type": "BLOOD_OATH"
+    },
+    {
+      "type": "bond",
+      "target": "npc_rival",
+      "op": ">=",
+      "value": 80
+    },
+    {
+      "type": "sect",
+      "field": "reputation",
+      "op": ">=",
+      "value": 80
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "id": "cheonma_repelled",
+  "title": "마교를 물리치다",
+  "description": "정파 연합의 선봉에서 천마신교를 몰아냈습니다.\n백 년이 지나도 강호는 이 싸움을 노래할 것입니다.",
+  "tone": "victory",
+  "auto": false,
+  "conditions": []
+}

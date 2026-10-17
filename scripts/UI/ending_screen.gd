@@ -45,9 +45,16 @@ func _display_ending() -> void:
 		var ending: Dictionary = EndingManager.get_ending(ending_id)
 		title_label.text = "엔딩: %s%s" % [ending["title"], " (시나리오 승리)" if victory else ""]
 		desc_label.text = ending.get("description", "")
+		if GameManager.story_flags.get("life_ended", false):
+			desc_label.text += "\n\n%s의 생이 끝났습니다. [세대 전승]으로 후계자를 정해 이야기를 이어 가세요." % (
+				GameManager.player_character.display_name
+			)
+	_apply_tone(EndingManager.get_ending(ending_id).get("tone", "neutral") if not ending_id.is_empty() else "neutral")
 
 	var lines: PackedStringArray = []
 	if game_over or not ending_id.is_empty():
+		lines.append_array(GameManager.get_run_summary())
+		lines.append("")
 		var evaluation: Dictionary = GameManager.get_evaluation()
 		lines.append("평가: %s (%d점)" % [evaluation["grade"], evaluation["score"]])
 		lines.append("  " + "\n  ".join(evaluation["lines"]))
@@ -58,6 +65,16 @@ func _display_ending() -> void:
 		for legacy in GameManager.legacy_records:
 			lines.append("  " + legacy.summary)
 	legacy_label.text = "\n".join(lines)
+
+
+## 엔딩 분위기에 맞춰 제목 색을 바꾼다.
+func _apply_tone(tone: String) -> void:
+	var colors: Dictionary = {
+		"victory": _UiTheme.COLORS["accent_gold"],
+		"tragedy": _UiTheme.COLORS["accent_red"],
+		"neutral": _UiTheme.COLORS["text_primary"],
+	}
+	title_label.add_theme_color_override("font_color", colors.get(tone, colors["neutral"]))
 
 
 func _on_succession_pressed() -> void:

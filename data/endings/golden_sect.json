@@ -1,0 +1,22 @@
+{
+  "id": "golden_sect",
+  "title": "금권 강호",
+  "description": "검보다 금이 강호를 움직였습니다.\n청운검파의 금고는 어느 세가보다도 깊어졌습니다.",
+  "priority": 20,
+  "tone": "neutral",
+  "final": false,
+  "conditions": [
+    {
+      "type": "sect",
+      "field": "gold",
+      "op": ">=",
+      "value": 3000
+    },
+    {
+      "type": "sect",
+      "field": "treasury_level",
+      "op": ">=",
+      "value": 5
+    }
+  ]
+}

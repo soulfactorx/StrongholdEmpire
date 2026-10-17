@@ -5,6 +5,7 @@ extends SceneTree
 
 const _SaveManager = preload("res://scripts/Systems/save_manager.gd")
 const _Balance = preload("res://scripts/Systems/game_balance.gd")
+const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
 
 const MAIN_SCENES: Array[String] = [
 	"res://scenes/main.tscn",
@@ -107,6 +108,12 @@ func _run_runtime_tests() -> void:
 	_check(_completed.has("_test_scenario_flow"), "_test_scenario_flow 끝까지 실행")
 	await _test_new_game_screen_scenarios()
 	_check(_completed.has("_test_new_game_screen_scenarios"), "_test_new_game_screen_scenarios 끝까지 실행")
+	_test_ending_data()
+	_check(_completed.has("_test_ending_data"), "_test_ending_data 끝까지 실행")
+	_test_every_ending_reachable()
+	_check(_completed.has("_test_every_ending_reachable"), "_test_every_ending_reachable 끝까지 실행")
+	await _test_final_ending_flow()
+	_check(_completed.has("_test_final_ending_flow"), "_test_final_ending_flow 끝까지 실행")
 
 	print("스모크 테스트: %d개 검사, %d개 실패" % [_checks, _failures])
 	quit(1 if _failures > 0 else 0)
@@ -1650,3 +1657,201 @@ func _test_new_game_screen_scenarios() -> void:
 	_check(bus.game_over.get_connections().is_empty() and bus.turn_advanced.get_connections().is_empty(), "경영 화면을 떠나면 신호 연결 해제")
 	root.get_node("GameManager").start_new_game("정리", "young_disciple")
 	_completed["_test_new_game_screen_scenarios"] = true
+
+
+func _test_ending_data() -> void:
+	ScenarioManager.activate(ScenarioManager.DEFAULT_ID)
+	var endings: Array[Dictionary] = EndingManager.get_all_endings()
+	var file_count: int = _count_json(EndingManager.ENDING_DIR)
+	_check(endings.size() == file_count and file_count >= 10, "공용 엔딩 %d개 모두 검증 통과" % file_count)
+	var priorities: Dictionary = {}
+	var duplicated: bool = false
+	for ending in endings:
+		if ending.get("auto", true):
+			duplicated = duplicated or priorities.has(int(ending["priority"]))
+			priorities[int(ending["priority"])] = true
+	_check(not duplicated, "자동 엔딩의 우선순위가 모두 다름")
+	_check(EndingManager.get_all_endings()[0]["id"] == "tragic_execution", "우선순위 높은 순 정렬")
+
+	var base: Dictionary = {
+		"id": "x", "title": "x", "description": "x", "priority": 1,
+		"conditions": [{"type": "flag", "flag": "f"}],
+	}
+	_check(EndingManager.validate_ending_dict(base).is_empty(), "엔딩 정의 정상 통과")
+	var bad_cases: Dictionary = {
+		"priority 없음": {"priority": null},
+		"조건 없는 자동 엔딩": {"conditions": []},
+		"잘못된 tone": {"tone": "happy"},
+		"게임오버 id와 겹침": {"id": "era_end"},
+		"잘못된 조건": {"conditions": [{"type": "weather"}]},
+		"final 형식": {"final": "yes"},
+	}
+	for label in bad_cases:
+		var data: Dictionary = base.duplicate(true)
+		data.merge(bad_cases[label], true)
+		if data["priority"] == null:
+			data.erase("priority")
+		_check(not EndingManager.validate_ending_dict(data).is_empty(), "엔딩 오류 검출: %s" % label)
+	var manual: Dictionary = {"id": "m", "title": "m", "description": "m", "auto": false, "conditions": []}
+	_check(EndingManager.validate_ending_dict(manual).is_empty(), "수동 엔딩은 priority·조건 없이도 통과")
+
+	# 우선순위가 겹치면 뒤의 파일을 건너뛴다
+	var dir_path: String = "user://_test_endings"
+	DirAccess.make_dir_recursive_absolute(dir_path)
+	for id in ["a_first", "b_second"]:
+		var file := FileAccess.open(dir_path.path_join(id + ".json"), FileAccess.WRITE)
+		var data: Dictionary = base.duplicate(true)
+		data["id"] = id
+		file.store_string(JSON.stringify(data))
+		file.close()
+	EndingManager.reload_data(dir_path)
+	_check(EndingManager.has_ending("a_first") and not EndingManager.has_ending("b_second"), "겹치는 우선순위 엔딩 거부")
+	for id in ["a_first", "b_second"]:
+		DirAccess.remove_absolute(dir_path.path_join(id + ".json"))
+	DirAccess.remove_absolute(dir_path)
+
+	# 시나리오 전용 엔딩은 해당 시나리오에서만
+	ScenarioManager.activate("heukpung_winter")
+	_check(EndingManager.has_ending("winter_defended") and EndingManager.has_ending("unify_righteous"), "시나리오 전용 + 공용 엔딩")
+	_check(not EndingManager.get_ending("winter_defended").get("auto", true), "전용 엔딩은 기연으로만 도달 (auto false)")
+	ScenarioManager.activate(ScenarioManager.DEFAULT_ID)
+	_check(not EndingManager.has_ending("winter_defended"), "다른 시나리오에서는 전용 엔딩 없음")
+	_check(
+		not ScenarioManager.validate_scenario_dict({"id": "x", "title": "x", "description": "x", "endings": {}}).is_empty(),
+		"scenario.json의 endings 필드는 폴더로 옮기라는 오류"
+	)
+	_completed["_test_ending_data"] = true
+
+
+## 엔딩마다 그 엔딩만 만족하도록 상태를 만들어, 판정이 정확히 그 엔딩을 고르는지 확인한다.
+func _test_every_ending_reachable() -> void:
+	ScenarioManager.activate(ScenarioManager.DEFAULT_ID)
+	var saved_world: Array[SectData] = EventManager.world_sects
+	var saved_history: Array[String] = EventManager.role_history
+	var saved_generation: int = EventManager.current_generation
+
+	var art := func(id: String) -> MartialArtData:
+		var a := MartialArtData.new()
+		a.id = id
+		return a
+	var setups: Dictionary = {
+		"tragic_execution": func(st: Dictionary) -> void: st["flags"]["spy_exposed"] = true,
+		"blood_soaked_path": func(st: Dictionary) -> void:
+			EventManager.role_history = ["SPY", "ASSASSIN"] as Array[String]
+			st["character"].morality = 5,
+		"hermit_master": func(st: Dictionary) -> void:
+			st["character"].role = CharacterData.Role.WANDERER
+			st["character"].level = 12
+			for i in 4:
+				st["character"].learn_martial_art(art.call("a%d" % i)),
+		"demonic_shadow": func(st: Dictionary) -> void:
+			st["flags"]["cheonma_pact"] = true
+			st["character"].morality = 25
+			st["sect"].reputation = 60,
+		"unify_righteous": func(st: Dictionary) -> void:
+			st["character"].role = CharacterData.Role.LEADER
+			st["character"].morality = 70
+			st["sect"].reputation = 100
+			EventManager.world_sects[0].subjugated = true
+			EventManager.world_sects[1].subjugated = true,
+		"master_successor": func(st: Dictionary) -> void:
+			st["character"].role = CharacterData.Role.LEADER
+			st["flags"]["inherited_master_art"] = true
+			RelationshipManager.get_bond_with(st["relationships"], "npc_master").bond_strength = 85,
+		"sworn_legend": func(st: Dictionary) -> void:
+			st["flags"]["sworn_with_rival"] = true
+			var rival: RelationshipData = RelationshipManager.get_bond_with(st["relationships"], "npc_rival")
+			rival.bond_type = RelationshipData.BondType.BLOOD_OATH
+			rival.bond_strength = 85
+			st["sect"].reputation = 85,
+		"shadow_empire": func(st: Dictionary) -> void:
+			st["character"].role = CharacterData.Role.SPY
+			st["character"].morality = 30
+			st["sect"].reputation = 70
+			st["flags"]["assassin_path"] = true,
+		"new_sect_founder": func(st: Dictionary) -> void:
+			st["character"].role = CharacterData.Role.MANAGER
+			st["flags"]["spy_mission_complete"] = true
+			st["sect"].reputation = 85,
+		"wanderer_legend": func(st: Dictionary) -> void:
+			st["character"].role = CharacterData.Role.WANDERER
+			st["character"].level = 6
+			st["character"].learn_martial_art(art.call("a"))
+			st["character"].learn_martial_art(art.call("b")),
+		"three_generations": func(st: Dictionary) -> void:
+			EventManager.current_generation = 3
+			st["sect"].reputation = 90,
+		"golden_sect": func(st: Dictionary) -> void:
+			st["sect"].gold = 3000
+			st["sect"].treasury_level = 5,
+	}
+	var auto_ids: Array = EndingManager.get_all_endings().filter(
+		func(e: Dictionary) -> bool: return e.get("auto", true)
+	).map(func(e: Dictionary) -> String: return e["id"])
+	_check(setups.keys().all(func(id: String) -> bool: return auto_ids.has(id)) and setups.size() == auto_ids.size(), "모든 자동 엔딩에 도달 시험 상태가 있음")
+
+	for ending_id in setups:
+		var st: Dictionary = _make_combat_state()
+		EventManager.world_sects = SectRegistry.create_rival_sects()
+		EventManager.role_history = ["YOUNG_DISCIPLE"] as Array[String]
+		EventManager.current_generation = 1
+		setups[ending_id].call(st)
+		var result: String = EndingManager.check_endings(st["character"], st["sect"], st["flags"], st["relationships"])
+		_check(result == ending_id, "엔딩 도달: %s (판정 %s)" % [ending_id, result])
+
+	var plain: Dictionary = _make_combat_state()
+	EventManager.world_sects = SectRegistry.create_rival_sects()
+	EventManager.role_history = ["YOUNG_DISCIPLE"] as Array[String]
+	EventManager.current_generation = 1
+	_check(EndingManager.check_endings(plain["character"], plain["sect"], plain["flags"], plain["relationships"]).is_empty(), "시작 상태에서는 엔딩 없음")
+
+	EventManager.world_sects = saved_world
+	EventManager.role_history = saved_history
+	EventManager.current_generation = saved_generation
+	_completed["_test_every_ending_reachable"] = true
+
+
+func _test_final_ending_flow() -> void:
+	var gm: Node = root.get_node("GameManager")
+
+	# 전승할 수 있는 시나리오: 생이 끝나면 시간이 멈추고, 나이와 관계없이 후계자로 이어 간다
+	gm.start_new_game("처형", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
+	gm.apply_role_transition(CharacterData.Role.SPY)
+	EventManager.set_flag(gm.story_flags, "spy_exposed")
+	gm._check_end_states()
+	_check(gm.current_ending_id == "tragic_execution" and gm.story_flags.get("life_ended", false), "생을 마치는 엔딩: 생 종료 표시")
+	_check(not gm.is_game_over(), "전승 가능하면 게임오버가 아님")
+	var turn: int = gm._get_turn_index()
+	gm.advance_turn()
+	_check(gm._get_turn_index() == turn, "생이 끝나면 계절이 흐르지 않음")
+	var summary: PackedStringArray = gm.get_run_summary()
+	_check(summary[1] == "역할 변천: 막내 제자 → 스파이", "요약: 역할 변천 %s" % summary[1])
+	_check(summary[2] == "굴복시킨 세력: 없음" and summary[4].begins_with("주요 인연: 청운검선"), "요약: 세력·인연")
+
+	SceneRouter.goto(self, SceneRouter.ENDING)
+	await process_frame
+	await process_frame
+	var screen: Node = current_scene
+	_check(
+		screen.legacy_label.text.contains("역할 변천") and screen.legacy_label.text.contains("평가:")
+		and screen.desc_label.text.contains("후계자"),
+		"엔딩 화면: 요약·평가·후계자 안내"
+	)
+	_check(screen.title_label.get_theme_color("font_color") == _UiTheme.COLORS["accent_red"], "비극 엔딩은 붉은 제목")
+
+	var result: Dictionary = gm.start_legacy_succession()
+	_check(result["success"] and gm.generation == 2 and not gm.story_flags.get("life_ended", false), "나이와 관계없이 후계자로 전승")
+	_check(EventManager.current_generation == 2, "세대 정보 동기화")
+	gm.advance_turn()
+	_check(gm._get_turn_index() == turn + 1, "후계자로 시간이 다시 흐름")
+
+	# 전승할 수 없는 시나리오: 이야기가 끝난다
+	gm.start_new_game("겨울 처형", "young_disciple", "heukpung_winter", {"event_rate": 0.0})
+	EventManager.set_flag(gm.story_flags, "spy_exposed")
+	gm._check_end_states()
+	_check(gm.game_over_id == "story_end" and gm.current_ending_id == "tragic_execution", "전승 불가 시나리오: 이야기의 끝")
+
+	gm.start_new_game("정리", "young_disciple")
+	SceneRouter.goto(self, SceneRouter.MAIN_MENU)
+	await process_frame
+	_completed["_test_final_ending_flow"] = true

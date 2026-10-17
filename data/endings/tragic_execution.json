@@ -1,0 +1,15 @@
+{
+  "id": "tragic_execution",
+  "title": "비극적 처형",
+  "description": "스파이 신분이 드러나 적 문파에 체포되었습니다.\n이중의 삶은 형장의 이슬로 끝났습니다.",
+  "priority": 100,
+  "tone": "tragedy",
+  "final": true,
+  "conditions": [
+    {
+      "type": "flag",
+      "flag": "spy_exposed",
+      "value": true
+    }
+  ]
+}

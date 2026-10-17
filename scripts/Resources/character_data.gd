@@ -40,6 +40,10 @@ enum Role {
 
 
 func get_role_name() -> String:
+	return get_role_display_name(role)
+
+
+static func get_role_display_name(role: Role) -> String:
 	match role:
 		Role.LEADER:
 			return "문주"

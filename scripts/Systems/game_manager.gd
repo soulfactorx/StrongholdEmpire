@@ -89,6 +89,7 @@ func _sync_event_context() -> void:
 	EventManager.world_sects = world_sects
 	EventManager.current_year = current_year
 	EventManager.current_turn = _get_turn_index()
+	EventManager.current_generation = generation
 	EventManager.role_history = role_history
 	EventManager.flag_turns = flag_turns
 
@@ -124,6 +125,10 @@ func get_date_text() -> String:
 
 func advance_turn() -> void:
 	if is_game_over():
+		return
+	# 생을 마치는 엔딩에 도달했으면 후계자를 정하기 전까지 시간이 흐르지 않는다.
+	if story_flags.get("life_ended", false):
+		EventBus.action_message.emit("이번 생의 이야기가 끝났습니다. [엔딩 / 레거시]에서 후계자를 정하세요.")
 		return
 	# 제한 연수의 마지막 겨울이 끝나면 시대가 끝난다.
 	if (
@@ -244,7 +249,7 @@ func _check_ending() -> void:
 	if not current_ending_id.is_empty():
 		return
 	var ending: String = EndingManager.check_endings(
-		player_character, player_sect, story_flags
+		player_character, player_sect, story_flags, player_relationships, get_current_season()
 	)
 	if ending.is_empty():
 		return
@@ -257,6 +262,47 @@ func _reach_ending(ending: String) -> void:
 	EventBus.ending_reached.emit(ending)
 	if ScenarioRules.end_on_victory() and ScenarioManager.is_victory_ending(ending):
 		_force_end("scenario_complete")
+	elif EndingManager.is_final(ending):
+		# 생을 마치는 엔딩: 전승할 수 있으면 후계자를 기다리고, 없으면 이야기가 끝난다.
+		if can_continue_lineage():
+			EventManager.set_flag(story_flags, "life_ended")
+		else:
+			_force_end("story_end")
+
+
+## 시나리오 규칙상 다음 세대로 이어 갈 수 있는지 (나이·레벨 조건은 따로 본다)
+func can_continue_lineage() -> bool:
+	if not ScenarioRules.legacy_enabled():
+		return false
+	var max_generations: int = ScenarioRules.max_generations()
+	return max_generations <= 0 or generation < max_generations
+
+
+## 엔딩 화면에 보여 줄 이번 판의 요약
+func get_run_summary() -> PackedStringArray:
+	var lines: PackedStringArray = []
+	lines.append("시나리오: 「%s」 %s 1년 ~ %s" % [
+		ScenarioManager.current.get("title", ""), ScenarioManager.get_era_name(), get_date_text(),
+	])
+	var role_names: PackedStringArray = []
+	for role_key in role_history:
+		role_names.append(CharacterData.get_role_display_name(CharacterData.Role.get(role_key)))
+	lines.append("역할 변천: %s" % " → ".join(role_names))
+	var subjugated: PackedStringArray = []
+	for world_sect in world_sects:
+		if world_sect.subjugated:
+			subjugated.append(world_sect.sect_name)
+	lines.append("굴복시킨 세력: %s" % (", ".join(subjugated) if not subjugated.is_empty() else "없음"))
+	lines.append("무공: %s" % player_character.get_martial_arts_text())
+	var bonds: Array[RelationshipData] = player_relationships.duplicate()
+	bonds.sort_custom(func(a: RelationshipData, b: RelationshipData) -> bool:
+		return a.bond_strength > b.bond_strength
+	)
+	var bond_texts: PackedStringArray = []
+	for rel in bonds.slice(0, 3):
+		bond_texts.append("%s(%s %d)" % [rel.target_name, rel.get_bond_name(), rel.bond_strength])
+	lines.append("주요 인연: %s" % (", ".join(bond_texts) if not bond_texts.is_empty() else "없음"))
+	return lines
 
 
 ## 그 판의 평가 (엔딩 화면용)
@@ -321,7 +367,8 @@ func start_legacy_succession() -> Dictionary:
 	var max_generations: int = ScenarioRules.max_generations()
 	if max_generations > 0 and generation >= max_generations:
 		return {"success": false, "message": "이 시나리오의 마지막 세대입니다. (최대 %d세대)" % max_generations}
-	if not LegacyManager.can_retire(player_character):
+	# 생을 마치는 엔딩에 도달했다면 나이·레벨과 관계없이 전승한다.
+	if not story_flags.get("life_ended", false) and not LegacyManager.can_retire(player_character):
 		return {
 			"success": false,
 			"message": "아직 전승할 수 없습니다. (55세 이상 또는 레벨 10)",
@@ -345,6 +392,7 @@ func start_legacy_succession() -> Dictionary:
 	flag_turns.clear()
 	role_history.clear()
 	_record_role(player_character.role)
+	_sync_event_context()
 
 	EventBus.legacy_succession.emit(legacy)
 	EventBus.character_updated.emit(player_character)
