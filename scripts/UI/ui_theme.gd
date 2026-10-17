@@ -47,8 +47,8 @@ static func apply_root_theme(theme: Theme) -> void:
 		theme.set_color("font_color", type, COLORS["text_primary"])
 		theme.set_color("font_focus_color", type, COLORS["text_primary"])
 		theme.set_color("font_hover_color", type, COLORS["accent_gold"])
-		theme.set_color("font_pressed_color", type, COLORS["text_on_ink"])
-		theme.set_color("font_hover_pressed_color", type, COLORS["text_on_ink"])
+		theme.set_color("font_pressed_color", type, COLORS["text_primary"])
+		theme.set_color("font_hover_pressed_color", type, COLORS["text_primary"])
 		theme.set_color("font_disabled_color", type, COLORS["text_muted"])
 		for state in ["normal", "hover", "pressed", "disabled", "focus"]:
 			theme.set_stylebox(state, type, _button_style(state))
@@ -141,7 +141,7 @@ static func _set_content_margins(style: StyleBox, horizontal: float, vertical: f
 	style.content_margin_bottom = vertical
 
 
-## 버튼 상태별 모양: 한지 바탕에 먹 테두리, 가리키면 황토 테, 누르면 주홍.
+## 버튼 상태별 모양: 한지 바탕에 먹 테두리. 누른 상태도 밝은 한지라 글씨는 늘 먹색이다.
 static func _button_style(state: String) -> StyleBox:
 	if state == "focus":
 		var focus := StyleBoxFlat.new()
@@ -155,7 +155,7 @@ static func _button_style(state: String) -> StyleBox:
 		var flat := StyleBoxFlat.new()
 		flat.bg_color = {
 			"normal": COLORS["bg_panel"], "hover": Color("#f5e2b8"),
-			"pressed": COLORS["accent_red"], "disabled": Color("#d6cdbb"),
+			"pressed": Color("#d9cdb4"), "disabled": Color("#d6cdbb"),
 		}[state]
 		flat.border_color = COLORS["text_muted"] if state == "disabled" else COLORS["text_primary"]
 		flat.set_border_width_all(1)
@@ -177,8 +177,8 @@ static func style_button(button: Button) -> void:
 	# 키보드·게임패드 포커스가 있을 때도 먹 글씨로 (기본값은 흰 글씨라 한지 바탕에서 안 보인다)
 	button.add_theme_color_override("font_focus_color", COLORS["text_primary"])
 	button.add_theme_color_override("font_hover_color", COLORS["accent_gold"])
-	button.add_theme_color_override("font_pressed_color", COLORS["text_on_ink"])
-	button.add_theme_color_override("font_hover_pressed_color", COLORS["text_on_ink"])
+	button.add_theme_color_override("font_pressed_color", COLORS["text_primary"])
+	button.add_theme_color_override("font_hover_pressed_color", COLORS["text_primary"])
 
 
 static func style_label_title(label: Label, size: int = 24) -> void:

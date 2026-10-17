@@ -289,6 +289,16 @@ func _make_token(unit: CombatUnit, controlled: bool) -> Control:
 	holder.position = Vector2(unit.grid_pos.x * GRID_SIZE + inset, unit.grid_pos.y * GRID_SIZE + inset)
 	holder.size = Vector2(TOKEN_SIZE, TOKEN_SIZE)
 	var kind: String = "player" if unit.is_player else ("ally" if unit.is_ally else "enemy")
+	# 장기말 그림은 가운데가 비어 있으므로 한지색 원을 깔아 글자가 지형 위에서도 보이게 한다.
+	var face := Panel.new()
+	var face_style := StyleBoxFlat.new()
+	face_style.bg_color = Color(_UiTheme.COLORS["bg_panel"], 0.92)
+	face_style.set_corner_radius_all(int(TOKEN_SIZE * 0.4))
+	face.add_theme_stylebox_override("panel", face_style)
+	face.position = holder.size * 0.1
+	face.size = holder.size * 0.8
+	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_child(face)
 	var body := TextureRect.new()
 	body.texture = ArtAssets.token(kind)
 	body.expand_mode = TextureRect.EXPAND_IGNORE_SIZE

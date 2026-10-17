@@ -7,6 +7,7 @@ const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
 @onready var choice_box: VBoxContainer = %ChoiceBox
 ## 기연에 얽힌 인물의 초상화 (없으면 숨긴다)
 var portrait: TextureRect
+var portrait_name: Label
 ## 긴 설명(길잡이 등)은 끌어서 스크롤한다. 높이는 내용에 맞추되 화면의 이 비율을 넘지 않는다.
 var desc_scroll: ScrollContainer
 const DESC_MAX_HEIGHT_RATIO := 0.5
@@ -27,7 +28,15 @@ func _ensure_portrait() -> void:
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	portrait.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	row.add_child(portrait)
+	# 초상화 그림에는 이름이 없으므로 아래에 이름을 단다.
+	var portrait_box := VBoxContainer.new()
+	portrait_box.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	portrait_box.add_child(portrait)
+	portrait_name = Label.new()
+	portrait_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	UiTheme.set_font_size(portrait_name, 16)
+	portrait_box.add_child(portrait_name)
+	row.add_child(portrait_box)
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	# reparent는 owner를 지켜 %이름 찾기가 계속 된다.
 	content.reparent(row, false)
@@ -47,6 +56,8 @@ func show_event(event_data: Dictionary) -> void:
 	var npc_id: String = str(event_data.get("npc", ""))
 	portrait.texture = ArtAssets.portrait(npc_id) if not npc_id.is_empty() else null
 	portrait.visible = portrait.texture != null
+	portrait_name.text = NpcRoster.get_display_name(npc_id) if portrait.visible else ""
+	portrait_name.visible = portrait.visible
 	title_label.text = event_data.get("title", "기연")
 	desc_label.text = event_data.get("description", "")
 	desc_scroll.scroll_vertical = 0
