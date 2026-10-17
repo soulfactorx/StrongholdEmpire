@@ -97,8 +97,11 @@ func start_new_game(
 	ironman = ironman_mode
 	is_game_active = true
 	# 길잡이: 첫 단계는 바로 보여 주고, 나머지는 계절마다 우선 기연으로 이어진다.
-	if tutorial:
+	# 안내형 시나리오("guided", 입문 수련)는 자체 길잡이가 있으므로 일반 길잡이 플래그를 켜지 않는다.
+	var guided: bool = ScenarioManager.current.get("guided", false) == true
+	if tutorial and not guided:
 		EventManager.set_flag(story_flags, "tutorial")
+	if tutorial or guided:
 		pending_event = EventManager.check_turn_events(
 			player_character, player_sect, player_relationships, get_current_season(), triggered_event_ids, story_flags
 		)

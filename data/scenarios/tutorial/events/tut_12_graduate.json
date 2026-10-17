@@ -1,0 +1,45 @@
+{
+  "id": "tut_12_graduate",
+  "title": "입문 ⑫ 수료",
+  "description": "청운검파 장문인이 문주를 불러 미소 짓습니다.\n\"경영, 기연, 전투, 무공, 인연, 외교, 문파전까지 모두 겪어 보았구나. 이제 진짜 강호로 나설 때다.\"\n\n수료하면 입문 수련이 끝나고 평가 화면으로 갑니다. 본편은 새 게임에서 「천하대란」(20년), 「흑풍의 겨울」(5년 단기전), 「강호백년」을 고르세요.\n이 판을 더 둘러보고 싶다면 계속 진행해도 됩니다(제한 4년).",
+  "can_repeat": false,
+  "priority": true,
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "tutorial"
+      ]
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "tut_11",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "수료한다",
+      "message": "입문 수련을 마쳤습니다.",
+      "effects": [
+        {
+          "type": "end_game",
+          "ending": "tutorial_complete"
+        }
+      ]
+    },
+    {
+      "label": "조금 더 둘러본다",
+      "message": "제한 기간 안에서 자유롭게 둘러보세요. 언제든 새 게임으로 본편을 시작할 수 있습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "tut_12",
+          "value": true
+        }
+      ]
+    }
+  ],
+  "npc": "npc_master"
+}

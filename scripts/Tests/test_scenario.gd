@@ -8,7 +8,8 @@ func _test_scenario_data() -> void:
 	var scenarios: Array[Dictionary] = ScenarioManager.list_scenarios()
 	var dir_count: int = DirAccess.get_directories_at(ScenarioManager.SCENARIO_DIR).size()
 	_check(scenarios.size() == dir_count and dir_count >= 3, "시나리오 %d개 모두 검증 통과" % dir_count)
-	_check(scenarios[0]["id"] == ScenarioManager.DEFAULT_ID, "기본 시나리오가 목록 첫 번째")
+	# 처음 하는 사람이 먼저 보도록 입문 수련이 맨 위, 그다음이 기본 시나리오
+	_check(scenarios[0]["id"] == "tutorial" and scenarios[1]["id"] == ScenarioManager.DEFAULT_ID, "입문 수련이 첫 번째, 기본 시나리오가 두 번째")
 
 	var base: Dictionary = {"id": "x", "title": "x", "description": "x"}
 	_check(ScenarioManager.validate_scenario_dict(base).is_empty(), "최소 시나리오 정의 통과")
@@ -402,3 +403,61 @@ func _test_final_ending_flow() -> void:
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
 	await process_frame
 	_completed["_test_final_ending_flow"] = true
+
+
+## 입문 수련: 처음부터 수료까지 길잡이 12단계를 차례로 따라간다.
+func _test_tutorial_scenario() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_clear_test_saves()
+	gm.start_new_game("입문", "leader", "tutorial")
+	_check(gm.pending_event.get("id", "") == "tut_01_hub", "입문 수련: 시작하자마자 첫 길잡이")
+	_check(not gm.story_flags.get("tutorial", false), "입문 수련: 일반 길잡이 플래그는 켜지 않음")
+	_check(ScenarioRules.time_limit_years() == 4 and gm.world_sects.size() == 2, "입문 수련: 4년, 세력 둘")
+	var gold: int = gm.player_sect.gold
+	gm.resolve_pending_event(0)
+	_check(gm.player_sect.gold == gold + 200, "① 수련 자금")
+
+	# [기연 id, 고를 선택지]. 서고를 확장하지 않았으므로 ③은 안내형(hint)이 나온다.
+	var steps: Array = [
+		["tut_02_facility", 0], ["tut_03_roster_hint", 0], ["tut_04_event", 0], ["tut_05_combat", 0],
+		["tut_06_martial", 0], ["tut_07_bond", 0], ["tut_08_defense", 0], ["tut_09_diplomacy", 0],
+		["tut_10_war", 0], ["tut_11_roles", 0], ["tut_12_graduate", 0],
+	]
+	var heukpung: SectData = gm.get_world_sect("heukpung")
+	var heukpung_disciples: int = heukpung.disciple_count
+	var combats: int = 0
+	for step in steps:
+		var seen: String = ""
+		for i in 3:
+			gm.advance_turn()
+			seen = gm.pending_event.get("id", "")
+			if not seen.is_empty():
+				break
+		if seen != step[0]:
+			_check(false, "입문 수련: %s 대신 %s (%d년 %s)" % [step[0], seen, gm.current_year, gm.get_current_season()])
+			break
+		gm.resolve_pending_event(step[1])
+		if gm.pending_combat != null:
+			combats += 1
+			gm.finish_combat(CombatManager.Outcome.VICTORY)
+	_check(gm.player_sect.library_level >= 2, "③ 서고를 확장하지 않았으면 길잡이가 대신 확장")
+	_check(combats == 2, "⑤ 비무와 ⑧ 방어전 전투가 시작됨 (%d번)" % combats)
+	_check(gm.player_character.knows_martial_art("preset_earth_life_palm"), "⑥ 무공 전수받음")
+	_check(RelationshipManager.get_bond_with(gm.player_relationships, "npc_swallow") != null, "⑦ 연소화와 인연")
+	_check(heukpung.disciple_count < heukpung_disciples and heukpung.attitude < 0, "⑩ 흑풍채가 약해지고 적대")
+	_check(gm.current_ending_id == "tutorial_complete" and gm.is_game_over(), "⑫ 수료하면 입문 수료 엔딩으로 끝남")
+
+	# 새 게임 화면: 입문 수련을 고르면 일반 길잡이 선택이 숨는다.
+	SceneRouter.goto(tree, SceneRouter.NEW_GAME)
+	await process_frame
+	await process_frame
+	var screen: Node = current_scene
+	_check(screen._selected_scenario.get("id", "") == "tutorial" and not screen.tutorial_check.visible, "새 게임 화면: 입문 수련이 기본 선택, 길잡이 선택 숨김")
+	screen.scenario_list.select(1)
+	screen._on_scenario_selected(1)
+	_check(screen.tutorial_check.visible, "새 게임 화면: 다른 시나리오는 길잡이 선택 보임")
+	gm.start_new_game("정리", "young_disciple")
+	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
+	await process_frame
+	_clear_test_saves()
+	_completed["_test_tutorial_scenario"] = true
