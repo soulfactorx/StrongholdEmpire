@@ -647,6 +647,7 @@ func _test_martial_art_screen_actions() -> void:
 	await process_frame
 	var screen: Node = current_scene
 	_check(screen.preset_list.item_count == MartialArtLibrary.get_all().size(), "무공 연구소: 비급 목록은 MartialArtLibrary")
+	_check(screen.known_arts_label.text.contains("[유혼쾌영검]") and screen.known_arts_label.text.contains("피해") and screen.known_arts_label.text.contains("사거리"), "보유 무공 목록: 늘 보이고 전투 수치까지")
 	screen._on_enhance_pressed()
 	_check(screen.choice_popup.visible and screen.choice_popup.get_option_count() == 1, "강화: 습득 무공 고르기")
 	screen.choice_popup._on_option_pressed("preset_soul_chase_sword")
@@ -701,13 +702,26 @@ func _test_martial_art_screen_actions() -> void:
 	await process_frame
 	var hub: Node = current_scene
 	var target: DiscipleData = gm.player_sect.disciples[0]
-	target.gain_experience(_Balance.DISCIPLE_EXP_PER_LEVEL)
 	hub._on_disciple_pressed()
 	await process_frame
+	# 경지가 모자라면 고를 수 없게 까닭을 보이고, 실패 결과는 팝업 안에 바로 보인다
+	var need: int = DiscipleRoster.get_transmit_level(gm.player_character.martial_arts[0])
+	if target.level < need:
+		hub.disciple_popup._on_transmit_pressed(target.id)
+		_check(hub.disciple_popup.art_choice.visible and hub.disciple_popup.art_choice.get_option_count() == 1, "전수: 무공 고르기 팝업 (모자라도 까닭과 함께 보임)")
+		hub.disciple_popup.art_choice.visible = false
+	hub.disciple_popup._apply(DiscipleRoster.transmit(gm.player_sect, target.id, null))
+	var notice: Label = hub.disciple_popup.notice_label
+	_check(notice.visible and notice.text.begins_with("할 수 없습니다") and notice.get_theme_color("font_color") == _UiTheme.COLORS["accent_red"], "전수 실패: 팝업 안에 붉은 알림")
+	target.gain_experience(_Balance.DISCIPLE_EXP_PER_LEVEL * maxi(1, need))
 	hub.disciple_popup._on_transmit_pressed(target.id)
 	_check(hub.disciple_popup.art_choice.visible and hub.disciple_popup.art_choice.get_option_count() == 1, "전수: 무공 고르기 팝업")
 	hub.disciple_popup.art_choice._on_option_pressed("preset_soul_chase_sword")
 	_check(target.martial_art != null and hub.log_label.text.contains("전수"), "제자 명단에서 무공 전수")
+	_check(hub.disciple_popup.notice_label.text.contains("전수했습니다"), "전수 성공도 팝업 안에 알림")
+	hub.disciple_popup.visible = false
+	var tip: String = hub.tips["arts"].provider.call()
+	_check(tip.contains("보유 무공") and tip.contains("[유혼쾌영검]") and tip.contains("피해"), "경영 화면: 무공 줄을 길게 누르면 보유 무공 자세히")
 	gm.start_new_game("정리", "young_disciple")
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
 	await process_frame

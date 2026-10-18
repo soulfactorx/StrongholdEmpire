@@ -129,6 +129,9 @@ func _attach_tips() -> void:
 	tips["stats"] = LongPressTip.attach(character_stats_label, func() -> String:
 		return "전투력 = 무력 + 신법 + 현재 내공 ÷ 10\n무력: 공격·무공 피해 / 신법: 전투력 / 지혜: 연구 성공률·연구점 / 매력: 대화 유대·리더십\n경험치가 차면 경지(레벨)가 오르고 능력치·최대 내공이 오릅니다."
 	)
+	tips["arts"] = LongPressTip.attach(martial_arts_label, func() -> String:
+		return "보유 무공\n" + GameManager.player_character.get_martial_arts_detail()
+	)
 	tips["facilities"] = LongPressTip.attach(facilities_label, func() -> String:
 		var lines: PackedStringArray = []
 		for facility in SectManager.get_facility_ids():
@@ -401,7 +404,7 @@ func _update_character_display(character: CharacterData) -> void:
 			character.get_next_level_experience(),
 		]
 	)
-	martial_arts_label.text = "무공: %s" % character.get_martial_arts_text()
+	martial_arts_label.text = "무공 %d개: %s (길게 누르면 자세히)" % [character.martial_arts.size(), character.get_martial_arts_text()] if not character.martial_arts.is_empty() else "무공: 습득 무공 없음"
 
 
 ## 경영 화면에는 유대가 깊은 인연 몇 명만 보이고, 나머지는 [인연 돌보기]에서 본다.

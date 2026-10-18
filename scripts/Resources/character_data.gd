@@ -118,6 +118,16 @@ func knows_martial_art(art_id: String) -> bool:
 	return false
 
 
+## 보유 무공 목록 (무공마다 범주·오행·전투 수치·효과)
+func get_martial_arts_detail() -> String:
+	if martial_arts.is_empty():
+		return "아직 익힌 무공이 없습니다. 무공 연구소에서 창조하거나 비급을 연구하세요."
+	var lines: PackedStringArray = []
+	for art in martial_arts:
+		lines.append(art.get_detail_text())
+	return "\n".join(lines)
+
+
 func get_martial_arts_text() -> String:
 	if martial_arts.is_empty():
 		return "습득 무공 없음"

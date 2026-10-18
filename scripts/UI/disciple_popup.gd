@@ -11,6 +11,8 @@ const _ChoicePopup = preload("res://scripts/UI/choice_popup.gd")
 signal changed(result: Dictionary)
 
 var _summary: Label
+## 방금 한 일(배치·출전·수련·전수)의 결과
+var notice_label: Label
 var _rows: VBoxContainer
 ## 전수할 무공을 고르는 팝업
 var art_choice: Control
@@ -46,6 +48,8 @@ func _ready() -> void:
 	_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_UiTheme.set_font_size(_summary, 14)
 	box.add_child(_summary)
+	notice_label = _UiTheme.make_notice()
+	box.add_child(notice_label)
 
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(0, 440)
@@ -68,6 +72,7 @@ func _ready() -> void:
 
 
 func open() -> void:
+	notice_label.visible = false
 	refresh()
 	visible = true
 
@@ -173,12 +178,22 @@ func _on_transmit_pressed(disciple_id: String) -> void:
 		if sect.secret_art and sect.secret_art.id == art.id:
 			tags.append("문파 비전")
 		var need: int = DiscipleRoster.get_transmit_level(art)
-		if disciple.level < need:
-			tags.append("Lv.%d 필요" % need)
+		var cost: int = DiscipleRoster.get_transmit_cost(sect, art)
+		# 전수할 수 없는 무공은 까닭을 적고 고를 수 없게 한다 (눌러도 아무 일이 없는 것처럼 보이지 않게)
+		var blocked: String = ""
+		if disciple.martial_art and disciple.martial_art.id == art.id:
+			blocked = "이미 익힘"
+		elif disciple.level < need:
+			blocked = "제자 Lv.%d 필요 (지금 Lv.%d)" % [need, disciple.level]
+		elif sect.research_points < cost:
+			blocked = "연구점 부족 (%d / %d)" % [sect.research_points, cost]
+		if not blocked.is_empty():
+			tags.append(blocked)
 		options.append({
 			"id": art.id,
 			"title": "%s%s" % [art.display_name, " (%s)" % ", ".join(tags) if not tags.is_empty() else ""],
-			"description": "연구점 %d · 피해 %d · 내공 %d" % [DiscipleRoster.get_transmit_cost(sect, art), art.damage, art.internal_cost],
+			"description": "연구점 %d · %s" % [cost, art.get_stats_text()],
+			"disabled": not blocked.is_empty(),
 		})
 	_transmit_target = disciple_id
 	art_choice.open("%s에게 무공 전수" % disciple.display_name, "전수한 무공은 방어전에서 그 제자가 씁니다. 제자는 무공을 하나만 익힙니다.", options)
@@ -195,5 +210,10 @@ func _on_art_chosen(art_id: String) -> void:
 
 
 func _apply(result: Dictionary) -> void:
+	_UiTheme.show_notice(notice_label, result)
+	if result.get("success", false):
+		AudioManager.play_success()
+	else:
+		AudioManager.play_failure()
 	changed.emit(result)
 	refresh()

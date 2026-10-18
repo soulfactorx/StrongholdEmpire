@@ -9,6 +9,8 @@ const _Balance = preload("res://scripts/Systems/game_balance.gd")
 signal upgraded(result: Dictionary)
 
 var _rows: VBoxContainer
+## 방금 한 확장의 결과
+var notice_label: Label
 
 
 func _ready() -> void:
@@ -40,6 +42,8 @@ func _ready() -> void:
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_UiTheme.set_font_size(note, 13)
 	box.add_child(note)
+	notice_label = _UiTheme.make_notice()
+	box.add_child(notice_label)
 
 	_rows = VBoxContainer.new()
 	_rows.add_theme_constant_override("separation", 8)
@@ -54,6 +58,7 @@ func _ready() -> void:
 
 
 func open() -> void:
+	notice_label.visible = false
 	_refresh()
 	visible = true
 
@@ -105,5 +110,6 @@ func _on_upgrade_pressed(facility: String) -> void:
 
 func _upgrade(facility: String) -> void:
 	var result: Dictionary = GameManager.upgrade_facility(facility)
+	_UiTheme.show_notice(notice_label, result)
 	upgraded.emit(result)
 	_refresh()

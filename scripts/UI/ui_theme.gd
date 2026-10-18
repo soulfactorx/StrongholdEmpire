@@ -215,6 +215,24 @@ static func set_font_size(control: Control, base: int) -> void:
 	control.add_theme_font_size_override("font_size", font_size(base))
 
 
+## 팝업 안의 결과 알림 줄: 방금 한 일의 결과를 팝업을 닫지 않고 바로 보이게 한다. (처음엔 숨김)
+static func make_notice() -> Label:
+	var label := Label.new()
+	label.name = "NoticeLabel"
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.visible = false
+	set_font_size(label, 16)
+	return label
+
+
+## 결과 {success, message}를 알림 줄에 보인다. 실패는 붉은 글씨
+static func show_notice(label: Label, result: Dictionary) -> void:
+	var message: String = str(result.get("message", ""))
+	label.text = ("" if result.get("success", false) else "할 수 없습니다: ") + message
+	label.add_theme_color_override("font_color", COLORS["accent_jade"] if result.get("success", false) else COLORS["accent_red"])
+	label.visible = not message.is_empty()
+
+
 ## 따로 정한 글자 크기가 있는 라벨에도 글자 크기 배율과 최소 크기를 적용한다. (한 번만)
 static func _scale_font(control: Control) -> void:
 	if not control.has_theme_font_size_override("font_size"):

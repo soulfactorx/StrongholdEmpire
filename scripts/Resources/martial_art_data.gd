@@ -140,6 +140,22 @@ func _effect_name(effect: SpecialEffect) -> String:
 			return "?"
 
 
+## 전투 수치 한 줄: "피해 18 · 사거리 2 · 행동력 2 · 내공 15" (회복 무공은 회복량)
+func get_stats_text() -> String:
+	var main: String = "회복 %d" % heal_amount if heal_amount > 0 else "피해 %d" % damage
+	return "%s · 사거리 %d · 행동력 %d · 내공 %d" % [main, range, action_cost, internal_cost]
+
+
+## 보유 무공 목록용 자세한 설명: 이름·강화, 범주·오행·음양, 전투 수치, 효과
+func get_detail_text() -> String:
+	var effects: String = get_effects_text()
+	return "[%s]%s — %s · %s · %s\n    %s%s" % [
+		display_name, " 강화 %d단계" % enhance_level if enhance_level > 0 else "",
+		get_category_name(), get_element_name(), get_yin_yang_name(), get_stats_text(),
+		" · 효과: %s" % effects if not effects.is_empty() and effects != "없음" else "",
+	]
+
+
 func get_summary() -> String:
 	return "%s [%s·%s·%s] 데미지 %d" % [
 		display_name,

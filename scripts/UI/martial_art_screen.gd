@@ -219,7 +219,8 @@ func _load_presets() -> void:
 
 
 func _refresh_display() -> void:
-	known_arts_label.text = "습득 무공: %s" % GameManager.player_character.get_martial_arts_text()
+	var character: CharacterData = GameManager.player_character
+	known_arts_label.text = "%d개 · 문파 비전은 ★\n%s" % [character.martial_arts.size(), _mark_secret(character.get_martial_arts_detail())]
 	var secret: MartialArtData = GameManager.player_sect.secret_art
 	var analyzed: PackedStringArray = []
 	for element in GameManager.analyzed_elements:
@@ -230,6 +231,14 @@ func _refresh_display() -> void:
 		_Balance.COUNTER_SUCCESS_BONUS,
 	]
 	_update_success_preview()
+
+
+## 문파 비전인 무공 이름에 ★
+func _mark_secret(text: String) -> String:
+	var secret: MartialArtData = GameManager.player_sect.secret_art
+	if secret == null:
+		return text
+	return text.replace("[%s]" % secret.display_name, "★[%s]" % secret.display_name)
 
 
 func _element_name(element: int) -> String:
