@@ -23,7 +23,7 @@ static func _by_name() -> Dictionary:
 			_Balance.FEAST_GOLD, _Balance.FEAST_FOOD, _Balance.FEAST_REPUTATION, _Balance.FEAST_DISCONTENT_RELIEF,
 		],
 		"MartialArtButton": "무공 연구소: 무공 창조, 비급 연구, 강화, 비전 지정, 상대 무공 분석.",
-		"RoleButton": "조건을 채운 다른 역할로 바꿉니다(이적·배신·강등 포함). 역할마다 할 수 있는 일이 다릅니다.",
+		"RoleButton": "조건을 채운 다른 역할로 바꿉니다(입문·떠나기·이적·배신 포함). 지금 역할에서 갈 수 있는 길과 필요한 조건도 여기서 봅니다.",
 		"CombatButton": "인연이 있는 인물(라이벌 먼저)과 연습 비무를 합니다. 이기면 경험치 +%d와 유대. 계절에 한 번. 인연이 없으면 할 수 없습니다." % _Balance.SPAR_EXP,
 		"SectWarButton": "강호 세력 하나와 문파전을 치릅니다. 정찰·명령·진형으로 겨루고, 이기면 상대가 약해집니다.",
 		"EndingButton": "엔딩별 조건과 진행 상황, 세대 전승을 봅니다.",

@@ -661,10 +661,9 @@ func _on_martial_art_pressed() -> void:
 	SceneRouter.goto(get_tree(), SceneRouter.MARTIAL_ART)
 
 
+## 역할 전환 창: 고를 전환이 없어도 열어 갈 수 있는 길과 조건을 보인다.
 func _on_role_pressed() -> void:
-	if GameManager.pending_role_transitions.is_empty():
-		_on_action_message("현재 가능한 역할 전환이 없습니다.")
-		return
+	GameManager.refresh_role_transitions(false)
 	role_popup.show_options(GameManager.pending_role_transitions)
 
 

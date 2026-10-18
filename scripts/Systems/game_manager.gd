@@ -651,7 +651,8 @@ func _process_yearly_events() -> String:
 	return "새해 정산: " + ", ".join(parts) if not parts.is_empty() else ""
 
 
-func refresh_role_transitions() -> void:
+## announce: 새 전환이 있으면 알린다 (역할 전환 창을 열 때는 조용히 다시 계산만)
+func refresh_role_transitions(announce: bool = true) -> void:
 	pending_role_transitions = RoleManager.get_available_transitions(
 		player_character,
 		player_sect,
@@ -660,7 +661,7 @@ func refresh_role_transitions() -> void:
 		role_state,
 		world_sects
 	)
-	if not pending_role_transitions.is_empty():
+	if announce and not pending_role_transitions.is_empty():
 		EventBus.role_transitions_available.emit(pending_role_transitions)
 
 
