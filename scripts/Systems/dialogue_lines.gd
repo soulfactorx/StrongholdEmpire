@@ -85,11 +85,94 @@ const ROLE_ACTION_LINES: Dictionary = {
 }
 
 
+## 담소 대사 데이터: 관계 유형별 유대 단계마다 주인공의 말·상대의 답, 깊은 단계의 속마음, 계절·성향 잡담
+const TALK_PATH := "res://data/dialogue/bond_talk.json"
+## 단계 수 (유대 20마다 한 단계: 낯선 사이 · 알게 된 사이 · 신뢰 · 깊은 유대 · 운명적 인연)
+const TALK_STAGES := 5
+## 상대가 자기만의 대사(인물 JSON)로 답할 확률, 속마음·잡담을 덧붙일 확률
+const OWN_LINE_CHANCE := 0.35
+const HEART_CHANCE := 0.4
+const TOPIC_CHANCE := 0.3
+## 성향 잡담: 이 이상인 성향이 있으면 그 성향에 맞는 말을 한다
+const TOPIC_TRAIT_MIN := 70
+
+static var _talk: Dictionary = {}
+
+
+static func get_talk_data() -> Dictionary:
+	if _talk.is_empty():
+		var file := FileAccess.open(TALK_PATH, FileAccess.READ)
+		var parsed: Variant = JSON.parse_string(file.get_as_text()) if file else null
+		_talk = parsed if parsed is Dictionary else {"types": {}, "topics": {}}
+	return _talk
+
+
+## 대화 대사 데이터 검사: 모든 관계 유형에 단계 5개, 단계마다 주인공 말과 답이 있어야 한다.
+static func validate_talk_data(data: Dictionary) -> PackedStringArray:
+	var errors: PackedStringArray = []
+	for key in RelationshipData.BondType.keys():
+		var entry: Variant = data.get("types", {}).get(key)
+		if not entry is Dictionary:
+			errors.append("대화 대사 없음: %s" % key)
+			continue
+		var stages: Array = entry.get("stages", [])
+		if stages.size() != TALK_STAGES:
+			errors.append("%s: 단계는 %d개여야 함" % [key, TALK_STAGES])
+		for i in stages.size():
+			if (stages[i].get("player", []) as Array).is_empty() or (stages[i].get("reply", []) as Array).is_empty():
+				errors.append("%s %d단계: player·reply 필요" % [key, i])
+	return errors
+
+
+## 유대 단계 (0~4). 원한은 유대가 깊을수록 원한도 깊다.
+static func talk_stage(rel: RelationshipData) -> int:
+	return clampi(rel.bond_strength / 20, 0, TALK_STAGES - 1)
+
+
+## 담소: 관계 유형과 유대 단계에 맞는 주인공의 말과 상대의 답. 가끔 상대가 속마음(깊은 단계)이나 계절·성향 잡담을 덧붙인다.
+static func for_talk(rel: RelationshipData, player_name: String) -> PackedStringArray:
+	var data: Dictionary = get_talk_data()
+	var type_name: String = RelationshipData.BondType.keys()[rel.bond_type]
+	var entry: Dictionary = data["types"].get(type_name, data["types"].get("ACQUAINTANCE", {}))
+	var stage: int = talk_stage(rel)
+	var lines: PackedStringArray = []
+	var step: Dictionary = entry.get("stages", [{}])[mini(stage, entry.get("stages", [{}]).size() - 1)]
+	lines.append("%s: %s" % [player_name, _pick(step.get("player", []))])
+	var own: Array = NpcRoster.get_npc(rel.target_id).get("dialogue", {}).get("talk", [])
+	var hatred: bool = rel.bond_type == RelationshipData.BondType.HATRED
+	var reply: String = _pick(own) if not hatred and stage >= 1 and not own.is_empty() and randf() < OWN_LINE_CHANCE else _pick(step.get("reply", []))
+	lines.append("%s: %s" % [rel.target_name, reply])
+	var extra: String = ""
+	var heart: Array = entry.get("heart", [])
+	if stage >= 3 and not heart.is_empty() and randf() < HEART_CHANCE:
+		extra = _pick(heart)
+	elif not hatred and randf() < TOPIC_CHANCE:
+		extra = _topic_line(rel.target_id, data.get("topics", {}))
+	if not extra.is_empty():
+		lines.append("%s: %s" % [rel.target_name, extra])
+	return lines
+
+
+## 계절 잡담, 또는 그 인물의 두드러진 성향에서 나오는 말
+static func _topic_line(npc_id: String, topics: Dictionary) -> String:
+	var pool: Array = []
+	var season: String = EventManager.SEASON_NAMES[posmod(EventManager.current_turn, 4)]
+	pool.append_array(topics.get("season", {}).get(season, []))
+	if NpcRoster.has_npc(npc_id):
+		var traits: Dictionary = NpcAgent.get_traits(npc_id)
+		for trait_name in traits:
+			if int(traits[trait_name]) >= TOPIC_TRAIT_MIN:
+				pool.append_array(topics.get("trait", {}).get(trait_name, []))
+	return _pick(pool) if not pool.is_empty() else ""
+
+
 ## 인연 상호작용(대화·선물·비무 신청)에서 오간 대사
 static func for_interaction(rel: RelationshipData, kind: String, player_name: String, success: bool) -> PackedStringArray:
 	var lines: PackedStringArray = []
 	if not success:
 		return lines
+	if kind == "talk":
+		return for_talk(rel, player_name)
 	var type_name: String = RelationshipData.BondType.keys()[rel.bond_type]
 	var hatred: bool = rel.bond_type == RelationshipData.BondType.HATRED
 	lines.append("%s: %s" % [player_name, _pick(_player_pool(kind, type_name))])

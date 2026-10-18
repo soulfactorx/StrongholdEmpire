@@ -3,7 +3,8 @@
 
 render_shanshui.js로 찍은 shan-shui-inf(MIT) 산수화 밑그림에 지역의 성격(설산·사막·강남 물가·도성·남방 숲 등)에 맞는
 색을 입히고, 지역 이름을 붓글씨와 낙관으로 넣는다. 경영 화면은 지금 있는 지역의 배경을 보인다.
-나중에 그린 그림으로 바꾸려면 같은 이름·크기(1280×720)로 assets/art/bg/regions/<지역 id>.jpg를 덮어쓰면 된다.
+주의: 지금 assets/art/bg/regions/에는 프로젝트 소유자가 넣은 수묵담채 그림(1920×1080)이 있다. 이 스크립트는 그 그림을 덮어쓴다.
+그린 그림으로 바꾸려면 같은 이름으로 assets/art/bg/regions/<지역 id>.jpg를 덮어쓰면 된다 (16:9, 1920×1080 권장).
 지도 데이터에서 지역의 background를 정하면(청운산 → bg/hub.jpg) 그 그림을 쓴다. 그래서 청운산은 만들지 않는다.
 
 실행:
@@ -30,7 +31,7 @@ from generate_art import (  # noqa: E402
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUT = os.path.join(ROOT, "assets", "art", "bg", "regions")
 REGIONS = os.path.join(ROOT, "data", "map", "regions.json")
-SIZE = (1280, 720)
+SIZE = (1920, 1080)
 
 # 지역 id → (산수화 시드, 성격)
 # 성격: snow 설산 · desert 서역 사막 · capital 도성 · water 강남 물가 · mountain 산악 · south 남방 숲 · plain 중원 들판

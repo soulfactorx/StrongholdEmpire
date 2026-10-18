@@ -360,8 +360,11 @@ func _test_chronicle_and_dialogue() -> void:
 	var result: Dictionary = gm.interact_with("npc_master", "talk")
 	var lines: PackedStringArray = result.get("dialogue", PackedStringArray())
 	var own: Array = NpcRoster.get_npc("npc_master")["dialogue"]["talk"]
-	_check(lines.size() == 2 and lines[0].begins_with(gm.player_character.display_name + ":"), "대화: 주인공 대사")
-	_check(lines[1].begins_with("청운검선:") and own.has(lines[1].trim_prefix("청운검선: ")), "대화: 인물 고유 대사")
+	var master_rel: RelationshipData = RelationshipManager.get_bond_with(gm.player_relationships, "npc_master")
+	var stage_replies: Array = DialogueLines.get_talk_data()["types"]["MASTER_DISCIPLE"]["stages"][DialogueLines.talk_stage(master_rel)]["reply"]
+	_check(lines.size() >= 2 and lines.size() <= 3 and lines[0].begins_with(gm.player_character.display_name + ":"), "대화: 주인공 대사")
+	var reply: String = lines[1].trim_prefix("청운검선: ")
+	_check(lines[1].begins_with("청운검선:") and (own.has(reply) or stage_replies.has(reply)), "대화: 인물 고유 대사나 유대 단계에 맞는 답")
 	_check(gm.chronicle[-1]["kind"] == "대화" and Array(gm.chronicle[-1]["lines"]) == Array(lines), "연대기: 대화와 오간 대사")
 	# 고유 대사가 없는 관계는 관계 유형에 맞는 기본 대사
 	var rel := RelationshipData.new()
@@ -370,6 +373,30 @@ func _test_chronicle_and_dialogue() -> void:
 	rel.bond_type = RelationshipData.BondType.BLOOD_OATH
 	var default_lines: PackedStringArray = DialogueLines.for_interaction(rel, "gift", "나", true)
 	_check(default_lines.size() == 2 and default_lines[1].begins_with("무명객:"), "기본 대사")
+	# 담소는 관계 유형과 유대 단계(0~4)에 따라 달라진다
+	_check(DialogueLines.validate_talk_data(DialogueLines.get_talk_data()).is_empty(), "대화 대사 데이터: 모든 관계 유형에 5단계")
+	var talk_data: Dictionary = DialogueLines.get_talk_data()["types"]
+	var stage_ok: bool = true
+	for type_key in RelationshipData.BondType.keys():
+		for stage in DialogueLines.TALK_STAGES:
+			var probe := RelationshipData.new()
+			probe.target_id = "npc_unknown"
+			probe.target_name = "무명객"
+			probe.bond_type = RelationshipData.BondType.get(type_key)
+			probe.bond_strength = stage * 20 + 5
+			var talk: PackedStringArray = DialogueLines.for_talk(probe, "나")
+			var step: Dictionary = talk_data[type_key]["stages"][stage]
+			stage_ok = stage_ok and step["player"].has(talk[0].trim_prefix("나: ")) and step["reply"].has(talk[1].trim_prefix("무명객: "))
+	_check(stage_ok, "대화: 모든 관계·단계에서 그 단계의 말과 답")
+	var stranger := RelationshipData.new()
+	stranger.target_id = "npc_unknown"
+	stranger.target_name = "무명객"
+	stranger.bond_type = RelationshipData.BondType.ROMANCE
+	stranger.bond_strength = 5
+	var shy: String = DialogueLines.for_talk(stranger, "나")[1]
+	stranger.bond_strength = 95
+	var deep: String = DialogueLines.for_talk(stranger, "나")[1]
+	_check(talk_data["ROMANCE"]["stages"][0]["reply"].has(shy.trim_prefix("무명객: ")) and talk_data["ROMANCE"]["stages"][4]["reply"].has(deep.trim_prefix("무명객: ")), "연인: 유대 5와 95의 답이 다름")
 	_check(not DialogueLines.validate({"talk": ["좋소"]}).size() and DialogueLines.validate({"shout": ["!"]}).size() == 1 and DialogueLines.validate({"talk": [1]}).size() == 1, "인물 대사 형식 검사")
 
 	# 외교: 사절과 문주의 대사
