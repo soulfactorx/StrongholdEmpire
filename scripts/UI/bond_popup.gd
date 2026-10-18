@@ -12,6 +12,8 @@ signal acted(result: Dictionary)
 var _summary: Label
 ## 방금 오간 대사
 var dialogue_label: Label
+## 방금 한 일의 결과 (유대 변화, 할 수 없는 까닭)
+var notice_label: Label
 var _rows: VBoxContainer
 
 
@@ -43,6 +45,8 @@ func _ready() -> void:
 	_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_UiTheme.set_font_size(_summary, 14)
 	box.add_child(_summary)
+	notice_label = _UiTheme.make_notice()
+	box.add_child(notice_label)
 	dialogue_label = Label.new()
 	dialogue_label.name = "DialogueLabel"
 	dialogue_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -69,6 +73,7 @@ func _ready() -> void:
 
 func open() -> void:
 	dialogue_label.visible = false
+	notice_label.visible = false
 	refresh()
 	visible = true
 
@@ -143,6 +148,7 @@ func _simulate_interact(target_id: String, kind: String) -> Dictionary:
 
 func _interact(target_id: String, kind: String) -> void:
 	var result: Dictionary = GameManager.interact_with(target_id, kind)
+	_UiTheme.show_notice(notice_label, result)
 	var lines: PackedStringArray = result.get("dialogue", PackedStringArray())
 	dialogue_label.text = "\n".join(lines)
 	dialogue_label.visible = not lines.is_empty()
