@@ -134,6 +134,7 @@
    "food": 8,
    "defense": 60,
    "description": "구름이 감도는 검산. 청운검파의 산문이 있다.",
+   "background": "bg/hub.jpg",
    "neighbors": [
     "luoyang",
     "kaifeng",

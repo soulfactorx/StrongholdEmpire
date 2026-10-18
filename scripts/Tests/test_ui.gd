@@ -873,4 +873,22 @@ func _test_role_guide() -> void:
 	hub._on_role_pressed()
 	_check(hub.role_popup.visible and hub.role_popup.confirm_button.disabled and hub.role_popup.get_guide_line_count() > 5, "역할 전환 창: 전환이 없어도 조건 안내")
 	hub.role_popup.visible = false
+	# 지도에서 골라 이동: 낭인의 [이동 (지도)]는 지도를 열고, 지역을 고르면 [이곳으로 이동]
+	_new_quiet_game(gm, "wanderer")
+	SceneRouter.goto(tree, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	current_scene._on_role_action_pressed("travel")
+	await process_frame
+	await process_frame
+	var map: Node = current_scene
+	_check(map.scene_file_path == SceneRouter.MAP and map.get_selected() == gm.player_region, "이동: 지도가 열리고 지금 지역이 골라져 있음")
+	map.select_region("kaifeng")
+	_check(map.action_button.visible and not map.action_button.disabled and map.action_button.text.contains("이동"), "다른 지역을 고르면 [이곳으로 이동]")
+	map._on_action_pressed()
+	_check(gm.player_region == "kaifeng" and map.summary_label.text.contains("개봉"), "지도에서 개봉으로 이동")
+	SceneRouter.goto(tree, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	_check(current_scene.character_role_label.text.contains("개봉") and current_scene.get_node("Background/Art").texture == ArtAssets.region_background("kaifeng"), "인물 정보에 지역, 배경은 그 지역 그림")
 	_completed["_test_role_guide"] = true

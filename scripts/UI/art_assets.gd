@@ -56,6 +56,13 @@ static func background(name: String) -> Texture2D:
 	return texture("bg/%s.jpg" % name)
 
 
+## 지역 배경: 지도 데이터의 background(art 폴더 기준 경로), 없으면 bg/regions/<지역 id>.jpg, 그것도 없으면 경영 화면 배경
+static func region_background(region_id: String) -> Texture2D:
+	var custom: String = str(WorldMap.get_region(region_id).get("background", ""))
+	var tex: Texture2D = texture(custom) if not custom.is_empty() else texture("bg/regions/%s.jpg" % region_id)
+	return tex if tex else background("hub")
+
+
 static func tile(name: String) -> Texture2D:
 	return texture("tiles/%s.png" % name)
 
@@ -115,6 +122,16 @@ static func _font(path: String) -> Font:
 	if not _cache.has(path):
 		_cache[path] = load(path) if ResourceLoader.exists(path) else null
 	return _cache[path]
+
+
+## 화면 배경 그림을 바꾼다 (경영 화면: 지금 있는 지역의 그림)
+static func set_background(root: Node, tex: Texture2D) -> void:
+	if tex == null:
+		return
+	apply_background(root)
+	var art: TextureRect = root.get_node_or_null("Background/Art") as TextureRect
+	if art and art.texture != tex:
+		art.texture = tex
 
 
 ## 화면의 Background 색 사각형 위에 그 화면의 배경 그림을 깐다. (한 번만)

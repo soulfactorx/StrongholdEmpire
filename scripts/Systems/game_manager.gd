@@ -29,6 +29,8 @@ var observed_arts: Dictionary = {}
 ## 개인 재산: 문파에 몸담아 살림을 맡지 않는 역할(낭인·의뢰인·간자·자객)의 금화·식량. 문파 금고와 따로다.
 ## 금화·식량만 쓴다. 문주·총관·막내 제자는 문파 금고(player_sect)를 쓴다 → get_wallet()
 var purse: SectData = create_purse()
+## 지금 있는 지역 (강호 지도의 지역 id). 문파 일을 하는 역할은 본거지에 있고, 개인 재산을 쓰는 역할은 지도에서 옮겨 다닌다.
+var player_region: String = ""
 ## 가진 비급 (무공 id). 소속 문파 서고의 비급과 함께 무공 연구소에서 연구할 수 있다. 기연·사부에게서 얻는다.
 var owned_manuals: Array[String] = []
 ## 해가 시작될 때의 기록 (연간 보고서 비교용)
@@ -226,6 +228,7 @@ func _initialize_new_game(
 		world_sects.push_front(default_sect)
 	_apply_faction_setup(factions)
 	map_state = WorldMap.create_state(_all_sect_ids())
+	player_region = _default_region()
 	last_faction_report.clear()
 	last_npc_report.clear()
 	StartingRoles.apply_sect_setup(role_id, player_sect, player_character)
@@ -249,6 +252,7 @@ func _initialize_new_game(
 	role_history.clear()
 	_record_role(player_character.role)
 	role_state = RoleActions.create_state()
+	_sync_location()
 	legacy_records.clear()
 	year_start = _take_year_snapshot()
 	observed_arts = {}
@@ -943,6 +947,9 @@ func _switch_player_sect(sect_id: String, kind: String) -> String:
 	pending_region_target = ""
 	EventManager.player_sect_id = player_sect.id
 	role_state["spy_target"] = ""
+	# 새 문파의 본거지로 옮겨 간다
+	player_region = _default_region()
+	_sync_location()
 	EventManager.set_flag(story_flags, "joined_%s" % new_sect.id)
 	if betrayal:
 		EventManager.set_flag(story_flags, "betrayed_%s" % old_sect.id)
@@ -1017,6 +1024,8 @@ func _leave_player_sect(mode: String) -> String:
 	role_state["spy_target"] = ""
 	EventManager.set_flag(story_flags, "left_%s" % old_sect.id)
 	EventManager.set_flag(story_flags, "left_sect")
+	# 떠나온 문파의 땅에 머문다 (이제 남의 땅)
+	_sync_location()
 	_sync_event_context()
 	EventBus.relationships_changed.emit(player_relationships)
 	return " ".join(parts) + " 이제 무소속입니다."
@@ -1122,6 +1131,7 @@ func start_legacy_succession() -> Dictionary:
 		player_character.learn_martial_art(player_sect.secret_art.duplicate(true))
 	LegacyManager.apply_legacy_bonuses(player_sect, legacy)
 	player_relationships = RelationshipManager.create_default_relationships(player_sect.id)
+	player_region = _default_region()
 	triggered_event_ids.clear()
 	current_ending_id = ""
 	story_flags.clear()
@@ -1503,6 +1513,92 @@ func _available_manual_ids() -> Array:
 	return get_research_manuals().map(func(entry: Dictionary) -> String: return entry["art"].id)
 
 
+# ── 지역·이동 ──
+
+## 시작·소속이 바뀔 때 있을 지역: 소속 문파의 본거지, 무소속이면 지도 한가운데
+func _default_region() -> String:
+	if has_sect():
+		var home: String = WorldMap.get_home(map_state, player_sect.id)
+		if not home.is_empty():
+			return home
+	if WorldMap.has_region(_Balance.START_REGION):
+		return _Balance.START_REGION
+	var regions: Array[Dictionary] = WorldMap.get_regions()
+	return regions[0]["id"] if not regions.is_empty() else ""
+
+
+## 지금 지역 이름
+func get_region_name() -> String:
+	return str(WorldMap.get_region(player_region).get("name", "정처 없는 길"))
+
+
+## 지금 지역과 그 땅의 주인: "낙양 · 주인 없는 땅", "청운산 · 우리 본거지"
+func get_location_text() -> String:
+	if not WorldMap.has_region(player_region):
+		return "정처 없는 길"
+	var owner: String = WorldMap.get_owner(map_state, player_region)
+	var note: String
+	if owner.is_empty():
+		note = "주인 없는 땅"
+	elif owner == player_sect.id:
+		note = "우리 본거지" if WorldMap.get_home(map_state, owner) == player_region else "우리 땅"
+	else:
+		var sect: SectData = get_world_sect(owner)
+		note = "%s의 %s" % [sect.sect_name if sect else owner, "본거지" if WorldMap.get_home(map_state, owner) == player_region else "땅"]
+	return "%s · %s" % [get_region_name(), note]
+
+
+## 타지에 있으면 그 땅 주인 세력 id를 역할 자원 location에 둔다 (의뢰 보상·위험·신용이 그 세력 기준)
+func _sync_location() -> void:
+	var owner: String = WorldMap.get_owner(map_state, player_region)
+	role_state["location"] = owner if not owner.is_empty() and owner != player_sect.id and get_world_sect(owner) != null else ""
+
+
+## 지도에서 옮겨 갈 수 있는 역할인지 (문파 일을 하는 역할은 본거지에 머문다)
+func can_travel() -> bool:
+	return uses_purse()
+
+
+func get_travel_cost(region_id: String) -> int:
+	return maxi(1, WorldMap.distance(player_region, region_id)) * _Balance.TRAVEL_GOLD_PER_STEP
+
+
+## 그 지역으로 옮길 수 없는 까닭 (옮길 수 있으면 "")
+func get_travel_block(region_id: String) -> String:
+	if not WorldMap.has_region(region_id):
+		return "없는 지역입니다."
+	if region_id == player_region:
+		return "지금 머무는 곳입니다."
+	if not can_travel():
+		return "문파 일을 하는 동안에는 본거지를 떠날 수 없습니다. (낭인·의뢰인·간자·자객만 옮겨 다닙니다)"
+	if not can_do_seasonal("last_travel_turn"):
+		return "이번 계절에는 이미 길을 떠났습니다."
+	if WorldMap.distance(player_region, region_id) < 0:
+		return "그곳으로 가는 길이 없습니다."
+	if get_wallet().gold < get_travel_cost(region_id):
+		return "여비가 모자랍니다. (금화 %d 필요)" % get_travel_cost(region_id)
+	return ""
+
+
+## 지도에서 고른 지역으로 옮긴다. 계절에 한 번, 여비는 거리만큼.
+func travel_to(region_id: String) -> Dictionary:
+	var block: String = get_travel_block(region_id)
+	if not block.is_empty():
+		return {"success": false, "message": block}
+	var cost: int = get_travel_cost(region_id)
+	get_wallet().gold -= cost
+	_mark_seasonal("last_travel_turn")
+	player_region = region_id
+	_sync_location()
+	var message: String = "%s(으)로 옮겼습니다. (여비 금화 -%d) — %s" % [get_region_name(), cost, get_location_text()]
+	if not str(role_state["location"]).is_empty():
+		message += ". 타지라 의뢰 보상이 크고 위험도 큽니다."
+	add_chronicle("행동", message)
+	EventBus.resources_changed.emit(player_sect)
+	EventBus.character_updated.emit(player_character)
+	return {"success": true, "message": message}
+
+
 ## 경영 화면 비무 상대 순서: 라이벌 → 동문 → 벗·혈맹 → 사부 → 그 밖의 인연 (원한은 빼고)
 const SPAR_PARTNER_ORDER: Array = [
 	RelationshipData.BondType.RIVALRY, RelationshipData.BondType.FELLOW,
@@ -1651,6 +1747,7 @@ func _build_save_state() -> Dictionary:
 		"role_state": role_state,
 		"observed_arts": observed_arts,
 		"owned_manuals": owned_manuals,
+		"player_region": player_region,
 		"purse": {"gold": purse.gold, "food": purse.food},
 		"challenge_target": challenge_target,
 		"pending_invasion": pending_invasion,
@@ -1779,6 +1876,9 @@ func _apply_save_data(data: Dictionary) -> void:
 		map_state = WorldMap.restore_state(data["map_state"])
 	else:
 		map_state = WorldMap.create_state(_all_sect_ids())
+	player_region = str(data.get("player_region", ""))
+	if not WorldMap.has_region(player_region):
+		player_region = _default_region()
 	last_faction_report.clear()
 	for entry in data.get("faction_report", []):
 		if entry is Dictionary:

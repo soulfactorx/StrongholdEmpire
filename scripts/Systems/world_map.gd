@@ -98,6 +98,24 @@ static func has_region(region_id: String) -> bool:
 	return _by_id.has(region_id)
 
 
+## 두 지역 사이 거리 (이웃을 따라 몇 걸음). 갈 수 없으면 -1
+static func distance(from_id: String, to_id: String) -> int:
+	if from_id == to_id:
+		return 0
+	var seen: Dictionary = {from_id: 0}
+	var queue: Array[String] = [from_id]
+	while not queue.is_empty():
+		var current: String = queue.pop_front()
+		for other in get_region(current).get("neighbors", []):
+			if seen.has(other):
+				continue
+			seen[other] = seen[current] + 1
+			if other == to_id:
+				return seen[other]
+			queue.append(other)
+	return -1
+
+
 static func get_size() -> Vector2:
 	_ensure_loaded()
 	return _size
