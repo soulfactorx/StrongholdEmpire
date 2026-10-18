@@ -1,0 +1,50 @@
+{
+  "id": "manual_book_peddler",
+  "title": "떠돌이 책장수",
+  "description": "장터 구석의 책장수가 소매를 끌어당깁니다. 「손님, 이건 진짜 비급이오. 금화 60이면 넘기리다.」",
+  "can_repeat": true,
+  "weight": 0.8,
+  "conditions": [
+    {
+      "type": "sect",
+      "field": "gold",
+      "op": ">=",
+      "value": 60
+    }
+  ],
+  "choices": [
+    {
+      "label": "사 본다 (금화 60)",
+      "message": "값을 치렀습니다.",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -60
+        }
+      ],
+      "branches": [
+        {
+          "chance": 70,
+          "message": "진짜였습니다!",
+          "effects": [
+            {
+              "type": "sect",
+              "field": "gold",
+              "add": -60
+            },
+            {
+              "type": "gain_manual",
+              "art": "random"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "수상해서 지나친다",
+      "message": "책장수가 혀를 찹니다.",
+      "effects": []
+    }
+  ]
+}

@@ -25,5 +25,9 @@
       "type": "RIVALRY",
       "strength": 10
     }
+  ],
+  "manuals": [
+    "manual_wudang_taiji_fist",
+    "preset_earth_life_palm"
   ]
 }

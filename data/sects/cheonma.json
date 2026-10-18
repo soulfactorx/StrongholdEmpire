@@ -38,5 +38,9 @@
       "type": "HATRED",
       "strength": 15
     }
+  ],
+  "manuals": [
+    "manual_cheonma_blood_palm",
+    "mod_thunder_palm"
   ]
 }

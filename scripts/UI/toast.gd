@@ -25,7 +25,7 @@ static func notify(host: Node, text: String, is_error: bool = false) -> void:
 	label.add_theme_color_override("font_color", _UiTheme.COLORS["accent_red"] if is_error else _UiTheme.COLORS["text_primary"])
 	panel.visible = true
 	panel.modulate.a = 0.0
-	var old: Tween = panel.get_meta("tween", null)
+	var old: Tween = panel.get_meta("tween") if panel.has_meta("tween") else null
 	if old != null and old.is_valid():
 		old.kill()
 	var tween: Tween = panel.create_tween()

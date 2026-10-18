@@ -1,0 +1,17 @@
+{
+  "id": "manual_tang_rain_needles",
+  "display_name": "만천화우",
+  "category": 5,
+  "element": 0,
+  "yin_yang": 0,
+  "effects": [
+    6,
+    2
+  ],
+  "research_cost": 40,
+  "complexity": 4,
+  "damage": 13,
+  "internal_cost": 18,
+  "range": 3,
+  "description": "사천당가의 암기술. 하늘 가득 비처럼 침을 뿌려 멀리서 적을 친다."
+}

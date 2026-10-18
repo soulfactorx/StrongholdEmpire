@@ -1,0 +1,46 @@
+{
+  "id": "manual_dying_warrior",
+  "title": "죽어 가는 무인",
+  "description": "숲길에 피투성이 무인이 쓰러져 있습니다. 「이…이것만은… 원수의 손에 넘어가선 안 되오…」 그가 품에서 책을 꺼냅니다.",
+  "can_repeat": false,
+  "weight": 1,
+  "conditions": [
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "유언을 받들어 비급을 맡는다",
+      "message": "무인이 눈을 감았습니다. 정성껏 묻어 주었습니다. 도덕 +3",
+      "effects": [
+        {
+          "type": "gain_manual",
+          "art": "random"
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 3
+        }
+      ]
+    },
+    {
+      "label": "상처부터 돌본다",
+      "message": "끝내 숨을 거두었지만 마지막에 웃었습니다. 그가 남긴 책을 거두었습니다. 도덕 +5",
+      "effects": [
+        {
+          "type": "gain_manual",
+          "art": "random"
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        }
+      ]
+    }
+  ]
+}

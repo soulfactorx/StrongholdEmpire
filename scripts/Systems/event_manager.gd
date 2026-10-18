@@ -58,6 +58,10 @@ extends RefCounted
 ##   marry target                    — 연인(또는 누구든)을 배우자로 맞는다. 배우자는 여럿 둘 수 있다 (효과)
 ##   end_relationship target         — 관계를 끝낸다 (이별·사별, 효과)
 ##
+## ■ 비급
+##   gain_manual art — 비급을 얻는다 (무공 연구소에서 연구할 수 있게 됨). art가 "random"이면 아직 연구할 수 없고
+##                     익히지도 않은 비급 중 하나 (효과)
+##
 ## ■ 가중치
 ##   최상위 "weight"(기본 1): 발생 후보 중에서 뽑힐 상대적 확률. 스토리 핵심 기연은 높게 준다.
 ##   최상위 "priority"(기본 false): true면 조건을 채운 계절에 기연 발생 확률과 관계없이 먼저 일어난다.
@@ -102,6 +106,8 @@ static var role_state: Dictionary = {}
 ## 강호 지도 상태 (GameManager.map_state)와 플레이어 문파 id — regions_owned 조건
 static var map_state: Dictionary = {}
 static var player_sect_id: String = ""
+## 가진 비급 (GameManager.owned_manuals와 같은 배열) — gain_manual 효과
+static var owned_manuals: Array[String] = []
 ## 관계 대상 기연에서 지금 판정·적용 중인 대상 인물 ("$subject")
 static var _subject: String = ""
 ## get_candidates가 관계 대상 기연마다 고른 대상 (기연 id → 인물 id)
@@ -476,6 +482,10 @@ static func _validate_effect(effect: Variant, errors: PackedStringArray) -> void
 			if not NpcRoster.has_npc(str(e.get("target", ""))) and e.get("target") != "$subject":
 				errors.append("명부에 없는 인물: %s" % e.get("target"))
 			_validate_bond_type(e, errors)
+		"gain_manual":
+			var manual: String = str(e.get("art", ""))
+			if manual != "random" and not MartialArtLibrary.has_art(manual):
+				errors.append("알 수 없는 비급: %s" % manual)
 		"marry", "end_relationship":
 			if not e.get("target") is String:
 				errors.append("%s 효과에 target 필요" % e.get("type"))
@@ -653,6 +663,27 @@ static func _condition_met(
 	return false
 
 
+## 얻을 비급이 남지 않았을 때 대신 주는 연구점
+const NO_MANUAL_RESEARCH := 20
+
+
+## 비급을 owned에 더한다. "random"이면 available(이미 연구할 수 있는 것)·owned·익힌 무공이 아닌 것 중 하나.
+## 얻은 비급 이름을 돌려준다 (이미 있거나 남은 것이 없으면 "").
+static func gain_manual(art_id: String, owned: Array[String], character: CharacterData, available: Array = []) -> String:
+	if art_id == "random":
+		var pool: Array[String] = []
+		for art in MartialArtLibrary.get_all():
+			if not owned.has(art.id) and not available.has(art.id) and not character.knows_martial_art(art.id):
+				pool.append(art.id)
+		if pool.is_empty():
+			return ""
+		art_id = pool.pick_random()
+	if not MartialArtLibrary.has_art(art_id) or owned.has(art_id):
+		return ""
+	owned.append(art_id)
+	return MartialArtLibrary.create_art(art_id).display_name
+
+
 static func _compare(actual: float, op: String, expected: float) -> bool:
 	match op:
 		">=":
@@ -725,6 +756,14 @@ static func _apply_effect(
 			var rel: RelationshipData = RelationshipManager.get_bond_with(relationships, _target(e))
 			if rel:
 				relationships.erase(rel)
+		"gain_manual":
+			var library: Array = SectRegistry.get_sect_info(sect.id).get("manuals", []) if SectRegistry.has_sect(sect.id) else []
+			var gained: String = gain_manual(str(e["art"]), owned_manuals, character, library)
+			var note: String = "비급 [%s]을(를) 얻었습니다. 무공 연구소에서 연구할 수 있습니다." % gained if not gained.is_empty() \
+				else "새로 얻을 비급이 없었습니다. 대신 연구점 +%d" % NO_MANUAL_RESEARCH
+			if gained.is_empty():
+				sect.research_points += NO_MANUAL_RESEARCH
+			result["message"] = (str(result.get("message", "")) + " " + note).strip_edges()
 		"learn_art":
 			var art: MartialArtData = MartialArtLibrary.create_art(e["art"])
 			if art:

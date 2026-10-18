@@ -646,7 +646,7 @@ func _test_martial_art_screen_actions() -> void:
 	await process_frame
 	await process_frame
 	var screen: Node = current_scene
-	_check(screen.preset_list.item_count == MartialArtLibrary.get_all().size(), "무공 연구소: 비급 목록은 MartialArtLibrary")
+	_check(screen.preset_list.item_count == 2 and screen.preset_list.get_item_text(0).contains("청운검법") and screen.preset_list.get_item_text(0).contains("서고"), "무공 연구소: 비급 목록은 소속 문파 서고의 비급")
 	_check(screen.known_arts_label.text.contains("[유혼쾌영검]") and screen.known_arts_label.text.contains("피해") and screen.known_arts_label.text.contains("사거리"), "보유 무공 목록: 늘 보이고 전투 수치까지")
 	screen._on_enhance_pressed()
 	_check(screen.choice_popup.visible and screen.choice_popup.get_option_count() == 1, "강화: 습득 무공 고르기")

@@ -26,6 +26,8 @@ var role_state: Dictionary = RoleActions.create_state()
 var legacy_records: Array[LegacyData] = []
 ## 전투에서 본 상대 무공 {무공 id: {id, name, element}} — 무공 연구소에서 분석한다. 세대를 넘어 남는다.
 var observed_arts: Dictionary = {}
+## 가진 비급 (무공 id). 소속 문파 서고의 비급과 함께 무공 연구소에서 연구할 수 있다. 기연·사부에게서 얻는다.
+var owned_manuals: Array[String] = []
 ## 해가 시작될 때의 기록 (연간 보고서 비교용)
 var year_start: Dictionary = {}
 ## 해가 바뀔 때 만든 연간 보고서 {title, lines}. 경영 화면이 보여 주고 비운다
@@ -243,6 +245,7 @@ func _initialize_new_game(
 	legacy_records.clear()
 	year_start = _take_year_snapshot()
 	observed_arts = {}
+	owned_manuals.clear()
 	analyzed_elements = []
 	challenge_target = ""
 	pending_invasion = ""
@@ -306,6 +309,7 @@ func _all_sect_ids() -> Array:
 ## 기연 판정에 쓰는 진행 상황을 EventManager에 넘긴다. (딕셔너리·배열은 같은 객체를 공유)
 func _sync_event_context() -> void:
 	EventManager.world_sects = world_sects
+	EventManager.owned_manuals = owned_manuals
 	EventManager.current_year = current_year
 	EventManager.current_turn = _get_turn_index()
 	EventManager.current_generation = generation
@@ -1298,6 +1302,32 @@ func upgrade_facility(facility: String) -> Dictionary:
 	return SectManager.upgrade_facility(player_sect, facility)
 
 
+## 무공 연구소에서 연구할 수 있는 비급: 소속 문파 서고의 비급과 가진 비급. [{art: MartialArtData, source: "문파 서고"|"소장"}]
+## 무소속(낭인)은 가진 비급뿐이다.
+func get_research_manuals() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	var seen: Dictionary = {}
+	var library: Array = SectRegistry.get_sect_info(player_sect.id).get("manuals", []) if has_sect() and SectRegistry.has_sect(player_sect.id) else []
+	for entry in [[library, "%s 서고" % player_sect.sect_name], [owned_manuals, "소장"]]:
+		for art_id in entry[0]:
+			var art: MartialArtData = MartialArtLibrary.create_art(str(art_id))
+			if art and not seen.has(art.id):
+				seen[art.id] = true
+				result.append({"art": art, "source": entry[1]})
+	return result
+
+
+## 비급을 얻는다. art_id가 "random"이면 아직 연구할 수 없고 익히지도 않은 비급 중 하나. 얻은 비급 이름(못 얻으면 "")
+func gain_manual(art_id: String) -> String:
+	var gained: String = EventManager.gain_manual(art_id, owned_manuals, player_character, _available_manual_ids())
+	EventBus.character_updated.emit(player_character)
+	return gained
+
+
+func _available_manual_ids() -> Array:
+	return get_research_manuals().map(func(entry: Dictionary) -> String: return entry["art"].id)
+
+
 ## 경영 화면 비무 상대 순서: 라이벌 → 동문 → 벗·혈맹 → 사부 → 그 밖의 인연 (원한은 빼고)
 const SPAR_PARTNER_ORDER: Array = [
 	RelationshipData.BondType.RIVALRY, RelationshipData.BondType.FELLOW,
@@ -1444,6 +1474,7 @@ func _build_save_state() -> Dictionary:
 		"role_history": role_history,
 		"role_state": role_state,
 		"observed_arts": observed_arts,
+		"owned_manuals": owned_manuals,
 		"challenge_target": challenge_target,
 		"pending_invasion": pending_invasion,
 		"year_start": year_start,
@@ -1518,6 +1549,10 @@ func _apply_save_data(data: Dictionary) -> void:
 				"generation": int(entry.get("generation", 1)), "kind": str(entry.get("kind", "")),
 				"text": str(entry.get("text", "")), "lines": Array(entry.get("lines", [])).map(func(line: Variant) -> String: return str(line)),
 			})
+	owned_manuals.clear()
+	for art_id in data.get("owned_manuals", []):
+		if MartialArtLibrary.has_art(str(art_id)):
+			owned_manuals.append(str(art_id))
 	observed_arts = {}
 	var saved_arts: Dictionary = data.get("observed_arts", {})
 	for art_id in saved_arts:

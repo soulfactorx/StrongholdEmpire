@@ -43,5 +43,8 @@
       "type": "HATRED",
       "strength": 20
     }
+  ],
+  "manuals": [
+    "manual_heukpung_black_wind"
   ]
 }

@@ -1,0 +1,17 @@
+{
+  "id": "manual_haomun_ghost_step",
+  "display_name": "유령보",
+  "category": 6,
+  "element": 0,
+  "yin_yang": 0,
+  "effects": [
+    5,
+    2
+  ],
+  "research_cost": 25,
+  "complexity": 2,
+  "damage": 6,
+  "internal_cost": 10,
+  "move_bonus": 3,
+  "description": "하오문의 보법. 그림자처럼 스며들어 뒤를 친다."
+}

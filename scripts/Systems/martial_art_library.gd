@@ -1,7 +1,8 @@
 class_name MartialArtLibrary
 extends RefCounted
 
-## id로 무공을 찾는 목록. resources/MartialArts/의 프리셋과 data/martial_arts/의 모드 무공을 모은다.
+## id로 무공을 찾는 목록. resources/MartialArts/의 프리셋과 data/martial_arts/의 데이터 무공을 모은다.
+## 강호에 있는 비급 전체다. 플레이어가 연구할 수 있는 것은 가진 비급과 소속 문파 서고의 비급뿐이다 (GameManager.get_research_manuals).
 
 const PRESET_DIR := "res://resources/MartialArts/"
 
@@ -21,7 +22,7 @@ static func create_art(art_id: String) -> MartialArtData:
 	return art.duplicate(true) if art else null
 
 
-## 연구할 수 있는 비급 전체: 프리셋을 먼저, 모드 무공을 뒤에 (이름순)
+## 강호의 비급 전체: 프리셋을 먼저, 데이터 무공을 뒤에 (이름순)
 static func get_all() -> Array[MartialArtData]:
 	_ensure_loaded()
 	var result: Array[MartialArtData] = []

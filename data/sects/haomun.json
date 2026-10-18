@@ -23,5 +23,8 @@
       "type": "ACQUAINTANCE",
       "strength": 15
     }
+  ],
+  "manuals": [
+    "manual_haomun_ghost_step"
   ]
 }

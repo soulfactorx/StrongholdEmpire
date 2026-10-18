@@ -878,3 +878,47 @@ func _test_bond_system() -> void:
 	gm.resolve_pending_event(1)
 	_check(_rel(gm, "npc_musician") == null, "식어 버린 정: 놓아 주면 관계가 끝남")
 	_completed["_test_bond_system"] = true
+
+
+func _test_manuals() -> void:
+	var gm: Node = root.get_node("GameManager")
+	# 강호의 비급 전체가 아니라, 소속 문파 서고의 비급과 가진 비급만 연구할 수 있다
+	_new_quiet_game(gm, "young_disciple")
+	var ids: Array = gm.get_research_manuals().map(func(entry: Dictionary) -> String: return entry["art"].id)
+	_check(ids == ["manual_qingyun_cloud_sword", "preset_earth_life_palm"], "청운검파: 서고의 비급만 연구 가능")
+	_check(not ids.has("mod_thunder_palm") and MartialArtLibrary.has_art("mod_thunder_palm"), "다른 세력의 비급은 목록에 없음")
+	gm.start_new_game("남궁", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0}, false, false, {"player_sect": "namgung"})
+	ids = gm.get_research_manuals().map(func(entry: Dictionary) -> String: return entry["art"].id)
+	_check(ids.has("manual_namgung_plum_sword") and not ids.has("manual_qingyun_cloud_sword"), "남궁세가: 매화검법")
+	_new_quiet_game(gm, "wanderer")
+	_check(gm.get_research_manuals().is_empty(), "낭인은 비급 없이 시작")
+
+	# 기연으로 비급을 얻는다
+	gm.pending_event = {"id": "manual_cliff_cave"}
+	gm.resolve_pending_event(0)
+	_check(gm.owned_manuals.size() == 1 and gm.get_research_manuals().size() == 1 and gm.get_research_manuals()[0]["source"] == "소장", "기연: 비급을 얻어 연구 가능")
+	var first: String = gm.owned_manuals[0]
+	_check(gm.gain_manual(first).is_empty() and gm.owned_manuals.size() == 1, "같은 비급은 두 번 얻지 않음")
+	var art: MartialArtData = MartialArtLibrary.create_art(first)
+	gm.player_sect.research_points = 500
+	gm.player_character.wisdom = 99
+	var learned: bool = false
+	for i in 20:
+		if MartialArtManager.research_existing(art.duplicate(true), gm.player_sect, gm.player_character)["success"]:
+			learned = true
+			break
+		gm.player_sect.research_points = 500
+	_check(learned and gm.player_character.knows_martial_art(first), "얻은 비급을 연구해 익힘")
+	gm.owned_manuals.clear()
+	for i in MartialArtLibrary.get_all().size():
+		gm.gain_manual("random")
+	_check(gm.owned_manuals.size() == MartialArtLibrary.get_all().size() - 1 and not gm.owned_manuals.has(first), "무작위 비급: 익힌 것·가진 것은 빼고")
+	var research: int = gm.player_sect.research_points
+	gm.pending_event = {"id": "manual_cliff_cave"}
+	gm.resolve_pending_event(0)
+	_check(gm.player_sect.research_points == research + EventManager.NO_MANUAL_RESEARCH, "얻을 비급이 없으면 연구점")
+
+	# 저장·복원
+	gm._apply_save_data(JSON.parse_string(JSON.stringify(gm._build_save_state())))
+	_check(gm.owned_manuals.size() == MartialArtLibrary.get_all().size() - 1, "가진 비급 저장·복원")
+	_completed["_test_manuals"] = true

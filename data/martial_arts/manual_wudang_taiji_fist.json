@@ -1,0 +1,16 @@
+{
+  "id": "manual_wudang_taiji_fist",
+  "display_name": "태극권",
+  "category": 2,
+  "element": 5,
+  "yin_yang": 2,
+  "effects": [
+    3,
+    7
+  ],
+  "research_cost": 35,
+  "complexity": 3,
+  "damage": 12,
+  "internal_cost": 14,
+  "description": "무당파의 권법. 부드러움으로 강함을 제어해 상대의 흐름을 묶는다."
+}
