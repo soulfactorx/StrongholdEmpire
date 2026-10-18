@@ -121,6 +121,7 @@ func _initialize() -> void:
 	GameSettings.combat_delay = 0.0
 	# 공격 미리보기는 끄고 바로 실행한다 (켠 상태는 test_combat의 _test_combat_preview_and_history에서 따로)
 	GameSettings.combat_preview = false
+	GameSettings.enemy_preview = false
 	# 경영 행동 미리보기도 끈다 (켠 상태는 test_ui의 _test_action_preview에서 따로)
 	GameSettings.action_preview = false
 	GameSettings.faction_report = false
@@ -142,6 +143,7 @@ func _run_runtime_tests() -> void:
 	# GameManager가 준비되며 설정 파일을 읽으므로, 시험용 전투 설정을 다시 맞춘다.
 	GameSettings.combat_delay = 0.0
 	GameSettings.combat_preview = false
+	GameSettings.enemy_preview = false
 	GameSettings.action_preview = false
 	GameSettings.faction_report = false
 	# 각 검사가 끝까지 실행됐는지 확인한다. 스크립트 오류로 중단되면 완료 표시가 남지 않는다.

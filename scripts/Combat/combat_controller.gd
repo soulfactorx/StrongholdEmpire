@@ -50,6 +50,10 @@ var _art_buttons_owner: CombatUnit = null
 var _last_move: Dictionary = {}
 ## 적이 움직이는 중 (전투 속도 옵션의 간격을 두고). 이때는 입력을 받지 않는다
 var _enemy_acting: bool = false
+## 적 공격 예고를 띄우고 [확인]을 기다리는 중인지
+var _enemy_waiting: bool = false
+## 적 공격 예고를 닫으면 적 차례가 이어진다.
+signal enemy_preview_closed
 const _ConfirmPopup = preload("res://scripts/UI/confirm_popup.gd")
 ## 후퇴 확인 대화상자 (처음 쓸 때 만든다)
 var confirm_popup: Control
@@ -1076,17 +1080,22 @@ func _pick_enemy_target(enemy: CombatUnit) -> CombatUnit:
 
 ## 적 한 명의 차례: 닿지 않으면 다가간 뒤, 행동력이 남는 동안 무공과 기본 공격(차례에 한 번)을 쓴다.
 ## 플레이어와 같은 규칙이다. 밸런스 시뮬레이터는 같은 방식으로 아군도 자동으로 움직인다.
+## 적이 아군을 칠 때는 설정에 따라 예고(예상 피해)를 보여 주고 [확인]을 기다린다.
 func _run_enemy_ai(enemy: CombatUnit) -> void:
 	var target := _pick_enemy_target(enemy)
 	if target == null or not enemy.is_alive():
 		return
-	if not _enemy_try_attack(enemy, target):
+	var attacked: bool = await _enemy_try_attack(enemy, target)
+	if not attacked:
 		_enemy_approach(enemy, target)
 	var guard: int = 0
 	while not _combat_over and enemy.is_alive() and guard < 8:
 		guard += 1
 		target = _pick_enemy_target(enemy)
-		if target == null or not _enemy_try_attack(enemy, target):
+		if target == null:
+			break
+		attacked = await _enemy_try_attack(enemy, target)
+		if not attacked:
 			break
 
 
@@ -1123,12 +1132,82 @@ func _enemy_usable_art(enemy: CombatUnit) -> MartialArtData:
 func _enemy_try_attack(enemy: CombatUnit, target: CombatUnit) -> bool:
 	var art: MartialArtData = _enemy_usable_art(enemy)
 	var dist: int = CombatRules.distance(enemy.grid_pos, target.grid_pos)
+	var action: Dictionary = {}
 	if art and dist <= CombatRules.get_art_range(art, _terrain_at(enemy.grid_pos)):
+		action = {"kind": "art", "unit": enemy, "target": target, "art": art}
+	elif dist == 1 and enemy.can_basic_attack():
+		action = {"kind": "attack", "unit": enemy, "target": target}
+	else:
+		return false
+	if not enemy.is_friendly() and GameSettings.enemy_preview and is_inside_tree():
+		await _show_enemy_preview(action)
+		if _combat_over or not is_inside_tree() or not enemy.is_alive() or not target.is_alive():
+			return false
+	if action["kind"] == "art":
 		return _perform_art(enemy, target, art)
-	if dist == 1 and enemy.can_basic_attack():
-		_perform_attack(enemy, target)
-		return true
-	return false
+	_perform_attack(enemy, target)
+	return true
+
+
+## 적 공격 예고: 누가 누구를 무엇으로 치는지, 예상 피해와 체력 변화. [확인]을 누르면 공격이 이어진다.
+func _show_enemy_preview(action: Dictionary) -> void:
+	_pending_action = action
+	_enemy_waiting = true
+	_refresh_all()
+	preview_label.text = enemy_preview_text(action)
+	var confirm: Button = preview_panel.find_child("PreviewConfirmButton", true, false)
+	confirm.text = "확인 (Enter)"
+	preview_panel.find_child("PreviewCancelButton", true, false).visible = false
+	preview_panel.reset_size()
+	preview_panel.visible = true
+	confirm.grab_focus()
+	await enemy_preview_closed
+
+
+func _close_enemy_preview() -> void:
+	_enemy_waiting = false
+	_pending_action = {}
+	preview_panel.visible = false
+	preview_panel.find_child("PreviewConfirmButton", true, false).text = "실행 (Enter)"
+	preview_panel.find_child("PreviewCancelButton", true, false).visible = true
+	enemy_preview_closed.emit()
+
+
+func is_enemy_preview() -> bool:
+	return _enemy_waiting
+
+
+## 적 공격 예고 문구
+func enemy_preview_text(action: Dictionary) -> String:
+	var unit: CombatUnit = action["unit"]
+	var target: CombatUnit = action["target"]
+	var art: MartialArtData = action.get("art")
+	var lines: PackedStringArray = ["[적 공격 예고]"]
+	lines.append("%s → %s: %s" % [unit.display_name, target.display_name, "기본 공격" if art == null else "[%s]" % art.display_name])
+	var p: Dictionary = CombatRules.preview_damage(
+		unit, target, art, _terrain_at(unit.grid_pos), _terrain_at(target.grid_pos),
+		_relationship_bonus(unit, target), _relationship_defense(unit, target)
+	)
+	var crit_text: String = " (회심 %d%%면 최대 %d)" % [roundi(p["crit_chance"] * 100), p["crit_max"]] if p["crit_chance"] > 0.0 else ""
+	lines.append("예상 피해: %d ~ %d%s" % [p["min"], p["max"], crit_text])
+	var danger: String = ""
+	if p["min"] >= target.hp:
+		danger = " — 반드시 쓰러짐"
+	elif p["max"] >= target.hp:
+		danger = " — 쓰러질 수 있음"
+	elif p["crit_max"] >= target.hp:
+		danger = " — 회심이면 쓰러짐"
+	lines.append("%s 체력: %d → %d ~ %d / %d%s" % [
+		target.display_name, target.hp, maxi(0, target.hp - p["max"]), maxi(0, target.hp - p["min"]), target.max_hp, danger,
+	])
+	if not p["notes"].is_empty():
+		lines.append("요인: %s" % ", ".join(p["notes"]))
+	if art:
+		var effects: String = art.get_effects_text()
+		if not effects.is_empty() and effects != "없음":
+			lines.append("효과: %s" % effects)
+	lines.append("%s 체력 %d / %d, 내공 %d" % [unit.display_name, unit.hp, unit.max_hp, unit.character.internal_energy_current])
+	return "\n".join(lines)
 
 
 # ─── 턴 진행 ────────────────────────────────────────
@@ -1257,7 +1336,9 @@ func _run_enemy_phase() -> void:
 			if not is_inside_tree() or _combat_over:
 				_enemy_acting = false
 				return
-		_run_enemy_ai(enemy)
+		await _run_enemy_ai(enemy)
+		if not is_inside_tree():
+			return
 		enemy.tick_statuses()
 	_enemy_acting = false
 	_refresh_all()
@@ -1304,6 +1385,9 @@ func _request_action(action: Dictionary) -> void:
 
 
 func confirm_preview() -> void:
+	if _enemy_waiting:
+		_close_enemy_preview()
+		return
 	if _pending_action.is_empty():
 		return
 	var action: Dictionary = _pending_action
@@ -1311,7 +1395,11 @@ func confirm_preview() -> void:
 	_execute_action(action)
 
 
+## 적 공격 예고는 취소할 수 없으므로 닫으면 공격이 이어진다.
 func cancel_preview() -> void:
+	if _enemy_waiting:
+		_close_enemy_preview()
+		return
 	_pending_action = {}
 	if preview_panel:
 		preview_panel.visible = false
