@@ -168,7 +168,8 @@ static func evaluate(
 
 
 static func check_game_over(sect: SectData) -> String:
-	if sect.disciple_count <= 0:
+	# 무소속(낭인)은 제자가 없어도 이야기가 이어진다.
+	if sect.disciple_count <= 0 and sect.id != "none":
 		return "sect_disbanded"
 	if sect.shortage_seasons >= _Balance.SHORTAGE_GAME_OVER_SEASONS:
 		return "famine_collapse"

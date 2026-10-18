@@ -80,6 +80,7 @@ const RUNTIME_SEQUENCE: Array = [
 	["roles", "_test_role_actions_hub"],
 	["combat", "_test_combat_library"],
 	["events", "_test_story_arcs"],
+	["roles", "_test_starting_sect"],
 	["roles", "_test_disciple_roster"],
 	["roles", "_test_disciple_roster_flow"],
 	["combat", "_test_transmission_and_secret"],

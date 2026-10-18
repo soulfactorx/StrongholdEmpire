@@ -101,6 +101,19 @@ func _test_save_screens() -> void:
 	await process_frame
 	await process_frame
 	var screen: Node = current_scene
+	# 소속 문파: 고를 수 있고, 낭인은 무소속
+	for i in screen._scenarios.size():
+		if screen._scenarios[i].get("id") == ScenarioManager.DEFAULT_ID:
+			screen._on_scenario_selected(i)
+	screen._on_role_selected(screen._role_ids.find("young_disciple"))
+	_check(not screen.sect_option.disabled and screen.sect_option.item_count > 1, "새 게임: 소속 문파를 고를 수 있음")
+	screen.set_player_sect("namgung")
+	_check(screen.get_faction_setup().get("player_sect") == "namgung", "새 게임: 고른 문파가 세력 설정에 담김")
+	var wanderer_index: int = screen._role_ids.find("wanderer")
+	if wanderer_index >= 0:
+		screen._on_role_selected(wanderer_index)
+		_check(screen.sect_option.disabled and screen.get_player_sect_choice().is_empty(), "새 게임: 낭인은 무소속")
+		screen._on_role_selected(screen._role_ids.find("young_disciple"))
 	screen.ironman_check.button_pressed = true
 	screen._on_start_pressed()
 	await process_frame

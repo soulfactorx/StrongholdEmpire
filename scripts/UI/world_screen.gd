@@ -100,6 +100,15 @@ func _do_diplomacy(sect_id: String, action_id: String) -> void:
 func _build_sect_list() -> void:
 	_add_heading(sect_list, "문파 세력")
 	var player_sect: SectData = GameManager.player_sect
+	if not GameManager.has_sect():
+		_add_entry(sect_list, "무소속 — %s" % GameManager.player_character.display_name,
+			"어느 문파에도 속하지 않은 떠돌이입니다. 신용을 쌓은 세력에 객경으로 들어갈 수 있습니다. (역할 전환)")
+	else:
+		_add_player_sect_entry(player_sect)
+	_add_world_sect_entries()
+
+
+func _add_player_sect_entry(player_sect: SectData) -> void:
 	_add_entry(
 		sect_list,
 		"%s (%s) — 우리 문파" % [player_sect.sect_name, player_sect.get_alignment_name()],
@@ -112,6 +121,9 @@ func _build_sect_list() -> void:
 		],
 		ArtAssets.emblem(player_sect.id), EMBLEM_SIZE
 	)
+
+
+func _add_world_sect_entries() -> void:
 	for sect in GameManager.get_world_sects_by_power():
 		var status: String = "굴복" if sect.subjugated else sect.get_attitude_text()
 		var tags: PackedStringArray = []

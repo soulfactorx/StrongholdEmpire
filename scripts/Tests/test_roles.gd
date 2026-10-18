@@ -243,9 +243,18 @@ func _test_role_transitions_extended() -> void:
 		if option.get("kind") == "defect" and option["sect_id"] == "namgung":
 			defect = option
 	_check(not defect.is_empty(), "신용 %d 이상: 이적 경로" % _Balance.DEFECT_CREDIT_REQ)
-	var old_id: String = gm.player_sect.id
+	_check(gm.player_sect.id == "none", "낭인 출신 의뢰인은 무소속")
+	var gold_before: int = gm.player_sect.gold
 	gm.apply_role_transition(defect["role"], defect)
 	_check(gm.player_sect.id == "namgung" and gm.player_character.role == CharacterData.Role.MANAGER, "이적: 남궁세가의 중간관리자")
+	_check(gm.get_world_sect("none") == null, "무소속에서 이적: 무소속은 강호 세력이 되지 않음")
+	_check(gm.player_sect.gold >= gold_before, "무소속에서 이적: 개인 금화를 가지고 감")
+
+	# 문파에 몸담은 의뢰인의 이적: 옛 문파는 강호 세력이 된다
+	_new_quiet_game(gm, "mercenary")
+	RoleActions.change_credit(gm.role_state, "namgung", _Balance.DEFECT_CREDIT_REQ)
+	var old_id: String = gm.player_sect.id
+	gm.apply_role_transition(CharacterData.Role.MANAGER, {"role": CharacterData.Role.MANAGER, "sect_id": "namgung", "kind": "defect"})
 	var old_sect: SectData = gm.get_world_sect(old_id)
 	_check(old_sect != null and old_sect.attitude == _Balance.DEFECT_OLD_SECT_ATTITUDE, "이적: 옛 문파는 강호 세력이 됨")
 	_check(gm.get_world_sect("namgung") == null and gm.story_flags.get("defected", false), "이적: 새 문파는 강호 세력 목록에서 빠짐")
@@ -343,6 +352,42 @@ func _test_role_actions_hub() -> void:
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
 	await process_frame
 	_completed["_test_role_actions_hub"] = true
+
+
+func _test_starting_sect() -> void:
+	var gm: Node = root.get_node("GameManager")
+	# 기본: 시나리오의 기본 문파
+	_new_quiet_game(gm, "young_disciple")
+	var default_id: String = gm.player_sect.id
+	_check(gm.has_sect() and gm.get_world_sect(default_id) == null, "기본 소속: 시나리오 기본 문파")
+
+	# 다른 문파를 골라 시작: 기본 문파는 강호 세력이 된다
+	gm.start_new_game("소속", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0}, false, false, {"player_sect": "namgung"})
+	_check(gm.player_sect.id == "namgung" and gm.get_world_sect("namgung") == null, "시작 문파 선택: 남궁세가")
+	_check(gm.get_world_sect(default_id) != null, "고르지 않은 기본 문파는 강호 세력")
+	_check(_roster_matches(gm.player_sect), "고른 문파의 제자 명단")
+	var leader_id: String = gm.player_sect.leader_id
+	if NpcRoster.has_npc(leader_id):
+		var master: RelationshipData = _rel(gm, leader_id)
+		_check(master != null and master.bond_type == RelationshipData.BondType.MASTER_DISCIPLE, "고른 문파의 문주가 사부")
+	var other_masters: bool = gm.player_relationships.any(func(rel: RelationshipData) -> bool:
+		return rel.bond_type == RelationshipData.BondType.MASTER_DISCIPLE and str(NpcRoster.get_npc(rel.target_id).get("sect_id", "")) != "namgung")
+	_check(not other_masters, "다른 문파의 스승은 사부가 아님")
+	_check(not WorldMap.get_home(gm.map_state, "namgung").is_empty(), "고른 문파의 본거지")
+
+	# 낭인: 무소속
+	_new_quiet_game(gm, "wanderer")
+	var sect: SectData = gm.player_sect
+	_check(sect.id == "none" and not gm.has_sect() and sect.disciple_count == 0, "낭인은 무소속 (제자 없음)")
+	_check(gm.get_world_sect(default_id) != null, "낭인: 기본 문파는 강호 세력")
+	_check(not gm._all_sect_ids().has("none"), "무소속은 지도 세력이 아님")
+	_check(EndingManager.check_game_over(sect).is_empty(), "무소속은 제자 0명이어도 끝나지 않음")
+	gm.advance_turn()
+	_check(gm.pending_invasion.is_empty() and gm.player_sect.id == "none", "무소속: 계절을 넘겨도 침공 없음")
+	_check(RoleDashboard.get_sect_title(gm.player_character.role, gm.player_sect).begins_with("무소속"), "무소속 칸 제목")
+	gm._apply_save_data(JSON.parse_string(JSON.stringify(gm._build_save_state())))
+	_check(gm.player_sect.id == "none" and not gm.has_sect() and gm.get_world_sect("none") == null, "무소속 저장·복원")
+	_completed["_test_starting_sect"] = true
 
 
 func _test_disciple_roster() -> void:
@@ -457,7 +502,7 @@ func _test_disciple_roster() -> void:
 	_check(_roster_matches(gm.player_sect) and gm.player_sect.disciple_count == 9, "구버전 세이브: 제자 수만큼 무작위 제자")
 
 	# 다른 세력으로 옮겨 가면 그 세력의 명단을 만든다
-	_new_quiet_game(gm, "wanderer")
+	_new_quiet_game(gm, "mercenary")
 	var old_id: String = gm.player_sect.id
 	RoleActions.change_credit(gm.role_state, "namgung", _Balance.DEFECT_CREDIT_REQ)
 	gm.apply_role_transition(CharacterData.Role.MANAGER, {"role": CharacterData.Role.MANAGER, "sect_id": "namgung", "kind": "defect"})
