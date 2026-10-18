@@ -301,6 +301,10 @@ func _test_action_preview() -> void:
 	hub._on_feast_pressed()
 	var popup: Control = ActionPreview.get_popup(hub)
 	_check(popup.visible and popup._message.text.contains("명성") and gm.player_sect.gold == 500, "연회 미리보기: 확인창, 아직 그대로")
+	# 맨 위 층(CanvasLayer)의 확인창·말풍선도 한글 본문 글꼴 (엔진 기본 글꼴이면 휴대폰·웹에서 글자가 깨진다)
+	var bubble_label: Label = LongPressTip._get_bubble(hub).get_child(0)
+	_check(popup._message.get_theme_font("font") == ArtAssets.body_font() and bubble_label.get_theme_font("font") == ArtAssets.body_font(), "미리보기·말풍선 글꼴은 본문 글꼴")
+	_check(ThemeDB.fallback_font == ArtAssets.body_font(), "엔진 기본 글꼴도 한글 글꼴")
 	popup._answer(false)
 	_check(gm.player_sect.gold == 500 and gm.can_do_seasonal("last_feast_turn"), "취소: 아무것도 바뀌지 않음")
 	hub._on_feast_pressed()
@@ -535,6 +539,41 @@ func _test_input_and_tips() -> void:
 
 
 ## 그림 자원: 배경·타일·장기말·UI 텍스처와 글꼴이 모두 불러와지고 화면·전투에 깔린다.
+## 데이터 JSON과 스크립트 문자열에 쓰인 문자 중 글꼴에 없는 것 {문자: 파일}
+func _missing_glyphs(font: Font) -> Dictionary:
+	var missing: Dictionary = {}
+	var files: PackedStringArray = []
+	_collect_files("res://data", ".json", files)
+	_collect_files("res://scripts/UI", ".gd", files)
+	_collect_files("res://scripts/Systems", ".gd", files)
+	_collect_files("res://scripts/Combat", ".gd", files)
+	var quoted := RegEx.new()
+	quoted.compile("\"(?:[^\"\\\\]|\\\\.)*\"")
+	for path in files:
+		var text: String = FileAccess.get_file_as_string(path)
+		if path.ends_with(".gd"):
+			var strings: PackedStringArray = []
+			for line in text.split("\n"):
+				if line.strip_edges().begins_with("#"):
+					continue
+				for found in quoted.search_all(line):
+					strings.append(found.get_string())
+			text = "".join(strings)
+		for i in text.length():
+			var code: int = text.unicode_at(i)
+			if code > 127 and not font.has_char(code):
+				missing[String.chr(code)] = path
+	return missing
+
+
+func _collect_files(dir_path: String, extension: String, out: PackedStringArray) -> void:
+	for file in DirAccess.get_files_at(dir_path):
+		if file.ends_with(extension):
+			out.append(dir_path.path_join(file))
+	for sub in DirAccess.get_directories_at(dir_path):
+		_collect_files(dir_path.path_join(sub), extension, out)
+
+
 func _test_art_assets() -> void:
 	var gm: Node = root.get_node("GameManager")
 	var names: Dictionary = {}
@@ -550,6 +589,11 @@ func _test_art_assets() -> void:
 		_check(ArtAssets.ui(ui) != null, "UI 텍스처 %s" % ui)
 	_check(ArtAssets.body_font() != null and ArtAssets.brush_font() != null, "본문·붓글씨 글꼴")
 	_check(root.theme != null and root.theme.default_font == ArtAssets.body_font(), "창 테마의 기본 글꼴")
+	# 글꼴에 없는 문자는 네모로 깨진다: 게임 글(데이터 JSON, 스크립트의 문자열)의 모든 문자가 본문 글꼴에 있어야 한다.
+	var missing_chars: Dictionary = _missing_glyphs(ArtAssets.body_font())
+	_check(missing_chars.is_empty(), "본문 글꼴에 없는 문자 없음 %s" % [missing_chars])
+	var brush: Font = ArtAssets.brush_font()
+	_check(brush.fallbacks.has(ArtAssets.body_font()) and brush.has_char("—".unicode_at(0)), "붓글씨 제목의 문장부호는 본문 글꼴로 (대체 글꼴)")
 	# 초상화·문장: 명부의 모든 인물, 모든 주인공 역할, 모든 문파
 	var missing: PackedStringArray = []
 	for npc in NpcRoster.get_all():

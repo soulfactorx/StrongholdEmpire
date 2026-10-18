@@ -432,11 +432,11 @@ func _test_diplomacy() -> void:
 	_check(gm.do_diplomacy("namgung", "break_alliance")["success"] and not namgung.allied, "동맹 파기")
 	_check(namgung.attitude == attitude - _Balance.ALLIANCE_BREAK_ATTITUDE and gm.player_sect.reputation == rep - _Balance.ALLIANCE_BREAK_REPUTATION, "동맹 파기: 태도·명성 하락")
 
-	# 도전장: 명성 +, 태도 −, 결판에 명성이 더 걸린다
+	# 도전장: 명성 +, 태도 -, 결판에 명성이 더 걸린다
 	rep = gm.player_sect.reputation
 	attitude = heukpung.attitude
 	_check(gm.do_diplomacy("heukpung", "challenge")["success"] and gm.challenge_target == "heukpung", "도전장 발송")
-	_check(gm.player_sect.reputation == rep + _Balance.CHALLENGE_REPUTATION and heukpung.attitude == attitude - _Balance.CHALLENGE_ATTITUDE, "도전장: 명성 +, 태도 −")
+	_check(gm.player_sect.reputation == rep + _Balance.CHALLENGE_REPUTATION and heukpung.attitude == attitude - _Balance.CHALLENGE_ATTITUDE, "도전장: 명성 +, 태도 -")
 	gm.advance_turn()
 	_check(not gm.do_diplomacy("heukpung", "challenge")["success"], "도전장은 결판 전까지 한 번")
 	rep = gm.player_sect.reputation

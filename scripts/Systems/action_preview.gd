@@ -56,6 +56,8 @@ static func get_popup(host: Node) -> Control:
 		scene.add_child(layer)
 		var popup: Control = preload("res://scripts/UI/confirm_popup.gd").new()
 		popup.name = "PreviewPopup"
+		# CanvasLayer 아래는 창 테마를 이어받지 않으므로 직접 준다 (글꼴이 깨지지 않게)
+		popup.theme = tree.root.theme
 		layer.add_child(popup)
 	return layer.get_node("PreviewPopup")
 

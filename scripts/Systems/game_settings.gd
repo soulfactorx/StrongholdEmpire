@@ -66,6 +66,9 @@ static func apply(tree: SceneTree = null) -> void:
 			tree.root.theme = Theme.new()
 			UiTheme.apply_root_theme(tree.root.theme)
 		tree.root.theme.default_font_size = UiTheme.font_size(UiTheme.BASE_FONT_SIZE)
+		# 화면 위 층(CanvasLayer)의 말풍선·확인창은 창 테마를 이어받지 못하므로 엔진 기본 글꼴도 한글 글꼴로 둔다.
+		if ArtAssets.body_font():
+			ThemeDB.fallback_font = ArtAssets.body_font()
 	# 헤드리스(테스트)에서는 창 모드를 바꾸지 않는다.
 	if DisplayServer.get_name() != "headless":
 		var mode: DisplayServer.WindowMode = (

@@ -330,7 +330,7 @@ func _update_time_display() -> void:
 
 func _update_sect_display(sect: SectData) -> void:
 	sect_name_label.text = RoleDashboard.get_sect_title(GameManager.player_character.role, sect)
-	# 다음 계절 예상 수지 (수입 − 유지비)
+	# 다음 계절 예상 수지 (수입 - 유지비)
 	var forecast: Dictionary = GameManager.estimate_next_season()
 	gold_label.text = "금화: %d (다음 계절 %+d, 유지비 %d)" % [sect.gold, forecast["gold"], sect.get_gold_upkeep()]
 	food_label.text = "식량: %d (다음 계절 %+d, 유지비 %d)" % [sect.food, forecast["food"], sect.get_food_upkeep()]
@@ -460,7 +460,7 @@ func _show_invasion() -> void:
 			{"id": "fight", "title": "맞서 싸운다", "description": "방어전: 제자와 인연이 함께 싸웁니다. 막아 내면 %s이(가) 제자를 잃습니다." % invader.sect_name},
 			{"id": "bribe", "title": "금화로 물린다 (금화 %d)" % bribe_gold, "description": "싸우지 않고 돌려보냅니다.",
 				"disabled": GameManager.player_sect.gold < bribe_gold},
-			{"id": "yield", "title": "산문을 내준다", "description": "제자 −%d, 명성 −%d" % [
+			{"id": "yield", "title": "산문을 내준다", "description": "제자 -%d, 명성 -%d" % [
 				_Balance.INVASION_YIELD_DISCIPLES, _Balance.INVASION_YIELD_REPUTATION,
 			]},
 	]
