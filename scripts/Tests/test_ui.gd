@@ -693,7 +693,19 @@ func _test_art_assets() -> void:
 	for token in ["player", "ally", "enemy", "highlight"]:
 		_check(ArtAssets.token(token) != null, "장기말 %s" % token)
 	for ui in ["panel", "button_normal", "button_hover", "button_pressed", "button_disabled"]:
-		_check(ArtAssets.ui(ui) != null, "UI 텍스처 %s" % ui)
+		var texture: Texture2D = ArtAssets.ui(ui)
+		_check(texture != null, "UI 텍스처 %s" % ui)
+		# 테두리 바깥 여백은 투명해야 배경 위에 흰 경계가 생기지 않는다 (그림을 바꾸면 tools/art/trim_ui_edges.py)
+		if texture:
+			var image: Image = texture.get_image()
+			if image.is_compressed():
+				image.decompress()
+			var w: int = image.get_width() - 1
+			var h: int = image.get_height() - 1
+			var corners_clear: bool = [Vector2i(0, 0), Vector2i(w, 0), Vector2i(0, h), Vector2i(w, h), Vector2i(w / 2, 0), Vector2i(0, h / 2)].all(
+				func(p: Vector2i) -> bool: return image.get_pixelv(p).a < 0.05
+			)
+			_check(corners_clear, "UI 텍스처 %s: 테두리 바깥이 투명 (흰 경계 없음)" % ui)
 	_check(ArtAssets.body_font() != null and ArtAssets.brush_font() != null, "본문·붓글씨 글꼴")
 	_check(root.theme != null and root.theme.default_font == ArtAssets.body_font(), "창 테마의 기본 글꼴")
 	# 글꼴에 없는 문자는 네모로 깨진다: 게임 글(데이터 JSON, 스크립트의 문자열)의 모든 문자가 본문 글꼴에 있어야 한다.
