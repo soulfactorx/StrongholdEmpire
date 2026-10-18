@@ -25,5 +25,27 @@
       "npc": "npc_namgung_enforcer",
       "post": "elder"
     }
+  ],
+  "initial_bonds": [
+    {
+      "target": "npc_namgung_lord",
+      "type": "MASTER_DISCIPLE",
+      "strength": 30
+    },
+    {
+      "target": "npc_namgung_lady",
+      "type": "FELLOW",
+      "strength": 25
+    },
+    {
+      "target": "npc_namgung_enforcer",
+      "type": "FELLOW",
+      "strength": 15
+    },
+    {
+      "target": "npc_rival",
+      "type": "RIVALRY",
+      "strength": 20
+    }
   ]
 }

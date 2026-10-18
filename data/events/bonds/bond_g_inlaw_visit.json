@@ -1,0 +1,53 @@
+{
+  "id": "bond_g_inlaw_visit",
+  "title": "처가 문안",
+  "description": "명절을 맞아 {title} {name}께 문안을 드릴 때가 되었습니다.",
+  "can_repeat": true,
+  "weight": 1,
+  "subject": {
+    "bond_types": [
+      "IN_LAW"
+    ]
+  },
+  "conditions": [
+    {
+      "type": "sect",
+      "field": "gold",
+      "op": ">=",
+      "value": 30
+    }
+  ],
+  "choices": [
+    {
+      "label": "예물을 갖춰 찾아뵙는다 (금화 30)",
+      "message": "{name}이(가) 흡족해합니다. 유대 +10",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -30
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 10
+        }
+      ]
+    },
+    {
+      "label": "사돈어른께 한 수 청한다",
+      "message": "{name}의 시험을 무사히 통과했습니다. 경험치 +15, 유대 +4",
+      "effects": [
+        {
+          "type": "experience",
+          "amount": 15
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 4
+        }
+      ]
+    }
+  ]
+}

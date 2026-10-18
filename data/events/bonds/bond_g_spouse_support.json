@@ -1,0 +1,48 @@
+{
+  "id": "bond_g_spouse_support",
+  "title": "내조",
+  "description": "{name}이(가) 장부를 내밉니다. 「살림을 아껴 모은 거예요. 요긴하게 쓰세요.」",
+  "can_repeat": true,
+  "weight": 1.5,
+  "subject": {
+    "bond_types": [
+      "SPOUSE"
+    ],
+    "min": 50
+  },
+  "conditions": [],
+  "choices": [
+    {
+      "label": "고맙게 받는다",
+      "message": "금화 +60, 유대 +3",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": 60
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 3
+        }
+      ]
+    },
+    {
+      "label": "당신을 위해 쓰라고 돌려준다",
+      "message": "{name}이(가) 감동합니다. 유대 +10, 명성 +2",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 10
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 2
+        }
+      ]
+    }
+  ]
+}

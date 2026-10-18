@@ -1,0 +1,41 @@
+{
+  "id": "bond_g_oath_aid",
+  "title": "의형제의 도움",
+  "description": "{name}이(가) 소식을 듣고 달려왔습니다. 「형제가 어렵다는데 가만있을 수 있나!」",
+  "can_repeat": true,
+  "weight": 1,
+  "subject": {
+    "bond_types": [
+      "BLOOD_OATH"
+    ]
+  },
+  "conditions": [],
+  "choices": [
+    {
+      "label": "함께 수련한다",
+      "message": "{name}와(과) 등을 맞대고 수련했습니다. 경험치 +20, 유대 +4",
+      "effects": [
+        {
+          "type": "experience",
+          "amount": 20
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 4
+        }
+      ]
+    },
+    {
+      "label": "살림을 도와 달라고 한다",
+      "message": "{name}이(가) 금화를 놓고 갑니다. 금화 +50",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": 50
+        }
+      ]
+    }
+  ]
+}

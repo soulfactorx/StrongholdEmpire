@@ -1,0 +1,51 @@
+{
+  "id": "npc_tang_daughter",
+  "display_name": "당소소",
+  "title": "사천당가 셋째 아가씨",
+  "sect_id": "tang",
+  "role": "YOUNG_DISCIPLE",
+  "named": true,
+  "description": "당가의 막내딸. 독보다 약을 좋아해 가문의 골칫거리다.",
+  "level": 2,
+  "stats": {
+    "strength": 9,
+    "agility": 15,
+    "wisdom": 15,
+    "charisma": 14,
+    "internal_energy_max": 100,
+    "age": 19,
+    "morality": 65
+  },
+  "scaling": {
+    "base_level": 2,
+    "level_offset": 0,
+    "per_level": {
+      "strength": 1,
+      "agility": 1,
+      "internal_energy_max": 8
+    }
+  },
+  "war_specialty": "FLANK",
+  "dialogue": {
+    "talk": [
+      "독이요? 저는 사람 살리는 약이 더 좋아요.",
+      "아버지는 제가 독을 안 배운다고 화내세요.",
+      "이 약초, 어디서 났는지 알아요?"
+    ],
+    "gift": [
+      "어머, 이 약초는 촉 땅에서도 귀한 건데!",
+      "…자꾸 이러시면 정들어요."
+    ],
+    "spar": [
+      "당가의 암기, 피할 수 있겠어요?"
+    ]
+  },
+  "traits": {
+    "benevolence": 75
+  },
+  "likes": [
+    "gift",
+    "talk"
+  ],
+  "favorite": "희귀한 약초"
+}

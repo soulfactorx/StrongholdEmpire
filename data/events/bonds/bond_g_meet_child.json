@@ -1,0 +1,65 @@
+{
+  "id": "bond_g_meet_child",
+  "title": "길 위의 아이",
+  "description": "저잣거리 구석에서 {name}이(가) 만두 하나를 꼭 쥐고 당신을 올려다봅니다. 눈빛이 예사롭지 않습니다.",
+  "can_repeat": true,
+  "weight": 1.5,
+  "subject": {
+    "stranger": true,
+    "max_age": 16
+  },
+  "conditions": [
+    {
+      "type": "sect",
+      "field": "gold",
+      "op": ">=",
+      "value": 20
+    }
+  ],
+  "choices": [
+    {
+      "label": "제자로 거둔다 (금화 20)",
+      "message": "{name}을(를) 제자로 거두었습니다. 「스승님!」 도덕 +3",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -20
+        },
+        {
+          "type": "add_relationship",
+          "target": "$subject",
+          "bond_type": "PUPIL",
+          "strength": 30
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 3
+        }
+      ]
+    },
+    {
+      "label": "먹을 것만 쥐여 준다",
+      "message": "{name}이(가) 꾸벅 인사합니다. 지인이 되었습니다. 도덕 +1",
+      "effects": [
+        {
+          "type": "add_relationship",
+          "target": "$subject",
+          "bond_type": "ACQUAINTANCE",
+          "strength": 15
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 1
+        }
+      ]
+    },
+    {
+      "label": "못 본 척 지나간다",
+      "message": "뒤에서 아이의 시선이 오래 따라옵니다.",
+      "effects": []
+    }
+  ]
+}

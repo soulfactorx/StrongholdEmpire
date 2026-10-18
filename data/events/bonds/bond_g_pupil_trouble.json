@@ -1,0 +1,54 @@
+{
+  "id": "bond_g_pupil_trouble",
+  "title": "제자의 사고",
+  "description": "{name}이(가) 저잣거리에서 싸움을 벌여 관아에 붙잡혀 갔습니다.",
+  "can_repeat": true,
+  "weight": 1,
+  "subject": {
+    "bond_types": [
+      "PUPIL"
+    ]
+  },
+  "conditions": [
+    {
+      "type": "sect",
+      "field": "gold",
+      "op": ">=",
+      "value": 40
+    }
+  ],
+  "choices": [
+    {
+      "label": "벌금을 내고 감싼다 (금화 40)",
+      "message": "{name}이(가) 눈물을 글썽입니다. 유대 +8",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -40
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 8
+        }
+      ]
+    },
+    {
+      "label": "엄히 벌한다",
+      "message": "{name}이(가) 반성합니다. 명성 +2, 유대 -5",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 2
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": -5
+        }
+      ]
+    }
+  ]
+}

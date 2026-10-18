@@ -225,8 +225,11 @@ func _initialize_new_game(
 	last_npc_report.clear()
 	StartingRoles.apply_sect_setup(role_id, player_sect, player_character)
 	DiscipleRoster.enable(player_sect)
-	player_relationships = RelationshipManager.create_default_relationships()
-	_adjust_bonds_for_sect()
+	# 시작 인연: 직접 정했으면 그대로, 아니면 소속 문파 기준 (무소속 낭인은 없음)
+	if factions.has("bonds"):
+		player_relationships = RelationshipManager.create_from_setup(factions["bonds"])
+	else:
+		player_relationships = RelationshipManager.create_default_relationships(player_sect.id)
 	triggered_event_ids.clear()
 	pending_event.clear()
 	story_flags.clear()
@@ -291,27 +294,6 @@ static func create_unaffiliated_sect() -> SectData:
 	for facility in _Balance.FACILITIES:
 		sect.set(facility + "_level", 0)
 	return sect
-
-
-## 시작 사부: 원래 사부(다른 문파의 스승)는 아는 사이로 두고, 소속 문파의 문주를 사부로 모신다.
-## 무소속(낭인)이면 사부 없이 아는 사이로만 남긴다.
-func _adjust_bonds_for_sect() -> void:
-	for rel in player_relationships:
-		if rel.bond_type != RelationshipData.BondType.MASTER_DISCIPLE:
-			continue
-		var npc_sect: String = str(NpcRoster.get_npc(rel.target_id).get("sect_id", ""))
-		if npc_sect == player_sect.id:
-			continue
-		rel.bond_type = RelationshipData.BondType.ACQUAINTANCE
-		rel.bond_strength = mini(rel.bond_strength, 15)
-		if has_sect() and NpcRoster.has_npc(player_sect.leader_id) and RelationshipManager.get_bond_with(player_relationships, player_sect.leader_id) == null:
-			var master := RelationshipData.new()
-			master.target_id = player_sect.leader_id
-			master.target_name = NpcRoster.get_display_name(player_sect.leader_id)
-			master.bond_type = RelationshipData.BondType.MASTER_DISCIPLE
-			master.bond_strength = 30
-			player_relationships.append(master)
-		return
 
 
 func _all_sect_ids() -> Array:
@@ -746,7 +728,8 @@ func resolve_pending_event(choice_index: int) -> void:
 		player_character,
 		player_sect,
 		player_relationships,
-		story_flags
+		story_flags,
+		str(pending_event.get("subject", ""))
 	)
 	_chronicle_event(pending_event, choice_index, result)
 	pending_event.clear()
@@ -959,7 +942,7 @@ func start_legacy_succession() -> Dictionary:
 	if player_sect.secret_art:
 		player_character.learn_martial_art(player_sect.secret_art.duplicate(true))
 	LegacyManager.apply_legacy_bonuses(player_sect, legacy)
-	player_relationships = RelationshipManager.create_default_relationships()
+	player_relationships = RelationshipManager.create_default_relationships(player_sect.id)
 	triggered_event_ids.clear()
 	current_ending_id = ""
 	story_flags.clear()
@@ -1171,11 +1154,14 @@ func scout_war(target_id: String) -> Dictionary:
 	}
 
 
-## 문파전에 장수로 데려갈 수 있는 인물: 유대가 깊은 사제·혈맹 인물. 상대 세력 소속은 제외.
+## 문파전에 장수로 데려갈 수 있는 인물: 유대가 깊은 사부·혈맹·배우자·제자. 상대 세력 소속은 제외.
 func get_war_generals(target_id: String = "") -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for rel in player_relationships:
-		if not rel.bond_type in [RelationshipData.BondType.MASTER_DISCIPLE, RelationshipData.BondType.BLOOD_OATH]:
+		if not rel.bond_type in [
+			RelationshipData.BondType.MASTER_DISCIPLE, RelationshipData.BondType.BLOOD_OATH,
+			RelationshipData.BondType.SPOUSE, RelationshipData.BondType.PUPIL,
+		]:
 			continue
 		if rel.bond_strength < _Balance.WAR_GENERAL_MIN_BOND or not NpcRoster.has_npc(rel.target_id):
 			continue

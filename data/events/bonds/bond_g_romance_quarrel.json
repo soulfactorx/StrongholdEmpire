@@ -1,0 +1,54 @@
+{
+  "id": "bond_g_romance_quarrel",
+  "title": "연인의 다툼",
+  "description": "{name}이(가) 토라졌습니다. 「요즘 나는 안중에도 없죠?」",
+  "can_repeat": true,
+  "weight": 1,
+  "subject": {
+    "bond_types": [
+      "ROMANCE"
+    ],
+    "min": 20
+  },
+  "conditions": [],
+  "choices": [
+    {
+      "label": "진심으로 사과한다",
+      "message": "{name}의 눈빛이 누그러집니다. 유대 +3",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 3
+        }
+      ]
+    },
+    {
+      "label": "고집을 부린다",
+      "message": "{name}이(가) 문을 쾅 닫습니다. 유대 -10",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": -10
+        }
+      ]
+    },
+    {
+      "label": "선물로 마음을 푼다 (금화 30)",
+      "message": "{name}이(가) 못 이기는 척 선물을 받습니다. 유대 +8",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -30
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 8
+        }
+      ]
+    }
+  ]
+}

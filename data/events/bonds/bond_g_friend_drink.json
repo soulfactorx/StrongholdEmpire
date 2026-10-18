@@ -1,0 +1,47 @@
+{
+  "id": "bond_g_friend_drink",
+  "title": "벗과의 술자리",
+  "description": "{name}이(가) 술 한 병을 들고 찾아왔습니다. 「오늘은 자네 근심을 다 털어놓게.」",
+  "can_repeat": true,
+  "weight": 2,
+  "subject": {
+    "bond_types": [
+      "FRIEND",
+      "BLOOD_OATH"
+    ]
+  },
+  "conditions": [],
+  "choices": [
+    {
+      "label": "밤새 마신다",
+      "message": "{name}와(과) 웃고 떠들다 새벽을 맞았습니다. 유대 +6, 경험치 +10",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 6
+        },
+        {
+          "type": "experience",
+          "amount": 10
+        }
+      ]
+    },
+    {
+      "label": "술 대신 차를 권하고 검을 논한다",
+      "message": "{name}의 검론에서 배운 것이 많습니다. 유대 +3, 지혜 +1",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 3
+        },
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 1
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "id": "bond_g_spouse_cold",
+  "title": "식어 버린 정",
+  "description": "{name}이(가) 짐을 싸 놓고 앉아 있습니다. 「우린 이미 남이에요.」",
+  "can_repeat": true,
+  "weight": 3,
+  "priority": true,
+  "subject": {
+    "bond_types": [
+      "SPOUSE"
+    ],
+    "max": 20
+  },
+  "conditions": [
+    {
+      "type": "sect",
+      "field": "gold",
+      "op": ">=",
+      "value": 50
+    }
+  ],
+  "choices": [
+    {
+      "label": "무릎 꿇고 붙잡는다 (금화 50)",
+      "message": "{name}이(가) 눈물을 흘리며 짐을 풉니다. 유대 +20",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -50
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 20
+        }
+      ]
+    },
+    {
+      "label": "놓아 준다",
+      "message": "{name}이(가) 떠났습니다. 혼인이 끝났습니다. 도덕 +1",
+      "effects": [
+        {
+          "type": "end_relationship",
+          "target": "$subject"
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 1
+        }
+      ]
+    }
+  ]
+}

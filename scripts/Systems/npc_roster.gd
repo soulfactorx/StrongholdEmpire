@@ -4,10 +4,10 @@ extends RefCounted
 ## NPC 명부. data/npcs/*.json 한 파일이 한 명이다.
 ##
 ## 필드: id, display_name, title, sect_id, role(CharacterData.Role 이름), description,
-##       level, stats{능력치}, scaling(선택), initial_bond(선택)
+##       level, stats{능력치}, scaling(선택), named(선택)
 ## scaling: { base_level, level_offset, per_level{능력치: 레벨당 증가} }
 ##   → 레벨 = max(base_level, 플레이어 레벨 + level_offset), 능력치는 base_level 대비 증가
-## initial_bond: { type(RelationshipData.BondType 이름), strength, stage } — 새 게임 시작 관계
+## 새 게임 시작 관계는 문파 데이터(initial_bonds)가 정한다.
 ## martial_arts: [{ id(MartialArtLibrary), min_level }] — 해당 레벨 이상이면 그 무공을 쓴다
 ## war_specialty: 문파전 장수로 참전할 때 보너스를 주는 명령 (CHARGE, DEFEND, FLANK)
 
@@ -82,10 +82,10 @@ static func create_character(npc_id: String, player: CharacterData = null) -> Ch
 const NO_SECT := "none"
 
 
-## 강호 정세의 인물 목록에 보일 인물인지. scaling만 있고 시작 관계가 없는 인물은 이름 없는 졸개로 본다.
+## 강호 정세의 인물 목록에 보일 인물인지 (인연을 맺을 수 있는 인물). scaling만 있는 인물은 이름 없는 졸개로 본다.
 ## 플레이어와 함께 성장하는 이름 있는 인물은 "named": true로 목록에 올린다.
 static func is_listed(npc: Dictionary) -> bool:
-	if npc.get("named", false) == true or npc.has("initial_bond"):
+	if npc.get("named", false) == true:
 		return true
 	return not npc.has("scaling")
 
@@ -119,9 +119,6 @@ static func validate_npc_dict(data: Dictionary) -> PackedStringArray:
 			errors.append("알 수 없는 취향: %s (talk·gift·spar)" % like)
 	if data.has("dialogue"):
 		errors.append_array(DialogueLines.validate(data["dialogue"]))
-	var bond: Variant = data.get("initial_bond")
-	if bond != null and not RelationshipData.BondType.has(bond.get("type", "")):
-		errors.append("알 수 없는 관계 유형: %s" % bond.get("type"))
 	return errors
 
 

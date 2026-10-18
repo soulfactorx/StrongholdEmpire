@@ -1,0 +1,55 @@
+{
+  "id": "bond_g_meet_inn",
+  "title": "객잔의 합석",
+  "description": "자리가 모자란 객잔에서 {title} {name}와(과) 한 상에 앉게 되었습니다. 술잔이 몇 순배 돌자 이야기가 길어집니다.",
+  "can_repeat": true,
+  "weight": 2,
+  "subject": {
+    "stranger": true,
+    "sect": "none"
+  },
+  "conditions": [
+    {
+      "type": "sect",
+      "field": "gold",
+      "op": ">=",
+      "value": 20
+    }
+  ],
+  "choices": [
+    {
+      "label": "술잔을 나누며 이야기한다",
+      "message": "{name}와(과) 밤새 강호 이야기를 나누었습니다. 지인이 되었습니다.",
+      "effects": [
+        {
+          "type": "add_relationship",
+          "target": "$subject",
+          "bond_type": "ACQUAINTANCE",
+          "strength": 20
+        }
+      ]
+    },
+    {
+      "label": "술값을 대신 낸다 (금화 20)",
+      "message": "{name}이(가) 껄껄 웃으며 이름을 알려 줍니다. 지인이 되었습니다. (유대 28)",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -20
+        },
+        {
+          "type": "add_relationship",
+          "target": "$subject",
+          "bond_type": "ACQUAINTANCE",
+          "strength": 28
+        }
+      ]
+    },
+    {
+      "label": "조용히 자리를 뜬다",
+      "message": "인연은 다음으로 미뤘습니다.",
+      "effects": []
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "id": "npc_innkeeper",
+  "display_name": "한매향",
+  "title": "취운객잔 여주인",
+  "sect_id": "none",
+  "role": "WANDERER",
+  "named": true,
+  "description": "강호의 소식이 모이는 취운객잔의 주인. 웃음 뒤에 칼 한 자루를 숨기고 산다.",
+  "level": 2,
+  "stats": {
+    "strength": 9,
+    "agility": 13,
+    "wisdom": 15,
+    "charisma": 17,
+    "internal_energy_max": 90,
+    "age": 32,
+    "morality": 55
+  },
+  "scaling": {
+    "base_level": 2,
+    "level_offset": 0,
+    "per_level": {
+      "strength": 1,
+      "agility": 1,
+      "internal_energy_max": 8
+    }
+  },
+  "war_specialty": "FLANK",
+  "dialogue": {
+    "talk": [
+      "손님, 오늘은 무슨 소식을 사러 오셨나?",
+      "이 객잔엔 정파도 사파도 없어요. 술값 내는 손님만 있지.",
+      "요즘 관도가 시끄러워요. 조심하세요."
+    ],
+    "gift": [
+      "어머, 나한테? 오늘 술값은 내가 내지.",
+      "이런 건 처음 받아 보네. …고마워요."
+    ],
+    "spar": [
+      "객잔 마당이 부서지면 수리비는 그쪽이 내요."
+    ]
+  },
+  "traits": {
+    "greed": 45,
+    "benevolence": 60
+  },
+  "likes": [
+    "talk"
+  ],
+  "favorite": "매실주"
+}

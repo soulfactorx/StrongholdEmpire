@@ -169,7 +169,7 @@ func _test_event_grammar_validation() -> void:
 	var bad_cases: Dictionary = {
 		"year 연산자": {"conditions": [{"type": "year", "op": "~", "value": 3}]},
 		"turns_since_flag 플래그 누락": {"conditions": [{"type": "turns_since_flag", "op": ">=", "value": 1}]},
-		"잘못된 관계 유형": {"conditions": [{"type": "relationship_type", "target": "npc_rival", "bond_type": "FRIEND"}]},
+		"잘못된 관계 유형": {"conditions": [{"type": "relationship_type", "target": "npc_rival", "bond_type": "LOVER"}]},
 		"잘못된 역할 기록": {"conditions": [{"type": "role_history", "role": "EMPEROR"}]},
 		"명부에 없는 인물과 관계": {"choices": [{"label": "a", "effects": [{"type": "add_relationship", "target": "npc_nobody", "bond_type": "ROMANCE"}]}]},
 		"없는 무공 습득": {"choices": [{"label": "a", "effects": [{"type": "learn_art", "art": "no_art"}]}]},

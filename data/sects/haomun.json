@@ -11,5 +11,17 @@
   "max_disciples": 30,
   "training_ground_level": 1,
   "attitude": 0,
-  "soldier_npc": "npc_bandit"
+  "soldier_npc": "npc_bandit",
+  "initial_bonds": [
+    {
+      "target": "npc_haomun_master",
+      "type": "MASTER_DISCIPLE",
+      "strength": 30
+    },
+    {
+      "target": "npc_scholar",
+      "type": "ACQUAINTANCE",
+      "strength": 15
+    }
+  ]
 }

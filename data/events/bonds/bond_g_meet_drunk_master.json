@@ -1,0 +1,49 @@
+{
+  "id": "bond_g_meet_drunk_master",
+  "title": "술 취한 노인",
+  "description": "주막 앞에서 {name}이(가) 술병을 흔들며 손짓합니다. 「젊은이, 한 잔만 사 주면 재미난 걸 보여 주지.」",
+  "can_repeat": true,
+  "weight": 0.8,
+  "subject": {
+    "stranger": true,
+    "min_age": 60,
+    "sect": "none"
+  },
+  "conditions": [
+    {
+      "type": "sect",
+      "field": "gold",
+      "op": ">=",
+      "value": 15
+    }
+  ],
+  "choices": [
+    {
+      "label": "술을 사 드린다 (금화 15)",
+      "message": "노인이 손가락 하나로 날아가는 파리를 잡아 보입니다. {name}이(가) 지인이 되었습니다. 지혜 +1",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -15
+        },
+        {
+          "type": "add_relationship",
+          "target": "$subject",
+          "bond_type": "ACQUAINTANCE",
+          "strength": 25
+        },
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 1
+        }
+      ]
+    },
+    {
+      "label": "거지 노인을 무시한다",
+      "message": "「끌끌, 눈이 어둡구먼.」",
+      "effects": []
+    }
+  ]
+}

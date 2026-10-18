@@ -1,0 +1,49 @@
+{
+  "id": "bond_g_acq_news",
+  "title": "지인의 소식",
+  "description": "{name}이(가) 보낸 서신이 도착했습니다. 강호의 소문이 빼곡히 적혀 있습니다.",
+  "can_repeat": true,
+  "weight": 1.5,
+  "subject": {
+    "bond_types": [
+      "ACQUAINTANCE",
+      "FRIEND",
+      "FELLOW"
+    ]
+  },
+  "conditions": [],
+  "choices": [
+    {
+      "label": "정성껏 답장을 쓴다",
+      "message": "{name}와(과)의 정이 깊어졌습니다. 유대 +5, 연구점 +5",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 5
+        },
+        {
+          "type": "sect",
+          "field": "research_points",
+          "add": 5
+        }
+      ]
+    },
+    {
+      "label": "소문만 챙긴다",
+      "message": "쓸 만한 소식을 얻었습니다. 연구점 +8, 유대 -2",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "research_points",
+          "add": 8
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": -2
+        }
+      ]
+    }
+  ]
+}

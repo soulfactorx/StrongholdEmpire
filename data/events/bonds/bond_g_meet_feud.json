@@ -1,0 +1,64 @@
+{
+  "id": "bond_g_meet_feud",
+  "title": "길 위의 시비",
+  "description": "좁은 다리 위에서 {title} {name}와(과) 어깨가 부딪쳤습니다. 상대가 눈을 부라립니다. 「눈이 없소?」",
+  "can_repeat": true,
+  "weight": 1,
+  "subject": {
+    "stranger": true,
+    "sect": "other"
+  },
+  "conditions": [],
+  "choices": [
+    {
+      "label": "먼저 사과한다",
+      "message": "{name}이(가) 머쓱해하며 사과를 받아 줍니다. 지인이 되었습니다. 명성 -1",
+      "effects": [
+        {
+          "type": "add_relationship",
+          "target": "$subject",
+          "bond_type": "ACQUAINTANCE",
+          "strength": 12
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": -1
+        }
+      ]
+    },
+    {
+      "label": "검을 뽑아 한 수 겨룬다",
+      "message": "승부는 나지 않았지만 서로의 실력을 알아보았습니다. {name}이(가) 라이벌이 되었습니다. 경험치 +15",
+      "effects": [
+        {
+          "type": "add_relationship",
+          "target": "$subject",
+          "bond_type": "RIVALRY",
+          "strength": 18
+        },
+        {
+          "type": "experience",
+          "amount": 15
+        }
+      ]
+    },
+    {
+      "label": "상대를 크게 모욕한다",
+      "message": "{name}이(가) 이를 갈며 돌아섭니다. 원한이 생겼습니다. 명성 +2",
+      "effects": [
+        {
+          "type": "add_relationship",
+          "target": "$subject",
+          "bond_type": "HATRED",
+          "strength": 25
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 2
+        }
+      ]
+    }
+  ]
+}

@@ -244,6 +244,15 @@ const TRIBUTE_ATTITUDE_PER_SEASON := 2
 const TRIBUTE_REVOLT_ATTITUDE := -80
 const TRIBUTE_RELEASE_ATTITUDE := 20
 
+# 혼인: 연인과 유대 MARRIAGE_MIN_BOND 이상이면 청혼할 수 있다. 배우자는 여럿 둘 수 있다
+const WEDDING_GOLD := 100
+const WEDDING_REPUTATION := 3
+const WEDDING_BOND := 10
+## 배우자가 몸담은 세력의 태도
+const WEDDING_ATTITUDE := 15
+## 새 배우자를 맞으면 이미 있던 배우자의 유대가 이만큼 준다
+const SPOUSE_JEALOUSY_BOND := 8
+
 # 인연 (M5-2)
 ## 인물과의 상호작용(대화·선물·비무)은 계절마다 이만큼
 const INTERACTIONS_PER_SEASON := 2

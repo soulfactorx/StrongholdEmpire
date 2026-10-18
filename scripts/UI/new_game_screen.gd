@@ -27,6 +27,13 @@ var _sect_ids: Array = []
 var faction_toggle: Button
 var faction_box: VBoxContainer
 var _faction_rows: Dictionary = {}
+## 시작 인연 설정: 펼침 버튼, 인물 줄 상자, 인물 id → OptionButton(항목 메타: 관계 유형 키, ""=없음)
+var bond_toggle: Button
+var bond_box: VBoxContainer
+var bond_note: Label
+var _bond_rows: Dictionary = {}
+## 직접 손댔는지. 손대지 않았으면 소속 문파 기준 시작 인연을 쓴다.
+var _bonds_custom: bool = false
 
 
 func _ready() -> void:
@@ -36,6 +43,7 @@ func _ready() -> void:
 	_build_settings()
 	_build_sect_choice()
 	_build_faction_section()
+	_build_bond_section()
 	_scenarios = ScenarioManager.list_scenarios()
 	scenario_list.clear()
 	for scenario in _scenarios:
@@ -76,6 +84,7 @@ func _build_sect_choice() -> void:
 	sect_option.item_selected.connect(func(_i: int) -> void:
 		_update_sect_note()
 		_fill_factions()
+		_fill_bonds()
 	)
 	parent.add_child(sect_option)
 	parent.move_child(sect_option, index + 1)
@@ -147,6 +156,7 @@ func set_player_sect(sect_id: String) -> void:
 		sect_option.select(index)
 		_update_sect_note()
 		_fill_factions()
+		_fill_bonds()
 
 
 ## 강호 세력 설정 칸: 세부 설정 아래에 펼침 버튼과 세력 목록을 둔다.
@@ -249,7 +259,162 @@ func get_faction_setup() -> Dictionary:
 		var strategy: String = str(row["option"].get_item_metadata(row["option"].selected))
 		if not strategy.is_empty():
 			strategies[sect_id] = strategy
-	return {"extra": extra, "strategies": strategies, "player_sect": get_player_sect_choice()}
+	var setup: Dictionary = {"extra": extra, "strategies": strategies, "player_sect": get_player_sect_choice()}
+	if _bonds_custom:
+		setup["bonds"] = get_bond_setup()
+	return setup
+
+
+# ── 시작 인연 ──
+
+## 시작 인연 설정 칸: 강호 세력 설정 아래에 펼침 버튼과 인물 목록을 둔다.
+func _build_bond_section() -> void:
+	var parent: Node = settings_grid.get_parent()
+	bond_toggle = Button.new()
+	bond_toggle.name = "BondToggle"
+	bond_toggle.text = "시작 인연 설정 ▼"
+	bond_toggle.custom_minimum_size = Vector2(0, 48)
+	bond_toggle.set_meta("help", "처음부터 맺고 시작할 인연(사부·동문·벗·연인·배우자·라이벌·원한 등)을 인물마다 정합니다. 손대지 않으면 소속 문파에 맞는 인연으로 시작합니다.")
+	bond_toggle.pressed.connect(func() -> void:
+		bond_box.visible = not bond_box.visible
+		bond_toggle.text = "시작 인연 설정 ▲" if bond_box.visible else "시작 인연 설정 ▼"
+	)
+	parent.add_child(bond_toggle)
+	_UiTheme.style_button(bond_toggle)
+	bond_box = VBoxContainer.new()
+	bond_box.name = "BondBox"
+	bond_box.visible = false
+	bond_box.add_theme_constant_override("separation", 6)
+	parent.add_child(bond_box)
+
+
+## 이름 있는 인물마다 시작 관계를 고르는 줄. 처음 값은 소속 문파 기준 인연이다 (낭인은 없음).
+func _fill_bonds() -> void:
+	if bond_box == null:
+		return
+	for child in bond_box.get_children():
+		bond_box.remove_child(child)
+		child.queue_free()
+	_bond_rows.clear()
+	_bonds_custom = false
+	# 입문 수련처럼 길잡이가 이끄는 시나리오는 정해진 인연으로 시작한다.
+	var guided: bool = _selected_scenario.get("guided", false) == true
+	bond_toggle.visible = not guided
+	if guided:
+		bond_box.visible = false
+		bond_toggle.text = "시작 인연 설정 ▼"
+	bond_note = Label.new()
+	bond_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_UiTheme.set_font_size(bond_note, 14)
+	bond_box.add_child(bond_note)
+	var presets := HFlowContainer.new()
+	presets.add_theme_constant_override("h_separation", 8)
+	bond_box.add_child(presets)
+	for preset in [["문파 기본으로", "default"], ["모두 비우기", "clear"]]:
+		var button := Button.new()
+		button.text = preset[0]
+		button.custom_minimum_size = Vector2(150, 48)
+		button.pressed.connect(_apply_bond_preset.bind(preset[1]))
+		_UiTheme.style_button(button)
+		presets.add_child(button)
+	var defaults: Dictionary = _default_bond_setup()
+	var npcs: Array[Dictionary] = NpcRoster.get_all().filter(func(npc: Dictionary) -> bool: return NpcRoster.is_listed(npc))
+	# 기본 인연이 있는 인물을 먼저, 그다음 이름순
+	npcs.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var a_set: bool = defaults.has(a["id"])
+		var b_set: bool = defaults.has(b["id"])
+		if a_set != b_set:
+			return a_set
+		return str(a["display_name"]) < str(b["display_name"])
+	)
+	for npc in npcs:
+		_add_bond_row(npc, str(defaults.get(npc["id"], "")))
+	_update_bond_note()
+
+
+func _add_bond_row(npc: Dictionary, type_key: String) -> void:
+	var parts: Array = LayoutMode.make_row()
+	var label := Label.new()
+	var sect_id: String = str(npc.get("sect_id", ""))
+	var sect_name: String = "무소속" if sect_id == NpcRoster.NO_SECT else str(SectRegistry.get_sect_info(sect_id).get("sect_name", sect_id))
+	label.text = "%s — %s (%s)" % [npc["display_name"], npc.get("title", ""), sect_name]
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	parts[0].add_child(label)
+	if parts[1] != parts[0]:
+		parts[0].add_child(parts[1])
+	var option := OptionButton.new()
+	option.name = "Bond_" + str(npc["id"])
+	option.custom_minimum_size = Vector2(150, 48)
+	option.add_item("없음")
+	option.set_item_metadata(0, "")
+	for key in RelationshipData.BondType.keys():
+		option.add_item(RelationshipData.type_name_of(key))
+		option.set_item_metadata(option.item_count - 1, key)
+	_select_bond(option, type_key)
+	option.item_selected.connect(func(_i: int) -> void:
+		_bonds_custom = true
+		_update_bond_note()
+	)
+	parts[1].add_child(option)
+	_UiTheme.style_button(option)
+	bond_box.add_child(parts[0])
+	_bond_rows[npc["id"]] = option
+
+
+func _select_bond(option: OptionButton, type_key: String) -> void:
+	for i in option.item_count:
+		if str(option.get_item_metadata(i)) == type_key:
+			option.select(i)
+			return
+	option.select(0)
+
+
+## 소속 문파 기준 시작 인연 {인물 id: 관계 유형 키}
+func _default_bond_setup() -> Dictionary:
+	var result: Dictionary = {}
+	for bond in RelationshipManager.get_sect_start_bonds(get_player_sect_choice()):
+		result[str(bond.get("target", ""))] = str(bond.get("type", ""))
+	return result
+
+
+func _apply_bond_preset(preset: String) -> void:
+	var defaults: Dictionary = _default_bond_setup() if preset == "default" else {}
+	for npc_id in _bond_rows:
+		_select_bond(_bond_rows[npc_id], str(defaults.get(npc_id, "")))
+	_bonds_custom = preset != "default"
+	_update_bond_note()
+
+
+func _update_bond_note() -> void:
+	var count: int = get_bond_setup().size()
+	if _bonds_custom:
+		bond_note.text = "직접 정한 인연 %d명으로 시작합니다. 시작 유대는 관계마다 다릅니다(배우자 %d, 연인 %d, 사부 %d …). 배우자는 여럿 둘 수 있습니다." % [
+			count, RelationshipManager.START_STRENGTH["SPOUSE"], RelationshipManager.START_STRENGTH["ROMANCE"], RelationshipManager.START_STRENGTH["MASTER_DISCIPLE"],
+		]
+	elif count == 0:
+		bond_note.text = "무소속(낭인)은 맺은 인연 없이 시작합니다. 강호를 떠돌며 기연으로 인연을 만들어 가세요. 직접 정할 수도 있습니다."
+	else:
+		bond_note.text = "소속 문파에 맞는 인연 %d명으로 시작합니다. 인물마다 관계를 바꾸면 직접 정한 인연으로 시작합니다." % count
+
+
+## 지금 고른 시작 인연 {인물 id: 관계 유형 키} (없음은 빼고)
+func get_bond_setup() -> Dictionary:
+	var result: Dictionary = {}
+	for npc_id in _bond_rows:
+		var option: OptionButton = _bond_rows[npc_id]
+		var key: String = str(option.get_item_metadata(option.selected))
+		if not key.is_empty():
+			result[npc_id] = key
+	return result
+
+
+## 인물 하나의 시작 관계를 정한다 (테스트용, ""=없음)
+func set_start_bond(npc_id: String, type_key: String) -> void:
+	if _bond_rows.has(npc_id):
+		_select_bond(_bond_rows[npc_id], type_key)
+		_bonds_custom = true
+		_update_bond_note()
 
 
 ## 세력 줄을 고른다 (테스트용): enabled는 골라 넣는 세력만, strategy는 전략 id·"random"·""(기본)
@@ -305,6 +470,7 @@ func _on_role_selected(index: int) -> void:
 	role_desc_label.text = "%s\n\n%s" % [entry["description"], RoleDashboard.describe_role(entry["role"])]
 	_fill_sects()
 	_fill_factions()
+	_fill_bonds()
 
 
 func _on_settings_toggle_pressed() -> void:

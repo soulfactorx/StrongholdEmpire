@@ -14,23 +14,76 @@ const PROTECTIVE_BONDS: Array = [
 	RelationshipData.BondType.MASTER_DISCIPLE,
 	RelationshipData.BondType.BLOOD_OATH,
 	RelationshipData.BondType.ROMANCE,
+	RelationshipData.BondType.SPOUSE,
+	RelationshipData.BondType.PUPIL,
+	RelationshipData.BondType.FRIEND,
 ]
+## 청혼 (인연 팝업의 따로 된 버튼. 상호작용 한 번을 쓴다)
+const PROPOSE := "propose"
+## 새 게임에서 직접 정한 관계의 시작 유대 (관계 유형 키 → 유대)
+const START_STRENGTH: Dictionary = {
+	"MASTER_DISCIPLE": 35, "ROMANCE": 45, "BLOOD_OATH": 45, "RIVALRY": 15, "HATRED": 30, "ACQUAINTANCE": 15,
+	"SPOUSE": 60, "FRIEND": 35, "FELLOW": 25, "PUPIL": 30, "BENEFACTOR": 30, "IN_LAW": 25,
+}
+## 문파 데이터에 initial_bonds가 없을 때 문주(사부)와의 시작 유대
+const DEFAULT_MASTER_STRENGTH := 30
 
-## 새 게임 시작 관계. NPC 명부에서 initial_bond가 있는 인물로 만든다.
-static func create_default_relationships() -> Array[RelationshipData]:
+
+## 소속 문파의 시작 인연: [{target, type, strength}]. 무소속("none"·"")이면 없다.
+## 문파 데이터의 initial_bonds를 쓰고, 없으면 문주를 사부로 모신다.
+static func get_sect_start_bonds(sect_id: String) -> Array:
+	if sect_id.is_empty() or sect_id == NpcRoster.NO_SECT or not SectRegistry.has_sect(sect_id):
+		return []
+	var info: Dictionary = SectRegistry.get_sect_info(sect_id)
+	if info.has("initial_bonds"):
+		return info["initial_bonds"]
+	return [{"target": info.get("leader_id", ""), "type": "MASTER_DISCIPLE", "strength": DEFAULT_MASTER_STRENGTH}]
+
+
+## 새 게임 시작 관계: 소속 문파의 시작 인연. 인자를 주지 않으면 시나리오의 기본 플레이어 문파.
+static func create_default_relationships(sect_id: String = "default") -> Array[RelationshipData]:
+	if sect_id == "default":
+		sect_id = SectRegistry.get_player_sect_id()
 	var relationships: Array[RelationshipData] = []
-	for npc in NpcRoster.get_all():
-		var bond: Dictionary = npc.get("initial_bond", {})
-		if bond.is_empty():
-			continue
-		var rel := RelationshipData.new()
-		rel.target_id = npc["id"]
-		rel.target_name = npc["display_name"]
-		rel.bond_type = RelationshipData.BondType.get(bond["type"])
-		rel.bond_strength = int(bond.get("strength", 0))
-		rel.stage = int(bond.get("stage", 0))
-		relationships.append(rel)
+	for bond in get_sect_start_bonds(sect_id):
+		var rel: RelationshipData = make_relationship(str(bond.get("target", "")), str(bond.get("type", "")), int(bond.get("strength", 10)))
+		if rel and get_bond_with(relationships, rel.target_id) == null:
+			relationships.append(rel)
 	return relationships
+
+
+## 새 게임에서 직접 정한 시작 관계: {인물 id: 관계 유형 키}. 빈 값이면 관계 없음.
+static func create_from_setup(setup: Dictionary) -> Array[RelationshipData]:
+	var relationships: Array[RelationshipData] = []
+	for target_id in setup:
+		var type_key: String = str(setup[target_id])
+		if type_key.is_empty():
+			continue
+		var rel: RelationshipData = make_relationship(str(target_id), type_key, int(START_STRENGTH.get(type_key, 20)))
+		if rel:
+			relationships.append(rel)
+	return relationships
+
+
+## 명부 인물과의 관계 하나를 만든다. 인물이나 유형이 잘못되면 null
+static func make_relationship(target_id: String, type_key: String, strength: int) -> RelationshipData:
+	if not NpcRoster.has_npc(target_id) or not RelationshipData.BondType.has(type_key):
+		return null
+	var rel := RelationshipData.new()
+	rel.target_id = target_id
+	rel.target_name = NpcRoster.get_display_name(target_id)
+	rel.bond_type = RelationshipData.BondType.get(type_key)
+	rel.increase_bond(strength)
+	return rel
+
+
+## 관계 유형별 인원
+static func count_type(relationships: Array[RelationshipData], bond_type: RelationshipData.BondType) -> int:
+	var count: int = 0
+	for rel in relationships:
+		if rel.bond_type == bond_type:
+			count += 1
+	return count
 
 
 static func get_bond_with(
@@ -59,6 +112,7 @@ static func get_ally_buff_multiplier(relationships: Array[RelationshipData]) -> 
 		if rel.bond_type in [
 			RelationshipData.BondType.MASTER_DISCIPLE,
 			RelationshipData.BondType.BLOOD_OATH,
+			RelationshipData.BondType.SPOUSE,
 		]:
 			multiplier += rel.bond_strength * 0.001
 	return multiplier
@@ -106,10 +160,23 @@ static func interact(
 	turn: int
 ) -> Dictionary:
 	var rel: RelationshipData = get_bond_with(relationships, target_id)
-	if rel == null or not INTERACTIONS.has(kind):
+	if rel == null or not (INTERACTIONS.has(kind) or kind == PROPOSE):
 		return {"success": false, "message": "할 수 없는 일입니다."}
 	if get_interactions_left(story_flags, turn) <= 0:
 		return {"success": false, "message": "이번 계절에는 더 인연을 돌볼 여유가 없습니다. (계절마다 %d번)" % _Balance.INTERACTIONS_PER_SEASON}
+	if kind == PROPOSE:
+		var reason: String = get_propose_block(rel)
+		if not reason.is_empty():
+			return {"success": false, "message": reason}
+		if not sect.spend_resources(_Balance.WEDDING_GOLD):
+			return {"success": false, "message": "혼례 비용이 모자랍니다. (금화 %d 필요)" % _Balance.WEDDING_GOLD}
+		_use_interaction(story_flags, turn)
+		var wedding: String = marry(relationships, rel, EventManager.world_sects)
+		sect.reputation += _Balance.WEDDING_REPUTATION
+		EventManager.set_flag(story_flags, "married")
+		return {"success": true, "married": target_id, "message": "%s에게 청혼해 혼례를 올렸습니다. (금화 -%d, 명성 +%d) %s" % [
+			rel.target_name, _Balance.WEDDING_GOLD, _Balance.WEDDING_REPUTATION, wedding,
+		]}
 	var hatred: bool = rel.bond_type == RelationshipData.BondType.HATRED
 	var stage_before: int = rel.stage
 	var message: String
@@ -156,6 +223,48 @@ static func _change(rel: RelationshipData, amount: int, hatred: bool, head: Stri
 		return "%s 원한이 조금 누그러졌습니다. (원한 %d)" % [head, rel.bond_strength]
 	rel.increase_bond(amount)
 	return "%s 유대 +%d (%d)" % [head, amount, rel.bond_strength]
+
+
+# ── 혼인 ──
+
+## 청혼할 수 없는 까닭 (할 수 있으면 "")
+static func get_propose_block(rel: RelationshipData) -> String:
+	if rel.bond_type == RelationshipData.BondType.SPOUSE:
+		return "이미 배우자입니다."
+	if rel.bond_type != RelationshipData.BondType.ROMANCE:
+		return "연인에게만 청혼할 수 있습니다."
+	if rel.bond_strength < _Balance.MARRIAGE_MIN_BOND:
+		return "유대가 %d 이상이어야 청혼할 수 있습니다. (지금 %d)" % [_Balance.MARRIAGE_MIN_BOND, rel.bond_strength]
+	return ""
+
+
+## 배우자로 맞는다. 배우자는 여럿일 수 있다. 이미 있던 배우자는 서운해 유대가 줄고,
+## 배우자가 몸담은 세력의 문주와는 인척이 되며 그 세력의 태도가 오른다. 일어난 일을 글로 돌려준다.
+static func marry(relationships: Array[RelationshipData], rel: RelationshipData, world_sects: Array[SectData] = []) -> String:
+	var notes: PackedStringArray = []
+	var others: PackedStringArray = []
+	for other in relationships:
+		if other != rel and other.bond_type == RelationshipData.BondType.SPOUSE:
+			other.decrease_bond(_Balance.SPOUSE_JEALOUSY_BOND)
+			others.append(other.target_name)
+	rel.bond_type = RelationshipData.BondType.SPOUSE
+	rel.increase_bond(_Balance.WEDDING_BOND)
+	notes.append("%s와(과) 부부가 되었습니다. (유대 +%d)" % [rel.target_name, _Balance.WEDDING_BOND])
+	if not others.is_empty():
+		notes.append("%s이(가) 서운해합니다. (유대 -%d)" % [", ".join(others), _Balance.SPOUSE_JEALOUSY_BOND])
+	var sect_id: String = str(NpcRoster.get_npc(rel.target_id).get("sect_id", ""))
+	for world_sect in world_sects:
+		if world_sect.id != sect_id:
+			continue
+		world_sect.attitude = clampi(world_sect.attitude + _Balance.WEDDING_ATTITUDE, -100, 100)
+		notes.append("%s 태도 +%d" % [world_sect.sect_name, _Balance.WEDDING_ATTITUDE])
+	var leader_id: String = str(SectRegistry.get_sect_info(sect_id).get("leader_id", "")) if SectRegistry.has_sect(sect_id) else ""
+	if not leader_id.is_empty() and leader_id != rel.target_id and get_bond_with(relationships, leader_id) == null:
+		var in_law: RelationshipData = make_relationship(leader_id, "IN_LAW", START_STRENGTH["IN_LAW"])
+		if in_law:
+			relationships.append(in_law)
+			notes.append("%s와(과) 인척이 되었습니다." % in_law.target_name)
+	return " ".join(notes)
 
 
 # ── 전투 ──

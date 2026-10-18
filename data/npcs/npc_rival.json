@@ -3,6 +3,7 @@
   "display_name": "남궁휘",
   "title": "남궁세가 소가주",
   "sect_id": "namgung",
+  "named": true,
   "role": "YOUNG_DISCIPLE",
   "description": "남궁세가의 젊은 후계자. 주인공을 라이벌로 여기며 함께 성장한다.",
   "level": 2,
@@ -24,11 +25,6 @@
       "wisdom": 1,
       "internal_energy_max": 10
     }
-  },
-  "initial_bond": {
-    "type": "RIVALRY",
-    "strength": 15,
-    "stage": 0
   },
   "martial_arts": [
     {

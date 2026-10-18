@@ -28,5 +28,27 @@
       "npc": "npc_healer",
       "post": "healer"
     }
+  ],
+  "initial_bonds": [
+    {
+      "target": "npc_master",
+      "type": "MASTER_DISCIPLE",
+      "strength": 35
+    },
+    {
+      "target": "npc_senior_brother",
+      "type": "FELLOW",
+      "strength": 30
+    },
+    {
+      "target": "npc_healer",
+      "type": "FELLOW",
+      "strength": 20
+    },
+    {
+      "target": "npc_rival",
+      "type": "RIVALRY",
+      "strength": 15
+    }
   ]
 }

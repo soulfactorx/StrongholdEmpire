@@ -1,0 +1,55 @@
+{
+  "id": "bond_g_inlaw_request",
+  "title": "사돈의 청",
+  "description": "{name}이(가) 서신을 보냈습니다. 「흉년이 들어 식구들이 굶고 있네. 사돈의 정으로 도와주게.」",
+  "can_repeat": true,
+  "weight": 0.8,
+  "subject": {
+    "bond_types": [
+      "IN_LAW"
+    ],
+    "min": 20
+  },
+  "conditions": [
+    {
+      "type": "sect",
+      "field": "food",
+      "op": ">=",
+      "value": 40
+    }
+  ],
+  "choices": [
+    {
+      "label": "식량을 보낸다 (식량 40)",
+      "message": "{name}이(가) 크게 고마워합니다. 유대 +10, 명성 +3",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "food",
+          "add": -40
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 10
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 3
+        }
+      ]
+    },
+    {
+      "label": "형편이 어렵다고 답한다",
+      "message": "{name}의 서운함이 서신에 묻어납니다. 유대 -10",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": -10
+        }
+      ]
+    }
+  ]
+}

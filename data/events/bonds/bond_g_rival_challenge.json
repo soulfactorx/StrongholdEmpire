@@ -1,0 +1,41 @@
+{
+  "id": "bond_g_rival_challenge",
+  "title": "맞수의 도전장",
+  "description": "{name}이(가) 도전장을 보냈습니다. 「지난번 승부는 끝나지 않았소.」",
+  "can_repeat": true,
+  "weight": 1.5,
+  "subject": {
+    "bond_types": [
+      "RIVALRY"
+    ]
+  },
+  "conditions": [],
+  "choices": [
+    {
+      "label": "도전을 받아 겨룬다",
+      "message": "치열한 승부 끝에 서로 한 걸음 성장했습니다. 경험치 +25, 유대 +5",
+      "effects": [
+        {
+          "type": "experience",
+          "amount": 25
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 5
+        }
+      ]
+    },
+    {
+      "label": "상대하지 않는다",
+      "message": "{name}이(가) 겁쟁이라 소문을 냅니다. 명성 -2",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": -2
+        }
+      ]
+    }
+  ]
+}

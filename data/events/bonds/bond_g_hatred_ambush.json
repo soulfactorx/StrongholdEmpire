@@ -1,0 +1,49 @@
+{
+  "id": "bond_g_hatred_ambush",
+  "title": "원수의 자객",
+  "description": "{name}이(가) 보낸 자객들이 밤길을 막아섭니다. 「원한은 피로 갚는 법이다!」",
+  "can_repeat": true,
+  "weight": 1,
+  "subject": {
+    "bond_types": [
+      "HATRED"
+    ],
+    "min": 30
+  },
+  "conditions": [
+    {
+      "type": "sect",
+      "field": "gold",
+      "op": ">=",
+      "value": 40
+    }
+  ],
+  "choices": [
+    {
+      "label": "맞서 싸운다",
+      "message": "검을 뽑았습니다!",
+      "effects": [
+        {
+          "type": "combat",
+          "combat": "assassination"
+        }
+      ]
+    },
+    {
+      "label": "금화를 던지고 달아난다 (금화 40)",
+      "message": "목숨은 건졌지만 체면을 잃었습니다. 명성 -2",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -40
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": -2
+        }
+      ]
+    }
+  ]
+}

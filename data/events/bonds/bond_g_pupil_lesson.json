@@ -1,0 +1,46 @@
+{
+  "id": "bond_g_pupil_lesson",
+  "title": "제자 가르치기",
+  "description": "{name}이(가) 아침 일찍 찾아와 무릎을 꿇습니다. 「스승님, 오늘도 가르침을 청합니다!」",
+  "can_repeat": true,
+  "weight": 2,
+  "subject": {
+    "bond_types": [
+      "PUPIL"
+    ]
+  },
+  "conditions": [],
+  "choices": [
+    {
+      "label": "자상하게 가르친다",
+      "message": "{name}이(가) 쑥쑥 자랍니다. 유대 +6, 경험치 +10",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 6
+        },
+        {
+          "type": "experience",
+          "amount": 10
+        }
+      ]
+    },
+    {
+      "label": "엄하게 몰아붙인다",
+      "message": "{name}이(가) 이를 악물고 따라옵니다. 유대 -2, 지혜 +1 (가르치며 깨달음)",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": -2
+        },
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 1
+        }
+      ]
+    }
+  ]
+}

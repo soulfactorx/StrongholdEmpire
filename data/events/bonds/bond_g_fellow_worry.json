@@ -1,0 +1,43 @@
+{
+  "id": "bond_g_fellow_worry",
+  "title": "동문의 고민",
+  "description": "{name}이(가) 연무장 뒤에서 혼자 한숨을 쉬고 있습니다. 「요즘 검이 늘지 않아 하산할까 고민이오.」",
+  "can_repeat": true,
+  "weight": 1,
+  "subject": {
+    "bond_types": [
+      "FELLOW"
+    ],
+    "min": 20
+  },
+  "conditions": [],
+  "choices": [
+    {
+      "label": "밤새 고민을 들어 준다",
+      "message": "{name}이(가) 마음을 다잡았습니다. 유대 +8",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 8
+        }
+      ]
+    },
+    {
+      "label": "수련법을 알려 준다",
+      "message": "{name}의 검이 한결 나아졌습니다. 유대 +5, 지혜 +1",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 5
+        },
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 1
+        }
+      ]
+    }
+  ]
+}

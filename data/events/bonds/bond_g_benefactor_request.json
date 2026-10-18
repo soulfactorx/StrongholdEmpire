@@ -1,0 +1,54 @@
+{
+  "id": "bond_g_benefactor_request",
+  "title": "은인의 부탁",
+  "description": "{name}이(가) 사람을 보내왔습니다. 「급히 도움이 필요하오. 그때의 일을 기억한다면…」",
+  "can_repeat": true,
+  "weight": 1,
+  "subject": {
+    "bond_types": [
+      "BENEFACTOR"
+    ]
+  },
+  "conditions": [
+    {
+      "type": "sect",
+      "field": "gold",
+      "op": ">=",
+      "value": 40
+    }
+  ],
+  "choices": [
+    {
+      "label": "은혜를 갚으러 간다 (금화 40)",
+      "message": "{name}이(가) 크게 고마워합니다. 유대 +12, 도덕 +2",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -40
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 12
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 2
+        }
+      ]
+    },
+    {
+      "label": "지금은 어렵다고 전한다",
+      "message": "{name}의 답신이 차갑습니다. 유대 -8",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": -8
+        }
+      ]
+    }
+  ]
+}

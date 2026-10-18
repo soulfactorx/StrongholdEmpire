@@ -1,0 +1,42 @@
+{
+  "id": "bond_g_meet_fellow",
+  "title": "동문의 얼굴",
+  "description": "연무장에서 {title} {name}이(가) 땀을 닦으며 다가옵니다. 「같은 문파 밥을 먹으면서 인사가 늦었소.」",
+  "can_repeat": true,
+  "weight": 2,
+  "subject": {
+    "stranger": true,
+    "sect": "same"
+  },
+  "conditions": [],
+  "choices": [
+    {
+      "label": "함께 수련하자고 한다",
+      "message": "{name}와(과) 동문의 정을 나누었습니다. 동문이 되었습니다. 경험치 +10",
+      "effects": [
+        {
+          "type": "add_relationship",
+          "target": "$subject",
+          "bond_type": "FELLOW",
+          "strength": 22
+        },
+        {
+          "type": "experience",
+          "amount": 10
+        }
+      ]
+    },
+    {
+      "label": "가볍게 인사만 나눈다",
+      "message": "{name}와(과) 동문으로 인사를 나누었습니다.",
+      "effects": [
+        {
+          "type": "add_relationship",
+          "target": "$subject",
+          "bond_type": "FELLOW",
+          "strength": 12
+        }
+      ]
+    }
+  ]
+}

@@ -12,5 +12,22 @@
   "training_ground_level": 2,
   "attitude": -5,
   "soldier_npc": "npc_tang_poisoner",
-  "war_formation": "CRANE"
+  "war_formation": "CRANE",
+  "initial_bonds": [
+    {
+      "target": "npc_tang_head",
+      "type": "MASTER_DISCIPLE",
+      "strength": 30
+    },
+    {
+      "target": "npc_tang_daughter",
+      "type": "FELLOW",
+      "strength": 25
+    },
+    {
+      "target": "npc_rival",
+      "type": "RIVALRY",
+      "strength": 15
+    }
+  ]
 }

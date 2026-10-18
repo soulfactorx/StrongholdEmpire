@@ -1,0 +1,47 @@
+{
+  "id": "bond_g_spouse_home",
+  "title": "따뜻한 밥상",
+  "description": "집에 돌아오니 {name}이(가) 밥상을 차려 놓고 기다리고 있습니다.",
+  "can_repeat": true,
+  "weight": 2,
+  "subject": {
+    "bond_types": [
+      "SPOUSE"
+    ]
+  },
+  "conditions": [],
+  "choices": [
+    {
+      "label": "함께 저녁을 든다",
+      "message": "오랜만에 편히 쉬었습니다. 내공 +40, 유대 +3",
+      "effects": [
+        {
+          "type": "character",
+          "field": "internal_energy_current",
+          "add": 40
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 3
+        }
+      ]
+    },
+    {
+      "label": "함께 장을 보러 간다",
+      "message": "{name}와(과) 장터를 돌며 살림을 채웠습니다. 식량 +30, 유대 +2",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "food",
+          "add": 30
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 2
+        }
+      ]
+    }
+  ]
+}
