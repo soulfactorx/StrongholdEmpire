@@ -61,6 +61,7 @@ func _on_diplomacy_pressed(sect_id: String) -> void:
 	AudioManager.play_click()
 	if not DiplomacyManager.can_negotiate(GameManager.player_character):
 		log_label.text = "외교는 문파를 대표하는 문주나 중간관리자만 할 수 있습니다."
+		Toast.notify(self, log_label.text, true)
 		return
 	var sect: SectData = GameManager.get_world_sect(sect_id)
 	var options: Array[Dictionary] = []
@@ -90,6 +91,7 @@ func _do_diplomacy(sect_id: String, action_id: String) -> void:
 	var result: Dictionary = GameManager.do_diplomacy(sect_id, action_id)
 	var lines: PackedStringArray = result.get("dialogue", PackedStringArray())
 	log_label.text = result["message"] + ("\n" + "\n".join(lines) if not lines.is_empty() else "")
+	Toast.notify_result(self, result)
 	if result["success"]:
 		AudioManager.play_success()
 	else:

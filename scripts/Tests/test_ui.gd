@@ -477,6 +477,8 @@ func _test_portrait_layout() -> void:
 	_check(hub.status_label.text.contains("금화") and hub.status_label.text.contains("제자"), "맨 위 자원 한 줄")
 	hub.show_page("sect")
 	_check(hub.pages["sect"].visible and not hub.pages["todo"].visible and hub._action_buttons["TrainButton"].is_visible_in_tree(), "탭: 문파 쪽에 문파 운영 버튼")
+	root.get_node("EventBus").action_message.emit("토스트 시험")
+	_check(Toast.get_text(hub) == "토스트 시험", "세로: 다른 탭에서도 안내 메시지가 토스트로 보임")
 	hub.show_page("world")
 	_check(hub._action_buttons["MapButton"].is_visible_in_tree() and hub.world_report_label.text.contains("강호 동향"), "탭: 강호 쪽에 지도·동향")
 	_check(hub._action_buttons["AdvanceTurnButton"].custom_minimum_size.y >= 60, "계절 넘기기는 크게, 늘 보임")
@@ -506,6 +508,8 @@ func _test_portrait_layout() -> void:
 	await process_frame
 	await process_frame
 	_check(current_scene.get_node("Margin/RootHBoxScroll/RootHBox") is VBoxContainer and current_scene.known_arts_label != null, "무공 연구소: 위아래로 쌓고 스크롤")
+	current_scene._on_save_blueprint_pressed()
+	_check(not Toast.get_text(current_scene).is_empty(), "무공 연구소: 결과가 토스트로 보임")
 	# 전투: 격자를 화면 폭에 맞춰 줄이고 칸 판정은 그대로
 	gm.start_combat(CombatManager.create_sparring(gm.player_character))
 	await process_frame
