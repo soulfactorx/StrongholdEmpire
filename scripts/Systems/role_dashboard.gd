@@ -65,10 +65,10 @@ static func is_button_visible(role: CharacterData.Role, button_name: String) -> 
 ## 문파 칸 제목: 문파를 운영하는 역할은 문파 이름, 아니면 몸담은 곳과 개인 재산
 static func get_sect_title(role: CharacterData.Role, sect: SectData) -> String:
 	if sect.id == "none":
-		return "무소속 (떠돌이 · 금화·식량은 내 몫)"
+		return "무소속 (떠돌이 · 금화·식량은 내 재산)"
 	if get_layout(role)["sect"]:
 		return sect.sect_name
-	return "%s (몸담은 곳 · 금화·식량은 내 몫)" % sect.sect_name
+	return "%s (몸담은 곳 · 금화·식량은 내 재산)" % sect.sect_name
 
 
 ## 새 게임 화면에 보일 역할 소개: 할 수 있는 일 목록
@@ -114,7 +114,7 @@ static func get_season_steps(gm: Node) -> Array[Dictionary]:
 	var interactions: int = RelationshipManager.get_interactions_left(gm.story_flags, turn)
 	if interactions > 0 and not gm.player_relationships.is_empty():
 		result.append({"id": "bond", "title": "인연 돌보기 %d번" % interactions, "detail": "대화·선물·비무로 유대를 쌓습니다"})
-	if is_button_visible(role, "ElixirButton") and gm.can_do_seasonal("last_elixir_turn") and sect.gold >= _Balance.ELIXIR_GOLD:
+	if is_button_visible(role, "ElixirButton") and gm.can_do_seasonal("last_elixir_turn") and gm.get_wallet().gold >= _Balance.ELIXIR_GOLD:
 		result.append({"id": "elixir", "title": "영약 구매", "detail": "금화 %d로 최대 내공 +%d" % [_Balance.ELIXIR_GOLD, _Balance.ELIXIR_INTERNAL_GAIN]})
 	if is_button_visible(role, "FeastButton") and gm.can_do_seasonal("last_feast_turn") and sect.gold >= _Balance.FEAST_GOLD and sect.food >= _Balance.FEAST_FOOD:
 		result.append({"id": "feast", "title": "문파 연회", "detail": "금화 %d·식량 %d로 명성 +%d" % [_Balance.FEAST_GOLD, _Balance.FEAST_FOOD, _Balance.FEAST_REPUTATION]})

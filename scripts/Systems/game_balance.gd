@@ -244,6 +244,21 @@ const TRIBUTE_ATTITUDE_PER_SEASON := 2
 const TRIBUTE_REVOLT_ATTITUDE := -80
 const TRIBUTE_RELEASE_ATTITUDE := 20
 
+# 개인 재산 (낭인·의뢰인·간자·자객): 문파 금고와 따로인 내 금화·식량
+const PURSE_START_GOLD := 150
+const PURSE_START_FOOD := 80
+## 문파 일을 떠나 떠돌게 될 때 문파 금고에서 챙기는 노자 (금고에 있는 만큼까지)
+const PURSE_ALLOWANCE_GOLD := 100
+const PURSE_ALLOWANCE_FOOD := 50
+## 계절마다 생활비: 식량을 먹고 금화를 쓴다. 식량이 모자라면 식량 1당 금화 LIVING_FOOD_PRICE로 사 먹는다
+const LIVING_GOLD := 5
+const LIVING_FOOD := 10
+const LIVING_FOOD_PRICE := 1
+## 금화마저 떨어져 굶으면 내공이 이만큼 준다
+const STARVE_INTERNAL_LOSS := 30
+## 간자가 계절마다 받는 활동비
+const SPY_STIPEND_GOLD := 15
+
 # 혼인: 연인과 유대 MARRIAGE_MIN_BOND 이상이면 청혼할 수 있다. 배우자는 여럿 둘 수 있다
 const WEDDING_GOLD := 100
 const WEDDING_REPUTATION := 3

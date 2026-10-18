@@ -196,7 +196,12 @@ static func check_endings(
 	for ending in get_all_endings():
 		if not ending.get("auto", true):
 			continue
-		if EventManager.conditions_met(ending["conditions"], character, sect, relationships, season, story_flags):
+		# 엔딩의 문파 조건은 개인 재산이 아니라 문파 자체를 본다 (금권 강호 = 문파 금고)
+		var wallet: SectData = EventManager.wallet
+		EventManager.wallet = null
+		var met: bool = EventManager.conditions_met(ending["conditions"], character, sect, relationships, season, story_flags)
+		EventManager.wallet = wallet
+		if met:
 			return ending["id"]
 	return ""
 

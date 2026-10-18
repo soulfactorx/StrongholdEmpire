@@ -106,6 +106,9 @@ static var role_state: Dictionary = {}
 ## 강호 지도 상태 (GameManager.map_state)와 플레이어 문파 id — regions_owned 조건
 static var map_state: Dictionary = {}
 static var player_sect_id: String = ""
+## 금화·식량을 내고 받는 곳 (GameManager.get_wallet). 개인 재산을 쓰는 역할이면 주머니다.
+## sect 조건·효과의 gold·food는 여기를 본다. null이면 문파.
+static var wallet: SectData = null
 ## 가진 비급 (GameManager.owned_manuals와 같은 배열) — gain_manual 효과
 static var owned_manuals: Array[String] = []
 ## 관계 대상 기연에서 지금 판정·적용 중인 대상 인물 ("$subject")
@@ -618,7 +621,7 @@ static func _condition_met(
 				value = character.get(c["field"])
 			return _compare(value, c["op"], c["value"])
 		"sect":
-			return _compare(sect.get(c["field"]), c["op"], c["value"])
+			return _compare(_money_target(sect, c["field"]).get(c["field"]), c["op"], c["value"])
 		"bond":
 			var bond: RelationshipData = RelationshipManager.get_bond_with(relationships, _target(c))
 			return bond != null and _compare(bond.bond_strength, c["op"], c["value"])
@@ -661,6 +664,11 @@ static func _condition_met(
 		"role_state":
 			return _compare(int(role_state.get(c["field"], 0)), c["op"], c["value"])
 	return false
+
+
+## 금화·식량은 지갑(개인 재산이면 주머니), 그 밖의 문파 수치는 문파
+static func _money_target(sect: SectData, field: String) -> SectData:
+	return wallet if wallet != null and field in ["gold", "food"] else sect
 
 
 ## 얻을 비급이 남지 않았을 때 대신 주는 연구점
@@ -718,7 +726,8 @@ static func _apply_effect(
 			character.set(field, new_value)
 		"sect":
 			var field: String = e["field"]
-			sect.set(field, maxi(0, int(sect.get(field)) + int(e.get("add", 0))))
+			var target: SectData = _money_target(sect, field)
+			target.set(field, maxi(0, int(target.get(field)) + int(e.get("add", 0))))
 		"experience":
 			character.gain_experience(int(e["amount"]))
 		"bond":

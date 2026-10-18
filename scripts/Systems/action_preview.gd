@@ -166,8 +166,11 @@ static func read_values(gm: Node) -> Dictionary:
 	var values: Dictionary = {}
 	var sect: SectData = gm.player_sect
 	var character: CharacterData = gm.player_character
-	values["금화"] = sect.gold
-	values["식량"] = sect.food
+	values["금화"] = gm.get_wallet().gold
+	values["식량"] = gm.get_wallet().food
+	if gm.uses_purse() and gm.has_sect():
+		values["문파 금화"] = sect.gold
+		values["문파 식량"] = sect.food
 	values["명성"] = sect.reputation
 	values["연구점"] = sect.research_points
 	values["제자 수"] = sect.disciple_count
@@ -204,7 +207,7 @@ static func _capture(gm: Node) -> Dictionary:
 		var value: Variant = gm.get(field)
 		# 인물·세력 목록은 원소(같은 객체)만 보관하고 객체 내용은 아래에서 따로 보관한다.
 		fields[field] = value.duplicate(field != "player_relationships" and field != "world_sects") if value is Array or value is Dictionary else value
-	var objects: Array = [gm.player_character, gm.player_sect]
+	var objects: Array = [gm.player_character, gm.player_sect, gm.purse]
 	objects.append_array(gm.player_relationships)
 	objects.append_array(gm.world_sects)
 	objects.append_array(gm.player_sect.disciples)

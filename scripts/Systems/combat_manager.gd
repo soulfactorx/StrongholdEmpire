@@ -205,8 +205,11 @@ static func apply_outcome(
 	relationships: Array[RelationshipData],
 	story_flags: Dictionary,
 	fallen_allies: int = 0,
-	fallen_ids: Array = []
+	fallen_ids: Array = [],
+	wallet: SectData = null
 ) -> Dictionary:
+	# 금화를 받고 잃는 곳: 문파 방어전은 문파 금고, 그 밖의 싸움은 내 재산(개인 재산을 쓰는 역할이면 주머니)
+	var purse_sect: SectData = sect if wallet == null or setup.allies_are_disciples else wallet
 	var parts: PackedStringArray = []
 	var lost: int = 0
 	var lost_names: PackedStringArray = []
@@ -232,7 +235,7 @@ static func apply_outcome(
 			character.gain_experience(exp_gain)
 			parts.append("경험치 +%d" % exp_gain)
 		if r.get("gold", 0) > 0:
-			sect.gold += r["gold"]
+			purse_sect.gold += r["gold"]
 			parts.append("금화 +%d" % r["gold"])
 		if r.get("reputation", 0) > 0:
 			sect.reputation += r["reputation"]
@@ -256,9 +259,9 @@ static func apply_outcome(
 	# 후퇴는 패배 손실의 절반만 받는다.
 	var scale: float = 0.5 if outcome == Outcome.RETREAT else 1.0
 	var p: Dictionary = setup.defeat_penalty
-	var gold_loss: int = mini(sect.gold, int(p.get("gold", 0) * scale))
+	var gold_loss: int = mini(purse_sect.gold, int(p.get("gold", 0) * scale))
 	if gold_loss > 0:
-		sect.gold -= gold_loss
+		purse_sect.gold -= gold_loss
 		parts.append("금화 -%d" % gold_loss)
 	var rep_loss: int = mini(sect.reputation, int(p.get("reputation", 0) * scale))
 	if rep_loss > 0:

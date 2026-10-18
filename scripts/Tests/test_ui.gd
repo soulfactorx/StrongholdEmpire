@@ -441,7 +441,7 @@ func _test_role_dashboard() -> void:
 	var hub: Node = current_scene
 	var grid: Node = hub.action_grid
 	_check(not grid.get_node("TrainButton").visible and not grid.get_node("SectWarButton").visible and grid.get_node("ElixirButton").visible, "자객: 문파 운영 버튼 숨김")
-	_check(not hub.get_node("Margin/RootHBox/LeftPanel/FacilityPanel").visible and hub.sect_name_label.text.contains("내 몫"), "자객: 시설 칸 숨김, 개인 재산")
+	_check(not hub.get_node("Margin/RootHBox/LeftPanel/FacilityPanel").visible and hub.sect_name_label.text.contains("내 재산") and hub.gold_label.text.begins_with("내 금화"), "자객: 시설 칸 숨김, 개인 재산")
 	_check(hub.role_resource_label.text.contains("표적") and hub.role_action_box.get_child_count() == 2, "자객: 역할 안내와 고유 행동")
 	var key := InputEventKey.new()
 	key.keycode = KEY_F

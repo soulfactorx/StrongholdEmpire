@@ -113,10 +113,10 @@ func _test_role_actions() -> void:
 	_check(RoleActions.get_escort_chance(gm) == 10, "약하면 호위 성공률 최저")
 	gm.player_character.strength = 80
 	_check(RoleActions.get_escort_chance(gm) == 95, "강하면 호위 성공률 최고")
-	gold_before = gm.player_sect.gold
+	gold_before = gm.get_wallet().gold
 	result = gm.do_role_action("job_board", "escort")
 	if result["success"]:
-		_check(gm.player_sect.gold == gold_before + roundi(_Balance.JOB_ESCORT_GOLD * _Balance.JOB_AWAY_REWARD_SCALE), "타지 호위 보상 1.5배")
+		_check(gm.get_wallet().gold == gold_before + roundi(_Balance.JOB_ESCORT_GOLD * _Balance.JOB_AWAY_REWARD_SCALE), "타지 호위 보상 1.5배")
 	else:
 		_check(gm.role_state["failures"] == 1, "호위 실패: 실책 누적")
 
@@ -156,8 +156,8 @@ func _test_role_actions() -> void:
 	_check(result["combat"].id == "assassination" and gm.role_state["bounty"] == _Balance.BOUNTY_PER_CONTRACT, "표적 의뢰: 잠입 전투, 현상금 상승")
 	gm.advance_turn()
 	_check(gm.role_state["bounty"] == _Balance.BOUNTY_PER_CONTRACT - _Balance.BOUNTY_DECAY, "현상금은 계절마다 조금씩 줄어듦")
-	gold_before = gm.player_sect.gold
-	_check(gm.do_role_action("lie_low")["success"] and gm.role_state["bounty"] == 0 and gm.player_sect.gold == gold_before - _Balance.LIE_LOW_GOLD, "은신: 현상금 감소")
+	gold_before = gm.get_wallet().gold
+	_check(gm.do_role_action("lie_low")["success"] and gm.role_state["bounty"] == 0 and gm.get_wallet().gold == gold_before - _Balance.LIE_LOW_GOLD, "은신: 현상금 감소")
 	gm.advance_turn()
 	_check(not gm.do_role_action("lie_low")["success"] and RoleActions.can_act(gm.role_state, gm._get_turn_index()), "쫓는 자가 없으면 은신 불가 (행동 소모 없음)")
 	gm.role_state["bounty"] = _Balance.BOUNTY_PURSUIT
@@ -173,10 +173,10 @@ func _test_role_actions() -> void:
 	# ── 의뢰인: 계약 수주·이행·위반·기한 ──
 	_new_quiet_game(gm, "mercenary")
 	_check(gm.player_character.role == CharacterData.Role.MERCENARY, "의뢰인으로 시작")
-	gold_before = gm.player_sect.gold
+	gold_before = gm.get_wallet().gold
 	_check(gm.do_role_action("contract", "namgung")["success"], "계약 수주")
 	var contract: Dictionary = gm.role_state["contract"]
-	_check(contract["sect"] == "namgung" and gm.player_sect.gold == gold_before + contract["advance"], "계약 선금 지급")
+	_check(contract["sect"] == "namgung" and gm.get_wallet().gold == gold_before + contract["advance"], "계약 선금 지급")
 	gm.advance_turn()
 	_check(not gm.do_role_action("contract", "heukpung")["success"], "계약은 한 번에 하나")
 	gm.advance_turn()
@@ -186,9 +186,9 @@ func _test_role_actions() -> void:
 	gm.advance_turn()
 	gm.do_role_action("contract", "heukpung")
 	gm.advance_turn()
-	gold_before = gm.player_sect.gold
+	gold_before = gm.get_wallet().gold
 	attitude = gm.get_world_sect("heukpung").attitude
-	_check(gm.do_role_action("breach")["success"] and gm.player_sect.gold == gold_before + _Balance.CONTRACT_BREACH_GOLD, "계약 위반: 금화 획득")
+	_check(gm.do_role_action("breach")["success"] and gm.get_wallet().gold == gold_before + _Balance.CONTRACT_BREACH_GOLD, "계약 위반: 금화 획득")
 	_check(RoleActions.get_credit(gm.role_state, "heukpung") == -_Balance.CONTRACT_BREACH_CREDIT and gm.get_world_sect("heukpung").attitude < attitude, "계약 위반: 신용·태도 하락")
 	gm.advance_turn()
 	gm.do_role_action("contract", "cheonma")
@@ -922,3 +922,57 @@ func _test_manuals() -> void:
 	gm._apply_save_data(JSON.parse_string(JSON.stringify(gm._build_save_state())))
 	_check(gm.owned_manuals.size() == MartialArtLibrary.get_all().size() - 1, "가진 비급 저장·복원")
 	_completed["_test_manuals"] = true
+
+
+func _test_purse() -> void:
+	var gm: Node = root.get_node("GameManager")
+	# 낭인: 문파 수입 없이 생활비만, 돈은 개인 재산
+	_new_quiet_game(gm, "wanderer")
+	_check(gm.uses_purse() and gm.get_wallet() == gm.purse and gm.purse.gold == _Balance.PURSE_START_GOLD and gm.player_sect.gold == 0, "낭인: 개인 재산으로 시작")
+	var research: int = gm.player_sect.research_points
+	gm.pending_event.clear()
+	gm.advance_turn()
+	_check(gm.purse.gold == _Balance.PURSE_START_GOLD - _Balance.LIVING_GOLD and gm.purse.food == _Balance.PURSE_START_FOOD - _Balance.LIVING_FOOD, "낭인: 계절마다 생활비만 나감 (문파 수입 없음)")
+	_check(gm.player_sect.research_points > research and gm.player_sect.gold == 0, "낭인: 홀로 수련한 연구점만 오름")
+	_check(gm.estimate_next_season() == {"gold": -_Balance.LIVING_GOLD, "food": -_Balance.LIVING_FOOD}, "예상 수지: 생활비")
+	gm.purse.food = 0
+	gm.purse.gold = 100
+	gm.advance_turn()
+	_check(gm.purse.food == 0 and gm.purse.gold == 100 - _Balance.LIVING_GOLD - _Balance.LIVING_FOOD * _Balance.LIVING_FOOD_PRICE, "식량이 없으면 금화로 사 먹음")
+	gm.purse.gold = 0
+	gm.player_character.internal_energy_current = gm.player_character.internal_energy_max
+	gm.advance_turn()
+	_check(gm.player_character.internal_energy_current == gm.player_character.internal_energy_max - _Balance.STARVE_INTERNAL_LOSS, "노자가 떨어지면 굶주려 내공 감소")
+	# 기연·선물의 금화도 개인 재산에서
+	gm.purse.gold = 200
+	gm.pending_event = {"id": "manual_book_peddler"}
+	gm.resolve_pending_event(0)
+	_check(gm.purse.gold == 140 and gm.player_sect.gold == 0, "기연의 금화는 개인 재산에서")
+	gm.player_relationships.append(RelationshipManager.make_relationship("npc_swallow", "ACQUAINTANCE", 20))
+	gm.interact_with("npc_swallow", "gift")
+	_check(gm.purse.gold == 140 - _Balance.GIFT_GOLD, "선물도 개인 재산에서")
+	gm._apply_save_data(JSON.parse_string(JSON.stringify(gm._build_save_state())))
+	_check(gm.purse.gold == 140 - _Balance.GIFT_GOLD, "개인 재산 저장·복원")
+
+	# 의뢰인(문파에 몸담음): 계약 금화는 내 몫, 문파 금고는 따로
+	_new_quiet_game(gm, "mercenary")
+	var sect_gold: int = gm.player_sect.gold
+	RoleActions.change_credit(gm.role_state, "namgung", 50)
+	gm.do_role_action("contract", "namgung")
+	_check(gm.purse.gold > _Balance.PURSE_START_GOLD and gm.player_sect.gold == sect_gold, "의뢰인: 선금은 내 재산, 문파 금고는 그대로")
+	# 문파 일을 맡게 되면 재산을 문파에 보태고, 떠돌게 되면 노자를 챙긴다
+	var purse_gold: int = gm.purse.gold
+	gm.apply_role_transition(CharacterData.Role.MANAGER)
+	_check(not gm.uses_purse() and gm.purse.gold == 0 and gm.player_sect.gold == sect_gold + purse_gold, "문파 일을 맡으면 재산을 문파에 보탬")
+	sect_gold = gm.player_sect.gold
+	gm.apply_role_transition(CharacterData.Role.WANDERER)
+	_check(gm.purse.gold == _Balance.PURSE_ALLOWANCE_GOLD and gm.player_sect.gold == sect_gold - _Balance.PURSE_ALLOWANCE_GOLD, "떠돌게 되면 노자를 챙김")
+
+	# 간자: 계절마다 활동비
+	_new_quiet_game(gm, "young_disciple")
+	gm.apply_role_transition(CharacterData.Role.SPY)
+	var spy_gold: int = gm.purse.gold
+	gm.pending_event.clear()
+	gm.advance_turn()
+	_check(gm.purse.gold == spy_gold + _Balance.SPY_STIPEND_GOLD - _Balance.LIVING_GOLD, "간자: 활동비를 받고 생활비를 냄")
+	_completed["_test_purse"] = true

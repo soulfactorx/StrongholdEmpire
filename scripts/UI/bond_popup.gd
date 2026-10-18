@@ -164,7 +164,7 @@ func _on_interact_pressed(target_id: String, kind: String) -> void:
 func _simulate_interact(target_id: String, kind: String) -> Dictionary:
 	return RelationshipManager.interact(
 		GameManager.player_relationships, target_id, kind, GameManager.player_character,
-		GameManager.player_sect, GameManager.story_flags, GameManager._get_turn_index()
+		GameManager.get_wallet(), GameManager.story_flags, GameManager._get_turn_index()
 	)
 
 
