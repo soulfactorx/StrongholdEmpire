@@ -7,7 +7,9 @@ extends Control
 const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
 const _ConfirmPopup = preload("res://scripts/UI/confirm_popup.gd")
 ## 지역 버튼 크기
-const REGION_SIZE := Vector2(76, 48)
+const REGION_SIZE_LANDSCAPE := Vector2(76, 48)
+## 세로(휴대폰)는 지도가 좁아 버튼을 조금 줄인다 (높이는 48 그대로)
+const REGION_SIZE_PORTRAIT := Vector2(62, 48)
 ## 세력 색 (없으면 성향 색)
 const SECT_COLORS: Dictionary = {
 	"qingyun": Color("#2f6b5e"), "namgung": Color("#3e5488"), "heukpung": Color("#5a4a3a"),
@@ -29,6 +31,7 @@ var log_label: Label
 var report_popup: Control
 var _region_buttons: Dictionary = {}
 var _selected: String = ""
+var _region_size: Vector2 = REGION_SIZE_LANDSCAPE
 
 
 func _ready() -> void:
@@ -43,13 +46,19 @@ func _ready() -> void:
 	for side in ["left", "right", "top", "bottom"]:
 		margin.add_theme_constant_override("margin_" + side, 16)
 	add_child(margin)
-	var root := HBoxContainer.new()
+	# 세로(휴대폰)면 지도 위, 정보·세력 칸 아래
+	var root: BoxContainer = VBoxContainer.new() if LayoutMode.is_portrait() else HBoxContainer.new()
 	root.add_theme_constant_override("separation", 12)
 	margin.add_child(root)
 
 	var map_panel := PanelContainer.new()
 	map_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	map_panel.size_flags_stretch_ratio = 2.2
+	# 세로(휴대폰): 지도 위, 정보·세력 칸 아래
+	if LayoutMode.is_portrait():
+		_region_size = REGION_SIZE_PORTRAIT
+		map_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		map_panel.size_flags_stretch_ratio = 1.15
 	root.add_child(map_panel)
 	canvas = Control.new()
 	canvas.name = "MapCanvas"
@@ -60,6 +69,7 @@ func _ready() -> void:
 
 	var side_panel := PanelContainer.new()
 	side_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	side_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(side_panel)
 	var side := VBoxContainer.new()
 	side.add_theme_constant_override("separation", 8)
@@ -125,8 +135,8 @@ func _ready() -> void:
 		var button := Button.new()
 		button.name = "Region_" + region["id"]
 		button.text = region["name"]
-		button.custom_minimum_size = REGION_SIZE
-		button.size = REGION_SIZE
+		button.custom_minimum_size = _region_size
+		button.size = _region_size
 		button.pressed.connect(select_region.bind(region["id"]))
 		canvas.add_child(button)
 		_region_buttons[region["id"]] = button
@@ -159,7 +169,7 @@ func _sect_name(sect_id: String) -> String:
 ## 지도 좌표(지도 데이터 크기)를 캔버스 크기에 맞춘다.
 func _to_canvas(pos: Vector2) -> Vector2:
 	var map_size: Vector2 = WorldMap.get_size()
-	var area: Vector2 = canvas.size - REGION_SIZE - Vector2(16, 16)
+	var area: Vector2 = canvas.size - _region_size - Vector2(16, 16)
 	var scale_factor: float = minf(area.x / map_size.x, area.y / map_size.y)
 	var offset: Vector2 = (canvas.size - map_size * scale_factor) / 2.0
 	return offset + pos * scale_factor
@@ -168,7 +178,7 @@ func _to_canvas(pos: Vector2) -> Vector2:
 func _layout_regions() -> void:
 	for region in WorldMap.get_regions():
 		var button: Button = _region_buttons[region["id"]]
-		button.position = _to_canvas(region["pos"]) - REGION_SIZE / 2.0
+		button.position = _to_canvas(region["pos"]) - _region_size / 2.0
 	canvas.queue_redraw()
 
 

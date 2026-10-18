@@ -31,7 +31,8 @@ func _ready() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(900, 0)
+	# 세로 화면(휴대폰)에서는 화면 폭에 맞춘다
+	LayoutMode.fit_width(panel, 900)
 	center.add_child(panel)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 10)
@@ -95,15 +96,23 @@ func refresh() -> void:
 		_rows.add_child(_make_row(rel, left > 0))
 
 
-func _make_row(rel: RelationshipData, can_act: bool) -> HBoxContainer:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
+## 가로: 초상화·이름표·버튼을 한 줄에. 세로(휴대폰): 초상화·이름표 아래에 버튼.
+func _make_row(rel: RelationshipData, can_act: bool) -> Container:
+	var parts: Array = LayoutMode.make_row()
+	var row: Container = parts[0]
+	var buttons: Container = parts[1]
+	var head: Container = row
+	if buttons != row:
+		head = HBoxContainer.new()
+		head.add_theme_constant_override("separation", 8)
+		row.add_child(head)
+		row.add_child(buttons)
 	# 초상화 (그림이 없으면 같은 크기의 빈칸으로 줄을 맞춘다)
 	var picture: Control = ArtAssets.picture_rect(ArtAssets.portrait(rel.target_id), Vector2(64, 80))
 	if picture == null:
 		picture = Control.new()
 		picture.custom_minimum_size = Vector2(64, 80)
-	row.add_child(picture)
+	head.add_child(picture)
 	var label := Label.new()
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var npc: Dictionary = NpcRoster.get_npc(rel.target_id)
@@ -113,7 +122,7 @@ func _make_row(rel: RelationshipData, can_act: bool) -> HBoxContainer:
 	label.text = "%s — %s\n%s %d · %s · 좋아함: %s" % [
 		rel.target_name, npc.get("title", ""), rel.get_bond_name(), rel.bond_strength, rel.get_stage_name(), ", ".join(liked),
 	]
-	row.add_child(label)
+	head.add_child(label)
 	# 길게 누르면(마우스는 올려 두면) 성향과 취향을 본다.
 	var target_id: String = rel.target_id
 	LongPressTip.attach(label, func() -> String: return "%s의 성향\n%s\n좋아하는 일을 하면 유대가 %d%% 더 오릅니다." % [
@@ -126,7 +135,7 @@ func _make_row(rel: RelationshipData, can_act: bool) -> HBoxContainer:
 		button.disabled = not can_act or (kind == "spar" and rel.bond_type == RelationshipData.BondType.HATRED)
 		button.pressed.connect(_on_interact_pressed.bind(rel.target_id, kind))
 		_UiTheme.style_button(button)
-		row.add_child(button)
+		buttons.add_child(button)
 	return row
 
 

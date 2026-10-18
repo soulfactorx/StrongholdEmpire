@@ -29,6 +29,8 @@ var _formations: Array = [
 
 func _ready() -> void:
 	_UiTheme.apply_to_control(self)
+	# 세로(휴대폰): 준비 칸 위, 명령 칸 아래
+	LayoutMode.stack($Margin/VBox/Columns, [1.0, 1.2])
 	for formation in _formations:
 		var name: String = SectWarManager.FORMATION_NAMES[formation]
 		if SectWarManager.FORMATION_BOOSTS.has(formation):

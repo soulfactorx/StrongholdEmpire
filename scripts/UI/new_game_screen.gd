@@ -27,6 +27,8 @@ var _faction_rows: Dictionary = {}
 
 func _ready() -> void:
 	_UiTheme.apply_to_control(self)
+	# 세로(휴대폰): 시나리오 칸 위, 인물 칸 아래
+	LayoutMode.stack($Margin/VBox/Columns, [0.8, 1.6])
 	_build_settings()
 	_build_faction_section()
 	_scenarios = ScenarioManager.list_scenarios()

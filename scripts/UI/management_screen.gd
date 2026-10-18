@@ -30,6 +30,15 @@ const _ChroniclePopup = preload("res://scripts/UI/chronicle_popup.gd")
 @onready var role_action_box: HBoxContainer = %RoleActionBox
 @onready var event_popup: Control = %EventPopup
 @onready var action_grid: GridContainer = $Margin/RootHBox/RightPanel/ActionPanel/ActionGrid
+@onready var facility_panel: Control = $Margin/RootHBox/LeftPanel/FacilityPanel
+## 행동 버튼 (노드 이름 → 버튼). 세로 배치에서는 버튼이 여러 쪽으로 흩어지므로 이름으로 찾는다.
+var _action_buttons: Dictionary = {}
+## 세로 배치: 쪽 이름 → 쪽(ScrollContainer), 탭 버튼, 할 일 목록, 맨 위 자원 한 줄
+var pages: Dictionary = {}
+var _tab_buttons: Dictionary = {}
+var todo_box: VBoxContainer
+var status_label: Label
+var world_report_label: Label
 @onready var role_popup: Control = %RolePopup
 var facility_popup: Control
 var chronicle_popup: Control
@@ -100,6 +109,10 @@ func _ready() -> void:
 	if GameManager.is_game_over():
 		_on_game_over.call_deferred(GameManager.game_over_id)
 		return
+	for button in action_grid.get_children():
+		_action_buttons[button.name] = button
+	if LayoutMode.is_portrait():
+		_build_portrait_layout()
 	_refresh_all()
 	_attach_tips()
 	if not GameManager.pending_event.is_empty():
@@ -107,7 +120,7 @@ func _ready() -> void:
 	_show_invasion()
 	# 게임패드가 있으면 계절 진행에 포커스를 두어 바로 조작할 수 있게 한다.
 	if not Input.get_connected_joypads().is_empty() and not event_popup.visible:
-		$Margin/RootHBox/RightPanel/ActionPanel/ActionGrid/AdvanceTurnButton.grab_focus()
+		_action_buttons["AdvanceTurnButton"].grab_focus()
 
 
 ## 길게 눌러(마우스는 올려 두면) 계산 근거를 보여 준다.
@@ -227,6 +240,7 @@ func _exit_tree() -> void:
 
 func _refresh_all() -> void:
 	_apply_role_layout()
+	_update_portrait()
 	_update_time_display()
 	_update_sect_display(GameManager.player_sect)
 	_update_character_display(GameManager.player_character)
@@ -238,15 +252,15 @@ func _refresh_all() -> void:
 func _apply_role_layout() -> void:
 	var role: CharacterData.Role = GameManager.player_character.role
 	for button_name in RoleDashboard.ACTION_BUTTONS:
-		var button: Control = action_grid.get_node_or_null(button_name)
+		var button: Control = _action_buttons.get(button_name)
 		if button:
 			button.visible = RoleDashboard.is_button_visible(role, button_name)
-	$Margin/RootHBox/LeftPanel/FacilityPanel.visible = RoleDashboard.get_layout(role)["sect"]
+	facility_panel.visible = RoleDashboard.get_layout(role)["sect"]
 
 
 ## 버튼이 숨겨진 행동은 단축키로도 열지 않는다.
 func _shortcut_allowed(method: String) -> bool:
-	for button in action_grid.get_children():
+	for button in _action_buttons.values():
 		if button is BaseButton and not button.visible:
 			for connection in button.pressed.get_connections():
 				if connection["callable"].get_method() == method:
@@ -489,15 +503,18 @@ func _on_invasion_chosen(choice: String) -> void:
 
 func _on_resources_changed(sect: SectData) -> void:
 	_update_sect_display(sect)
+	_update_portrait()
 
 
 func _on_character_updated(character: CharacterData) -> void:
 	_update_character_display(character)
 	_update_role_actions()
+	_update_portrait()
 
 
 func _on_relationships_changed(relationships: Array[RelationshipData]) -> void:
 	_update_relationships_display(relationships)
+	_update_portrait()
 
 
 func _on_action_message(message: String) -> void:
@@ -687,3 +704,203 @@ func go_main_menu() -> void:
 func _on_options_pressed() -> void:
 	AudioManager.play_click()
 	options_popup.open()
+
+# ─── 세로(휴대폰) 배치 ─────────────────────────────
+
+## 이 계절 할 일 단계 id → 누르면 할 일
+const STEP_HANDLERS: Dictionary = {
+	"bond": "_on_bond_pressed", "elixir": "_on_elixir_pressed", "feast": "_on_feast_pressed",
+	"spar": "_on_combat_pressed", "disciple_train": "_on_disciple_pressed", "sect_war": "_on_sect_war_pressed",
+	"pacify": "_on_map_pressed",
+}
+## 쪽 이름과 탭 글자
+const PAGES: Array = [["todo", "할 일"], ["sect", "문파"], ["hero", "인물"], ["world", "강호"], ["menu", "메뉴"]]
+
+
+## 세로 화면: 위에 날짜·자원 한 줄, 가운데 쪽(할 일·문파·인물·강호·메뉴), 아래에 [계절 넘기기]와 탭.
+## 기존 칸과 버튼을 그대로 옮겨 쓰므로 하는 일(신호·단축키·미리보기)은 가로와 같다.
+func _build_portrait_layout() -> void:
+	var margin: MarginContainer = $Margin
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 10)
+	var old_root: Control = $Margin/RootHBox
+	var root := VBoxContainer.new()
+	root.name = "PortraitRoot"
+	root.add_theme_constant_override("separation", 8)
+	margin.add_child(root)
+
+	# 위: 날짜와 자원 한 줄
+	var top := PanelContainer.new()
+	top.name = "TopBar"
+	root.add_child(top)
+	var top_box := VBoxContainer.new()
+	top.add_child(top_box)
+	var date_row := HBoxContainer.new()
+	date_row.add_theme_constant_override("separation", 12)
+	top_box.add_child(date_row)
+	year_label.reparent(date_row)
+	season_label.reparent(date_row)
+	generation_label.reparent(date_row)
+	status_label = Label.new()
+	status_label.name = "StatusLabel"
+	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	top_box.add_child(status_label)
+
+	# 가운데: 쪽들 (한 번에 하나)
+	var holder := Control.new()
+	holder.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_child(holder)
+	for entry in PAGES:
+		var scroll := ScrollContainer.new()
+		scroll.name = "Page_" + entry[0]
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		var box := VBoxContainer.new()
+		box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		box.add_theme_constant_override("separation", 10)
+		scroll.add_child(box)
+		holder.add_child(scroll)
+		pages[entry[0]] = scroll
+
+	# 할 일: 역할 칸(고유 행동), 이 계절 할 일 목록, 최근 소식
+	var todo: VBoxContainer = _page_box("todo")
+	$Margin/RootHBox/RightPanel/RolePanel.reparent(todo)
+	var todo_panel := PanelContainer.new()
+	todo_panel.name = "TodoPanel"
+	todo.add_child(todo_panel)
+	todo_box = VBoxContainer.new()
+	todo_box.add_theme_constant_override("separation", 8)
+	todo_panel.add_child(todo_box)
+	$Margin/RootHBox/LeftPanel/LogPanel.reparent(todo)
+
+	# 문파: 자원·시설 칸, 문파 운영 버튼
+	var sect_page: VBoxContainer = _page_box("sect")
+	$Margin/RootHBox/LeftPanel/SectPanel.reparent(sect_page)
+	facility_panel.reparent(sect_page)
+	_add_button_grid(sect_page, ["TrainButton", "FacilityButton", "FeastButton", "DiscipleButton", "SectWarButton"])
+
+	# 인물: 주인공·인연 칸, 무공·수련 버튼
+	var hero: VBoxContainer = _page_box("hero")
+	$Margin/RootHBox/RightPanel/CharacterPanel.reparent(hero)
+	_add_button_grid(hero, ["MartialArtButton", "ElixirButton", "CombatButton", "RoleButton"])
+	$Margin/RootHBox/RightPanel/RelationshipPanel.reparent(hero)
+
+	# 강호: 지도·정세·연대기·엔딩, 지난 계절 동향
+	var world: VBoxContainer = _page_box("world")
+	var world_grid: GridContainer = _add_button_grid(world, ["MapButton", "WorldButton"])
+	for node_name in ["ChronicleButton", "EndingButton"]:
+		var button: Button = $Margin/RootHBox/LeftPanel/SystemPanel/SystemVBox.get_node(node_name)
+		button.reparent(world_grid)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var report_panel := PanelContainer.new()
+	world.add_child(report_panel)
+	world_report_label = Label.new()
+	world_report_label.name = "WorldReportLabel"
+	world_report_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_UiTheme.set_font_size(world_report_label, 14)
+	report_panel.add_child(world_report_label)
+
+	# 메뉴: 저장·도움말·설정·메인 메뉴
+	$Margin/RootHBox/LeftPanel/SystemPanel.reparent(_page_box("menu"))
+
+	# 아래: 계절 넘기기(크게)와 탭
+	var advance: Button = _action_buttons["AdvanceTurnButton"]
+	advance.reparent(root)
+	advance.custom_minimum_size = Vector2(0, 64)
+	advance.text = "계절 넘기기 ▶"
+	var tabs := HBoxContainer.new()
+	tabs.name = "TabBar"
+	tabs.add_theme_constant_override("separation", 4)
+	root.add_child(tabs)
+	var group := ButtonGroup.new()
+	for entry in PAGES:
+		var tab := Button.new()
+		tab.name = "Tab_" + entry[0]
+		tab.text = entry[1]
+		tab.toggle_mode = true
+		tab.button_group = group
+		tab.custom_minimum_size = Vector2(0, 60)
+		tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tab.pressed.connect(show_page.bind(entry[0]))
+		tabs.add_child(tab)
+		_tab_buttons[entry[0]] = tab
+	old_root.visible = false
+	_UiTheme.apply_to_control(root)
+	show_page("todo")
+
+
+func _page_box(page: String) -> VBoxContainer:
+	return pages[page].get_child(0)
+
+
+## 이름으로 고른 행동 버튼을 2열 격자로 옮긴다.
+func _add_button_grid(parent: Control, names: Array) -> GridContainer:
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
+	parent.add_child(grid)
+	for button_name in names:
+		var button: Button = _action_buttons[button_name]
+		button.reparent(grid)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.custom_minimum_size = Vector2(0, 56)
+	return grid
+
+
+## 세로 화면의 쪽을 바꾼다.
+func show_page(page: String) -> void:
+	for name in pages:
+		pages[name].visible = name == page
+	if _tab_buttons.has(page):
+		_tab_buttons[page].set_pressed_no_signal(true)
+	_update_portrait()
+
+
+func get_current_page() -> String:
+	for name in pages:
+		if pages[name].visible:
+			return name
+	return ""
+
+
+## 세로 화면의 자원 한 줄·할 일 목록·강호 동향을 새로 그린다.
+func _update_portrait() -> void:
+	if pages.is_empty():
+		return
+	var sect: SectData = GameManager.player_sect
+	var forecast: Dictionary = GameManager.estimate_next_season()
+	status_label.text = "금화 %d (%+d) · 식량 %d (%+d) · 명성 %d · 연구점 %d · 제자 %d/%d" % [
+		sect.gold, forecast["gold"], sect.food, forecast["food"], sect.reputation, sect.research_points,
+		sect.disciple_count, sect.max_disciples,
+	]
+	_set_warning(status_label, sect.gold + forecast["gold"] < 0 or sect.food + forecast["food"] < 0)
+	for child in todo_box.get_children():
+		todo_box.remove_child(child)
+		child.queue_free()
+	var title := Label.new()
+	title.text = "이번 계절 할 일 — %s" % GameManager.get_date_text()
+	_UiTheme.style_label_title(title, 22)
+	todo_box.add_child(title)
+	var steps: Array[Dictionary] = RoleDashboard.get_season_steps(GameManager)
+	for step in steps:
+		if step["id"] == "role_action":
+			var note := Label.new()
+			note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			note.text = "· %s — 위 역할 칸의 버튼으로" % step["title"]
+			todo_box.add_child(note)
+			continue
+		var button := Button.new()
+		button.name = "Step_" + step["id"]
+		button.text = "%s\n%s" % [step["title"], step["detail"]]
+		button.custom_minimum_size = Vector2(0, 64)
+		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		button.pressed.connect(Callable(self, STEP_HANDLERS[step["id"]]))
+		_UiTheme.style_button(button)
+		todo_box.add_child(button)
+	var done := Label.new()
+	done.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	done.text = "할 일을 마쳤으면 아래 [계절 넘기기]를 누르세요." if not steps.is_empty() else "이번 계절에 할 수 있는 일을 다 했습니다. 아래 [계절 넘기기]를 누르세요."
+	_UiTheme.set_font_size(done, 14)
+	todo_box.add_child(done)
+	world_report_label.text = "지난 계절 강호 동향\n" + NpcAgent.format_season(GameManager.last_npc_report, GameManager.last_faction_report)

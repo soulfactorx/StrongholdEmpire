@@ -85,6 +85,8 @@ func _ready() -> void:
 	$HUD/Panel.theme = get_tree().root.theme
 	_build_extra_hud()
 	_UiTheme.apply_to_control($HUD/Panel)
+	if LayoutMode.is_portrait():
+		_apply_portrait_layout()
 	_setup = GameManager.get_or_create_combat_setup()
 	_setup_combat()
 	title_label.text = _setup.title
@@ -192,7 +194,7 @@ func _build_extra_hud() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	history_popup.add_child(center)
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(900, 0)
+	LayoutMode.fit_width(panel, 900)
 	center.add_child(panel)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
@@ -1058,6 +1060,27 @@ func _end_combat(outcome: CombatManager.Outcome) -> void:
 	_log(result["message"])
 	_record("── 전투 끝: %s ──" % result["message"])
 	GameManager.last_combat_history = history
+
+
+## 세로(휴대폰): 격자를 화면 폭에 맞춰 줄여 위에 두고, 조작 칸을 그 아래에 둔다.
+## 격자 입력은 make_input_local로 받으므로 줄여도 칸 판정이 맞다.
+func _apply_portrait_layout() -> void:
+	var view: Vector2 = get_viewport_rect().size
+	var board: Vector2 = Vector2(GRID_WIDTH, GRID_HEIGHT) * GRID_SIZE
+	var factor: float = (view.x - 16.0) / board.x
+	scale = Vector2(factor, factor)
+	position = Vector2(8, 8)
+	var background: ColorRect = $Background
+	background.position = -position / factor
+	background.size = view / factor
+	var panel: Control = $HUD/Panel
+	panel.offset_left = 8
+	panel.offset_right = view.x - 8
+	panel.offset_top = 8 + board.y * factor + 8
+	panel.offset_bottom = view.y - 8
+	preview_panel.position = Vector2(12, 24)
+	LayoutMode.fit_width(preview_panel, 520)
+	preview_label.custom_minimum_size.x = preview_panel.custom_minimum_size.x - 40
 
 
 # ─── 적 AI ─────────────────────────────────────────

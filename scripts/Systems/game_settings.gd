@@ -26,6 +26,8 @@ static var enemy_preview: bool = true
 static var action_preview: bool = true
 ## 계절을 넘기면 강호 세력이 무엇을 했는지 보고 창을 띄운다
 static var faction_report: bool = true
+## 화면 배치: LayoutMode.Mode (자동·가로·세로)
+static var layout_mode: int = 0
 
 
 static func load_settings() -> void:
@@ -40,6 +42,7 @@ static func load_settings() -> void:
 		enemy_preview = config.get_value("combat", "enemy_preview", true) == true
 		action_preview = config.get_value("game", "action_preview", true) == true
 		faction_report = config.get_value("game", "faction_report", true) == true
+		layout_mode = clampi(int(config.get_value("display", "layout_mode", 0)), 0, 2)
 	if not TEXT_SCALES.any(func(entry: Array) -> bool: return is_equal_approx(entry[1], text_scale)):
 		text_scale = 1.0
 	if not COMBAT_DELAYS.any(func(entry: Array) -> bool: return is_equal_approx(entry[1], combat_delay)):
@@ -57,6 +60,7 @@ static func save_settings() -> void:
 	config.set_value("combat", "enemy_preview", enemy_preview)
 	config.set_value("game", "action_preview", action_preview)
 	config.set_value("game", "faction_report", faction_report)
+	config.set_value("display", "layout_mode", layout_mode)
 	config.save(settings_path)
 
 
@@ -66,6 +70,7 @@ static func apply(tree: SceneTree = null) -> void:
 	_set_bus_volume(MUSIC_BUS, music_volume)
 	UiTheme.text_scale = text_scale
 	if tree and tree.root:
+		LayoutMode.apply(tree, layout_mode)
 		if tree.root.theme == null:
 			tree.root.theme = Theme.new()
 			UiTheme.apply_root_theme(tree.root.theme)
@@ -102,6 +107,8 @@ static func set_and_save(key: String, value: Variant, tree: SceneTree = null) ->
 			action_preview = value == true
 		"faction_report":
 			faction_report = value == true
+		"layout_mode":
+			layout_mode = clampi(int(value), 0, 2)
 	save_settings()
 	apply(tree)
 
