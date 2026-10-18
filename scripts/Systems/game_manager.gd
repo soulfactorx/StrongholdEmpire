@@ -828,7 +828,9 @@ func _chronicle_event(event: Dictionary, choice_index: int, result: Dictionary) 
 ## 역할을 전환한다. option은 RoleManager가 준 선택지로, sect_id가 있으면 그 세력으로 옮겨 간다(이적·배신).
 func apply_role_transition(role: CharacterData.Role, option: Dictionary = {}) -> Dictionary:
 	var prefix: String = ""
-	if option.has("sect_id"):
+	if option.get("kind", "") == "leave":
+		prefix = _leave_player_sect("blessed" if option.get("blessed", false) else "desert")
+	elif option.has("sect_id"):
 		prefix = _switch_player_sect(option["sect_id"], option.get("kind", "defect"))
 	var result: Dictionary = _change_role(role)
 	if not prefix.is_empty():
@@ -871,6 +873,9 @@ func _transfer_purse(had_purse: bool) -> String:
 		purse.gold = 0
 		purse.food = 0
 		return "모아 둔 재산(금화 %d, 식량 %d)을 %s에 보탰습니다." % [gold, food, player_sect.sect_name] if gold + food > 0 else ""
+	# 무소속이 되며 떠난 경우 노자는 _leave_player_sect가 이미 챙겼다.
+	if not has_sect():
+		return ""
 	var take_gold: int = mini(player_sect.gold, _Balance.PURSE_ALLOWANCE_GOLD)
 	var take_food: int = mini(player_sect.food, _Balance.PURSE_ALLOWANCE_FOOD)
 	player_sect.gold -= take_gold
@@ -886,13 +891,16 @@ func _apply_role_consequences() -> String:
 	if consequence.is_empty():
 		return ""
 	EventManager.set_flag(story_flags, consequence["flag"])
+	var left: String = ""
 	if player_character.role == CharacterData.Role.LEADER:
-		# 쫓겨난 문주 대신 원래 문주(또는 원로회)가 문파를 맡는다.
+		# 쫓겨난 문주 대신 원래 문주(또는 원로회)가 문파를 맡고, 쫓겨난 문주는 산문을 나선다.
 		player_sect.leader_name = (
 			NpcRoster.get_display_name(player_sect.leader_id) if not player_sect.leader_id.is_empty() else "원로회"
 		)
+		if consequence["role"] == CharacterData.Role.WANDERER:
+			left = " " + _leave_player_sect("ousted")
 	_change_role(consequence["role"])
-	return consequence["message"]
+	return consequence["message"] + left
 
 
 ## 플레이어가 다른 세력으로 옮겨 간다. 옛 문파는 강호 세력이 된다. 알림 문구를 돌려준다.
@@ -946,8 +954,71 @@ func _switch_player_sect(sect_id: String, kind: String) -> String:
 		return "%s을(를) 배신하고 %s(으)로 넘어갔습니다. (도덕 -%d)" % [
 			old_sect.sect_name, new_sect.sect_name, _Balance.BETRAY_MORALITY_LOSS,
 		]
+	if kind == "join":
+		EventManager.set_flag(story_flags, "joined_sect")
+		# 문주가 사부가 된다 (이미 인연이 있으면 그대로)
+		var master_note: String = ""
+		if NpcRoster.has_npc(new_sect.leader_id) and RelationshipManager.get_bond_with(player_relationships, new_sect.leader_id) == null:
+			player_relationships.append(RelationshipManager.make_relationship(new_sect.leader_id, "MASTER_DISCIPLE", _Balance.JOIN_MASTER_BOND))
+			master_note = " %s이(가) 사부가 되었습니다." % NpcRoster.get_display_name(new_sect.leader_id)
+		EventBus.relationships_changed.emit(player_relationships)
+		return "%s에 입문했습니다.%s" % [new_sect.sect_name, master_note]
 	EventManager.set_flag(story_flags, "defected")
 	return "%s에 객경으로 들어갔습니다." % new_sect.sect_name
+
+
+## 문파를 떠나 무소속이 된다. mode: "blessed"(허락받은 하산·문주 사임) · "desert"(탈문) · "ousted"(축출)
+## 떠나온 문파는 강호 세력이 된다. 알림 문구를 돌려준다.
+func _leave_player_sect(mode: String) -> String:
+	if not has_sect():
+		return ""
+	var old_sect: SectData = player_sect
+	var parts: PackedStringArray = []
+	if old_sect.leader_name == player_character.display_name:
+		old_sect.leader_name = (
+			NpcRoster.get_display_name(old_sect.leader_id) if not old_sect.leader_id.is_empty() else "원로회"
+		)
+	old_sect.attitude = {
+		"blessed": _Balance.LEAVE_BLESSED_ATTITUDE, "desert": _Balance.LEAVE_DESERT_ATTITUDE, "ousted": _Balance.LEAVE_OUSTED_ATTITUDE,
+	}[mode]
+	old_sect.allied = false
+	old_sect.tribute = false
+	old_sect.subjugated = false
+	old_sect.observed_commands.clear()
+	old_sect.use_roster = false
+	old_sect.disciples.clear()
+	world_sects.append(old_sect)
+	if mode == "blessed":
+		# 노자를 챙긴다 (개인 재산)
+		var take_gold: int = mini(old_sect.gold, _Balance.PURSE_ALLOWANCE_GOLD)
+		var take_food: int = mini(old_sect.food, _Balance.PURSE_ALLOWANCE_FOOD)
+		old_sect.gold -= take_gold
+		old_sect.food -= take_food
+		purse.gold += take_gold
+		purse.food += take_food
+		parts.append("%s을(를) 떠났습니다. 노자로 금화 %d, 식량 %d를 챙겼습니다." % [old_sect.sect_name, take_gold, take_food])
+	elif mode == "desert":
+		for rel in player_relationships:
+			if rel.bond_type in [RelationshipData.BondType.MASTER_DISCIPLE, RelationshipData.BondType.FELLOW] \
+					and NpcRoster.get_npc(rel.target_id).get("sect_id", "") == old_sect.id:
+				rel.decrease_bond(_Balance.LEAVE_DESERT_BOND)
+		parts.append("허락 없이 %s을(를) 떠났습니다(탈문). %s 태도 %d, 사부·동문 유대 -%d" % [
+			old_sect.sect_name, old_sect.sect_name, old_sect.attitude, _Balance.LEAVE_DESERT_BOND,
+		])
+	else:
+		parts.append("%s에서 쫓겨났습니다. %s 태도 %d" % [old_sect.sect_name, old_sect.sect_name, old_sect.attitude])
+	player_sect = create_unaffiliated_sect()
+	pending_war_plan = {}
+	pending_region_target = ""
+	pending_invasion = ""
+	challenge_target = ""
+	EventManager.player_sect_id = player_sect.id
+	role_state["spy_target"] = ""
+	EventManager.set_flag(story_flags, "left_%s" % old_sect.id)
+	EventManager.set_flag(story_flags, "left_sect")
+	_sync_event_context()
+	EventBus.relationships_changed.emit(player_relationships)
+	return " ".join(parts) + " 이제 무소속입니다."
 
 
 ## 외교 행동 (강호 정세 화면)

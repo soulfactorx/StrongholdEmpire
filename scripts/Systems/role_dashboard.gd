@@ -34,7 +34,7 @@ const LAYOUTS: Dictionary = {
 	CharacterData.Role.WANDERER: {
 		"hidden": ["TrainButton", "FacilityButton", "FeastButton", "SectWarButton", "DiscipleButton"],
 		"sect": false,
-		"focus": "의뢰로 이름을 떨치고 강호를 떠돕니다. 지도에서 다른 세력의 땅으로 옮겨 갈 수 있습니다.",
+		"focus": "의뢰로 이름을 떨치고 강호를 떠돕니다. 신용이나 연줄이 생긴 세력에는 [역할 전환]으로 입문할 수 있습니다.",
 	},
 	CharacterData.Role.MERCENARY: {
 		"hidden": ["TrainButton", "FacilityButton", "FeastButton", "SectWarButton", "DiscipleButton"],

@@ -29,12 +29,6 @@ static func get_available_transitions(
 				"스파이 임무 수락",
 				"적 문파에 잠입해 정보를 수집합니다."
 			))
-		if character.level >= 2:
-			options.append(_transition_option(
-				CharacterData.Role.WANDERER,
-				"문파를 떠나 낭인이 된다",
-				"자유로운 강호 행을 시작합니다."
-			))
 
 	elif character.role == CharacterData.Role.MANAGER:
 		var named_heir: bool = story_flags.get("arc_succession_heir", false) and character.level >= _Balance.MANAGER_LEVEL_REQ
@@ -85,6 +79,23 @@ static func get_available_transitions(
 			"계약에서 손을 떼고 다시 떠돌이 낭인이 됩니다."
 		))
 
+	# 입문: 무소속 낭인·의뢰인은 신용을 조금 쌓았거나 연줄(그 세력 인물과의 유대)이 있는 세력에 제자로 들어간다.
+	if sect.id == NpcRoster.NO_SECT and character.role in [CharacterData.Role.WANDERER, CharacterData.Role.MERCENARY]:
+		for world_sect in world_sects:
+			var reason: String = get_join_block(world_sect, character, relationships, role_state)
+			if reason.is_empty():
+				var option: Dictionary = _sect_option(
+					world_sect, "join",
+					"%s에 입문한다" % world_sect.sect_name,
+					"%s의 막내 제자로 들어갑니다. 문주가 사부가 되고, 모은 재산은 문파에 보탭니다." % world_sect.sect_name
+				)
+				option["role"] = CharacterData.Role.YOUNG_DISCIPLE
+				options.append(option)
+
+	# 문파를 떠난다: 사부(문주)와 유대가 깊으면 허락받고 하산, 아니면 탈문
+	if sect.id != NpcRoster.NO_SECT and (character.role != CharacterData.Role.YOUNG_DISCIPLE or character.level >= _Balance.LEAVE_LEVEL_REQ):
+		options.append(get_leave_option(character, sect, relationships))
+
 	# 이적: 신용을 쌓은 세력에 객경으로 들어간다.
 	if character.role in [CharacterData.Role.WANDERER, CharacterData.Role.MERCENARY]:
 		for world_sect in world_sects:
@@ -109,6 +120,65 @@ static func get_available_transitions(
 				))
 
 	return options
+
+
+## 입문할 수 없는 까닭 (할 수 있으면 "")
+static func get_join_block(
+	world_sect: SectData, character: CharacterData, relationships: Array[RelationshipData], role_state: Dictionary
+) -> String:
+	if world_sect.subjugated:
+		return "굴복한 세력"
+	if world_sect.attitude <= _Balance.JOIN_MIN_ATTITUDE:
+		return "우리를 적대함 (태도 %d)" % world_sect.attitude
+	if world_sect.alignment == SectData.Alignment.RIGHTEOUS and character.morality < _Balance.JOIN_RIGHTEOUS_MORALITY:
+		return "정파는 도덕 %d 이상만 받음" % _Balance.JOIN_RIGHTEOUS_MORALITY
+	if RoleActions.get_credit(role_state, world_sect.id) >= _Balance.JOIN_CREDIT_REQ:
+		return ""
+	for rel in relationships:
+		if rel.bond_type != RelationshipData.BondType.HATRED and rel.bond_strength >= _Balance.JOIN_BOND_REQ \
+				and NpcRoster.get_npc(rel.target_id).get("sect_id", "") == world_sect.id:
+			return ""
+	return "신용 %d 이상이나 그 세력 인물과 유대 %d 이상(연줄)이 필요" % [_Balance.JOIN_CREDIT_REQ, _Balance.JOIN_BOND_REQ]
+
+
+## 문파를 떠나는 선택지. 문주는 자리를 내려놓고, 의뢰인·자객은 그 일을 이어 가고, 나머지는 낭인이 된다.
+static func get_leave_option(character: CharacterData, sect: SectData, relationships: Array[RelationshipData]) -> Dictionary:
+	var blessed: bool = character.role == CharacterData.Role.LEADER or get_master_bond(sect, relationships) >= _Balance.LEAVE_BLESSING_BOND
+	var role: CharacterData.Role = character.role if character.role in [
+		CharacterData.Role.MERCENARY, CharacterData.Role.ASSASSIN, CharacterData.Role.WANDERER,
+	] else CharacterData.Role.WANDERER
+	var title: String
+	var description: String
+	if character.role == CharacterData.Role.LEADER:
+		title = "문주 자리를 내려놓고 떠난다"
+		description = "문파를 원래 문주(원로회)에게 맡기고 강호로 나섭니다. 노자를 챙기고, 문파와의 사이는 좋게 남습니다."
+	elif blessed:
+		title = "사부의 허락을 받아 하산한다"
+		description = "사부와의 유대가 깊어 좋게 떠납니다. 노자(금화 %d·식량 %d)를 챙기고 %s의 태도 +%d." % [
+			_Balance.PURSE_ALLOWANCE_GOLD, _Balance.PURSE_ALLOWANCE_FOOD, sect.sect_name, _Balance.LEAVE_BLESSED_ATTITUDE,
+		]
+	else:
+		title = "몰래 문파를 떠난다 (탈문)"
+		description = "허락 없이 떠납니다 (사부 유대 %d 미만). 노자 없이, %s의 태도 %d, 사부·동문 유대 -%d." % [
+			_Balance.LEAVE_BLESSING_BOND, sect.sect_name, _Balance.LEAVE_DESERT_ATTITUDE, _Balance.LEAVE_DESERT_BOND,
+		]
+	var option: Dictionary = _transition_option(role, title, description + " 무소속이 됩니다.")
+	option["kind"] = "leave"
+	option["blessed"] = blessed
+	return option
+
+
+## 사부(소속 문파의 문주)와의 유대. 문주와 사부 인연이 없으면 같은 문파 인물 중 사부 관계의 유대
+static func get_master_bond(sect: SectData, relationships: Array[RelationshipData]) -> int:
+	var best: int = 0
+	for rel in relationships:
+		if rel.bond_type != RelationshipData.BondType.MASTER_DISCIPLE:
+			continue
+		if rel.target_id == sect.leader_id:
+			return rel.bond_strength
+		if NpcRoster.get_npc(rel.target_id).get("sect_id", "") == sect.id:
+			best = maxi(best, rel.bond_strength)
+	return best
 
 
 static func _sect_option(sect: SectData, kind: String, title: String, description: String) -> Dictionary:
@@ -192,8 +262,7 @@ static func _can_become_manager(
 	sect: SectData,
 	relationships: Array[RelationshipData]
 ) -> bool:
-	var master: RelationshipData = RelationshipManager.get_bond_with(relationships, "npc_master")
-	var master_bond: int = master.bond_strength if master else 0
+	var master_bond: int = get_master_bond(sect, relationships)
 	return (
 		character.level >= _Balance.MANAGER_LEVEL_REQ
 		and character.wisdom >= _Balance.MANAGER_WISDOM_REQ
@@ -217,8 +286,7 @@ static func _can_become_leader(
 	sect: SectData,
 	relationships: Array[RelationshipData]
 ) -> bool:
-	var master: RelationshipData = RelationshipManager.get_bond_with(relationships, "npc_master")
-	var master_bond: int = master.bond_strength if master else 0
+	var master_bond: int = get_master_bond(sect, relationships)
 	return (
 		character.level >= _Balance.LEADER_LEVEL_REQ
 		and sect.reputation >= _Balance.LEADER_REPUTATION_REQ

@@ -316,6 +316,23 @@ const LEADER_REPUTATION_REQ := 75
 const LEADER_DISCIPLE_REQ := 18
 ## 의뢰인으로 전환할 수 있는 낭인 레벨
 const MERCENARY_LEVEL_REQ := 3
+## 입문: 무소속이 그 세력과 신용 JOIN_CREDIT_REQ 이상이거나, 그 세력 인물과 유대 JOIN_BOND_REQ 이상(연줄)이면 제자로 들어간다
+const JOIN_CREDIT_REQ := 15
+const JOIN_BOND_REQ := 30
+## 태도가 이 이하인 세력은 받아 주지 않고, 정파는 도덕이 이 이상이어야 받는다
+const JOIN_MIN_ATTITUDE := -30
+const JOIN_RIGHTEOUS_MORALITY := 40
+## 입문하면 그 세력 문주와 사부 인연 (이미 인연이 없을 때)
+const JOIN_MASTER_BOND := 25
+## 문파를 떠나기: 막내 제자는 이 레벨부터. 사부 유대가 LEAVE_BLESSING_BOND 이상이면 허락받은 하산
+const LEAVE_LEVEL_REQ := 2
+const LEAVE_BLESSING_BOND := 40
+const LEAVE_BLESSED_ATTITUDE := 10
+## 탈문: 떠나온 문파의 태도, 사부·동문 유대 감소
+const LEAVE_DESERT_ATTITUDE := -20
+const LEAVE_DESERT_BOND := 15
+## 축출된 문주가 떠나온 문파의 태도
+const LEAVE_OUSTED_ATTITUDE := -30
 ## 이적: 그 세력과의 신용도가 이 이상이면 객경으로 들어갈 수 있다
 const DEFECT_CREDIT_REQ := 40
 ## 배신: 도덕이 이 이하이면 적대 세력으로 넘어갈 수 있다

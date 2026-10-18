@@ -976,3 +976,75 @@ func _test_purse() -> void:
 	gm.advance_turn()
 	_check(gm.purse.gold == spy_gold + _Balance.SPY_STIPEND_GOLD - _Balance.LIVING_GOLD, "간자: 활동비를 받고 생활비를 냄")
 	_completed["_test_purse"] = true
+
+
+func _option_of(gm: Node, kind: String, sect_id: String = "") -> Dictionary:
+	gm.refresh_role_transitions()
+	for option in gm.pending_role_transitions:
+		if option.get("kind", "") == kind and (sect_id.is_empty() or option.get("sect_id", "") == sect_id):
+			return option
+	return {}
+
+
+func _test_join_leave() -> void:
+	var gm: Node = root.get_node("GameManager")
+	# 입문: 무소속 낭인은 신용이나 연줄이 있는 세력에 제자로 들어간다
+	_new_quiet_game(gm, "wanderer")
+	_check(_option_of(gm, "join").is_empty(), "신용·연줄이 없으면 입문할 곳이 없음")
+	RoleActions.change_credit(gm.role_state, "namgung", _Balance.JOIN_CREDIT_REQ)
+	var join: Dictionary = _option_of(gm, "join", "namgung")
+	_check(not join.is_empty() and join["role"] == CharacterData.Role.YOUNG_DISCIPLE, "신용 %d: 남궁세가 입문 선택지" % _Balance.JOIN_CREDIT_REQ)
+	gm.player_character.morality = _Balance.JOIN_RIGHTEOUS_MORALITY - 1
+	_check(_option_of(gm, "join", "namgung").is_empty(), "도덕이 낮으면 정파는 받지 않음")
+	gm.player_character.morality = 60
+	var purse_gold: int = gm.purse.gold
+	gm.apply_role_transition(join["role"], join)
+	_check(gm.player_sect.id == "namgung" and gm.player_character.role == CharacterData.Role.YOUNG_DISCIPLE and gm.get_world_sect("namgung") == null, "입문: 남궁세가의 막내 제자")
+	_check(_rel(gm, "npc_namgung_lord") != null and _rel(gm, "npc_namgung_lord").bond_type == RelationshipData.BondType.MASTER_DISCIPLE, "입문: 문주가 사부")
+	_check(gm.purse.gold == 0 and not gm.uses_purse(), "입문: 모은 재산(%d)은 문파에 보탬" % purse_gold)
+	# 연줄: 그 세력 인물과 유대가 깊으면 신용 없이도
+	_new_quiet_game(gm, "wanderer")
+	gm.player_relationships.append(RelationshipManager.make_relationship("npc_heukpung_second", "FRIEND", _Balance.JOIN_BOND_REQ))
+	gm.get_world_sect("heukpung").attitude = 0
+	_check(not _option_of(gm, "join", "heukpung").is_empty() and _option_of(gm, "join", "namgung").is_empty(), "연줄(유대 %d)로 흑풍채 입문" % _Balance.JOIN_BOND_REQ)
+	gm.get_world_sect("heukpung").attitude = _Balance.JOIN_MIN_ATTITUDE
+	_check(_option_of(gm, "join", "heukpung").is_empty(), "적대하는 세력은 받지 않음")
+
+	# 떠나기: 사부 유대가 깊으면 하산(노자), 아니면 탈문
+	_new_quiet_game(gm, "young_disciple")
+	gm.player_character.gain_experience(CharacterData.get_experience_for_level(_Balance.LEAVE_LEVEL_REQ))
+	var leave: Dictionary = _option_of(gm, "leave")
+	_check(not leave.is_empty() and not leave["blessed"] and leave["title"].contains("탈문"), "사부 유대가 낮으면 탈문")
+	_rel(gm, "npc_master").increase_bond(_Balance.LEAVE_BLESSING_BOND)
+	leave = _option_of(gm, "leave")
+	_check(leave["blessed"], "사부 유대 %d 이상이면 허락받은 하산" % _Balance.LEAVE_BLESSING_BOND)
+	var sect_gold: int = gm.player_sect.gold
+	gm.apply_role_transition(leave["role"], leave)
+	var old: SectData = gm.get_world_sect("qingyun")
+	_check(not gm.has_sect() and gm.player_character.role == CharacterData.Role.WANDERER and old != null, "하산: 무소속 낭인, 청운검파는 강호 세력")
+	_check(gm.purse.gold == _Balance.PURSE_ALLOWANCE_GOLD and old.gold == sect_gold - _Balance.PURSE_ALLOWANCE_GOLD and old.attitude == _Balance.LEAVE_BLESSED_ATTITUDE, "하산: 노자를 챙기고 사이가 좋게 남음")
+	# 다시 입문할 수 있다 (사부가 연줄)
+	_check(not _option_of(gm, "join", "qingyun").is_empty(), "떠난 문파에 사부 연줄로 다시 입문 가능")
+	# 탈문
+	_new_quiet_game(gm, "young_disciple")
+	gm.player_character.gain_experience(CharacterData.get_experience_for_level(_Balance.LEAVE_LEVEL_REQ))
+	var master_bond: int = _rel(gm, "npc_master").bond_strength
+	leave = _option_of(gm, "leave")
+	gm.apply_role_transition(leave["role"], leave)
+	_check(gm.purse.gold == 0 and gm.get_world_sect("qingyun").attitude == _Balance.LEAVE_DESERT_ATTITUDE and _rel(gm, "npc_master").bond_strength == master_bond - _Balance.LEAVE_DESERT_BOND, "탈문: 노자 없이, 태도·사부 유대 하락")
+	# 문주 사임
+	_new_quiet_game(gm, "leader")
+	leave = _option_of(gm, "leave")
+	_check(leave["blessed"] and leave["title"].contains("문주"), "문주는 자리를 내려놓고 떠날 수 있음")
+	gm.apply_role_transition(leave["role"], leave)
+	_check(not gm.has_sect() and gm.get_world_sect("qingyun").leader_name == NpcRoster.get_display_name("npc_master"), "문주 사임: 원래 문주가 문파를 맡음")
+	# 축출된 문주는 산문을 나선다
+	_new_quiet_game(gm, "leader")
+	gm.role_state["discontent"] = _Balance.DISCONTENT_OUSTED
+	gm._apply_role_consequences()
+	_check(not gm.has_sect() and gm.player_character.role == CharacterData.Role.WANDERER and gm.get_world_sect("qingyun").attitude == _Balance.LEAVE_OUSTED_ATTITUDE, "축출된 문주는 무소속 낭인")
+
+	# 승진 조건은 소속 문파의 사부(문주)와의 유대로 (청운검선만 보던 것 수정)
+	gm.start_new_game("남궁", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0}, false, false, {"player_sect": "namgung"})
+	_check(RoleManager.get_master_bond(gm.player_sect, gm.player_relationships) == _rel(gm, "npc_namgung_lord").bond_strength, "남궁세가: 사부 유대는 남궁천과의 유대")
+	_completed["_test_join_leave"] = true
