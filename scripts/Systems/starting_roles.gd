@@ -9,7 +9,7 @@ const ROLES: Array[Dictionary] = [
 	{
 		"id": "young_disciple",
 		"title": "막내 제자",
-		"description": "청운검파에 갓 입문한 제자. 스승과의 유대와 기연으로 성장합니다.\n스파이·관리자·낭인 등 가장 많은 갈림길이 열려 있습니다.",
+		"description": "문파에 갓 입문한 막내 제자. 스승과의 유대와 기연으로 성장합니다.\n스파이·관리자·낭인 등 가장 많은 갈림길이 열려 있습니다.",
 		"role": CharacterData.Role.YOUNG_DISCIPLE,
 		"default_name": "이청풍",
 		"stats": {
@@ -20,7 +20,7 @@ const ROLES: Array[Dictionary] = [
 	{
 		"id": "wanderer",
 		"title": "낭인",
-		"description": "어느 문파에도 얽매이지 않은 떠돌이 무인. 청운검파에 객으로 머뭅니다.\n무공과 경지를 쌓아 전설이 되는 길을 노립니다.",
+		"description": "어느 문파에도 속하지 않은 떠돌이 무인(무소속). 제자·시설 없이 몸 하나로 강호를 누빕니다.\n무공과 경지를 쌓아 전설이 되는 길을 노립니다.",
 		"role": CharacterData.Role.WANDERER,
 		"default_name": "독고휘",
 		"stats": {
@@ -32,7 +32,7 @@ const ROLES: Array[Dictionary] = [
 	{
 		"id": "mercenary",
 		"title": "의뢰인",
-		"description": "세력들의 임무를 계약으로 맡는 청부업자. 청운검파에 거처를 두고 일감을 찾습니다.\n세력별 신용을 쌓아 객경으로 들어가거나, 계약을 깨고 한몫 챙길 수 있습니다.",
+		"description": "세력들의 임무를 계약으로 맡는 청부업자. 고른 문파에 거처를 두고 일감을 찾습니다.\n세력별 신용을 쌓아 객경으로 들어가거나, 계약을 깨고 한몫 챙길 수 있습니다.",
 		"role": CharacterData.Role.MERCENARY,
 		"default_name": "모용진",
 		"stats": {
@@ -44,7 +44,7 @@ const ROLES: Array[Dictionary] = [
 	{
 		"id": "manager",
 		"title": "총관",
-		"description": "청운검파의 살림을 맡은 중간관리자. 부서를 정해 문파를 굴리고 문주에게 건의합니다.\n신임을 쌓아 문주 자리를 잇거나, 실패가 쌓이면 강등됩니다.",
+		"description": "문파의 살림을 맡은 중간관리자. 부서를 정해 문파를 굴리고 문주에게 건의합니다.\n신임을 쌓아 문주 자리를 잇거나, 실패가 쌓이면 강등됩니다.",
 		"role": CharacterData.Role.MANAGER,
 		"default_name": "남궁린",
 		"stats": {
@@ -56,7 +56,7 @@ const ROLES: Array[Dictionary] = [
 	{
 		"id": "spy",
 		"title": "간자",
-		"description": "청운검파가 강호 세력 사이에 심어 둔 간자. 정보를 캐고 사보타주로 적을 흔듭니다.\n노출도가 차면 정체가 드러나니, 임무를 마치고 돌아오거나 자객의 길로 빠질 수 있습니다.",
+		"description": "소속 문파가 강호 세력 사이에 심어 둔 간자. 정보를 캐고 사보타주로 적을 흔듭니다.\n노출도가 차면 정체가 드러나니, 임무를 마치고 돌아오거나 자객의 길로 빠질 수 있습니다.",
 		"role": CharacterData.Role.SPY,
 		"default_name": "설무영",
 		"stats": {
@@ -82,7 +82,7 @@ const ROLES: Array[Dictionary] = [
 	{
 		"id": "leader",
 		"title": "문주",
-		"description": "몰락해 가는 청운검파를 물려받은 젊은 문주. 문파 경영과 전쟁 지휘가 중심입니다.\n명성과 덕망을 쌓아 정파를 통일하세요.",
+		"description": "문파를 물려받은 젊은 문주. 문파 경영과 전쟁 지휘가 중심입니다.\n명성과 덕망을 쌓아 정파를 통일하세요.",
 		"role": CharacterData.Role.LEADER,
 		"default_name": "청운도",
 		"stats": {
@@ -93,6 +93,11 @@ const ROLES: Array[Dictionary] = [
 		"sect": {"gold": 400, "reputation": 45},
 	},
 ]
+
+
+## 소속 문파 없이 시작하는 역할 (낭인)
+static func is_unaffiliated(role_id: String) -> bool:
+	return get_by_id(role_id)["role"] == CharacterData.Role.WANDERER
 
 
 static func get_by_id(role_id: String) -> Dictionary:

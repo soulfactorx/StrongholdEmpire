@@ -64,6 +64,8 @@ static func is_button_visible(role: CharacterData.Role, button_name: String) -> 
 
 ## 문파 칸 제목: 문파를 운영하는 역할은 문파 이름, 아니면 몸담은 곳과 개인 재산
 static func get_sect_title(role: CharacterData.Role, sect: SectData) -> String:
+	if sect.id == "none":
+		return "무소속 (떠돌이 · 금화·식량은 내 몫)"
 	if get_layout(role)["sect"]:
 		return sect.sect_name
 	return "%s (몸담은 곳 · 금화·식량은 내 몫)" % sect.sect_name

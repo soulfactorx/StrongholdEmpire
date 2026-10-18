@@ -309,6 +309,7 @@ func _on_action_pressed() -> void:
 		"attack":
 			var result: Dictionary = GameManager.prepare_region_attack(_selected)
 			log_label.text = result["message"]
+			Toast.notify_result(self, result)
 			if result["success"]:
 				AudioManager.play_click()
 				SceneRouter.goto(get_tree(), SceneRouter.SECT_WAR)
@@ -323,6 +324,7 @@ func _pacify(region_id: String) -> void:
 	refresh()
 	select_region(region_id)
 	log_label.text = result["message"]
+	Toast.notify_result(self, result)
 
 
 func open_report() -> void:

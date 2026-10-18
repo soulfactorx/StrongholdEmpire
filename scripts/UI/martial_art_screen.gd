@@ -128,6 +128,7 @@ func _on_save_blueprint_pressed() -> void:
 	AudioManager.play_click()
 	var result: Dictionary = GameManager.save_art_blueprint(_build_blueprint())
 	log_label.text = result["message"]
+	Toast.notify_result(self, result)
 
 
 func _blueprint_options() -> Array[Dictionary]:
@@ -297,6 +298,7 @@ func _on_create_pressed() -> void:
 		GameManager.analyzed_elements
 	)
 	log_label.text = result["message"]
+	Toast.notify_result(self, result)
 	if result["success"]:
 		EventBus.martial_art_learned.emit(result["martial_art"])
 		EventBus.resources_changed.emit(GameManager.player_sect)
@@ -320,6 +322,7 @@ func _on_research_preset_pressed() -> void:
 		GameManager.player_character
 	)
 	log_label.text = result["message"]
+	Toast.notify_result(self, result)
 	if result["success"]:
 		EventBus.martial_art_learned.emit(result["martial_art"])
 		EventBus.resources_changed.emit(GameManager.player_sect)
@@ -373,6 +376,7 @@ func _open_choice(action: String, title: String, description: String, options: A
 	AudioManager.play_click()
 	if options.is_empty():
 		log_label.text = empty_text if not empty_text.is_empty() else "%s: 고를 수 있는 무공이 없습니다." % title
+		Toast.notify(self, log_label.text, true)
 		return
 	_pending_action = action
 	choice_popup.open(title, description, options)
@@ -396,6 +400,7 @@ func _on_choice_made(option_id: String) -> void:
 			return
 	_pending_action = ""
 	log_label.text = result["message"]
+	Toast.notify_result(self, result)
 	if result["success"]:
 		AudioManager.play_success()
 		EventBus.resources_changed.emit(sect)

@@ -184,7 +184,7 @@ static func get_targets(gm: Node, action_id: String) -> Array[Dictionary]:
 				result.append({"id": job_id, "title": JOBS[job_id]["title"], "description": JOBS[job_id]["description"]})
 		"location":
 			if not str(state["location"]).is_empty():
-				result.append({"id": "", "title": gm.player_sect.sect_name, "description": "본거지로 돌아갑니다."})
+				result.append({"id": "", "title": "정처 없는 길" if gm.player_sect.id == "none" else gm.player_sect.sect_name, "description": "본거지로 돌아갑니다." if gm.player_sect.id != "none" else "어느 세력의 땅도 아닌 길로 나섭니다."})
 			for sect in gm.world_sects:
 				if sect.id != state["location"]:
 					result.append({
@@ -402,7 +402,7 @@ static func _do_travel(gm: Node, target: String) -> Dictionary:
 static func get_location_name(gm: Node) -> String:
 	var location: String = gm.role_state["location"]
 	if location.is_empty():
-		return gm.player_sect.sect_name
+		return "정처 없는 길" if gm.player_sect.id == "none" else gm.player_sect.sect_name
 	var sect: SectData = gm.get_world_sect(location)
 	return "%s의 땅" % sect.sect_name if sect else gm.player_sect.sect_name
 

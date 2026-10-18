@@ -197,15 +197,28 @@ func save_art_blueprint(blueprint: Dictionary) -> Dictionary:
 	return {"success": true, "message": message}
 
 
-## factions: 새 게임 화면의 세력 설정 {extra: [더할 세력 id], strategies: {세력 id: 전략 id 또는 "random"}}
+## factions: 새 게임 화면의 세력 설정
+##   {player_sect: 소속 문파 id(비면 시나리오 기본), extra: [더할 세력 id], strategies: {세력 id: 전략 id 또는 "random"}}
+## 낭인은 소속 문파가 없다 (무소속: player_sect.id == NO_SECT, 제자·시설 없이 금화·식량만 개인 재산으로 쓴다).
 func _initialize_new_game(
 	role_id: String = StartingRoles.DEFAULT_ID,
 	display_name: String = "",
 	factions: Dictionary = {}
 ) -> void:
 	_set_player_character(StartingRoles.create_character(role_id, display_name))
-	player_sect = ScenarioManager.create_player_sect()
+	var default_sect: SectData = ScenarioManager.create_player_sect()
+	var chosen: String = str(factions.get("player_sect", ""))
+	if StartingRoles.is_unaffiliated(role_id):
+		player_sect = create_unaffiliated_sect()
+	elif not chosen.is_empty() and chosen != default_sect.id and SectRegistry.has_sect(chosen):
+		player_sect = SectRegistry.create_sect(chosen)
+	else:
+		player_sect = default_sect
 	world_sects = ScenarioManager.create_rival_sects()
+	# 다른 문파에 속하거나 무소속이면, 원래 플레이어 문파(청운검파 등)는 강호 세력이 된다.
+	world_sects.assign(world_sects.filter(func(sect: SectData) -> bool: return sect.id != player_sect.id))
+	if player_sect.id != default_sect.id and get_world_sect(default_sect.id) == null:
+		world_sects.push_front(default_sect)
 	_apply_faction_setup(factions)
 	map_state = WorldMap.create_state(_all_sect_ids())
 	last_faction_report.clear()
@@ -213,6 +226,7 @@ func _initialize_new_game(
 	StartingRoles.apply_sect_setup(role_id, player_sect, player_character)
 	DiscipleRoster.enable(player_sect)
 	player_relationships = RelationshipManager.create_default_relationships()
+	_adjust_bonds_for_sect()
 	triggered_event_ids.clear()
 	pending_event.clear()
 	story_flags.clear()
@@ -258,8 +272,50 @@ func _apply_faction_setup(factions: Dictionary) -> void:
 			sect.strategy = chosen
 
 
+## 무소속 (낭인): 제자·시설·땅이 없고 금화·식량은 개인 재산
+const NO_SECT := "none"
+
+
+func has_sect() -> bool:
+	return player_sect != null and player_sect.id != NO_SECT
+
+
+static func create_unaffiliated_sect() -> SectData:
+	var sect := SectData.new()
+	sect.id = NO_SECT
+	sect.sect_name = "무소속"
+	sect.leader_name = ""
+	sect.disciple_count = 0
+	sect.max_disciples = 0
+	sect.reputation = 30
+	for facility in _Balance.FACILITIES:
+		sect.set(facility + "_level", 0)
+	return sect
+
+
+## 시작 사부: 원래 사부(다른 문파의 스승)는 아는 사이로 두고, 소속 문파의 문주를 사부로 모신다.
+## 무소속(낭인)이면 사부 없이 아는 사이로만 남긴다.
+func _adjust_bonds_for_sect() -> void:
+	for rel in player_relationships:
+		if rel.bond_type != RelationshipData.BondType.MASTER_DISCIPLE:
+			continue
+		var npc_sect: String = str(NpcRoster.get_npc(rel.target_id).get("sect_id", ""))
+		if npc_sect == player_sect.id:
+			continue
+		rel.bond_type = RelationshipData.BondType.ACQUAINTANCE
+		rel.bond_strength = mini(rel.bond_strength, 15)
+		if has_sect() and NpcRoster.has_npc(player_sect.leader_id) and RelationshipManager.get_bond_with(player_relationships, player_sect.leader_id) == null:
+			var master := RelationshipData.new()
+			master.target_id = player_sect.leader_id
+			master.target_name = NpcRoster.get_display_name(player_sect.leader_id)
+			master.bond_type = RelationshipData.BondType.MASTER_DISCIPLE
+			master.bond_strength = 30
+			player_relationships.append(master)
+		return
+
+
 func _all_sect_ids() -> Array:
-	var ids: Array = [player_sect.id]
+	var ids: Array = [] if not has_sect() else [player_sect.id]
 	for sect in world_sects:
 		ids.append(sect.id)
 	return ids
@@ -381,8 +437,9 @@ func _run_sect_ai() -> String:
 	if not SectAI.active:
 		return ""
 	# 침공 빈도는 기연 빈도를 따른다 (기연 빈도 0인 시험·시뮬레이션에서는 침공이 없다).
+	# 무소속(낭인)은 쳐들어올 산문이 없다.
 	var result: Dictionary = SectAI.run_season(
-		world_sects, _get_turn_index(), current_year, ScenarioRules.event_rate(), map_state
+		world_sects, _get_turn_index(), current_year, ScenarioRules.event_rate() if has_sect() else 0.0, map_state
 	)
 	last_faction_report.assign(result["reports"])
 	if not last_faction_report.is_empty():
@@ -774,7 +831,12 @@ func _switch_player_sect(sect_id: String, kind: String) -> String:
 	# 옛 문파는 강호 세력이 되어 제자 수만 남고, 새 문파는 명단을 만든다.
 	old_sect.use_roster = false
 	old_sect.disciples.clear()
-	world_sects.append(old_sect)
+	if old_sect.id == NO_SECT:
+		# 무소속이던 낭인은 지니던 재물을 들고 들어간다.
+		new_sect.gold += old_sect.gold
+		new_sect.food += old_sect.food
+	else:
+		world_sects.append(old_sect)
 	DiscipleRoster.enable(new_sect)
 	new_sect.attitude = 0
 	new_sect.subjugated = false

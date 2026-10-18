@@ -169,6 +169,7 @@ func _on_scout_pressed() -> void:
 	AudioManager.play_click()
 	var result: Dictionary = GameManager.scout_war(target.id)
 	log_label.text = result["message"]
+	Toast.notify_result(self, result)
 	_update_display()
 
 
@@ -204,6 +205,7 @@ func _on_execute_pressed() -> void:
 	var lines: PackedStringArray = [result["message"], ""]
 	lines.append_array(result.get("logs", PackedStringArray()))
 	log_label.text = "\n".join(lines)
+	Toast.notify(self, result["message"], not result.get("success", true))
 	if result.get("victory", false):
 		AudioManager.play_success()
 	else:

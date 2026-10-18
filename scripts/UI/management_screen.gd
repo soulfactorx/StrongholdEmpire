@@ -519,6 +519,9 @@ func _on_relationships_changed(relationships: Array[RelationshipData]) -> void:
 
 func _on_action_message(message: String) -> void:
 	log_label.text = message
+	# 세로 화면에서 안내 줄은 "할 일" 탭에만 있으므로, 다른 탭에서는 토스트로 띄운다
+	if LayoutMode.is_portrait() and pages.has("todo") and not pages["todo"].visible:
+		Toast.notify(self, message)
 
 
 func _on_event_triggered(event_data: Dictionary) -> void:
