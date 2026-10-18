@@ -142,8 +142,8 @@ func _ready() -> void:
 		_region_buttons[region["id"]] = button
 	_UiTheme.apply_to_control(self)
 	refresh()
-	var home: String = WorldMap.get_home(GameManager.map_state, GameManager.player_sect.id)
-	select_region(home if not home.is_empty() else WorldMap.get_regions()[0]["id"])
+	# 처음에는 지금 있는 지역을 고른다
+	select_region(GameManager.player_region if WorldMap.has_region(GameManager.player_region) else WorldMap.get_regions()[0]["id"])
 	_layout_regions.call_deferred()
 
 
@@ -202,8 +202,13 @@ func refresh() -> void:
 	for region in WorldMap.get_regions():
 		_style_region(region["id"])
 	var income: Dictionary = WorldMap.income(state, player_id)
-	summary_label.text = "%s의 땅 %d / %d · 땅에서 나는 계절 수입 금화 +%d, 식량 +%d\n지역을 눌러 정보를 보고, 문주라면 맞닿은 빈 땅을 평정하거나 남의 땅을 공략합니다." % [
-		GameManager.player_sect.sect_name, WorldMap.count(state, player_id), WorldMap.get_regions().size(), income["gold"], income["food"],
+	summary_label.text = "지금 위치: %s (▶ 표시)\n%s\n지역을 눌러 정보를 봅니다. %s" % [
+		GameManager.get_location_text(),
+		"%s의 땅 %d / %d · 땅에서 나는 계절 수입 금화 +%d, 식량 +%d" % [
+			GameManager.player_sect.sect_name, WorldMap.count(state, player_id), WorldMap.get_regions().size(), income["gold"], income["food"],
+		] if GameManager.has_sect() else "무소속이라 가진 땅이 없습니다.",
+		"다른 지역을 골라 [이곳으로 이동]하면 옮겨 갑니다 (계절에 한 번, 여비)." if GameManager.can_travel()
+			else "문주라면 맞닿은 빈 땅을 평정하거나 남의 땅을 공략합니다.",
 	]
 	for child in faction_box.get_children():
 		faction_box.remove_child(child)
@@ -211,7 +216,8 @@ func refresh() -> void:
 	var reports: Dictionary = {}
 	for report in GameManager.last_faction_report:
 		reports[report.get("sect_id", "")] = report
-	faction_box.add_child(_faction_row(player_id, "우리 문파", ""))
+	if GameManager.has_sect():
+		faction_box.add_child(_faction_row(player_id, "우리 문파", ""))
 	for sect in GameManager.world_sects:
 		var report: Dictionary = reports.get(sect.id, {})
 		var last: String = "지난 계절: %s" % report["action"] if not report.is_empty() else ""
@@ -258,7 +264,8 @@ func _style_region(region_id: String) -> void:
 	var text_color: Color = _UiTheme.COLORS["text_primary"] if owner.is_empty() else Color("#f8f2e4")
 	for key in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
 		button.add_theme_color_override(key, text_color)
-	button.text = ("★" if home else "") + WorldMap.get_region(region_id)["name"]
+	var here: bool = region_id == GameManager.player_region
+	button.text = ("▶" if here else "") + ("★" if home else "") + WorldMap.get_region(region_id)["name"]
 	button.set_meta("help", "%s — %s%s" % [
 		WorldMap.get_region(region_id)["name"], _sect_name(owner), " (우리 땅)" if mine else "",
 	])
@@ -276,11 +283,20 @@ func select_region(region_id: String) -> void:
 	var neighbors: PackedStringArray = []
 	for other in region["neighbors"]:
 		neighbors.append(WorldMap.get_region(other)["name"])
-	info_label.text = "%s%s\n주인: %s · 주둔 병력 %d\n땅의 수입: 계절마다 금화 +%d, 식량 +%d%s\n%s\n이웃: %s" % [
-		region["name"], " (본거지)" if home else "", _sect_name(owner), region["defense"],
+	info_label.text = "%s%s%s\n주인: %s · 주둔 병력 %d\n땅의 수입: 계절마다 금화 +%d, 식량 +%d%s\n%s\n이웃: %s" % [
+		region["name"], " (본거지)" if home else "", " — 지금 여기 있습니다" if region_id == GameManager.player_region else "",
+		_sect_name(owner), region["defense"],
 		region["gold"], region["food"], " (본거지는 수입 없음)" if home else "",
 		region["description"], ", ".join(neighbors),
 	]
+	# 옮겨 다니는 역할(낭인·의뢰인·간자·자객)은 다른 지역으로 이동
+	if GameManager.can_travel() and region_id != GameManager.player_region:
+		var block: String = GameManager.get_travel_block(region_id)
+		action_button.visible = true
+		action_button.text = "이곳으로 이동 (여비 금화 %d)" % GameManager.get_travel_cost(region_id)
+		action_button.disabled = not block.is_empty()
+		log_label.text = block
+		return
 	var action: Dictionary = GameManager.get_region_action(region_id)
 	match action["kind"]:
 		"pacify":
@@ -301,6 +317,9 @@ func get_selected() -> String:
 
 
 func _on_action_pressed() -> void:
+	if GameManager.can_travel() and _selected != GameManager.player_region:
+		travel_to(_selected)
+		return
 	var action: Dictionary = GameManager.get_region_action(_selected)
 	match action["kind"]:
 		"pacify":
@@ -313,6 +332,19 @@ func _on_action_pressed() -> void:
 			if result["success"]:
 				AudioManager.play_click()
 				SceneRouter.goto(get_tree(), SceneRouter.SECT_WAR)
+
+
+## 고른 지역으로 옮긴다
+func travel_to(region_id: String) -> void:
+	var result: Dictionary = GameManager.travel_to(region_id)
+	if result["success"]:
+		AudioManager.play_success()
+	else:
+		AudioManager.play_failure()
+	refresh()
+	select_region(region_id)
+	log_label.text = result["message"]
+	Toast.notify_result(self, result)
 
 
 func _pacify(region_id: String) -> void:

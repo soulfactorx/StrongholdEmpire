@@ -102,8 +102,8 @@ func _test_role_actions() -> void:
 	_check(result["success"] and result["combat"] is CombatSetup and result["combat"].id == "bandit_hunt", "토벌 의뢰: 전투 구성")
 	_check(result["combat"].rewards["gold"] == _Balance.JOB_HUNT_GOLD, "본거지 토벌 보상")
 	gm.advance_turn()
-	_check(gm.do_role_action("travel", "heukpung")["success"] and gm.role_state["location"] == "heukpung", "이동: 흑풍채의 땅")
-	_check(RoleActions.get_targets(gm, "travel").size() == gm.world_sects.size(), "이동 대상: 본거지 + 현재 거처가 아닌 세력")
+	_check(gm.do_role_action("travel", "taihang")["success"] and gm.role_state["location"] == "heukpung", "이동: 흑풍채의 땅(태항산)")
+	_check(RoleActions.get_targets(gm, "travel").size() == WorldMap.get_regions().size() - 1, "이동 대상: 지금 지역이 아닌 모든 지역")
 	gm.advance_turn()
 	gm.do_role_action("job_board", "search")
 	_check(RoleActions.get_credit(gm.role_state, "heukpung") == _Balance.JOB_CREDIT_GAIN, "타지 의뢰: 그 세력 신용 상승")
@@ -1048,3 +1048,45 @@ func _test_join_leave() -> void:
 	gm.start_new_game("남궁", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0}, false, false, {"player_sect": "namgung"})
 	_check(RoleManager.get_master_bond(gm.player_sect, gm.player_relationships) == _rel(gm, "npc_namgung_lord").bond_strength, "남궁세가: 사부 유대는 남궁천과의 유대")
 	_completed["_test_join_leave"] = true
+
+
+
+func _test_region_travel() -> void:
+	var gm: Node = root.get_node("GameManager")
+	# 지금 있는 지역: 문파 일을 하면 본거지, 무소속은 낙양
+	_new_quiet_game(gm, "young_disciple")
+	_check(gm.player_region == "qingyun" and gm.get_location_text() == "청운산 · 우리 본거지", "막내 제자: 청운산 본거지")
+	_check(not gm.can_travel() and not gm.get_travel_block("luoyang").is_empty(), "문파 일을 하는 동안은 이동 불가")
+	_new_quiet_game(gm, "wanderer")
+	_check(gm.player_region == _Balance.START_REGION and gm.get_location_text().contains("주인 없는 땅"), "무소속 낭인: 낙양에서 시작")
+	# 지도에서 이동: 여비는 거리만큼, 계절에 한 번
+	var gold: int = gm.purse.gold
+	var cost: int = gm.get_travel_cost("hefei")
+	_check(cost == WorldMap.distance("luoyang", "hefei") * _Balance.TRAVEL_GOLD_PER_STEP and WorldMap.distance("luoyang", "hefei") == 2, "여비: 낙양→합비 두 걸음")
+	var result: Dictionary = gm.travel_to("hefei")
+	_check(result["success"] and gm.player_region == "hefei" and gm.purse.gold == gold - cost and gm.role_state["location"] == "namgung", "이동: 합비(남궁세가 본거지)로, 여비 지불")
+	_check(not gm.travel_to("luoyang")["success"], "이동은 계절에 한 번")
+	_check(RoleActions.get_escort_chance(gm) < 95, "타지에서는 호위 위험 증가")
+	gm.advance_turn()
+	gm.purse.gold = 0
+	_check(gm.get_travel_block("luoyang").contains("여비"), "여비가 없으면 이동 불가")
+	gm.purse.gold = 100
+	# 저장·복원
+	gm._apply_save_data(JSON.parse_string(JSON.stringify(gm._build_save_state())))
+	_check(gm.player_region == "hefei" and gm.role_state["location"] == "namgung", "지역 저장·복원")
+	# 입문하면 그 문파 본거지로
+	RoleActions.change_credit(gm.role_state, "heukpung", _Balance.JOIN_CREDIT_REQ)
+	gm.get_world_sect("heukpung").attitude = 0
+	gm.player_character.morality = 60
+	var join: Dictionary = _option_of(gm, "join", "heukpung")
+	gm.apply_role_transition(join["role"], join)
+	_check(gm.player_region == "taihang" and gm.role_state["location"] == "", "입문: 흑풍채 본거지(태항산)로 옮김")
+	# 지역마다 배경 그림 (청운산은 경영 화면 그림)
+	_check(ArtAssets.region_background("hangzhou") != null and ArtAssets.region_background("hangzhou") != ArtAssets.background("hub"), "지역 배경: 항주 그림")
+	_check(ArtAssets.region_background("qingyun") == ArtAssets.background("hub"), "청운산 배경은 경영 화면 그림")
+	var missing: PackedStringArray = []
+	for region in WorldMap.get_regions():
+		if ArtAssets.region_background(region["id"]) == null or (region["id"] != "qingyun" and ArtAssets.region_background(region["id"]) == ArtAssets.background("hub")):
+			missing.append(region["id"])
+	_check(missing.is_empty(), "모든 지역에 배경 그림 %s" % [missing])
+	_completed["_test_region_travel"] = true

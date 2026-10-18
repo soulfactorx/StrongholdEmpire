@@ -43,8 +43,8 @@ const ACTIONS: Dictionary = {
 		"description": "토벌·호위·수색 의뢰를 받습니다. 타지에서는 보상이 크고 위험합니다.",
 	},
 	"travel": {
-		"role": CharacterData.Role.WANDERER, "title": "이동", "target": "location",
-		"description": "다른 세력의 땅으로 거처를 옮깁니다. 그곳 의뢰를 하면 그 세력의 신용을 얻습니다.",
+		"role": CharacterData.Role.WANDERER, "title": "이동 (지도)", "target": "location",
+		"description": "강호 지도에서 지역을 골라 옮깁니다 (계절에 한 번, 여비). 남의 땅에서 의뢰를 하면 보상이 크고 그 세력의 신용을 얻습니다.",
 	},
 	"intel": {
 		"role": CharacterData.Role.SPY, "title": "정보 수집", "target": "sect",
@@ -183,15 +183,10 @@ static func get_targets(gm: Node, action_id: String) -> Array[Dictionary]:
 			for job_id in JOBS:
 				result.append({"id": job_id, "title": JOBS[job_id]["title"], "description": JOBS[job_id]["description"]})
 		"location":
-			if not str(state["location"]).is_empty():
-				result.append({"id": "", "title": "정처 없는 길" if gm.player_sect.id == "none" else gm.player_sect.sect_name, "description": "본거지로 돌아갑니다." if gm.player_sect.id != "none" else "어느 세력의 땅도 아닌 길로 나섭니다."})
-			for sect in gm.world_sects:
-				if sect.id != state["location"]:
-					result.append({
-						"id": sect.id,
-						"title": "%s의 땅" % sect.sect_name,
-						"description": "보상 ×%.1f, 위험 증가 · 신용 %d" % [_Balance.JOB_AWAY_REWARD_SCALE, get_credit(state, sect.id)],
-					})
+			# 지도의 지역 (경영 화면은 지도 화면을 열어 고르게 한다)
+			for region in WorldMap.get_regions():
+				if region["id"] != gm.player_region:
+					result.append({"id": region["id"], "title": region["name"], "description": "여비 금화 %d" % gm.get_travel_cost(region["id"])})
 	return result
 
 
@@ -226,7 +221,8 @@ static func perform(gm: Node, action_id: String, target: String = "") -> Diction
 		"contract": result = _do_contract(gm, target)
 		"fulfill": result = _do_fulfill(gm, target)
 		"breach": result = _do_breach(gm, target)
-	if result["success"] or result.get("consumed", false):
+	# 이동은 역할 행동 횟수를 쓰지 않는다 (계절에 한 번, 여비)
+	if action_id != "travel" and (result["success"] or result.get("consumed", false)):
 		_consume_action(state, turn)
 	return result
 
@@ -395,16 +391,12 @@ static func _do_job_board(gm: Node, target: String) -> Dictionary:
 
 
 static func _do_travel(gm: Node, target: String) -> Dictionary:
-	gm.role_state["location"] = target
-	return {"success": true, "message": "%s(으)로 거처를 옮겼습니다." % get_location_name(gm)}
+	return gm.travel_to(target)
 
 
+## 지금 거처: "낙양 · 남궁세가의 땅"
 static func get_location_name(gm: Node) -> String:
-	var location: String = gm.role_state["location"]
-	if location.is_empty():
-		return "정처 없는 길" if gm.player_sect.id == "none" else gm.player_sect.sect_name
-	var sect: SectData = gm.get_world_sect(location)
-	return "%s의 땅" % sect.sect_name if sect else gm.player_sect.sect_name
+	return gm.get_location_text()
 
 
 # ── 스파이 ──

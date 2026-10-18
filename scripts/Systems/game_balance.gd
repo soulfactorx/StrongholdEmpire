@@ -256,6 +256,10 @@ const LIVING_FOOD := 10
 const LIVING_FOOD_PRICE := 1
 ## 금화마저 떨어져 굶으면 내공이 이만큼 준다
 const STARVE_INTERNAL_LOSS := 30
+## 이동: 개인 재산을 쓰는 역할(낭인·의뢰인·간자·자객)은 계절에 한 번 지도에서 다른 지역으로 옮긴다. 여비는 한 걸음에 이만큼
+const TRAVEL_GOLD_PER_STEP := 5
+## 무소속으로 시작할 때 있는 지역 (지도 한가운데)
+const START_REGION := "luoyang"
 ## 간자가 계절마다 받는 활동비
 const SPY_STIPEND_GOLD := 15
 

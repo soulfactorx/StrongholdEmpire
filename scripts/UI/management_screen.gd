@@ -313,7 +313,8 @@ func _update_role_actions() -> void:
 		var button := Button.new()
 		button.text = action["title"]
 		button.custom_minimum_size = Vector2(170, 48)
-		button.disabled = not can_act
+		# 이동은 역할 행동 횟수와 따로 계절에 한 번
+		button.disabled = not GameManager.can_do_seasonal("last_travel_turn") if action["id"] == "travel" else not can_act
 		button.pressed.connect(_on_role_action_pressed.bind(action["id"]))
 		_UiTheme.style_button(button)
 		role_action_box.add_child(button)
@@ -324,6 +325,10 @@ func _on_role_action_pressed(action_id: String) -> void:
 	var action: Dictionary = RoleActions.ACTIONS[action_id]
 	if action["target"].is_empty():
 		_run_role_action(action_id, "")
+		return
+	# 이동은 강호 지도에서 지역을 골라 옮긴다
+	if action["target"] == "location":
+		SceneRouter.goto(get_tree(), SceneRouter.MAP)
 		return
 	var targets: Array[Dictionary] = RoleActions.get_targets(GameManager, action_id)
 	if targets.is_empty():
@@ -438,7 +443,9 @@ func _update_character_display(character: CharacterData) -> void:
 	character_portrait.texture = ArtAssets.role_portrait(character.role)
 	character_portrait.visible = character_portrait.texture != null
 	character_name_label.text = "%s (%d세)" % [character.display_name, character.age]
-	character_role_label.text = character.get_role_name()
+	# 지금 있는 지역 (경영 화면 배경도 그 지역의 그림으로)
+	character_role_label.text = "%s · 지역: %s" % [character.get_role_name(), GameManager.get_location_text()]
+	ArtAssets.set_background(self, ArtAssets.region_background(GameManager.player_region))
 	character_stats_label.text = (
 		"무력 %d | 신법 %d | 지혜 %d | 매력 %d\n내공 %d/%d | 전투력 %d | 도덕 %d | Lv.%d (경험 %d/%d)"
 		% [
@@ -911,10 +918,11 @@ func _update_portrait() -> void:
 	var sect: SectData = GameManager.player_sect
 	var wallet: SectData = GameManager.get_wallet()
 	var forecast: Dictionary = GameManager.estimate_next_season()
-	status_label.text = "%s %d (%+d) · 식량 %d (%+d) · 명성 %d · 연구점 %d%s" % [
+	status_label.text = "%s %d (%+d) · 식량 %d (%+d) · 명성 %d · 연구점 %d%s · %s" % [
 		"내 금화" if GameManager.uses_purse() else "금화", wallet.gold, forecast["gold"], wallet.food, forecast["food"],
 		sect.reputation, sect.research_points,
 		" · 제자 %d/%d" % [sect.disciple_count, sect.max_disciples] if GameManager.has_sect() else "",
+		GameManager.get_region_name(),
 	]
 	_set_warning(status_label, wallet.gold + forecast["gold"] < 0 or wallet.food + forecast["food"] < 0)
 	for child in todo_box.get_children():
