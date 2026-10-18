@@ -26,6 +26,11 @@ var role_state: Dictionary = RoleActions.create_state()
 var legacy_records: Array[LegacyData] = []
 ## 전투에서 본 상대 무공 {무공 id: {id, name, element}} — 무공 연구소에서 분석한다. 세대를 넘어 남는다.
 var observed_arts: Dictionary = {}
+## 개인 재산: 문파에 몸담아 살림을 맡지 않는 역할(낭인·의뢰인·간자·자객)의 금화·식량. 문파 금고와 따로다.
+## 금화·식량만 쓴다. 문주·총관·막내 제자는 문파 금고(player_sect)를 쓴다 → get_wallet()
+var purse: SectData = create_purse()
+## 가진 비급 (무공 id). 소속 문파 서고의 비급과 함께 무공 연구소에서 연구할 수 있다. 기연·사부에게서 얻는다.
+var owned_manuals: Array[String] = []
 ## 해가 시작될 때의 기록 (연간 보고서 비교용)
 var year_start: Dictionary = {}
 ## 해가 바뀔 때 만든 연간 보고서 {title, lines}. 경영 화면이 보여 주고 비운다
@@ -224,6 +229,10 @@ func _initialize_new_game(
 	last_faction_report.clear()
 	last_npc_report.clear()
 	StartingRoles.apply_sect_setup(role_id, player_sect, player_character)
+	purse = create_purse()
+	if uses_purse():
+		purse.gold = _Balance.PURSE_START_GOLD
+		purse.food = _Balance.PURSE_START_FOOD
 	DiscipleRoster.enable(player_sect)
 	# 시작 인연: 직접 정했으면 그대로, 아니면 소속 문파 기준 (무소속 낭인은 없음)
 	if factions.has("bonds"):
@@ -243,6 +252,7 @@ func _initialize_new_game(
 	legacy_records.clear()
 	year_start = _take_year_snapshot()
 	observed_arts = {}
+	owned_manuals.clear()
 	analyzed_elements = []
 	challenge_target = ""
 	pending_invasion = ""
@@ -291,9 +301,29 @@ static func create_unaffiliated_sect() -> SectData:
 	sect.disciple_count = 0
 	sect.max_disciples = 0
 	sect.reputation = 30
+	sect.gold = 0
+	sect.food = 0
 	for facility in _Balance.FACILITIES:
 		sect.set(facility + "_level", 0)
 	return sect
+
+
+## 개인 재산 주머니 (금화·식량만 쓴다)
+static func create_purse() -> SectData:
+	var purse_data: SectData = create_unaffiliated_sect()
+	purse_data.id = "purse"
+	purse_data.sect_name = "개인 재산"
+	return purse_data
+
+
+## 지금 역할이 개인 재산을 쓰는지 (RoleDashboard 구성에서 문파 일에 몸담지 않는 역할)
+func uses_purse() -> bool:
+	return not RoleDashboard.get_layout(player_character.role)["sect"]
+
+
+## 금화·식량을 내고 받는 곳: 개인 재산을 쓰는 역할이면 주머니, 아니면 문파 금고
+func get_wallet() -> SectData:
+	return purse if uses_purse() else player_sect
 
 
 func _all_sect_ids() -> Array:
@@ -306,6 +336,8 @@ func _all_sect_ids() -> Array:
 ## 기연 판정에 쓰는 진행 상황을 EventManager에 넘긴다. (딕셔너리·배열은 같은 객체를 공유)
 func _sync_event_context() -> void:
 	EventManager.world_sects = world_sects
+	EventManager.wallet = get_wallet() if player_character else null
+	EventManager.owned_manuals = owned_manuals
 	EventManager.current_year = current_year
 	EventManager.current_turn = _get_turn_index()
 	EventManager.current_generation = generation
@@ -378,6 +410,7 @@ func advance_turn() -> void:
 	if not last_npc_report.is_empty():
 		add_chronicle("인물", "%s의 인물들이 움직였습니다." % player_sect.sect_name, _report_lines(last_npc_report, true))
 	var income: String = _process_seasonal_income()
+	var living: String = _pay_living_costs()
 	var upkeep: Dictionary = SectManager.pay_upkeep(player_sect)
 	var facility_report: String = _apply_facility_effects()
 	var role_report: String = RoleActions.on_season(self)
@@ -385,8 +418,10 @@ func advance_turn() -> void:
 	var tribute_report: String = DiplomacyManager.on_season(player_sect, world_sects)
 	var consequence: String = _apply_role_consequences()
 	var world_report: String = _run_sect_ai()
-	var report_parts: PackedStringArray = [income, upkeep["message"]]
-	for part in [ignored_invasion, facility_report, disciple_report, tribute_report, role_report, consequence, yearly_report, world_report]:
+	var report_parts: PackedStringArray = [income] if has_sect() else []
+	if has_sect():
+		report_parts.append(upkeep["message"])
+	for part in [living, ignored_invasion, facility_report, disciple_report, tribute_report, role_report, consequence, yearly_report, world_report]:
 		if not part.is_empty():
 			report_parts.append(part)
 	last_turn_report = "%s — %s" % [get_date_text(), " | ".join(report_parts)]
@@ -511,7 +546,33 @@ func resolve_invasion(choice: String) -> Dictionary:
 	return {"success": true, "message": message}
 
 
+## 개인 재산의 생활비: 식량을 먹고(모자라면 금화로 사 먹는다) 금화를 쓴다. 둘 다 바닥나면 굶주려 내공이 준다.
+func _pay_living_costs() -> String:
+	if not uses_purse():
+		return ""
+	var parts: PackedStringArray = []
+	var food_need: int = _Balance.LIVING_FOOD
+	var eaten: int = mini(purse.food, food_need)
+	purse.food -= eaten
+	food_need -= eaten
+	var gold_need: int = _Balance.LIVING_GOLD + food_need * _Balance.LIVING_FOOD_PRICE
+	var paid: int = mini(purse.gold, gold_need)
+	purse.gold -= paid
+	parts.append("생활비: 식량 -%d, 금화 -%d%s" % [eaten, paid, " (모자란 식량을 사 먹음)" if food_need > 0 else ""])
+	if paid < gold_need:
+		var loss: int = mini(player_character.internal_energy_current, _Balance.STARVE_INTERNAL_LOSS)
+		player_character.internal_energy_current -= loss
+		parts.append("노자가 떨어져 굶주렸습니다. 내공 -%d (의뢰로 돈을 버세요)" % loss)
+	EventBus.resources_changed.emit(player_sect)
+	return ", ".join(parts)
+
+
 func _process_seasonal_income() -> String:
+	# 무소속은 문파 수입이 없다. 홀로 수련하며 깨닫는 연구점만 남는다.
+	if not has_sect():
+		var research: int = roundi(int(player_character.wisdom * _Balance.WISDOM_RESEARCH_RATIO) * ScenarioRules.income_scale())
+		player_sect.research_points += research
+		return "홀로 수련: 연구점 +%d" % research
 	var income: Dictionary = SectManager.compute_seasonal_income(player_sect, player_character, get_current_season())
 	income["gold"] += RoleActions.get_income_gold_bonus(role_state, player_character.role, income["gold"])
 	var lands: Dictionary = WorldMap.income(map_state, player_sect.id)
@@ -523,8 +584,22 @@ func _process_seasonal_income() -> String:
 	return "수입: 금화 +%d, 식량 +%d, 연구점 +%d" % [income["gold"], income["food"], income["research"]]
 
 
-## 다음 계절 예상 수지 (경영 화면 표시용). 계절 보정은 다음 계절 기준
+## 다음 계절 예상 수지 (경영 화면 표시용). 계절 보정은 다음 계절 기준.
+## 개인 재산을 쓰는 역할이면 내 주머니의 생활비 (문파 금고 수지는 estimate_sect_season)
 func estimate_next_season() -> Dictionary:
+	if uses_purse():
+		var food_short: int = maxi(0, _Balance.LIVING_FOOD - purse.food)
+		return {
+			"gold": -(_Balance.LIVING_GOLD + food_short * _Balance.LIVING_FOOD_PRICE),
+			"food": -(_Balance.LIVING_FOOD - food_short),
+		}
+	return estimate_sect_season()
+
+
+## 문파 금고의 다음 계절 예상 수지
+func estimate_sect_season() -> Dictionary:
+	if not has_sect():
+		return {"gold": 0, "food": 0}
 	var next_season: String = SEASONS[(current_season_index + 1) % SEASONS.size()]
 	var income: Dictionary = SectManager.compute_seasonal_income(player_sect, player_character, next_season)
 	income["gold"] += RoleActions.get_income_gold_bonus(role_state, player_character.role, income["gold"])
@@ -576,7 +651,8 @@ func _process_yearly_events() -> String:
 	return "새해 정산: " + ", ".join(parts) if not parts.is_empty() else ""
 
 
-func refresh_role_transitions() -> void:
+## announce: 새 전환이 있으면 알린다 (역할 전환 창을 열 때는 조용히 다시 계산만)
+func refresh_role_transitions(announce: bool = true) -> void:
 	pending_role_transitions = RoleManager.get_available_transitions(
 		player_character,
 		player_sect,
@@ -585,7 +661,7 @@ func refresh_role_transitions() -> void:
 		role_state,
 		world_sects
 	)
-	if not pending_role_transitions.is_empty():
+	if announce and not pending_role_transitions.is_empty():
 		EventBus.role_transitions_available.emit(pending_role_transitions)
 
 
@@ -753,7 +829,9 @@ func _chronicle_event(event: Dictionary, choice_index: int, result: Dictionary) 
 ## 역할을 전환한다. option은 RoleManager가 준 선택지로, sect_id가 있으면 그 세력으로 옮겨 간다(이적·배신).
 func apply_role_transition(role: CharacterData.Role, option: Dictionary = {}) -> Dictionary:
 	var prefix: String = ""
-	if option.has("sect_id"):
+	if option.get("kind", "") == "leave":
+		prefix = _leave_player_sect("blessed" if option.get("blessed", false) else "desert")
+	elif option.has("sect_id"):
 		prefix = _switch_player_sect(option["sect_id"], option.get("kind", "defect"))
 	var result: Dictionary = _change_role(role)
 	if not prefix.is_empty():
@@ -765,8 +843,13 @@ func apply_role_transition(role: CharacterData.Role, option: Dictionary = {}) ->
 
 
 func _change_role(role: CharacterData.Role) -> Dictionary:
+	var had_purse: bool = uses_purse()
 	var result: Dictionary = RoleManager.apply_transition(player_character, player_sect, role)
 	RoleActions.on_role_changed(role_state, player_character.role)
+	var transfer: String = _transfer_purse(had_purse)
+	if not transfer.is_empty():
+		result["message"] = str(result.get("message", "")) + " " + transfer
+	_sync_event_context()
 	add_chronicle("역할", str(result.get("message", "")))
 	_record_role(player_character.role)
 	EventBus.character_updated.emit(player_character)
@@ -775,19 +858,50 @@ func _change_role(role: CharacterData.Role) -> Dictionary:
 	return result
 
 
+## 개인 재산을 쓰는 역할과 문파 금고를 쓰는 역할 사이를 오갈 때 재산을 옮긴다.
+## 문파 일을 맡게 되면 모은 재산을 문파에 보태고, 문파를 떠나 떠돌게 되면 노자를 챙긴다.
+func _transfer_purse(had_purse: bool) -> String:
+	var has_purse: bool = uses_purse()
+	if had_purse == has_purse:
+		return ""
+	if had_purse:
+		if not has_sect():
+			return ""
+		var gold: int = purse.gold
+		var food: int = purse.food
+		player_sect.gold += gold
+		player_sect.food += food
+		purse.gold = 0
+		purse.food = 0
+		return "모아 둔 재산(금화 %d, 식량 %d)을 %s에 보탰습니다." % [gold, food, player_sect.sect_name] if gold + food > 0 else ""
+	# 무소속이 되며 떠난 경우 노자는 _leave_player_sect가 이미 챙겼다.
+	if not has_sect():
+		return ""
+	var take_gold: int = mini(player_sect.gold, _Balance.PURSE_ALLOWANCE_GOLD)
+	var take_food: int = mini(player_sect.food, _Balance.PURSE_ALLOWANCE_FOOD)
+	player_sect.gold -= take_gold
+	player_sect.food -= take_food
+	purse.gold += take_gold
+	purse.food += take_food
+	return "노자로 금화 %d, 식량 %d를 챙겼습니다. 이제 금화·식량은 내 몫입니다." % [take_gold, take_food]
+
+
 ## 역할 자원이 한계에 이르렀을 때 축출·강등을 적용하고 알림 문구를 돌려준다.
 func _apply_role_consequences() -> String:
 	var consequence: Dictionary = RoleActions.check_consequences(self)
 	if consequence.is_empty():
 		return ""
 	EventManager.set_flag(story_flags, consequence["flag"])
+	var left: String = ""
 	if player_character.role == CharacterData.Role.LEADER:
-		# 쫓겨난 문주 대신 원래 문주(또는 원로회)가 문파를 맡는다.
+		# 쫓겨난 문주 대신 원래 문주(또는 원로회)가 문파를 맡고, 쫓겨난 문주는 산문을 나선다.
 		player_sect.leader_name = (
 			NpcRoster.get_display_name(player_sect.leader_id) if not player_sect.leader_id.is_empty() else "원로회"
 		)
+		if consequence["role"] == CharacterData.Role.WANDERER:
+			left = " " + _leave_player_sect("ousted")
 	_change_role(consequence["role"])
-	return consequence["message"]
+	return consequence["message"] + left
 
 
 ## 플레이어가 다른 세력으로 옮겨 간다. 옛 문파는 강호 세력이 된다. 알림 문구를 돌려준다.
@@ -841,8 +955,71 @@ func _switch_player_sect(sect_id: String, kind: String) -> String:
 		return "%s을(를) 배신하고 %s(으)로 넘어갔습니다. (도덕 -%d)" % [
 			old_sect.sect_name, new_sect.sect_name, _Balance.BETRAY_MORALITY_LOSS,
 		]
+	if kind == "join":
+		EventManager.set_flag(story_flags, "joined_sect")
+		# 문주가 사부가 된다 (이미 인연이 있으면 그대로)
+		var master_note: String = ""
+		if NpcRoster.has_npc(new_sect.leader_id) and RelationshipManager.get_bond_with(player_relationships, new_sect.leader_id) == null:
+			player_relationships.append(RelationshipManager.make_relationship(new_sect.leader_id, "MASTER_DISCIPLE", _Balance.JOIN_MASTER_BOND))
+			master_note = " %s이(가) 사부가 되었습니다." % NpcRoster.get_display_name(new_sect.leader_id)
+		EventBus.relationships_changed.emit(player_relationships)
+		return "%s에 입문했습니다.%s" % [new_sect.sect_name, master_note]
 	EventManager.set_flag(story_flags, "defected")
 	return "%s에 객경으로 들어갔습니다." % new_sect.sect_name
+
+
+## 문파를 떠나 무소속이 된다. mode: "blessed"(허락받은 하산·문주 사임) · "desert"(탈문) · "ousted"(축출)
+## 떠나온 문파는 강호 세력이 된다. 알림 문구를 돌려준다.
+func _leave_player_sect(mode: String) -> String:
+	if not has_sect():
+		return ""
+	var old_sect: SectData = player_sect
+	var parts: PackedStringArray = []
+	if old_sect.leader_name == player_character.display_name:
+		old_sect.leader_name = (
+			NpcRoster.get_display_name(old_sect.leader_id) if not old_sect.leader_id.is_empty() else "원로회"
+		)
+	old_sect.attitude = {
+		"blessed": _Balance.LEAVE_BLESSED_ATTITUDE, "desert": _Balance.LEAVE_DESERT_ATTITUDE, "ousted": _Balance.LEAVE_OUSTED_ATTITUDE,
+	}[mode]
+	old_sect.allied = false
+	old_sect.tribute = false
+	old_sect.subjugated = false
+	old_sect.observed_commands.clear()
+	old_sect.use_roster = false
+	old_sect.disciples.clear()
+	world_sects.append(old_sect)
+	if mode == "blessed":
+		# 노자를 챙긴다 (개인 재산)
+		var take_gold: int = mini(old_sect.gold, _Balance.PURSE_ALLOWANCE_GOLD)
+		var take_food: int = mini(old_sect.food, _Balance.PURSE_ALLOWANCE_FOOD)
+		old_sect.gold -= take_gold
+		old_sect.food -= take_food
+		purse.gold += take_gold
+		purse.food += take_food
+		parts.append("%s을(를) 떠났습니다. 노자로 금화 %d, 식량 %d를 챙겼습니다." % [old_sect.sect_name, take_gold, take_food])
+	elif mode == "desert":
+		for rel in player_relationships:
+			if rel.bond_type in [RelationshipData.BondType.MASTER_DISCIPLE, RelationshipData.BondType.FELLOW] \
+					and NpcRoster.get_npc(rel.target_id).get("sect_id", "") == old_sect.id:
+				rel.decrease_bond(_Balance.LEAVE_DESERT_BOND)
+		parts.append("허락 없이 %s을(를) 떠났습니다(탈문). %s 태도 %d, 사부·동문 유대 -%d" % [
+			old_sect.sect_name, old_sect.sect_name, old_sect.attitude, _Balance.LEAVE_DESERT_BOND,
+		])
+	else:
+		parts.append("%s에서 쫓겨났습니다. %s 태도 %d" % [old_sect.sect_name, old_sect.sect_name, old_sect.attitude])
+	player_sect = create_unaffiliated_sect()
+	pending_war_plan = {}
+	pending_region_target = ""
+	pending_invasion = ""
+	challenge_target = ""
+	EventManager.player_sect_id = player_sect.id
+	role_state["spy_target"] = ""
+	EventManager.set_flag(story_flags, "left_%s" % old_sect.id)
+	EventManager.set_flag(story_flags, "left_sect")
+	_sync_event_context()
+	EventBus.relationships_changed.emit(player_relationships)
+	return " ".join(parts) + " 이제 무소속입니다."
 
 
 ## 외교 행동 (강호 정세 화면)
@@ -859,8 +1036,10 @@ func do_diplomacy(sect_id: String, action_id: String) -> Dictionary:
 ## 인연 상호작용 (대화·선물·비무). 비무면 전투를 시작한다.
 func interact_with(target_id: String, kind: String) -> Dictionary:
 	var result: Dictionary = RelationshipManager.interact(
-		player_relationships, target_id, kind, player_character, player_sect, story_flags, _get_turn_index()
+		player_relationships, target_id, kind, player_character, get_wallet(), story_flags, _get_turn_index()
 	)
+	if result.get("married", "") != "":
+		player_sect.reputation += _Balance.WEDDING_REPUTATION
 	var rel: RelationshipData = RelationshipManager.get_bond_with(player_relationships, target_id)
 	if rel and result["success"]:
 		result["dialogue"] = DialogueLines.for_interaction(rel, kind, player_character.display_name, true)
@@ -1257,7 +1436,7 @@ func _mark_seasonal(action_flag: String) -> void:
 func buy_elixir() -> Dictionary:
 	if not can_do_seasonal("last_elixir_turn"):
 		return {"success": false, "message": "이번 계절에는 이미 영약을 구했습니다."}
-	if not player_sect.spend_resources(_Balance.ELIXIR_GOLD):
+	if not get_wallet().spend_resources(_Balance.ELIXIR_GOLD):
 		return {"success": false, "message": "금화가 부족합니다. (%d 필요)" % _Balance.ELIXIR_GOLD}
 	_mark_seasonal("last_elixir_turn")
 	player_character.internal_energy_max += _Balance.ELIXIR_INTERNAL_GAIN
@@ -1298,17 +1477,71 @@ func upgrade_facility(facility: String) -> Dictionary:
 	return SectManager.upgrade_facility(player_sect, facility)
 
 
+## 무공 연구소에서 연구할 수 있는 비급: 소속 문파 서고의 비급과 가진 비급. [{art: MartialArtData, source: "문파 서고"|"소장"}]
+## 무소속(낭인)은 가진 비급뿐이다.
+func get_research_manuals() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	var seen: Dictionary = {}
+	var library: Array = SectRegistry.get_sect_info(player_sect.id).get("manuals", []) if has_sect() and SectRegistry.has_sect(player_sect.id) else []
+	for entry in [[library, "%s 서고" % player_sect.sect_name], [owned_manuals, "소장"]]:
+		for art_id in entry[0]:
+			var art: MartialArtData = MartialArtLibrary.create_art(str(art_id))
+			if art and not seen.has(art.id):
+				seen[art.id] = true
+				result.append({"art": art, "source": entry[1]})
+	return result
+
+
+## 비급을 얻는다. art_id가 "random"이면 아직 연구할 수 없고 익히지도 않은 비급 중 하나. 얻은 비급 이름(못 얻으면 "")
+func gain_manual(art_id: String) -> String:
+	var gained: String = EventManager.gain_manual(art_id, owned_manuals, player_character, _available_manual_ids())
+	EventBus.character_updated.emit(player_character)
+	return gained
+
+
+func _available_manual_ids() -> Array:
+	return get_research_manuals().map(func(entry: Dictionary) -> String: return entry["art"].id)
+
+
+## 경영 화면 비무 상대 순서: 라이벌 → 동문 → 벗·혈맹 → 사부 → 그 밖의 인연 (원한은 빼고)
+const SPAR_PARTNER_ORDER: Array = [
+	RelationshipData.BondType.RIVALRY, RelationshipData.BondType.FELLOW,
+	RelationshipData.BondType.FRIEND, RelationshipData.BondType.BLOOD_OATH, RelationshipData.BondType.MASTER_DISCIPLE,
+]
+
+
+## 경영 화면 비무 상대: 인연이 있는 인물 중 순서가 앞서고 유대가 깊은 사람. 없으면 "" (낭인은 처음엔 상대가 없다)
+func get_spar_partner() -> String:
+	var best: RelationshipData = null
+	var best_rank: int = 99
+	for rel in player_relationships:
+		if rel.bond_type == RelationshipData.BondType.HATRED or not NpcRoster.has_npc(rel.target_id):
+			continue
+		var rank: int = SPAR_PARTNER_ORDER.find(rel.bond_type)
+		if rank < 0:
+			rank = SPAR_PARTNER_ORDER.size()
+		if best == null or rank < best_rank or (rank == best_rank and rel.bond_strength > best.bond_strength):
+			best = rel
+			best_rank = rank
+	return best.target_id if best else ""
+
+
 func can_spar() -> bool:
-	return story_flags.get("last_spar_turn", -1) != _get_turn_index()
+	return story_flags.get("last_spar_turn", -1) != _get_turn_index() and not get_spar_partner().is_empty()
 
 
-## 경영 화면의 비무. 계절마다 한 번만 할 수 있다.
+## 경영 화면의 비무. 계절마다 한 번, 인연이 있는 인물과 겨룬다.
 func start_sparring() -> Dictionary:
+	var partner: String = get_spar_partner()
+	if partner.is_empty():
+		return {"success": false, "message": "겨룰 상대가 없습니다. 강호에서 인연을 맺으면 비무할 수 있습니다."}
 	if not can_spar():
 		return {"success": false, "message": "이번 계절에는 이미 비무를 했습니다."}
 	EventManager.set_flag(story_flags, "last_spar_turn", _get_turn_index())
-	start_combat(CombatManager.create_sparring(player_character))
-	return {"success": true, "message": "남궁휘에게 비무를 청합니다."}
+	var setup: CombatSetup = CombatManager.create_sparring(player_character) if partner == CombatManager.RIVAL_ID \
+		else CombatManager.create_sparring_with(partner, player_character)
+	start_combat(setup)
+	return {"success": true, "message": "%s에게 비무를 청합니다." % NpcRoster.get_display_name(partner)}
 
 
 ## 전투 결과를 반영하고 결과(message, outcome 포함)를 돌려준다.
@@ -1333,7 +1566,8 @@ func finish_combat(outcome: CombatManager.Outcome, fallen_allies: int = 0, falle
 		player_relationships,
 		story_flags,
 		fallen_allies,
-		fallen_ids
+		fallen_ids,
+		get_wallet()
 	)
 	add_chronicle("전투", str(result.get("message", "")), last_combat_history.slice(maxi(0, last_combat_history.size() - 6)))
 	pending_combat = null
@@ -1416,6 +1650,8 @@ func _build_save_state() -> Dictionary:
 		"role_history": role_history,
 		"role_state": role_state,
 		"observed_arts": observed_arts,
+		"owned_manuals": owned_manuals,
+		"purse": {"gold": purse.gold, "food": purse.food},
 		"challenge_target": challenge_target,
 		"pending_invasion": pending_invasion,
 		"year_start": year_start,
@@ -1490,6 +1726,21 @@ func _apply_save_data(data: Dictionary) -> void:
 				"generation": int(entry.get("generation", 1)), "kind": str(entry.get("kind", "")),
 				"text": str(entry.get("text", "")), "lines": Array(entry.get("lines", [])).map(func(line: Variant) -> String: return str(line)),
 			})
+	purse = create_purse()
+	if data.has("purse"):
+		purse.gold = int(data["purse"].get("gold", 0))
+		purse.food = int(data["purse"].get("food", 0))
+	elif uses_purse():
+		# 개인 재산이 생기기 전 세이브: 무소속이면 그 재산을, 아니면 시작 노자를 준다.
+		purse.gold = player_sect.gold if not has_sect() else _Balance.PURSE_START_GOLD
+		purse.food = player_sect.food if not has_sect() else _Balance.PURSE_START_FOOD
+	if not has_sect():
+		player_sect.gold = 0
+		player_sect.food = 0
+	owned_manuals.clear()
+	for art_id in data.get("owned_manuals", []):
+		if MartialArtLibrary.has_art(str(art_id)):
+			owned_manuals.append(str(art_id))
 	observed_arts = {}
 	var saved_arts: Dictionary = data.get("observed_arts", {})
 	for art_id in saved_arts:

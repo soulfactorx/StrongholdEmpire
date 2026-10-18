@@ -150,6 +150,7 @@ static func _use_interaction(story_flags: Dictionary, turn: int) -> void:
 
 
 ## 인물과 대화·선물·비무를 한다. 비무면 결과에 combat(CombatSetup)이 담긴다 (GameManager가 전투를 시작한다).
+## sect: 금화를 내는 곳 (개인 재산을 쓰는 역할이면 주머니). 청혼의 명성은 GameManager가 문파에 더한다.
 static func interact(
 	relationships: Array[RelationshipData],
 	target_id: String,
@@ -172,7 +173,6 @@ static func interact(
 			return {"success": false, "message": "혼례 비용이 모자랍니다. (금화 %d 필요)" % _Balance.WEDDING_GOLD}
 		_use_interaction(story_flags, turn)
 		var wedding: String = marry(relationships, rel, EventManager.world_sects)
-		sect.reputation += _Balance.WEDDING_REPUTATION
 		EventManager.set_flag(story_flags, "married")
 		return {"success": true, "married": target_id, "message": "%s에게 청혼해 혼례를 올렸습니다. (금화 -%d, 명성 +%d) %s" % [
 			rel.target_name, _Balance.WEDDING_GOLD, _Balance.WEDDING_REPUTATION, wedding,

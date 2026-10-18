@@ -1,0 +1,16 @@
+{
+  "id": "manual_qingyun_cloud_sword",
+  "display_name": "청운검법",
+  "category": 0,
+  "element": 1,
+  "yin_yang": 2,
+  "effects": [
+    0,
+    7
+  ],
+  "research_cost": 30,
+  "complexity": 2,
+  "damage": 15,
+  "internal_cost": 15,
+  "description": "청운검파의 기본 검법. 구름처럼 이어지는 초식이 몸을 가볍게 한다."
+}

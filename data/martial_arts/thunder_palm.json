@@ -4,10 +4,13 @@
   "category": 1,
   "element": 2,
   "yin_yang": 1,
-  "effects": [1, 7],
+  "effects": [
+    1,
+    7
+  ],
   "research_cost": 35,
   "complexity": 3,
   "damage": 16,
   "internal_cost": 18,
-  "description": "모드 예시 무공 — 화양 뇌전의 힘이 담긴 장법."
+  "description": "천마신교 혈영대가 쓰는 장법. 화양 뇌전의 힘이 담겼다."
 }

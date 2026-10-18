@@ -441,7 +441,7 @@ func _test_role_dashboard() -> void:
 	var hub: Node = current_scene
 	var grid: Node = hub.action_grid
 	_check(not grid.get_node("TrainButton").visible and not grid.get_node("SectWarButton").visible and grid.get_node("ElixirButton").visible, "자객: 문파 운영 버튼 숨김")
-	_check(not hub.get_node("Margin/RootHBox/LeftPanel/FacilityPanel").visible and hub.sect_name_label.text.contains("내 몫"), "자객: 시설 칸 숨김, 개인 재산")
+	_check(not hub.get_node("Margin/RootHBox/LeftPanel/FacilityPanel").visible and hub.sect_name_label.text.contains("내 재산") and hub.gold_label.text.begins_with("내 금화"), "자객: 시설 칸 숨김, 개인 재산")
 	_check(hub.role_resource_label.text.contains("표적") and hub.role_action_box.get_child_count() == 2, "자객: 역할 안내와 고유 행동")
 	var key := InputEventKey.new()
 	key.keycode = KEY_F
@@ -846,3 +846,31 @@ func _test_suspend_autosave() -> void:
 	_clear_test_saves()
 	_new_quiet_game(gm, "young_disciple")
 	_completed["_test_suspend_autosave"] = true
+
+
+func _test_role_guide() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_new_quiet_game(gm, "young_disciple")
+	# 조건 안내: 막내 제자는 승진·간자·배신·떠나기 길이 있고, 조건마다 채웠는지 표시
+	var paths: Array[Dictionary] = RoleManager.get_transition_guide(gm)
+	var titles: Array = paths.map(func(p: Dictionary) -> String: return p["title"])
+	_check(titles.has("총관(중간관리자) 승진") and titles.has("간자(스파이) 임무") and titles.has("문파를 떠나 무소속으로"), "막내 제자의 길: 승진·간자·떠나기")
+	var promote: Dictionary = paths[titles.find("총관(중간관리자) 승진")]
+	_check(not promote["available"] and promote["conditions"].any(func(r: Dictionary) -> bool: return not r["ok"] and r["text"].contains("경지")), "승진: 경지 조건 미충족 표시")
+	_new_quiet_game(gm, "wanderer")
+	paths = RoleManager.get_transition_guide(gm)
+	titles = paths.map(func(p: Dictionary) -> String: return p["title"])
+	_check(titles.has("문파에 입문 (막내 제자)") and titles.has("의뢰인이 된다") and not titles.has("문파를 떠나 무소속으로"), "무소속 낭인의 길: 입문·의뢰인")
+	RoleActions.change_credit(gm.role_state, "namgung", _Balance.JOIN_CREDIT_REQ)
+	paths = RoleManager.get_transition_guide(gm)
+	_check(paths[titles.find("문파에 입문 (막내 제자)")]["available"], "신용을 채우면 입문 가능 표시")
+	# 역할 전환 버튼: 고를 전환이 없어도 창이 열려 안내를 보인다
+	_new_quiet_game(gm, "young_disciple")
+	SceneRouter.goto(tree, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	var hub: Node = current_scene
+	hub._on_role_pressed()
+	_check(hub.role_popup.visible and hub.role_popup.confirm_button.disabled and hub.role_popup.get_guide_line_count() > 5, "역할 전환 창: 전환이 없어도 조건 안내")
+	hub.role_popup.visible = false
+	_completed["_test_role_guide"] = true

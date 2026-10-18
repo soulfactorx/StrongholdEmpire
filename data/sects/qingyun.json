@@ -50,5 +50,9 @@
       "type": "RIVALRY",
       "strength": 15
     }
+  ],
+  "manuals": [
+    "manual_qingyun_cloud_sword",
+    "preset_earth_life_palm"
   ]
 }

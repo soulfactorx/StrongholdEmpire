@@ -4,7 +4,7 @@ const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
 const _Balance = preload("res://scripts/Systems/game_balance.gd")
 const _ChoicePopup = preload("res://scripts/UI/choice_popup.gd")
 
-## 비급 목록 (MartialArtLibrary: 프리셋 + 모드 무공)
+## 연구할 수 있는 비급 목록 (GameManager.get_research_manuals: 문파 서고 + 가진 비급)
 var _preset_arts: Array[MartialArtData] = []
 ## 강화·비전·분석의 대상을 고르는 팝업과, 지금 고르는 행동
 var choice_popup: Control
@@ -212,13 +212,21 @@ func _enum_label(key: String) -> String:
 			return key
 
 
+## 연구할 수 있는 비급: 소속 문파 서고의 비급과 가진 비급 (강호의 모든 비급이 아니다)
 func _load_presets() -> void:
 	preset_list.clear()
-	_preset_arts = MartialArtLibrary.get_all()
-	for art in _preset_arts:
-		preset_list.add_item("%s — %s%s" % [
-			art.display_name, art.get_category_name(), " [모드]" if MartialArtLibrary.is_mod(art) else "",
+	_preset_arts.clear()
+	for entry in GameManager.get_research_manuals():
+		var art: MartialArtData = entry["art"]
+		_preset_arts.append(art)
+		preset_list.add_item("%s — %s · 연구점 %d (%s)%s" % [
+			art.display_name, art.get_category_name(), art.research_cost, entry["source"],
+			" · 익힘" if GameManager.player_character.knows_martial_art(art.id) else "",
 		])
+	if _preset_arts.is_empty():
+		preset_list.add_item("가진 비급이 없습니다. 문파에 몸담거나 기연·사부에게서 얻습니다.")
+		preset_list.set_item_disabled(0, true)
+		preset_list.set_item_selectable(0, false)
 
 
 func _refresh_display() -> void:
@@ -315,6 +323,8 @@ func _on_research_preset_pressed() -> void:
 		return
 
 	# 원본(비급 목록)을 지키기 위해 복제본을 익힌다. 강화는 복제본에만 적용된다.
+	if selected[0] >= _preset_arts.size():
+		return
 	var art: MartialArtData = _preset_arts[selected[0]].duplicate(true)
 	var result: Dictionary = MartialArtManager.research_existing(
 		art,
@@ -327,6 +337,7 @@ func _on_research_preset_pressed() -> void:
 		EventBus.martial_art_learned.emit(result["martial_art"])
 		EventBus.resources_changed.emit(GameManager.player_sect)
 		EventBus.character_updated.emit(GameManager.player_character)
+		_load_presets()
 
 
 func _on_enhance_pressed() -> void:

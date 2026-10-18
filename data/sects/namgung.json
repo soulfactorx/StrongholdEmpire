@@ -47,5 +47,9 @@
       "type": "RIVALRY",
       "strength": 20
     }
+  ],
+  "manuals": [
+    "manual_namgung_plum_sword",
+    "preset_soul_chase_sword"
   ]
 }

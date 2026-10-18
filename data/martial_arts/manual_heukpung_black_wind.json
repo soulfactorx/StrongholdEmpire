@@ -1,0 +1,15 @@
+{
+  "id": "manual_heukpung_black_wind",
+  "display_name": "흑풍도법",
+  "category": 0,
+  "element": 2,
+  "yin_yang": 1,
+  "effects": [
+    1
+  ],
+  "research_cost": 35,
+  "complexity": 3,
+  "damage": 20,
+  "internal_cost": 22,
+  "description": "흑풍채의 거친 도법. 검은 바람처럼 몰아쳐 막는 것을 베어 넘긴다."
+}

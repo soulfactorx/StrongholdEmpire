@@ -1,0 +1,37 @@
+{
+  "id": "manual_cliff_cave",
+  "title": "절벽 아래 동굴",
+  "description": "약초를 캐다 미끄러진 절벽 아래, 덩굴에 가려진 동굴이 있습니다. 안쪽 석상 앞에 먼지 쌓인 책 한 권이 놓여 있습니다.",
+  "can_repeat": true,
+  "weight": 1,
+  "conditions": [
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "비급을 챙긴다",
+      "message": "오래된 비급을 품에 넣었습니다.",
+      "effects": [
+        {
+          "type": "gain_manual",
+          "art": "random"
+        }
+      ]
+    },
+    {
+      "label": "석상에 절하고 그대로 둔다",
+      "message": "남의 물건에는 손대지 않았습니다. 도덕 +2",
+      "effects": [
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 2
+        }
+      ]
+    }
+  ]
+}

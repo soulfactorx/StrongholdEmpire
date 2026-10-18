@@ -1,0 +1,42 @@
+{
+  "id": "bond_g_master_manual",
+  "title": "사부의 서가",
+  "description": "{name}께서 낡은 함을 열어 책 한 권을 꺼내십니다. 「내가 젊을 때 얻은 것이다. 이제 네가 가져라.」",
+  "can_repeat": true,
+  "weight": 1,
+  "subject": {
+    "bond_types": [
+      "MASTER_DISCIPLE"
+    ],
+    "min": 50
+  },
+  "conditions": [],
+  "choices": [
+    {
+      "label": "공손히 받는다",
+      "message": "{name}께 비급을 받았습니다. 유대 +3",
+      "effects": [
+        {
+          "type": "gain_manual",
+          "art": "random"
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 3
+        }
+      ]
+    },
+    {
+      "label": "아직 감당할 수 없다며 사양한다",
+      "message": "{name}께서 고개를 끄덕이십니다. 「겸손하구나.」 지혜 +1",
+      "effects": [
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 1
+        }
+      ]
+    }
+  ]
+}

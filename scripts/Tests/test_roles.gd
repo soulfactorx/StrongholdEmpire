@@ -113,10 +113,10 @@ func _test_role_actions() -> void:
 	_check(RoleActions.get_escort_chance(gm) == 10, "약하면 호위 성공률 최저")
 	gm.player_character.strength = 80
 	_check(RoleActions.get_escort_chance(gm) == 95, "강하면 호위 성공률 최고")
-	gold_before = gm.player_sect.gold
+	gold_before = gm.get_wallet().gold
 	result = gm.do_role_action("job_board", "escort")
 	if result["success"]:
-		_check(gm.player_sect.gold == gold_before + roundi(_Balance.JOB_ESCORT_GOLD * _Balance.JOB_AWAY_REWARD_SCALE), "타지 호위 보상 1.5배")
+		_check(gm.get_wallet().gold == gold_before + roundi(_Balance.JOB_ESCORT_GOLD * _Balance.JOB_AWAY_REWARD_SCALE), "타지 호위 보상 1.5배")
 	else:
 		_check(gm.role_state["failures"] == 1, "호위 실패: 실책 누적")
 
@@ -156,8 +156,8 @@ func _test_role_actions() -> void:
 	_check(result["combat"].id == "assassination" and gm.role_state["bounty"] == _Balance.BOUNTY_PER_CONTRACT, "표적 의뢰: 잠입 전투, 현상금 상승")
 	gm.advance_turn()
 	_check(gm.role_state["bounty"] == _Balance.BOUNTY_PER_CONTRACT - _Balance.BOUNTY_DECAY, "현상금은 계절마다 조금씩 줄어듦")
-	gold_before = gm.player_sect.gold
-	_check(gm.do_role_action("lie_low")["success"] and gm.role_state["bounty"] == 0 and gm.player_sect.gold == gold_before - _Balance.LIE_LOW_GOLD, "은신: 현상금 감소")
+	gold_before = gm.get_wallet().gold
+	_check(gm.do_role_action("lie_low")["success"] and gm.role_state["bounty"] == 0 and gm.get_wallet().gold == gold_before - _Balance.LIE_LOW_GOLD, "은신: 현상금 감소")
 	gm.advance_turn()
 	_check(not gm.do_role_action("lie_low")["success"] and RoleActions.can_act(gm.role_state, gm._get_turn_index()), "쫓는 자가 없으면 은신 불가 (행동 소모 없음)")
 	gm.role_state["bounty"] = _Balance.BOUNTY_PURSUIT
@@ -173,10 +173,10 @@ func _test_role_actions() -> void:
 	# ── 의뢰인: 계약 수주·이행·위반·기한 ──
 	_new_quiet_game(gm, "mercenary")
 	_check(gm.player_character.role == CharacterData.Role.MERCENARY, "의뢰인으로 시작")
-	gold_before = gm.player_sect.gold
+	gold_before = gm.get_wallet().gold
 	_check(gm.do_role_action("contract", "namgung")["success"], "계약 수주")
 	var contract: Dictionary = gm.role_state["contract"]
-	_check(contract["sect"] == "namgung" and gm.player_sect.gold == gold_before + contract["advance"], "계약 선금 지급")
+	_check(contract["sect"] == "namgung" and gm.get_wallet().gold == gold_before + contract["advance"], "계약 선금 지급")
 	gm.advance_turn()
 	_check(not gm.do_role_action("contract", "heukpung")["success"], "계약은 한 번에 하나")
 	gm.advance_turn()
@@ -186,9 +186,9 @@ func _test_role_actions() -> void:
 	gm.advance_turn()
 	gm.do_role_action("contract", "heukpung")
 	gm.advance_turn()
-	gold_before = gm.player_sect.gold
+	gold_before = gm.get_wallet().gold
 	attitude = gm.get_world_sect("heukpung").attitude
-	_check(gm.do_role_action("breach")["success"] and gm.player_sect.gold == gold_before + _Balance.CONTRACT_BREACH_GOLD, "계약 위반: 금화 획득")
+	_check(gm.do_role_action("breach")["success"] and gm.get_wallet().gold == gold_before + _Balance.CONTRACT_BREACH_GOLD, "계약 위반: 금화 획득")
 	_check(RoleActions.get_credit(gm.role_state, "heukpung") == -_Balance.CONTRACT_BREACH_CREDIT and gm.get_world_sect("heukpung").attitude < attitude, "계약 위반: 신용·태도 하락")
 	gm.advance_turn()
 	gm.do_role_action("contract", "cheonma")
@@ -812,6 +812,13 @@ func _test_bond_system() -> void:
 	_check(_rel(gm, "npc_namgung_lady").bond_type == RelationshipData.BondType.FELLOW, "남궁세가: 남궁설이 동문")
 	_new_quiet_game(gm, "wanderer")
 	_check(gm.player_relationships.is_empty(), "낭인은 인연 없이 시작")
+	_check(gm.get_spar_partner().is_empty() and not gm.can_spar() and not gm.start_sparring()["success"], "인연이 없으면 경영 화면 비무 불가")
+	_check(not RoleDashboard.get_season_steps(gm).any(func(step: Dictionary) -> bool: return step["id"] == "spar"), "인연이 없으면 할 일에 비무 없음")
+	gm.player_relationships.append(RelationshipManager.make_relationship("npc_iron_blade", "ACQUAINTANCE", 20))
+	gm.player_relationships.append(RelationshipManager.make_relationship("npc_scholar", "HATRED", 50))
+	_check(gm.get_spar_partner() == "npc_iron_blade" and gm.can_spar(), "비무 상대는 인연이 있는 인물 (원한 제외)")
+	gm.player_relationships.append(RelationshipManager.make_relationship("npc_swallow", "RIVALRY", 10))
+	_check(gm.get_spar_partner() == "npc_swallow", "라이벌이 있으면 라이벌과 비무")
 
 	# 처음부터 정한 인연: 배우자 둘
 	gm.start_new_game("직접", "wanderer", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0}, false, false,
@@ -871,3 +878,173 @@ func _test_bond_system() -> void:
 	gm.resolve_pending_event(1)
 	_check(_rel(gm, "npc_musician") == null, "식어 버린 정: 놓아 주면 관계가 끝남")
 	_completed["_test_bond_system"] = true
+
+
+func _test_manuals() -> void:
+	var gm: Node = root.get_node("GameManager")
+	# 강호의 비급 전체가 아니라, 소속 문파 서고의 비급과 가진 비급만 연구할 수 있다
+	_new_quiet_game(gm, "young_disciple")
+	var ids: Array = gm.get_research_manuals().map(func(entry: Dictionary) -> String: return entry["art"].id)
+	_check(ids == ["manual_qingyun_cloud_sword", "preset_earth_life_palm"], "청운검파: 서고의 비급만 연구 가능")
+	_check(not ids.has("mod_thunder_palm") and MartialArtLibrary.has_art("mod_thunder_palm"), "다른 세력의 비급은 목록에 없음")
+	gm.start_new_game("남궁", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0}, false, false, {"player_sect": "namgung"})
+	ids = gm.get_research_manuals().map(func(entry: Dictionary) -> String: return entry["art"].id)
+	_check(ids.has("manual_namgung_plum_sword") and not ids.has("manual_qingyun_cloud_sword"), "남궁세가: 매화검법")
+	_new_quiet_game(gm, "wanderer")
+	_check(gm.get_research_manuals().is_empty(), "낭인은 비급 없이 시작")
+
+	# 기연으로 비급을 얻는다
+	gm.pending_event = {"id": "manual_cliff_cave"}
+	gm.resolve_pending_event(0)
+	_check(gm.owned_manuals.size() == 1 and gm.get_research_manuals().size() == 1 and gm.get_research_manuals()[0]["source"] == "소장", "기연: 비급을 얻어 연구 가능")
+	var first: String = gm.owned_manuals[0]
+	_check(gm.gain_manual(first).is_empty() and gm.owned_manuals.size() == 1, "같은 비급은 두 번 얻지 않음")
+	var art: MartialArtData = MartialArtLibrary.create_art(first)
+	gm.player_sect.research_points = 500
+	gm.player_character.wisdom = 99
+	var learned: bool = false
+	for i in 20:
+		if MartialArtManager.research_existing(art.duplicate(true), gm.player_sect, gm.player_character)["success"]:
+			learned = true
+			break
+		gm.player_sect.research_points = 500
+	_check(learned and gm.player_character.knows_martial_art(first), "얻은 비급을 연구해 익힘")
+	gm.owned_manuals.clear()
+	for i in MartialArtLibrary.get_all().size():
+		gm.gain_manual("random")
+	_check(gm.owned_manuals.size() == MartialArtLibrary.get_all().size() - 1 and not gm.owned_manuals.has(first), "무작위 비급: 익힌 것·가진 것은 빼고")
+	var research: int = gm.player_sect.research_points
+	gm.pending_event = {"id": "manual_cliff_cave"}
+	gm.resolve_pending_event(0)
+	_check(gm.player_sect.research_points == research + EventManager.NO_MANUAL_RESEARCH, "얻을 비급이 없으면 연구점")
+
+	# 저장·복원
+	gm._apply_save_data(JSON.parse_string(JSON.stringify(gm._build_save_state())))
+	_check(gm.owned_manuals.size() == MartialArtLibrary.get_all().size() - 1, "가진 비급 저장·복원")
+	_completed["_test_manuals"] = true
+
+
+func _test_purse() -> void:
+	var gm: Node = root.get_node("GameManager")
+	# 낭인: 문파 수입 없이 생활비만, 돈은 개인 재산
+	_new_quiet_game(gm, "wanderer")
+	_check(gm.uses_purse() and gm.get_wallet() == gm.purse and gm.purse.gold == _Balance.PURSE_START_GOLD and gm.player_sect.gold == 0, "낭인: 개인 재산으로 시작")
+	var research: int = gm.player_sect.research_points
+	gm.pending_event.clear()
+	gm.advance_turn()
+	_check(gm.purse.gold == _Balance.PURSE_START_GOLD - _Balance.LIVING_GOLD and gm.purse.food == _Balance.PURSE_START_FOOD - _Balance.LIVING_FOOD, "낭인: 계절마다 생활비만 나감 (문파 수입 없음)")
+	_check(gm.player_sect.research_points > research and gm.player_sect.gold == 0, "낭인: 홀로 수련한 연구점만 오름")
+	_check(gm.estimate_next_season() == {"gold": -_Balance.LIVING_GOLD, "food": -_Balance.LIVING_FOOD}, "예상 수지: 생활비")
+	gm.purse.food = 0
+	gm.purse.gold = 100
+	gm.advance_turn()
+	_check(gm.purse.food == 0 and gm.purse.gold == 100 - _Balance.LIVING_GOLD - _Balance.LIVING_FOOD * _Balance.LIVING_FOOD_PRICE, "식량이 없으면 금화로 사 먹음")
+	gm.purse.gold = 0
+	gm.player_character.internal_energy_current = gm.player_character.internal_energy_max
+	gm.advance_turn()
+	_check(gm.player_character.internal_energy_current == gm.player_character.internal_energy_max - _Balance.STARVE_INTERNAL_LOSS, "노자가 떨어지면 굶주려 내공 감소")
+	# 기연·선물의 금화도 개인 재산에서
+	gm.purse.gold = 200
+	gm.pending_event = {"id": "manual_book_peddler"}
+	gm.resolve_pending_event(0)
+	_check(gm.purse.gold == 140 and gm.player_sect.gold == 0, "기연의 금화는 개인 재산에서")
+	gm.player_relationships.append(RelationshipManager.make_relationship("npc_swallow", "ACQUAINTANCE", 20))
+	gm.interact_with("npc_swallow", "gift")
+	_check(gm.purse.gold == 140 - _Balance.GIFT_GOLD, "선물도 개인 재산에서")
+	gm._apply_save_data(JSON.parse_string(JSON.stringify(gm._build_save_state())))
+	_check(gm.purse.gold == 140 - _Balance.GIFT_GOLD, "개인 재산 저장·복원")
+
+	# 의뢰인(문파에 몸담음): 계약 금화는 내 몫, 문파 금고는 따로
+	_new_quiet_game(gm, "mercenary")
+	var sect_gold: int = gm.player_sect.gold
+	RoleActions.change_credit(gm.role_state, "namgung", 50)
+	gm.do_role_action("contract", "namgung")
+	_check(gm.purse.gold > _Balance.PURSE_START_GOLD and gm.player_sect.gold == sect_gold, "의뢰인: 선금은 내 재산, 문파 금고는 그대로")
+	# 문파 일을 맡게 되면 재산을 문파에 보태고, 떠돌게 되면 노자를 챙긴다
+	var purse_gold: int = gm.purse.gold
+	gm.apply_role_transition(CharacterData.Role.MANAGER)
+	_check(not gm.uses_purse() and gm.purse.gold == 0 and gm.player_sect.gold == sect_gold + purse_gold, "문파 일을 맡으면 재산을 문파에 보탬")
+	sect_gold = gm.player_sect.gold
+	gm.apply_role_transition(CharacterData.Role.WANDERER)
+	_check(gm.purse.gold == _Balance.PURSE_ALLOWANCE_GOLD and gm.player_sect.gold == sect_gold - _Balance.PURSE_ALLOWANCE_GOLD, "떠돌게 되면 노자를 챙김")
+
+	# 간자: 계절마다 활동비
+	_new_quiet_game(gm, "young_disciple")
+	gm.apply_role_transition(CharacterData.Role.SPY)
+	var spy_gold: int = gm.purse.gold
+	gm.pending_event.clear()
+	gm.advance_turn()
+	_check(gm.purse.gold == spy_gold + _Balance.SPY_STIPEND_GOLD - _Balance.LIVING_GOLD, "간자: 활동비를 받고 생활비를 냄")
+	_completed["_test_purse"] = true
+
+
+func _option_of(gm: Node, kind: String, sect_id: String = "") -> Dictionary:
+	gm.refresh_role_transitions()
+	for option in gm.pending_role_transitions:
+		if option.get("kind", "") == kind and (sect_id.is_empty() or option.get("sect_id", "") == sect_id):
+			return option
+	return {}
+
+
+func _test_join_leave() -> void:
+	var gm: Node = root.get_node("GameManager")
+	# 입문: 무소속 낭인은 신용이나 연줄이 있는 세력에 제자로 들어간다
+	_new_quiet_game(gm, "wanderer")
+	_check(_option_of(gm, "join").is_empty(), "신용·연줄이 없으면 입문할 곳이 없음")
+	RoleActions.change_credit(gm.role_state, "namgung", _Balance.JOIN_CREDIT_REQ)
+	var join: Dictionary = _option_of(gm, "join", "namgung")
+	_check(not join.is_empty() and join["role"] == CharacterData.Role.YOUNG_DISCIPLE, "신용 %d: 남궁세가 입문 선택지" % _Balance.JOIN_CREDIT_REQ)
+	gm.player_character.morality = _Balance.JOIN_RIGHTEOUS_MORALITY - 1
+	_check(_option_of(gm, "join", "namgung").is_empty(), "도덕이 낮으면 정파는 받지 않음")
+	gm.player_character.morality = 60
+	var purse_gold: int = gm.purse.gold
+	gm.apply_role_transition(join["role"], join)
+	_check(gm.player_sect.id == "namgung" and gm.player_character.role == CharacterData.Role.YOUNG_DISCIPLE and gm.get_world_sect("namgung") == null, "입문: 남궁세가의 막내 제자")
+	_check(_rel(gm, "npc_namgung_lord") != null and _rel(gm, "npc_namgung_lord").bond_type == RelationshipData.BondType.MASTER_DISCIPLE, "입문: 문주가 사부")
+	_check(gm.purse.gold == 0 and not gm.uses_purse(), "입문: 모은 재산(%d)은 문파에 보탬" % purse_gold)
+	# 연줄: 그 세력 인물과 유대가 깊으면 신용 없이도
+	_new_quiet_game(gm, "wanderer")
+	gm.player_relationships.append(RelationshipManager.make_relationship("npc_heukpung_second", "FRIEND", _Balance.JOIN_BOND_REQ))
+	gm.get_world_sect("heukpung").attitude = 0
+	_check(not _option_of(gm, "join", "heukpung").is_empty() and _option_of(gm, "join", "namgung").is_empty(), "연줄(유대 %d)로 흑풍채 입문" % _Balance.JOIN_BOND_REQ)
+	gm.get_world_sect("heukpung").attitude = _Balance.JOIN_MIN_ATTITUDE
+	_check(_option_of(gm, "join", "heukpung").is_empty(), "적대하는 세력은 받지 않음")
+
+	# 떠나기: 사부 유대가 깊으면 하산(노자), 아니면 탈문
+	_new_quiet_game(gm, "young_disciple")
+	gm.player_character.gain_experience(CharacterData.get_experience_for_level(_Balance.LEAVE_LEVEL_REQ))
+	var leave: Dictionary = _option_of(gm, "leave")
+	_check(not leave.is_empty() and not leave["blessed"] and leave["title"].contains("탈문"), "사부 유대가 낮으면 탈문")
+	_rel(gm, "npc_master").increase_bond(_Balance.LEAVE_BLESSING_BOND)
+	leave = _option_of(gm, "leave")
+	_check(leave["blessed"], "사부 유대 %d 이상이면 허락받은 하산" % _Balance.LEAVE_BLESSING_BOND)
+	var sect_gold: int = gm.player_sect.gold
+	gm.apply_role_transition(leave["role"], leave)
+	var old: SectData = gm.get_world_sect("qingyun")
+	_check(not gm.has_sect() and gm.player_character.role == CharacterData.Role.WANDERER and old != null, "하산: 무소속 낭인, 청운검파는 강호 세력")
+	_check(gm.purse.gold == _Balance.PURSE_ALLOWANCE_GOLD and old.gold == sect_gold - _Balance.PURSE_ALLOWANCE_GOLD and old.attitude == _Balance.LEAVE_BLESSED_ATTITUDE, "하산: 노자를 챙기고 사이가 좋게 남음")
+	# 다시 입문할 수 있다 (사부가 연줄)
+	_check(not _option_of(gm, "join", "qingyun").is_empty(), "떠난 문파에 사부 연줄로 다시 입문 가능")
+	# 탈문
+	_new_quiet_game(gm, "young_disciple")
+	gm.player_character.gain_experience(CharacterData.get_experience_for_level(_Balance.LEAVE_LEVEL_REQ))
+	var master_bond: int = _rel(gm, "npc_master").bond_strength
+	leave = _option_of(gm, "leave")
+	gm.apply_role_transition(leave["role"], leave)
+	_check(gm.purse.gold == 0 and gm.get_world_sect("qingyun").attitude == _Balance.LEAVE_DESERT_ATTITUDE and _rel(gm, "npc_master").bond_strength == master_bond - _Balance.LEAVE_DESERT_BOND, "탈문: 노자 없이, 태도·사부 유대 하락")
+	# 문주 사임
+	_new_quiet_game(gm, "leader")
+	leave = _option_of(gm, "leave")
+	_check(leave["blessed"] and leave["title"].contains("문주"), "문주는 자리를 내려놓고 떠날 수 있음")
+	gm.apply_role_transition(leave["role"], leave)
+	_check(not gm.has_sect() and gm.get_world_sect("qingyun").leader_name == NpcRoster.get_display_name("npc_master"), "문주 사임: 원래 문주가 문파를 맡음")
+	# 축출된 문주는 산문을 나선다
+	_new_quiet_game(gm, "leader")
+	gm.role_state["discontent"] = _Balance.DISCONTENT_OUSTED
+	gm._apply_role_consequences()
+	_check(not gm.has_sect() and gm.player_character.role == CharacterData.Role.WANDERER and gm.get_world_sect("qingyun").attitude == _Balance.LEAVE_OUSTED_ATTITUDE, "축출된 문주는 무소속 낭인")
+
+	# 승진 조건은 소속 문파의 사부(문주)와의 유대로 (청운검선만 보던 것 수정)
+	gm.start_new_game("남궁", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0}, false, false, {"player_sect": "namgung"})
+	_check(RoleManager.get_master_bond(gm.player_sect, gm.player_relationships) == _rel(gm, "npc_namgung_lord").bond_strength, "남궁세가: 사부 유대는 남궁천과의 유대")
+	_completed["_test_join_leave"] = true

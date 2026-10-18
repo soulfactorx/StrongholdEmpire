@@ -1,0 +1,16 @@
+{
+  "id": "manual_namgung_plum_sword",
+  "display_name": "매화검법",
+  "category": 0,
+  "element": 4,
+  "yin_yang": 1,
+  "effects": [
+    1,
+    0
+  ],
+  "research_cost": 40,
+  "complexity": 4,
+  "damage": 19,
+  "internal_cost": 20,
+  "description": "남궁세가의 자랑. 매화 다섯 잎처럼 흩어지는 검기가 단단한 것을 부순다."
+}

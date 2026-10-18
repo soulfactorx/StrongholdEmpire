@@ -156,6 +156,8 @@ func _attach_tips() -> void:
 func _gold_tip() -> String:
 	var sect: SectData = GameManager.player_sect
 	var forecast: Dictionary = GameManager.estimate_next_season()
+	if GameManager.uses_purse():
+		return _purse_tip()
 	return "다음 계절 금화 %+d\n수입: 기본 %d + 금고 Lv.%d × %d (역할·계절·시나리오 보정, 금고 담당 제자·공물 포함)\n유지비 %d: 제자 %d명 × %d + 확장한 시설 %d단계 × %d\n금화가 모자라면 명성이 떨어지고, 3계절 연속이면 이야기가 끝납니다.\n해마다 %d을 넘는 몫의 %d%%를 잃습니다." % [
 		forecast["gold"], _Balance.BASE_GOLD_INCOME, sect.treasury_level, _Balance.TREASURY_GOLD_PER_LEVEL,
 		sect.get_gold_upkeep(), sect.disciple_count, _Balance.GOLD_PER_DISCIPLE, sect.get_facility_steps(), _Balance.FACILITY_UPKEEP_GOLD,
@@ -166,10 +168,28 @@ func _gold_tip() -> String:
 func _food_tip() -> String:
 	var sect: SectData = GameManager.player_sect
 	var forecast: Dictionary = GameManager.estimate_next_season()
+	if GameManager.uses_purse():
+		return _purse_tip()
 	return "다음 계절 식량 %+d\n수입: 기본 %d + 무술장 Lv.%d × %d (역할·계절·시나리오 보정)\n유지비 %d: 제자 %d명 × %d\n식량이 모자라면 제자가 떠납니다. 해마다 %d을 넘는 몫의 %d%%가 상합니다." % [
 		forecast["food"], _Balance.BASE_FOOD_INCOME, sect.training_ground_level, _Balance.TRAINING_FOOD_PER_LEVEL,
 		sect.get_food_upkeep(), sect.disciple_count, _Balance.FOOD_PER_DISCIPLE,
 		_Balance.FOOD_SAFE_AMOUNT, int(_Balance.FOOD_SPOIL_RATE * 100),
+	]
+
+
+## 개인 재산 설명: 문파 수입이 없고 생활비만 나간다. 버는 길은 역할마다 다르다.
+func _purse_tip() -> String:
+	var ways: String = {
+		CharacterData.Role.WANDERER: "의뢰 게시판(토벌·호위, 타지는 보상 %d%%)" % roundi(_Balance.JOB_AWAY_REWARD_SCALE * 100),
+		CharacterData.Role.MERCENARY: "세력의 계약(선금·잔금)",
+		CharacterData.Role.SPY: "활동비(계절마다 금화 %d)" % _Balance.SPY_STIPEND_GOLD,
+		CharacterData.Role.ASSASSIN: "표적 의뢰(금화 %d)" % _Balance.ASSASSINATION_GOLD,
+	}.get(GameManager.player_character.role, "역할 행동")
+	var sect_line: String = "\n몸담은 %s의 금고(금화 %d, 식량 %d)는 문주가 꾸립니다." % [
+		GameManager.player_sect.sect_name, GameManager.player_sect.gold, GameManager.player_sect.food,
+	] if GameManager.has_sect() else ""
+	return "내 재산 — 문파 수입은 없습니다.\n생활비: 계절마다 식량 %d·금화 %d (식량이 모자라면 식량 1당 금화 %d로 사 먹음)\n금화도 떨어지면 굶주려 내공 -%d\n버는 길: %s, 외출·기연·전투 보상%s" % [
+		_Balance.LIVING_FOOD, _Balance.LIVING_GOLD, _Balance.LIVING_FOOD_PRICE, _Balance.STARVE_INTERNAL_LOSS, ways, sect_line,
 	]
 
 
@@ -256,6 +276,17 @@ func _apply_role_layout() -> void:
 		if button:
 			button.visible = RoleDashboard.is_button_visible(role, button_name)
 	facility_panel.visible = RoleDashboard.get_layout(role)["sect"]
+	_update_spar_button()
+
+
+## 비무 버튼: 겨룰 상대(인연이 있는 인물) 이름을 보이고, 없으면 누를 수 없다.
+func _update_spar_button() -> void:
+	var button: Button = _action_buttons.get("CombatButton")
+	if button == null:
+		return
+	var partner: String = GameManager.get_spar_partner()
+	button.text = "비무 (%s)" % NpcRoster.get_display_name(partner) if not partner.is_empty() else "비무 (상대 없음)"
+	button.disabled = partner.is_empty()
 
 
 ## 버튼이 숨겨진 행동은 단축키로도 열지 않는다.
@@ -349,11 +380,17 @@ func _update_sect_display(sect: SectData) -> void:
 	sect_name_label.text = RoleDashboard.get_sect_title(GameManager.player_character.role, sect)
 	# 다음 계절 예상 수지 (수입 - 유지비)
 	var forecast: Dictionary = GameManager.estimate_next_season()
-	gold_label.text = "금화: %d (다음 계절 %+d, 유지비 %d)" % [sect.gold, forecast["gold"], sect.get_gold_upkeep()]
-	food_label.text = "식량: %d (다음 계절 %+d, 유지비 %d)" % [sect.food, forecast["food"], sect.get_food_upkeep()]
+	var wallet: SectData = GameManager.get_wallet()
+	if GameManager.uses_purse():
+		# 개인 재산: 수입 없이 생활비만 나간다. 의뢰·계약·기연으로 번다.
+		gold_label.text = "내 금화: %d (다음 계절 %+d, 생활비)" % [wallet.gold, forecast["gold"]]
+		food_label.text = "내 식량: %d (다음 계절 %+d, 생활비)" % [wallet.food, forecast["food"]]
+	else:
+		gold_label.text = "금화: %d (다음 계절 %+d, 유지비 %d)" % [sect.gold, forecast["gold"], sect.get_gold_upkeep()]
+		food_label.text = "식량: %d (다음 계절 %+d, 유지비 %d)" % [sect.food, forecast["food"], sect.get_food_upkeep()]
 	# 다음 계절을 넘기지 못할 것 같으면 경고 색으로 표시한다.
-	_set_warning(gold_label, sect.gold + forecast["gold"] < 0)
-	_set_warning(food_label, sect.food + forecast["food"] < 0)
+	_set_warning(gold_label, wallet.gold + forecast["gold"] < 0)
+	_set_warning(food_label, wallet.food + forecast["food"] < 0)
 	reputation_label.text = "명성: %d" % sect.reputation
 	research_label.text = "연구점: %d" % sect.research_points
 	disciple_label.text = "제자: %d / %d" % [sect.disciple_count, sect.max_disciples]
@@ -514,6 +551,7 @@ func _on_character_updated(character: CharacterData) -> void:
 
 func _on_relationships_changed(relationships: Array[RelationshipData]) -> void:
 	_update_relationships_display(relationships)
+	_update_spar_button()
 	_update_portrait()
 
 
@@ -565,13 +603,13 @@ func _on_advance_turn_pressed() -> void:
 
 ## 계절을 넘기면 확실히 바뀌는 것(수입·유지비)과 넘긴 뒤에야 알 수 있는 것을 알려 준다.
 func _advance_preview_text() -> String:
-	var sect: SectData = GameManager.player_sect
+	var sect: SectData = GameManager.get_wallet()
 	var estimate: Dictionary = GameManager.estimate_next_season()
-	var lines: PackedStringArray = ["예상 변화 (수입 - 유지비)"]
+	var lines: PackedStringArray = ["예상 변화 (생활비)" if GameManager.uses_purse() else "예상 변화 (수입 - 유지비)"]
 	lines.append("금화  %d → %d (%+d)" % [sect.gold, maxi(0, sect.gold + estimate["gold"]), estimate["gold"]])
 	lines.append("식량  %d → %d (%+d)" % [sect.food, maxi(0, sect.food + estimate["food"]), estimate["food"]])
 	if sect.food + estimate["food"] < 0 or sect.gold + estimate["gold"] < 0:
-		lines.append("자원이 모자라 유지비를 다 내지 못하면 제자가 떠납니다.")
+		lines.append("노자가 떨어지면 굶주려 내공이 줍니다." if GameManager.uses_purse() else "자원이 모자라 유지비를 다 내지 못하면 제자가 떠납니다.")
 	lines.append("")
 	lines.append("나이·시설 효과·역할 자원도 계절에 맞춰 바뀌고, 기연·강호 세력의 움직임·침공은 넘긴 뒤에 알 수 있습니다.")
 	# 지금 역할로 할 수 있는 일만 (막내 제자에게 연회를 권하지 않는다)
@@ -623,10 +661,9 @@ func _on_martial_art_pressed() -> void:
 	SceneRouter.goto(get_tree(), SceneRouter.MARTIAL_ART)
 
 
+## 역할 전환 창: 고를 전환이 없어도 열어 갈 수 있는 길과 조건을 보인다.
 func _on_role_pressed() -> void:
-	if GameManager.pending_role_transitions.is_empty():
-		_on_action_message("현재 가능한 역할 전환이 없습니다.")
-		return
+	GameManager.refresh_role_transitions(false)
 	role_popup.show_options(GameManager.pending_role_transitions)
 
 
@@ -872,12 +909,14 @@ func _update_portrait() -> void:
 	if pages.is_empty():
 		return
 	var sect: SectData = GameManager.player_sect
+	var wallet: SectData = GameManager.get_wallet()
 	var forecast: Dictionary = GameManager.estimate_next_season()
-	status_label.text = "금화 %d (%+d) · 식량 %d (%+d) · 명성 %d · 연구점 %d · 제자 %d/%d" % [
-		sect.gold, forecast["gold"], sect.food, forecast["food"], sect.reputation, sect.research_points,
-		sect.disciple_count, sect.max_disciples,
+	status_label.text = "%s %d (%+d) · 식량 %d (%+d) · 명성 %d · 연구점 %d%s" % [
+		"내 금화" if GameManager.uses_purse() else "금화", wallet.gold, forecast["gold"], wallet.food, forecast["food"],
+		sect.reputation, sect.research_points,
+		" · 제자 %d/%d" % [sect.disciple_count, sect.max_disciples] if GameManager.has_sect() else "",
 	]
-	_set_warning(status_label, sect.gold + forecast["gold"] < 0 or sect.food + forecast["food"] < 0)
+	_set_warning(status_label, wallet.gold + forecast["gold"] < 0 or wallet.food + forecast["food"] < 0)
 	for child in todo_box.get_children():
 		todo_box.remove_child(child)
 		child.queue_free()

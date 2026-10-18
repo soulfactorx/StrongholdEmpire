@@ -39,7 +39,7 @@
 
 | (선택) `war_specialty` | 문파전 장수로 참전할 때 보너스를 주는 명령: `CHARGE`(돌격) · `DEFEND`(방어) · `FLANK`(측면) |
 | (선택) `portrait` | 초상화 그림 경로 (`assets/art/` 아래, 예: `"portraits/npc_rival.jpg"`). 없으면 `portraits/<id>.jpg`. 256×320 권장 |
-| (선택) `martial_arts` | `[{ "id": 무공 id, "min_level": 레벨 }]` — 그 레벨 이상이면 전투에서 해당 무공을 씁니다. 무공 id는 `resources/MartialArts/`의 프리셋 또는 `data/martial_arts/`의 모드 무공 |
+| (선택) `martial_arts` | `[{ "id": 무공 id, "min_level": 레벨 }]` — 그 레벨 이상이면 전투에서 해당 무공을 씁니다. 무공 id는 `resources/MartialArts/`의 프리셋 또는 `data/martial_arts/`의 데이터 무공 |
 | (선택) `traits` | 성향 0~100: `ambition`(야망) · `caution`(신중) · `benevolence`(인정) · `greed`(탐욕) · `loyalty`(의리). 빠진 것은 능력치에서 끌어낸다(무력+매력 → 야망, 지혜 → 신중, 도덕 → 인정·탐욕·의리). 문주의 성향은 세력 AI와 NPC 문주의 살림 결정에 쓰인다 (`NpcAgent`) |
 | (선택) `likes` | 좋아하는 상호작용 `talk`(담소) · `gift`(선물) · `spar`(비무). 그 일을 하면 유대가 1.5배 오른다. 없으면 능력치에서(매력 → 담소, 탐욕 → 선물, 무력 → 비무) |
 | (선택) `favorite` | 좋아하는 것 (화면에 보이는 글) |
@@ -78,6 +78,7 @@
 | `war_tactics` | (선택) 문파전 명령 선택 가중치. 예: `{ "CHARGE": 0.4, "DEFEND": 0.15, "FLANK": 0.4, "RETREAT": 0.05 }`. 없으면 성향별 기본값 |
 | `war_formation` | (선택) 문파전 진형: `CRANE`(학익진) · `FISH`(어린진) · `CIRCLE`(방원진) · `NONE`. 없으면 성향별 기본값 |
 | `soldier_npc` | (선택) 이 세력이 침공할 때 오는 졸개 인물 id. 없으면 `npc_bandit` |
+| `manuals` | (선택) 문파 서고의 비급 `[무공 id]`. 이 문파에 몸담으면 무공 연구소에서 연구할 수 있습니다. 무공 id는 `resources/MartialArts/`의 프리셋 또는 `data/martial_arts/`의 데이터 무공 |
 | `initial_bonds` | (선택) 이 문파에 몸담고 시작할 때의 인연 `[{ "target": 인물 id, "type": 관계 유형, "strength": 유대 }]`. 없으면 문주를 사부(유대 30)로 모십니다. 무소속(낭인)은 인연 없이 시작하고, 새 게임의 "시작 인연 설정"에서 직접 정하면 그 설정을 씁니다. 관계 유형은 `docs/기연_데이터_형식.md` 참고 |
 | `champion_npc` | (선택) 침공을 이끄는 우두머리 인물 id. 없으면 졸개만 온다 |
 | `emblem` | (선택) 문장 그림 경로 (`assets/art/` 아래). 없으면 `emblems/<id>.png`. 256×256 투명 PNG 권장 |
