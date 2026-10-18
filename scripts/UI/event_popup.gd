@@ -14,23 +14,27 @@ const DESC_MAX_HEIGHT_RATIO := 0.5
 
 
 ## 내용 왼쪽에 초상화 자리를 만든다. (한 번만)
+## 세로(휴대폰)에서는 화면이 좁으므로 초상화를 작게 위에 두고 글을 그 아래에 둔다.
 func _ensure_portrait() -> void:
 	if portrait:
 		return
 	var content: Control = title_label.get_parent()
 	var panel: Node = content.get_parent()
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 16)
+	var narrow: bool = LayoutMode.is_portrait()
+	var row: BoxContainer = VBoxContainer.new() if narrow else HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8 if narrow else 16)
 	panel.add_child(row)
 	row.owner = content.owner
 	portrait = TextureRect.new()
-	portrait.custom_minimum_size = Vector2(192, 240)
+	portrait.custom_minimum_size = Vector2(112, 140) if narrow else Vector2(192, 240)
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	portrait.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	# 초상화 그림에는 이름이 없으므로 아래에 이름을 단다.
 	var portrait_box := VBoxContainer.new()
 	portrait_box.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	if narrow:
+		portrait_box.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	portrait_box.add_child(portrait)
 	portrait_name = Label.new()
 	portrait_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -40,8 +44,8 @@ func _ensure_portrait() -> void:
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	# reparent는 owner를 지켜 %이름 찾기가 계속 된다.
 	content.reparent(row, false)
-	# 초상화 옆 글 칸이 좁지 않게 팝업을 넓힌다.
-	(panel as Control).custom_minimum_size.x = 900
+	# 초상화 옆 글 칸이 좁지 않게 팝업을 넓힌다. (세로 화면에서는 화면 폭에 맞춘다)
+	LayoutMode.fit_width(panel as Control, 900)
 	desc_scroll = ScrollContainer.new()
 	desc_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	content.add_child(desc_scroll)

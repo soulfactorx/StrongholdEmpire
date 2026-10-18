@@ -467,6 +467,10 @@ func _test_portrait_layout() -> void:
 	hub.show_page("world")
 	_check(hub._action_buttons["MapButton"].is_visible_in_tree() and hub.world_report_label.text.contains("강호 동향"), "탭: 강호 쪽에 지도·동향")
 	_check(hub._action_buttons["AdvanceTurnButton"].custom_minimum_size.y >= 60, "계절 넘기기는 크게, 늘 보임")
+	# 기연 창: 세로에서는 초상화를 위에, 글을 아래에 (옆에 두면 화면 밖으로 잘린다)
+	hub.event_popup.show_event(EventManager.get_definitions()[0].to_popup_dict())
+	_check(hub.event_popup.title_label.get_parent().get_parent() is VBoxContainer and hub.event_popup.portrait.custom_minimum_size.x < 192, "세로 기연 창: 초상화 위, 글 아래")
+	hub.event_popup.visible = false
 	# 역할에 따라 버튼 숨김은 세로에서도 그대로
 	gm.apply_role_transition(CharacterData.Role.WANDERER)
 	await process_frame
