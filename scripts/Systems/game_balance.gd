@@ -323,8 +323,7 @@ const MERCENARY_LEVEL_REQ := 3
 ## 입문: 무소속이 그 세력과 신용 JOIN_CREDIT_REQ 이상이거나, 그 세력 인물과 유대 JOIN_BOND_REQ 이상(연줄)이면 제자로 들어간다
 const JOIN_CREDIT_REQ := 15
 const JOIN_BOND_REQ := 30
-## 태도가 이 이하인 세력은 받아 주지 않고, 정파는 도덕이 이 이상이어야 받는다
-const JOIN_MIN_ATTITUDE := -30
+## 정파는 도덕이 이 이상이어야 받는다 (그 세력 신용이 마이너스면 어디든 거절)
 const JOIN_RIGHTEOUS_MORALITY := 40
 ## 입문하면 그 세력 문주와 사부 인연 (이미 인연이 없을 때)
 const JOIN_MASTER_BOND := 25
