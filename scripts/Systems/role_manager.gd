@@ -188,6 +188,7 @@ static func get_transition_guide(gm: Node) -> Array[Dictionary]:
 				{"text": "신용 %d 이상인 세력 (지금 최고: %s)" % [_Balance.JOIN_CREDIT_REQ, best_credit[0]], "ok": best_credit[1] >= _Balance.JOIN_CREDIT_REQ},
 				{"text": "정파는 도덕 %d 이상 (지금 %d), 그 세력 신용이 마이너스면 거절" % [_Balance.JOIN_RIGHTEOUS_MORALITY, c.morality], "ok": true},
 				{"text": "받아 줄 세력: %s" % (", ".join(joinable) if not joinable.is_empty() else "아직 없음"), "ok": not joinable.is_empty()},
+				_credit_hint(gm),
 			], {"text": "또는 그 세력 인물과 유대 %d 이상 (지금 최고: %s)" % [_Balance.JOIN_BOND_REQ, best_tie[0]], "ok": best_tie[1] >= _Balance.JOIN_BOND_REQ})
 			join["force"] = not joinable.is_empty()
 			paths.append(join)
@@ -227,16 +228,25 @@ static func _req(label: String, value: int, need: int) -> Dictionary:
 	return {"text": "%s 이상 (지금 %d)" % [label, value], "ok": value >= need}
 
 
-## 신용이 가장 높은 세력: ["남궁세가 12", 12]
+## 신용이 가장 높은 세력: ["남궁세가 12", 12]. 쌓은 신용이 없으면 ["아직 없음", 0]
 static func _best_credit(gm: Node) -> Array:
-	var best_name: String = "없음"
-	var best: int = -999
+	var best_name: String = "아직 없음"
+	var best: int = 0
 	for world_sect in gm.world_sects:
 		var credit: int = RoleActions.get_credit(gm.role_state, world_sect.id)
 		if credit > best:
 			best = credit
 			best_name = "%s %d" % [world_sect.sect_name, credit]
 	return [best_name, best]
+
+
+## 신용을 쌓는 곳 안내: 지금 지역이 어느 세력의 땅인지에 따라
+static func _credit_hint(gm: Node) -> Dictionary:
+	var location: String = str(gm.role_state.get("location", ""))
+	var sect: SectData = gm.get_world_sect(location) if not location.is_empty() else null
+	if sect:
+		return {"text": "지금 %s — 여기서 의뢰를 마치면 %s 신용 +%d" % [gm.get_location_text(), sect.sect_name, _Balance.JOB_CREDIT_GAIN], "ok": true}
+	return {"text": "지금 %s — 의뢰해도 신용이 오르지 않음. 세력의 땅으로 이동해 의뢰하세요" % gm.get_location_text(), "ok": false}
 
 
 ## 세력 인물과의 가장 깊은 유대 (원한 제외): ["위청(흑풍채) 20", 20]
