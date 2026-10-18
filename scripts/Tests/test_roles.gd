@@ -1007,8 +1007,14 @@ func _test_join_leave() -> void:
 	gm.player_relationships.append(RelationshipManager.make_relationship("npc_heukpung_second", "FRIEND", _Balance.JOIN_BOND_REQ))
 	gm.get_world_sect("heukpung").attitude = 0
 	_check(not _option_of(gm, "join", "heukpung").is_empty() and _option_of(gm, "join", "namgung").is_empty(), "연줄(유대 %d)로 흑풍채 입문" % _Balance.JOIN_BOND_REQ)
-	gm.get_world_sect("heukpung").attitude = _Balance.JOIN_MIN_ATTITUDE
-	_check(_option_of(gm, "join", "heukpung").is_empty(), "적대하는 세력은 받지 않음")
+	RoleActions.change_credit(gm.role_state, "heukpung", -1)
+	_check(_option_of(gm, "join", "heukpung").is_empty(), "그 세력 신용이 마이너스면 받지 않음")
+	# 무소속에게 세력 태도는 따지지 않는다: 천마신교(태도 -60)도 신용을 쌓으면 입문
+	gm.get_world_sect("cheonma").attitude = -60
+	RoleActions.change_credit(gm.role_state, "cheonma", _Balance.JOIN_CREDIT_REQ)
+	_check(not _option_of(gm, "join", "cheonma").is_empty(), "천마신교 신용 %d: 입문 가능" % _Balance.JOIN_CREDIT_REQ)
+	var guide_join: Array = RoleManager.get_transition_guide(gm).filter(func(p: Dictionary) -> bool: return p["title"] == "문파에 입문 (막내 제자)")
+	_check(guide_join[0]["available"] and guide_join[0]["conditions"].any(func(r: Dictionary) -> bool: return r["text"].contains("천마신교")), "안내와 실제 입문 판정이 같음")
 
 	# 떠나기: 사부 유대가 깊으면 하산(노자), 아니면 탈문
 	_new_quiet_game(gm, "young_disciple")

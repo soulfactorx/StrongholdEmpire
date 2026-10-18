@@ -179,10 +179,18 @@ static func get_transition_guide(gm: Node) -> Array[Dictionary]:
 		var best_credit: Array = _best_credit(gm)
 		if not in_sect:
 			var best_tie: Array = _best_tie(gm)
-			paths.append(_path("문파에 입문 (막내 제자)", [
+			# 실제로 받아 줄 세력 (역할 전환 선택지와 같은 판정)
+			var joinable: PackedStringArray = []
+			for world_sect in gm.world_sects:
+				if get_join_block(world_sect, c, gm.player_relationships, state).is_empty():
+					joinable.append(world_sect.sect_name)
+			var join: Dictionary = _path("문파에 입문 (막내 제자)", [
 				{"text": "신용 %d 이상인 세력 (지금 최고: %s)" % [_Balance.JOIN_CREDIT_REQ, best_credit[0]], "ok": best_credit[1] >= _Balance.JOIN_CREDIT_REQ},
-				{"text": "태도 %d 초과, 정파는 도덕 %d 이상" % [_Balance.JOIN_MIN_ATTITUDE, _Balance.JOIN_RIGHTEOUS_MORALITY], "ok": true},
-			], {"text": "또는 그 세력 인물과 유대 %d 이상 (지금 최고: %s)" % [_Balance.JOIN_BOND_REQ, best_tie[0]], "ok": best_tie[1] >= _Balance.JOIN_BOND_REQ}))
+				{"text": "정파는 도덕 %d 이상 (지금 %d), 그 세력 신용이 마이너스면 거절" % [_Balance.JOIN_RIGHTEOUS_MORALITY, c.morality], "ok": true},
+				{"text": "받아 줄 세력: %s" % (", ".join(joinable) if not joinable.is_empty() else "아직 없음"), "ok": not joinable.is_empty()},
+			], {"text": "또는 그 세력 인물과 유대 %d 이상 (지금 최고: %s)" % [_Balance.JOIN_BOND_REQ, best_tie[0]], "ok": best_tie[1] >= _Balance.JOIN_BOND_REQ})
+			join["force"] = not joinable.is_empty()
+			paths.append(join)
 		paths.append(_path("세력의 객경(총관)으로 이적", [
 			{"text": "그 세력 신용 %d 이상 (지금 최고: %s)" % [_Balance.DEFECT_CREDIT_REQ, best_credit[0]], "ok": best_credit[1] >= _Balance.DEFECT_CREDIT_REQ},
 		]))
@@ -199,6 +207,9 @@ static func get_transition_guide(gm: Node) -> Array[Dictionary]:
 		paths.append(_path("문파를 떠나 무소속으로", conditions))
 	for path in paths:
 		path["available"] = path["conditions"].all(func(r: Dictionary) -> bool: return r["ok"]) or path.get("alt", {}).get("ok", false)
+		# 판정이 따로 있는 길(입문)은 그 판정을 따른다
+		if path.has("force"):
+			path["available"] = path["force"]
 		if path["title"].begins_with("(자동)"):
 			path["available"] = false
 	return paths
@@ -248,8 +259,10 @@ static func get_join_block(
 ) -> String:
 	if world_sect.subjugated:
 		return "굴복한 세력"
-	if world_sect.attitude <= _Balance.JOIN_MIN_ATTITUDE:
-		return "우리를 적대함 (태도 %d)" % world_sect.attitude
+	# 세력의 태도는 플레이어 문파를 보는 눈이라 무소속에게는 쓰지 않는다. 그 세력에 진 신용이 마이너스(계약 위반·배신)면 받지 않는다.
+	var credit: int = RoleActions.get_credit(role_state, world_sect.id)
+	if credit < 0:
+		return "신용이 바닥남 (%d) — 계약 위반·배신 등" % credit
 	if world_sect.alignment == SectData.Alignment.RIGHTEOUS and character.morality < _Balance.JOIN_RIGHTEOUS_MORALITY:
 		return "정파는 도덕 %d 이상만 받음" % _Balance.JOIN_RIGHTEOUS_MORALITY
 	if RoleActions.get_credit(role_state, world_sect.id) >= _Balance.JOIN_CREDIT_REQ:
