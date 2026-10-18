@@ -1,0 +1,58 @@
+{
+  "id": "s1_hy_heaven_aftermath",
+  "title": "천마의 최후",
+  "description": "천마 위무량이 무릎을 꿇었습니다. 그의 눈에는 분노보다 이상한 기쁨이 어려 있었습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_cheonma",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_cheonma_envoy",
+      "value": true
+    },
+    {
+      "type": "flag",
+      "flag": "s1_hy_heaven_won",
+      "value": true
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_cheonma",
+      "text": "…잘했다. 열 살의 너를 주운 보람이 있구나. 교를… 맡아라."
+    },
+    {
+      "speaker": "player",
+      "text": "교주께서 가르치신 대로 했을 뿐입니다."
+    },
+    {
+      "speaker": "npc_cheonma",
+      "text": "그래. 강한 자가… 위에 선다. 그게 신교다."
+    }
+  ],
+  "choices": [
+    {
+      "label": "교주의 자리에 오른다",
+      "message": "신교의 모든 교도가 엎드렸습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hy_heaven_aftermath",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_demon_supreme"
+        }
+      ]
+    }
+  ]
+}

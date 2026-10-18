@@ -29,6 +29,8 @@ var observed_arts: Dictionary = {}
 ## 개인 재산: 문파에 몸담아 살림을 맡지 않는 역할(낭인·의뢰인·간자·자객)의 금화·식량. 문파 금고와 따로다.
 ## 금화·식량만 쓴다. 문주·총관·막내 제자는 문파 금고(player_sect)를 쓴다 → get_wallet()
 var purse: SectData = create_purse()
+## 등장인물 선택 플레이: 주인공이 된 명부 인물 id (시나리오 playables). 일반 시작이면 ""
+var player_npc_id: String = ""
 ## 지금 있는 지역 (강호 지도의 지역 id). 문파 일을 하는 역할은 본거지에 있고, 개인 재산을 쓰는 역할은 지도에서 옮겨 다닌다.
 var player_region: String = ""
 ## 가진 비급 (무공 id). 소속 문파 서고의 비급과 함께 무공 연구소에서 연구할 수 있다. 기연·사부에게서 얻는다.
@@ -212,13 +214,24 @@ func _initialize_new_game(
 	display_name: String = "",
 	factions: Dictionary = {}
 ) -> void:
-	_set_player_character(StartingRoles.create_character(role_id, display_name))
+	# 등장인물로 시작: 역할·소속·인연·플래그를 시나리오의 등장인물 항목이 정한다.
+	var playable: Dictionary = ScenarioManager.get_playable(str(factions.get("playable", "")))
+	player_npc_id = str(playable.get("npc", ""))
+	EventManager.player_npc_id = player_npc_id
+	if playable.is_empty():
+		_set_player_character(StartingRoles.create_character(role_id, display_name))
+	else:
+		role_id = str(playable["start_role"])
+		factions = factions.duplicate()
+		factions["player_sect"] = str(playable.get("sect", ""))
+		factions["bonds"] = playable.get("bonds", {})
+		_set_player_character(create_playable_character(playable))
 	var default_sect: SectData = ScenarioManager.create_player_sect()
 	var chosen: String = str(factions.get("player_sect", ""))
-	if StartingRoles.is_unaffiliated(role_id):
+	if StartingRoles.is_unaffiliated(role_id) or chosen == NO_SECT:
 		player_sect = create_unaffiliated_sect()
 	elif not chosen.is_empty() and chosen != default_sect.id and SectRegistry.has_sect(chosen):
-		player_sect = SectRegistry.create_sect(chosen)
+		player_sect = SectRegistry.create_sect(chosen, ScenarioManager.current.get("sect_overrides", {}).get(chosen, {}))
 	else:
 		player_sect = default_sect
 	world_sects = ScenarioManager.create_rival_sects()
@@ -229,6 +242,8 @@ func _initialize_new_game(
 	_apply_faction_setup(factions)
 	map_state = WorldMap.create_state(_all_sect_ids())
 	player_region = _default_region()
+	if WorldMap.has_region(str(playable.get("region", ""))):
+		player_region = str(playable["region"])
 	last_faction_report.clear()
 	last_npc_report.clear()
 	StartingRoles.apply_sect_setup(role_id, player_sect, player_character)
@@ -249,6 +264,10 @@ func _initialize_new_game(
 	# 시작 역할이 이미 걸어온 길 (간자 포섭, 자객의 길 등)
 	for flag in StartingRoles.get_by_id(role_id).get("flags", []):
 		EventManager.set_flag(story_flags, flag)
+	if not playable.is_empty():
+		EventManager.set_flag(story_flags, "playing_" + player_npc_id)
+		for flag in playable.get("flags", []):
+			EventManager.set_flag(story_flags, str(flag))
 	role_history.clear()
 	_record_role(player_character.role)
 	role_state = RoleActions.create_state()
@@ -275,6 +294,32 @@ func _initialize_new_game(
 	art_draft = {}
 	art_blueprints.clear()
 	_sync_event_context()
+
+
+## 시나리오 등장인물로 주인공을 만든다: 인물의 능력치·무공·나이·도덕·초상화에 시작 역할을 입힌다.
+static func create_playable_character(playable: Dictionary) -> CharacterData:
+	var npc_id: String = str(playable["npc"])
+	var character: CharacterData = NpcRoster.create_character(npc_id)
+	character.id = "player_001"
+	character.portrait_id = npc_id
+	character.role = StartingRoles.get_by_id(str(playable["start_role"]))["role"]
+	if playable.has("level"):
+		character.level = int(playable["level"])
+	for key in ["morality", "age"]:
+		if playable.has(key):
+			character.set(key, int(playable[key]))
+	# 인물 데이터의 무공은 레벨 조건을 따르므로, 정한 레벨에 맞게 다시 익힌다.
+	for entry in NpcRoster.get_npc(npc_id).get("martial_arts", []):
+		if character.level >= int(entry.get("min_level", 1)):
+			var art: MartialArtData = MartialArtLibrary.create_art(str(entry["id"]))
+			if art:
+				character.learn_martial_art(art)
+	for art_id in playable.get("arts", []):
+		var extra: MartialArtData = MartialArtLibrary.create_art(str(art_id))
+		if extra:
+			character.learn_martial_art(extra)
+	character.restore_internal_energy()
+	return character
 
 
 ## 새 게임 세력 설정: 고른 세력을 더하고 세력마다 전략을 정한다.
@@ -342,6 +387,8 @@ func _sync_event_context() -> void:
 	EventManager.world_sects = world_sects
 	EventManager.wallet = get_wallet() if player_character else null
 	EventManager.owned_manuals = owned_manuals
+	EventManager.player_name = player_character.display_name if player_character else ""
+	EventManager.player_npc_id = player_npc_id
 	EventManager.current_year = current_year
 	EventManager.current_turn = _get_turn_index()
 	EventManager.current_generation = generation
@@ -802,9 +849,12 @@ func resolve_pending_event(choice_index: int) -> void:
 	if pending_event.is_empty():
 		return
 
+	# 보이는 선택지 순번 → 원래 선택지 번호 (선택지 조건으로 일부만 보일 때)
+	var choice_map: Array = pending_event.get("choice_map", [])
+	var original_index: int = int(choice_map[choice_index]) if choice_index >= 0 and choice_index < choice_map.size() else choice_index
 	var result: Dictionary = EventManager.resolve_choice(
 		pending_event["id"],
-		choice_index,
+		original_index,
 		player_character,
 		player_sect,
 		player_relationships,
@@ -966,7 +1016,7 @@ func _switch_player_sect(sect_id: String, kind: String) -> String:
 		EventManager.set_flag(story_flags, "joined_sect")
 		# 문주가 사부가 된다 (이미 인연이 있으면 그대로)
 		var master_note: String = ""
-		if NpcRoster.has_npc(new_sect.leader_id) and RelationshipManager.get_bond_with(player_relationships, new_sect.leader_id) == null:
+		if NpcRoster.has_npc(new_sect.leader_id) and new_sect.leader_id != player_npc_id and RelationshipManager.get_bond_with(player_relationships, new_sect.leader_id) == null:
 			player_relationships.append(RelationshipManager.make_relationship(new_sect.leader_id, "MASTER_DISCIPLE", _Balance.JOIN_MASTER_BOND))
 			master_note = " %s이(가) 사부가 되었습니다." % NpcRoster.get_display_name(new_sect.leader_id)
 		EventBus.relationships_changed.emit(player_relationships)
@@ -1125,6 +1175,9 @@ func start_legacy_succession() -> Dictionary:
 	legacy_records.append(legacy)
 	generation += 1
 
+	# 후계자는 등장인물이 아니다.
+	player_npc_id = ""
+	EventManager.player_npc_id = ""
 	_set_player_character(LegacyManager.create_successor(legacy, player_sect))
 	# 문파 비전은 후계자에게 이어진다.
 	if player_sect.secret_art:
@@ -1748,6 +1801,7 @@ func _build_save_state() -> Dictionary:
 		"observed_arts": observed_arts,
 		"owned_manuals": owned_manuals,
 		"player_region": player_region,
+		"player_npc_id": player_npc_id,
 		"purse": {"gold": purse.gold, "food": purse.food},
 		"challenge_target": challenge_target,
 		"pending_invasion": pending_invasion,
@@ -1876,6 +1930,7 @@ func _apply_save_data(data: Dictionary) -> void:
 		map_state = WorldMap.restore_state(data["map_state"])
 	else:
 		map_state = WorldMap.create_state(_all_sect_ids())
+	player_npc_id = str(data.get("player_npc_id", ""))
 	player_region = str(data.get("player_region", ""))
 	if not WorldMap.has_region(player_region):
 		player_region = _default_region()

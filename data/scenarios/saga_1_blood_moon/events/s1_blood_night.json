@@ -1,0 +1,436 @@
+{
+  "id": "s1_blood_night",
+  "title": "혈월의 밤",
+  "description": "혈월 3년 가을. 다시 붉은 달이 떴습니다. 천마신교의 대군이 낙양의 정도맹 본진으로 밀려들었습니다.\n서쪽 문이 안에서 열렸습니다. 불길 속에서 청운검선과 천마 위무량이 마주 섰고, 두 사람은 밤새 검과 장을 겨루었습니다.\n새벽이 오기 전에 맹은 무너질 것입니다. 당신은 이 밤을 어떻게 보내겠습니까?",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_cheonma",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_traitor_within",
+      "op": ">=",
+      "value": 2
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_cheonma",
+      "text": "청운검선! 그대만은 내 손으로 베어야 예의겠지."
+    },
+    {
+      "speaker": "npc_master",
+      "text": "위무량. 그대의 칼이 아무리 높아도 사람의 마음까지 벨 수는 없소."
+    },
+    {
+      "speaker": "npc_namgung_lord",
+      "text": "서문이 열렸다! 누가 문을 연 것이냐!"
+    },
+    {
+      "speaker": "npc_healer",
+      "text": "사형… 대사형은 어디 계세요? 대사형!",
+      "only": [
+        "npc_rival",
+        "npc_swallow",
+        "npc_cheonma_envoy",
+        "npc_senior_brother"
+      ]
+    },
+    {
+      "speaker": "npc_senior_brother",
+      "text": "(어둠 속에서 서문 빗장에 손을 얹은 채) …사부님, 용서하지 마십시오.",
+      "only": [
+        "npc_rival",
+        "npc_swallow",
+        "npc_cheonma_envoy"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "(서문 빗장에 손을 얹은 채) 여기서 문을 열면… 다시는 돌아갈 수 없다.",
+      "only": [
+        "npc_senior_brother"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "아버지! 동쪽 진이 무너집니다!",
+      "only": [
+        "npc_rival"
+      ]
+    },
+    {
+      "speaker": "npc_namgung_lord",
+      "text": "휘야, 살아라! 남궁의 피는 너 하나면 된다!",
+      "only": [
+        "npc_rival"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "석두야, 내 손 놓지 마! 남문으로 간다!",
+      "only": [
+        "npc_swallow"
+      ]
+    },
+    {
+      "speaker": "npc_orphan",
+      "text": "누나, 저 불… 저 불이 우리 마을도 태웠어요.",
+      "only": [
+        "npc_swallow"
+      ]
+    },
+    {
+      "speaker": "npc_cheonma",
+      "text": "혈영, 지금이다. 늙은이의 등을 쳐라.",
+      "only": [
+        "npc_cheonma_envoy"
+      ]
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "(불길 너머에서) 혈영…!",
+      "only": [
+        "npc_cheonma_envoy"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "홀로 천마의 본진으로 돌격한다",
+      "message": "붉은 달 아래로 몸을 던졌습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_blood_night",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_bad_sacrifice"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_cheonma_envoy",
+          "value": false
+        },
+        {
+          "type": "flag",
+          "flag": "playing_npc_senior_brother",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "무너지는 서문을 막아선다",
+      "message": "불타는 문 앞에서 검을 뽑았습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_blood_night",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        },
+        {
+          "type": "combat",
+          "combat": "s1_blood_night_gate"
+        },
+        {
+          "type": "flag",
+          "flag": "s1_resisted",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_cheonma_envoy",
+          "value": false
+        },
+        {
+          "type": "flag",
+          "flag": "playing_npc_senior_brother",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "부상자와 아이들을 데리고 남문으로 빠진다",
+      "message": "등 뒤에서 맹부가 무너지는 소리가 들렸습니다. 도덕 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_blood_night",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 8
+        },
+        {
+          "type": "flag",
+          "flag": "s1_saved_wounded",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s1_resisted",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_cheonma_envoy",
+          "value": false
+        },
+        {
+          "type": "flag",
+          "flag": "playing_npc_senior_brother",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "혼자 몸을 빼 달아난다",
+      "message": "살아남는 것이 먼저입니다. 도덕 -5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_blood_night",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -5
+        },
+        {
+          "type": "flag",
+          "flag": "s1_fled_alone",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_cheonma_envoy",
+          "value": false
+        },
+        {
+          "type": "flag",
+          "flag": "playing_npc_senior_brother",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "약속대로 서문을 연다",
+      "message": "문빗장이 생각보다 가볍게 풀렸습니다. 마교의 깃발이 밀려 들어왔습니다. 도덕 -20",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_blood_night",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -20
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_opened_gate",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_cheonma",
+          "add": 15
+        },
+        {
+          "type": "bond",
+          "target": "npc_master",
+          "add": -50
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_senior_brother",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_pact",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "문을 열지 않고 사부의 등 뒤로 달려간다",
+      "message": "사부의 등을 노리는 붉은 그림자들이 보였습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_blood_night",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 15
+        },
+        {
+          "type": "combat",
+          "combat": "s1_guard_the_master"
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_repent",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_senior_brother",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "혼란을 틈타 맹부의 기밀 문서를 챙긴다",
+      "message": "불길 속에서 정도맹의 명부를 품에 넣었습니다. 도덕 -5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_blood_night",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -5
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_took_ledger",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_senior_brother",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_pact",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "교주의 명대로 청운검선의 등을 노린다",
+      "message": "검선의 등 뒤로 그림자처럼 다가갔습니다. 도덕 -10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_blood_night",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -10
+        },
+        {
+          "type": "bond",
+          "target": "npc_cheonma",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hy_struck_master",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_cheonma_envoy",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "불길 속에서 남궁설을 찾아 빼낸다",
+      "message": "그녀를 안고 불길을 빠져나왔습니다. 남궁설 유대 +20, 도덕 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_blood_night",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 8
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lady",
+          "add": 20
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hy_saved_seol",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_cheonma_envoy",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s1_seol_dead",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "불길 속에서 살아남는 데만 매달린다",
+      "message": "그 밤을 어떻게 넘겼는지 기억나지 않습니다. 경험 +20",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_blood_night",
+          "value": true
+        },
+        {
+          "type": "experience",
+          "amount": 20
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,167 @@
+{
+  "id": "s1_mu_aftermath",
+  "title": "새벽의 맹부",
+  "description": "혈월의 밤이 지났습니다. 사부 청운검선은 천마와의 싸움 끝에 절벽 아래로 사라졌습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_healer",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_senior_brother",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_blood_night",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_healer",
+      "text": "사형… 사부님이…"
+    },
+    {
+      "speaker": "npc_cheonma",
+      "text": "진 총관, 약속은 지킨다. 낙양을 그대에게 맡기겠다."
+    }
+  ],
+  "choices": [
+    {
+      "label": "마교의 총관 인장을 받는다",
+      "message": "위무량이 직접 당신의 어깨에 붉은 장포를 걸쳐 주었습니다. 위무량 유대 +15",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_aftermath",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_cheonma",
+          "add": 15
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_steward",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_opened_gate",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "총관 자리를 거절하고 사라진다",
+      "message": "\"…나는 문을 열었을 뿐, 개가 되진 않겠소.\" 도덕 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_aftermath",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_vanished",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_opened_gate",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "사부의 검을 찾아 절벽을 내려간다",
+      "message": "검만 있고 사부는 없었습니다. 청운검법의 비급이 검집에 끼워져 있었습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_aftermath",
+          "value": true
+        },
+        {
+          "type": "learn_art",
+          "art": "manual_qingyun_cloud_sword"
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_found_sword",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_repent",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "남은 사제들을 이끌고 산을 내려간다",
+      "message": "청운의 제자들이 당신을 장문인이라 불렀습니다. 도덕 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_aftermath",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_led_disciples",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_opened_gate",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "사부가 사라진 절벽 끝에 오래 서 있는다",
+      "message": "바람만 불었습니다. 지혜 +1",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_aftermath",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 1
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,151 @@
+{
+  "id": "s3_new_dawn",
+  "title": "청천 — 맑은 하늘",
+  "description": "청천 4년 겨울. 흑련맹이 해체되었습니다. 독고천은 개봉 대전의 밤에 숨을 거두었고, 사파의 세력들은 흩어졌습니다.\n천산의 신교와 무림맹 사이에 처음으로 사자가 오갑니다. 강호의 하늘이 백 년 만에 개었습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s3_kaifeng_battle",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_seokun",
+      "text": "청하야, 하늘이 맑구나. 내 사부님… 아니, 청운검선께서는 이 하늘을 못 보셨지.",
+      "only": [
+        "s3_cheongha"
+      ]
+    },
+    {
+      "speaker": "s3_namgung_un",
+      "text": "연아, 아버지가 할아버지께 못 드린 말이 있다. 고맙다고. 너한테 먼저 하마.",
+      "only": [
+        "s3_namgung_yeon"
+      ]
+    },
+    {
+      "speaker": "s3_ma_hwarin",
+      "text": "결아, 너는 아버지가 아니야. 그걸 알면 다시 시작할 수 있어.",
+      "only": [
+        "s3_dokgo_gyeol"
+      ]
+    },
+    {
+      "speaker": "s3_hyeolyeong",
+      "text": "설아야… 이제 나도 칼을 놓아도 되겠구나.",
+      "only": [
+        "s3_wi_seola"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "흑련에 짓밟힌 사람들을 돌본다",
+      "message": "무너진 마을에 집을 다시 지었습니다. 도덕 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_new_dawn",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        },
+        {
+          "type": "flag",
+          "flag": "s3_healing",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "good"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "새 강호에서 내 자리를 찾는다",
+      "message": "칼의 시대가 끝나면, 무엇이 남을까요.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_new_dawn",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s3_new_place",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "neutral"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "빈자리를 노린다",
+      "message": "흑련이 남긴 빈자리가 많습니다. 도덕 -5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_new_dawn",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -5
+        },
+        {
+          "type": "flag",
+          "flag": "s3_ambition",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "evil"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "맑은 하늘을 본다",
+      "message": "백 년 만의 하늘입니다. 경험 +15",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_new_dawn",
+          "value": true
+        },
+        {
+          "type": "experience",
+          "amount": 15
+        }
+      ]
+    }
+  ]
+}

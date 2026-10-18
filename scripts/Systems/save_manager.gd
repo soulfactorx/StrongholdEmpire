@@ -127,6 +127,7 @@ static func serialize_character(character: CharacterData) -> Dictionary:
 		"level": character.level,
 		"experience": character.experience,
 		"age": character.age,
+		"portrait_id": character.portrait_id,
 		"morality": character.morality,
 		"martial_arts": serialize_martial_arts(character.martial_arts),
 	}
@@ -294,6 +295,7 @@ static func deserialize_character(data: Dictionary) -> CharacterData:
 	character.experience = data.get("experience", 0)
 	character.age = data.get("age", 18)
 	character.morality = data.get("morality", 50)
+	character.portrait_id = str(data.get("portrait_id", ""))
 	character.martial_arts = deserialize_martial_arts(data.get("martial_arts", []))
 	return character
 

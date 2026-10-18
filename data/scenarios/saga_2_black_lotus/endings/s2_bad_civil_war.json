@@ -1,0 +1,9 @@
+{
+  "id": "s2_bad_civil_war",
+  "title": "내전의 제물",
+  "description": "천마신교의 내전은 한쪽이 모두 죽어야 끝나는 싸움이었습니다. 당신은 끝까지 살아남은 쪽이 아니었습니다.",
+  "tone": "tragedy",
+  "auto": false,
+  "conditions": [],
+  "final": true
+}

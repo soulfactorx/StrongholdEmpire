@@ -1,0 +1,90 @@
+{
+  "id": "s1_hy_blade",
+  "title": "천마의 칼",
+  "description": "천산 신교 대전. 교주 위무량이 혈영에게 단검 한 자루를 내렸습니다. 손잡이에 '혈' 자가 새겨져 있습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_cheonma",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_cheonma_envoy",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_red_moon",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_cheonma",
+      "text": "열 살에 너를 주웠을 때, 너는 굶어 죽은 어미 곁에서 울지도 않더구나."
+    },
+    {
+      "speaker": "player",
+      "text": "기억나지 않습니다."
+    },
+    {
+      "speaker": "npc_cheonma",
+      "text": "그래서 너를 골랐다. 울지 않는 아이는 좋은 칼이 된다."
+    },
+    {
+      "speaker": "npc_cheonma",
+      "text": "명심해라. 내게 칼은 많다. 하지만 '혈영'은 하나다."
+    }
+  ],
+  "choices": [
+    {
+      "label": "무릎 꿇고 칼을 받는다",
+      "message": "\"이 칼로 중원의 목을 베겠습니다.\" 위무량 유대 +10, 무력 +2",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hy_blade",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_cheonma",
+          "add": 10
+        },
+        {
+          "type": "character",
+          "field": "strength",
+          "add": 2
+        }
+      ]
+    },
+    {
+      "label": "칼을 받으며 묻는다 — 왜 저입니까",
+      "message": "\"너는 죽음을 두려워하지 않으니까. 그리고… 삶도 바라지 않으니까.\" 지혜 +2",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hy_blade",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 2
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 3
+        }
+      ]
+    }
+  ]
+}

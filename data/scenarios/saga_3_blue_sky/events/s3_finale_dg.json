@@ -1,0 +1,103 @@
+{
+  "id": "s3_finale_dg",
+  "title": "독고결 — 삼란의 끝",
+  "description": "청천 5년 봄. 흑련의 깃발이 내려간 개봉에 봄비가 내립니다. 아버지의 아들이고 싶었던 사내의 이야기가 끝나려 합니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s3_ma_hwarin",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s3_dokgo_gyeol",
+      "value": true
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 5
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s3_new_dawn",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_ma_hwarin",
+      "text": "결아, 강 건너 남궁세가에 방이 하나 있어. 네 방이야."
+    }
+  ],
+  "choices": [
+    {
+      "label": "흑련이 짓밟은 마을을 다시 세운다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_finale_dg",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s3_beyond_father"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "good",
+            "neutral"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "끝까지 흑련의 이름으로 칼을 든다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_finale_dg",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s3_blood_heir"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "evil"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "이름을 버리고 떠난다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_finale_dg",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s3_survivor"
+        }
+      ]
+    }
+  ]
+}

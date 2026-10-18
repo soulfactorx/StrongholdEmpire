@@ -1,0 +1,85 @@
+{
+  "id": "s3_sa_peace_mission",
+  "title": "홀로 가는 길",
+  "description": "개봉 대전이 끝났습니다. 화친을 맺으려면 누군가 무림맹을 찾아가야 합니다. 성녀가 홀로 가겠다고 했습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s3_hyeolyeong",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s3_wi_seola",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s3_kaifeng_battle",
+      "op": ">=",
+      "value": 1
+    },
+    {
+      "type": "flag",
+      "flag": "s3_sa_allied",
+      "value": true
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_hyeolyeong",
+      "text": "설아야, 이 늙은이가 따라가마. 칼은 안 뽑으마. 그냥 뒤에 서 있으마."
+    }
+  ],
+  "choices": [
+    {
+      "label": "홀로 무림맹을 찾아간다",
+      "message": "정파의 검들이 성녀를 둘러쌌습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_sa_peace_mission",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s3_sa_went",
+          "value": true
+        }
+      ],
+      "branches": [
+        {
+          "chance": 25,
+          "message": "백 년의 원한을 품은 검 하나가 움직였습니다.",
+          "effects": [
+            {
+              "type": "end_game",
+              "ending": "s3_bad_martyr"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "혈영과 함께 간다",
+      "message": "늙은 칼이 성녀의 등 뒤를 지켰습니다. 아무도 칼을 뽑지 못했습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_sa_peace_mission",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s3_sa_went",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

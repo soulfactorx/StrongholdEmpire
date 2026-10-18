@@ -1,0 +1,359 @@
+{
+  "id": "s1_traitor_within",
+  "title": "맹 안의 첩자",
+  "description": "혈월 3년 봄. 마교의 기습이 번번이 정도맹의 허를 찔렀습니다. 맹회에서 누군가 말했습니다.\n「맹 안에 쥐가 있소.」 서로를 향한 의심이 칼보다 먼저 맹을 갈라놓기 시작했습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_namgung_lord",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 3
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_lady_and_shadow",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_namgung_lord",
+      "text": "기습마다 우리 진의 빈틈을 정확히 찔렀소. 맹회의 결정을 아는 자는 이 방 안에 있는 사람뿐이오."
+    },
+    {
+      "speaker": "npc_master",
+      "text": "가주, 의심으로는 아무도 구할 수 없소."
+    },
+    {
+      "speaker": "npc_senior_brother",
+      "text": "(태연하게) 사부님 말씀이 옳습니다. 서로를 의심하면 마교만 웃습니다.",
+      "only": [
+        "npc_rival",
+        "npc_swallow",
+        "npc_cheonma_envoy"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "(태연하게) 사부님 말씀이 옳습니다. 서로를 의심하면 마교만 웃습니다.",
+      "only": [
+        "npc_senior_brother"
+      ]
+    },
+    {
+      "speaker": "npc_healer",
+      "text": "(작게) 대사형… 요즘 밤마다 어디를 다녀오세요?",
+      "only": [
+        "npc_senior_brother"
+      ]
+    },
+    {
+      "speaker": "npc_healer",
+      "text": "진 사형이 요즘 밤마다 산을 내려가요. 걱정돼요.",
+      "only": [
+        "npc_rival"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "의심 가는 자를 맹회에 고한다 — 청운의 대사형",
+      "message": "진무겸의 얼굴이 굳었습니다. 그러나 증거가 없었습니다. 진무겸 유대 -15",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_traitor_within",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_senior_brother",
+          "add": -15
+        },
+        {
+          "type": "flag",
+          "flag": "s1_accused_mugyeom",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_senior_brother",
+          "value": false
+        },
+        {
+          "type": "flag",
+          "flag": "playing_npc_cheonma_envoy",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "의심을 접고 맹의 단결을 호소한다",
+      "message": "맹은 한 번 더 뭉쳤습니다. 도덕 +3, 명성 +3",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_traitor_within",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 3
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 3
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_senior_brother",
+          "value": false
+        },
+        {
+          "type": "flag",
+          "flag": "playing_npc_cheonma_envoy",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "서신을 불태우고 흔적을 지운다",
+      "message": "불꽃 속에서 천마의 인장이 오그라들었습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_traitor_within",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_covered",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_senior_brother",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_pact",
+          "value": true
+        }
+      ],
+      "branches": [
+        {
+          "chance": 25,
+          "message": "타다 남은 서신 한 조각이 백소하의 손에 들어갔습니다…",
+          "effects": [
+            {
+              "type": "flag",
+              "flag": "s1_mu_exposed",
+              "value": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "사형제 하나에게 누명을 씌운다",
+      "message": "죄 없는 사제가 집법당으로 끌려갔습니다. 도덕 -15",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_traitor_within",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -15
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_framed",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_senior_brother",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_pact",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "마교와의 서신을 사부께 털어놓는다",
+      "message": "사부는 한참 말이 없었습니다. \"…고맙다, 무겸아.\" 도덕 +15, 청운검선 유대 +15",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_traitor_within",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 15
+        },
+        {
+          "type": "bond",
+          "target": "npc_master",
+          "add": 15
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_confessed",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_pact",
+          "value": false
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_senior_brother",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_pact",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "의심받는 진무겸에게 손을 내민다",
+      "message": "\"마교가 원하는 건 우리가 서로를 의심하는 것이오.\" 진무겸 유대 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_traitor_within",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_senior_brother",
+          "add": 10
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_rival",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "첩자 노릇을 계속한다",
+      "message": "맹이 서로 물어뜯는 모습을 천장 위에서 내려다봅니다. 위무량 유대 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_traitor_within",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_cheonma",
+          "add": 5
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_cheonma_envoy",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "남궁천의 목을 노린다 — 지금이 기회다",
+      "message": "맹회가 끝난 밤, 남궁천의 처소 지붕 위에 올랐습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_traitor_within",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -10
+        },
+        {
+          "type": "bond",
+          "target": "npc_cheonma",
+          "add": 10
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_cheonma_envoy",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hy_loves",
+          "value": false
+        }
+      ],
+      "branches": [
+        {
+          "chance": 50,
+          "message": "청허진인의 손이 당신의 손목을 잡았습니다.",
+          "effects": [
+            {
+              "type": "end_game",
+              "ending": "s1_bad_unmasked"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "지켜본다",
+      "message": "의심은 독처럼 번졌습니다. 경험 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_traitor_within",
+          "value": true
+        },
+        {
+          "type": "experience",
+          "amount": 10
+        }
+      ]
+    }
+  ]
+}

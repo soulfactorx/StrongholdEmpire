@@ -1,0 +1,277 @@
+{
+  "id": "s3_kaifeng_battle",
+  "title": "개봉 대전",
+  "description": "청천 4년 가을. 무림맹과 흑련맹이 개봉에서 맞붙었습니다. 마화린이 알려 준 비밀 수로로 무림맹의 검수들이 성 안에 들어섰고,\n천산에서 내려온 신교의 교도들이 흑련의 뒤를 쳤습니다. 이 대전은 정파가 이깁니다.\n백 년의 세 번째 대전, 그 마지막 밤입니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s3_dokgo_gyeol",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s3_last_order",
+      "op": ">=",
+      "value": 2
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_dokgo_gyeol",
+      "text": "청운의 계집, 남궁의 계집. 아버지의 천하를 무너뜨리러 왔나?",
+      "only": [
+        "s3_cheongha",
+        "s3_namgung_yeon",
+        "s3_wi_seola"
+      ]
+    },
+    {
+      "speaker": "s3_cheongha",
+      "text": "아니요. 당신을 그 천하에서 꺼내러 왔어요.",
+      "only": [
+        "s3_namgung_yeon",
+        "s3_dokgo_gyeol",
+        "s3_wi_seola"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "아니요. 당신을 그 천하에서 꺼내러 왔어요.",
+      "only": [
+        "s3_cheongha"
+      ]
+    },
+    {
+      "speaker": "s3_namgung_yeon",
+      "text": "할아버지, 보고 계세요? 남궁의 매화가 개봉에 피었어요.",
+      "only": [
+        "s3_cheongha",
+        "s3_dokgo_gyeol",
+        "s3_wi_seola"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "할아버지, 보고 계세요? 남궁의 매화가 개봉에 피었어요.",
+      "only": [
+        "s3_namgung_yeon"
+      ]
+    },
+    {
+      "speaker": "s3_ma_hwarin",
+      "text": "결아, 그만해. 이제 그만해도 돼.",
+      "only": [
+        "s3_dokgo_gyeol"
+      ]
+    },
+    {
+      "speaker": "s3_hyeolyeong",
+      "text": "설아야, 백 년 전 네 할아버지는 이 성을 불태웠다. 오늘 너는 이 성을 구하는구나.",
+      "only": [
+        "s3_wi_seola"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "홀로 흑련의 본진에 뛰어든다",
+      "message": "불길 속으로 몸을 던졌습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_kaifeng_battle",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s3_bad_kaifeng"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_dokgo_gyeol",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "흑련의 성문을 깬다",
+      "message": "성문 앞에서 흑련의 소맹주와 마주 섰습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_kaifeng_battle",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 3
+        },
+        {
+          "type": "combat",
+          "combat": "s3_kaifeng_gate"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_dokgo_gyeol",
+          "value": false
+        },
+        {
+          "type": "flag",
+          "flag": "playing_s3_wi_seola",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "교도들을 이끌고 흑련의 뒤를 친다",
+      "message": "천산의 교도들이 흑련의 진을 갈랐습니다. 명성 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_kaifeng_battle",
+          "value": true
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s3_sa_fought",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_wi_seola",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "싸움이 끝나기를 천산에서 기다린다",
+      "message": "정파와 흑련이 서로를 갉아먹는 동안 신교는 칼을 갈았습니다. 도덕 -10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_kaifeng_battle",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -10
+        },
+        {
+          "type": "flag",
+          "flag": "s3_sa_waited",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_wi_seola",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "마지막 성루에서 끝까지 싸운다",
+      "message": "아버지의 깃발 아래 섰습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_kaifeng_battle",
+          "value": true
+        },
+        {
+          "type": "combat",
+          "combat": "s3_kaifeng_last"
+        },
+        {
+          "type": "flag",
+          "flag": "s3_dg_last_stand",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_dokgo_gyeol",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s3_dg_left",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "흑련의 깃발을 스스로 내린다",
+      "message": "흑련의 무사들이 하나둘 칼을 내려놓았습니다. 도덕 +15",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_kaifeng_battle",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 15
+        },
+        {
+          "type": "flag",
+          "flag": "s3_dg_surrendered",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_dokgo_gyeol",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "불길 속에서 사람들을 빼낸다",
+      "message": "그 밤 당신이 빼낸 사람은 마흔을 넘었습니다. 도덕 +8, 경험 +20",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_kaifeng_battle",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 8
+        },
+        {
+          "type": "experience",
+          "amount": 20
+        },
+        {
+          "type": "flag",
+          "flag": "s3_saved_people",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

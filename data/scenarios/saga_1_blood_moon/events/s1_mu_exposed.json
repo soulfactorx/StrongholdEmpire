@@ -1,0 +1,104 @@
+{
+  "id": "s1_mu_exposed",
+  "title": "드러난 서신",
+  "description": "타다 남은 서신 조각이 맹회의 탁자 위에 놓였습니다. 남궁천이 당신을 똑바로 바라보았습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_namgung_lord",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_senior_brother",
+      "value": true
+    },
+    {
+      "type": "flag",
+      "flag": "s1_mu_exposed",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_traitor_within",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_namgung_lord",
+      "text": "진무겸. 이 인장이 무엇인지 설명해 보시오."
+    },
+    {
+      "speaker": "npc_master",
+      "text": "……무겸아."
+    }
+  ],
+  "choices": [
+    {
+      "label": "변명한다",
+      "message": "아무도 믿지 않았습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_exposed",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_bad_traitor"
+        }
+      ]
+    },
+    {
+      "label": "무릎 꿇고 사부께 모든 것을 고백한다",
+      "message": "사부가 맹회 앞에서 당신을 감쌌습니다. \"내 제자의 죄는 내가 지겠소.\" 도덕 +15, 청운검선 유대 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_exposed",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 15
+        },
+        {
+          "type": "bond",
+          "target": "npc_master",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_pact",
+          "value": false
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_confessed",
+          "value": true
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": -10
+        }
+      ],
+      "conditions": [
+        {
+          "type": "bond",
+          "target": "npc_master",
+          "op": ">=",
+          "value": 50
+        }
+      ]
+    }
+  ]
+}

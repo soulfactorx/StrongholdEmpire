@@ -1,0 +1,26 @@
+{
+  "id": "s3_cheongha",
+  "display_name": "청하",
+  "title": "청운검파 제자",
+  "sect_id": "qingyun",
+  "role": "YOUNG_DISCIPLE",
+  "description": "흑련의 습격 속에서 살아남은 석운의 제자. 맑은 검을 쓰고, 누구도 버리지 않는다.",
+  "level": 4,
+  "named": true,
+  "portrait": "portraits/npc_healer.jpg",
+  "stats": {
+    "strength": 14,
+    "agility": 16,
+    "wisdom": 16,
+    "charisma": 15,
+    "internal_energy_max": 130,
+    "age": 20,
+    "morality": 74
+  },
+  "martial_arts": [
+    {
+      "id": "manual_qingyun_cloud_sword",
+      "min_level": 1
+    }
+  ]
+}

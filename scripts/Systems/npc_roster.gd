@@ -85,9 +85,16 @@ const NO_SECT := "none"
 ## 강호 정세의 인물 목록에 보일 인물인지 (인연을 맺을 수 있는 인물). scaling만 있는 인물은 이름 없는 졸개로 본다.
 ## 플레이어와 함께 성장하는 이름 있는 인물은 "named": true로 목록에 올린다.
 static func is_listed(npc: Dictionary) -> bool:
+	if is_hidden(str(npc.get("id", ""))):
+		return false
 	if npc.get("named", false) == true:
 		return true
 	return not npc.has("scaling")
+
+
+## 현재 시나리오에 나오지 않는 인물인지 (scenario.json hidden_npcs — 다른 시대의 인물 등)
+static func is_hidden(npc_id: String) -> bool:
+	return ScenarioManager.current.get("hidden_npcs", []).has(npc_id)
 
 
 static func validate_npc_dict(data: Dictionary) -> PackedStringArray:

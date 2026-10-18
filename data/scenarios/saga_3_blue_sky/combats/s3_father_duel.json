@@ -1,0 +1,32 @@
+{
+  "id": "s3_father_duel",
+  "title": "아버지와 아들",
+  "player_position": [
+    3,
+    5
+  ],
+  "enemies": [
+    {
+      "npc": "s3_dokgo_cheon",
+      "position": [
+        12,
+        5
+      ],
+      "stats": {
+        "internal_energy_max": -80
+      }
+    }
+  ],
+  "relationship_target": "s3_dokgo_cheon",
+  "enemy_hp_scale": 0.55,
+  "enemy_damage_scale": 0.55,
+  "rewards": {
+    "experience": 120,
+    "reputation": 10
+  },
+  "defeat_penalty": {
+    "injury_ratio": 0.2
+  },
+  "victory_flag": "s3_dg_father_won",
+  "defeat_flag": "s3_dg_father_lost"
+}

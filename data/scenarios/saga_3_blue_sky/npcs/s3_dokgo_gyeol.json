@@ -1,0 +1,27 @@
+{
+  "id": "s3_dokgo_gyeol",
+  "display_name": "독고결",
+  "title": "흑련 소맹주",
+  "sect_id": "heukpung",
+  "role": "MANAGER",
+  "description": "흑련맹주 독고천의 아들. 피로 강호를 다스리지만, 그 피는 아버지의 눈길 한 번을 위한 것이다.",
+  "level": 7,
+  "named": true,
+  "portrait": "portraits/npc_heukpung_second.jpg",
+  "stats": {
+    "strength": 19,
+    "agility": 17,
+    "wisdom": 15,
+    "charisma": 13,
+    "internal_energy_max": 170,
+    "age": 26,
+    "morality": 25
+  },
+  "martial_arts": [
+    {
+      "id": "manual_heukpung_black_wind",
+      "min_level": 1
+    }
+  ],
+  "war_specialty": "CHARGE"
+}

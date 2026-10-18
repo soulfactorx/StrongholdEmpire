@@ -1,0 +1,50 @@
+{
+  "id": "s2_y_after_civil",
+  "title": "내전의 끝",
+  "description": "진무겸과의 싸움이 끝났습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_jin_mugyeom",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_hyeolyeong",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_mugyeom_revolt",
+      "op": ">=",
+      "value": 0
+    },
+    {
+      "type": "flag",
+      "flag": "s2_y_civil_lost",
+      "value": true
+    }
+  ],
+  "choices": [
+    {
+      "label": "일어서려 한다",
+      "message": "다시 일어서지 못했습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_y_after_civil",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s2_bad_civil_war"
+        }
+      ]
+    }
+  ]
+}

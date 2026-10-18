@@ -1,0 +1,110 @@
+{
+  "id": "s2_hw_after_luoyang",
+  "title": "남은 자의 몫",
+  "description": "낙양이 무너졌습니다. 정파의 남은 문파들이 남궁세가를 바라봅니다. 흑련에 맞설 것인가, 고개를 숙일 것인가.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_namgung_un",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_namgung_hwi",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_luoyang_battle",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s2_namgung_un",
+      "text": "아버지, 할아버지가 혈월의 밤에 하신 말씀… 이제 알겠어요. 살아야 다음이 있다는 거."
+    },
+    {
+      "speaker": "npc_namgung_enforcer",
+      "text": "가주님, 남궁연 아가씨가 오늘 처음 목검을 들었습니다."
+    }
+  ],
+  "choices": [
+    {
+      "label": "세가의 문을 닫고 다음 대를 기른다",
+      "message": "\"남궁은 기다린다. 다음 봄을.\" 도덕 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hw_after_luoyang",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hw_waits",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "흑련에 맞서 마지막 싸움을 준비한다",
+      "message": "무사들이 검을 갈았습니다. 그러나 세가는 너무 작습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hw_after_luoyang",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hw_last_stand",
+          "value": true
+        }
+      ],
+      "branches": [
+        {
+          "chance": 60,
+          "message": "흑련의 대군이 남궁세가를 에워쌌습니다.",
+          "effects": [
+            {
+              "type": "end_game",
+              "ending": "s2_bad_luoyang"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "흑련의 법을 받아들인다",
+      "message": "남궁의 깃발이 내려갔습니다. 도덕 -10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hw_after_luoyang",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -10
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hw_submitted",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

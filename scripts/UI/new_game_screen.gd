@@ -17,6 +17,9 @@ var _scenarios: Array[Dictionary] = []
 var _role_ids: Array = []
 var _selected_scenario: Dictionary = {}
 var _selected_role_id: String = StartingRoles.DEFAULT_ID
+## 등장인물(playables)이 있는 시나리오: 목록 항목은 역할 대신 인물이다. 고른 인물 항목 ({}: 역할 선택)
+var _playables: Array = []
+var _selected_playable: Dictionary = {}
 ## 파라미터 이름 → OptionButton (첫 항목은 "시나리오 기본")
 var _setting_options: Dictionary = {}
 ## 강호 세력 설정: 펼침 버튼, 세력 줄을 담는 상자, 세력 id → {check: CheckButton, option: OptionButton}
@@ -106,6 +109,21 @@ func _default_sect_id() -> String:
 func _fill_sects() -> void:
 	sect_option.clear()
 	_sect_ids.clear()
+	# 등장인물은 소속이 정해져 있다.
+	if not _selected_playable.is_empty():
+		var sect_id: String = str(_selected_playable.get("sect", ""))
+		if sect_id == NpcRoster.NO_SECT or StartingRoles.is_unaffiliated(_selected_role_id):
+			sect_id = ""
+		_sect_ids.append(sect_id)
+		if sect_id.is_empty():
+			sect_option.add_item("무소속")
+		else:
+			var sect_info: Dictionary = SectRegistry.get_sect_info(sect_id)
+			sect_option.add_item("%s (%s)" % [ScenarioManager.sect_display_name(sect_id, _selected_scenario), _alignment_name(sect_info.get("alignment", ""))])
+		sect_option.disabled = true
+		sect_option.select(0)
+		_update_sect_note()
+		return
 	if StartingRoles.is_unaffiliated(_selected_role_id):
 		sect_option.add_item("무소속 (낭인은 문파에 속하지 않습니다)")
 		_sect_ids.append("")
@@ -124,7 +142,7 @@ func _fill_sects() -> void:
 				_sect_ids.append(sect_id)
 	for sect_id in _sect_ids:
 		var info: Dictionary = SectRegistry.get_sect_info(sect_id)
-		sect_option.add_item("%s (%s)%s" % [info.get("sect_name", sect_id), _alignment_name(info.get("alignment", "")), " — 기본" if sect_id == default_id else ""])
+		sect_option.add_item("%s (%s)%s" % [ScenarioManager.sect_display_name(sect_id, _selected_scenario), _alignment_name(info.get("alignment", "")), " — 기본" if sect_id == default_id else ""])
 	sect_option.disabled = fixed
 	sect_option.select(0)
 	_update_sect_note()
@@ -132,6 +150,9 @@ func _fill_sects() -> void:
 
 func _update_sect_note() -> void:
 	var sect_id: String = get_player_sect_choice()
+	if not _selected_playable.is_empty():
+		sect_note.text = "이 인물의 소속은 이야기에서 정해져 있습니다."
+		return
 	if sect_id.is_empty():
 		sect_note.text = "제자·시설 없이 금화·식량을 개인 재산으로 씁니다. 신용을 쌓은 세력에 객경으로 들어갈 수 있습니다."
 		return
@@ -214,7 +235,7 @@ func _add_faction_row(sect_id: String, fixed: bool) -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	var check := CheckButton.new()
-	check.text = "%s (%s)" % [info.get("sect_name", sect_id), _alignment_name(info.get("alignment", ""))]
+	check.text = "%s (%s)" % [ScenarioManager.sect_display_name(sect_id, _selected_scenario), _alignment_name(info.get("alignment", ""))]
 	check.custom_minimum_size = Vector2(0, 48)
 	check.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	check.button_pressed = fixed
@@ -260,7 +281,9 @@ func get_faction_setup() -> Dictionary:
 		if not strategy.is_empty():
 			strategies[sect_id] = strategy
 	var setup: Dictionary = {"extra": extra, "strategies": strategies, "player_sect": get_player_sect_choice()}
-	if _bonds_custom:
+	if not _selected_playable.is_empty():
+		setup["playable"] = str(_selected_playable["npc"])
+	elif _bonds_custom:
 		setup["bonds"] = get_bond_setup()
 	return setup
 
@@ -297,8 +320,8 @@ func _fill_bonds() -> void:
 		child.queue_free()
 	_bond_rows.clear()
 	_bonds_custom = false
-	# 입문 수련처럼 길잡이가 이끄는 시나리오는 정해진 인연으로 시작한다.
-	var guided: bool = _selected_scenario.get("guided", false) == true
+	# 입문 수련처럼 길잡이가 이끄는 시나리오와 등장인물은 정해진 인연으로 시작한다.
+	var guided: bool = _selected_scenario.get("guided", false) == true or not _selected_playable.is_empty()
 	bond_toggle.visible = not guided
 	if guided:
 		bond_box.visible = false
@@ -318,7 +341,8 @@ func _fill_bonds() -> void:
 		_UiTheme.style_button(button)
 		presets.add_child(button)
 	var defaults: Dictionary = _default_bond_setup()
-	var npcs: Array[Dictionary] = NpcRoster.get_all().filter(func(npc: Dictionary) -> bool: return NpcRoster.is_listed(npc))
+	var me: String = str(_selected_playable.get("npc", ""))
+	var npcs: Array[Dictionary] = NpcRoster.get_all().filter(func(npc: Dictionary) -> bool: return NpcRoster.is_listed(npc) and npc["id"] != me)
 	# 기본 인연이 있는 인물을 먼저, 그다음 이름순
 	npcs.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		var a_set: bool = defaults.has(a["id"])
@@ -370,8 +394,10 @@ func _select_bond(option: OptionButton, type_key: String) -> void:
 	option.select(0)
 
 
-## 소속 문파 기준 시작 인연 {인물 id: 관계 유형 키}
+## 소속 문파 기준 시작 인연 {인물 id: 관계 유형 키} (등장인물은 그 인물의 인연)
 func _default_bond_setup() -> Dictionary:
+	if not _selected_playable.is_empty():
+		return _selected_playable.get("bonds", {}).duplicate()
 	var result: Dictionary = {}
 	for bond in RelationshipManager.get_sect_start_bonds(get_player_sect_choice()):
 		result[str(bond.get("target", ""))] = str(bond.get("type", ""))
@@ -388,7 +414,9 @@ func _apply_bond_preset(preset: String) -> void:
 
 func _update_bond_note() -> void:
 	var count: int = get_bond_setup().size()
-	if _bonds_custom:
+	if not _selected_playable.is_empty():
+		bond_note.text = "이 인물이 이야기 속에서 맺어 온 인연 %d명으로 시작합니다." % count
+	elif _bonds_custom:
 		bond_note.text = "직접 정한 인연 %d명으로 시작합니다. 시작 유대는 관계마다 다릅니다(배우자 %d, 연인 %d, 사부 %d …). 배우자는 여럿 둘 수 있습니다." % [
 			count, RelationshipManager.START_STRENGTH["SPOUSE"], RelationshipManager.START_STRENGTH["ROMANCE"], RelationshipManager.START_STRENGTH["MASTER_DISCIPLE"],
 		]
@@ -445,6 +473,21 @@ func _on_scenario_selected(index: int) -> void:
 	tutorial_check.visible = _selected_scenario.get("guided", false) != true
 	_update_length_text()
 
+	# 등장인물이 있는 시나리오는 역할 대신 인물을 고른다. (둘러보기만 하므로 시나리오를 켜지 않는다)
+	_playables = ScenarioManager.get_playables(_selected_scenario)
+	role_list.get_parent().get_node("RoleLabel").text = "등장인물" if not _playables.is_empty() else "시작 역할"
+	if not _playables.is_empty():
+		role_list.clear()
+		for entry in _playables:
+			var npc: Dictionary = ScenarioManager.peek_npc(str(entry["npc"]), _selected_scenario)
+			role_list.add_item("%s — %s" % [npc.get("display_name", entry["npc"]), npc.get("title", "")])
+		role_list.select(0)
+		_on_role_selected(0)
+		return
+	if not _selected_playable.is_empty():
+		name_edit.text = ""
+	_selected_playable = {}
+	name_edit.editable = true
 	# 시나리오마다 고를 수 있는 시작 역할이 다르다.
 	var previous_role: String = _selected_role_id
 	_role_ids = ScenarioManager.get_start_role_ids(_selected_scenario)
@@ -461,6 +504,9 @@ func _update_length_text() -> void:
 
 
 func _on_role_selected(index: int) -> void:
+	if not _playables.is_empty():
+		_on_playable_selected(index)
+		return
 	var entry: Dictionary = StartingRoles.get_by_id(_role_ids[index])
 	# 이름을 직접 입력하지 않았다면 역할별 기본 이름을 보여준다.
 	var previous: Dictionary = StartingRoles.get_by_id(_selected_role_id)
@@ -471,6 +517,32 @@ func _on_role_selected(index: int) -> void:
 	_fill_sects()
 	_fill_factions()
 	_fill_bonds()
+
+
+## 등장인물을 고른다: 이름·소속·인연은 인물에게서 정해진다.
+func _on_playable_selected(index: int) -> void:
+	_selected_playable = _playables[index]
+	_selected_role_id = str(_selected_playable["start_role"])
+	var npc: Dictionary = ScenarioManager.peek_npc(str(_selected_playable["npc"]), _selected_scenario)
+	var stats: Dictionary = npc.get("stats", {})
+	var preview := CharacterData.new()
+	preview.morality = int(_selected_playable.get("morality", stats.get("morality", 50)))
+	name_edit.text = str(npc.get("display_name", _selected_playable["npc"]))
+	name_edit.editable = false
+	var role_entry: Dictionary = StartingRoles.get_by_id(_selected_role_id)
+	role_desc_label.text = "%s\n\n%s · %d세 · Lv.%d · 성향 %s\n%s\n\n%s" % [
+		_selected_playable.get("summary", ""), role_entry["title"],
+		int(_selected_playable.get("age", stats.get("age", 20))), int(_selected_playable.get("level", npc.get("level", 1))),
+		preview.get_alignment_name(), npc.get("description", ""), RoleDashboard.describe_role(role_entry["role"]),
+	]
+	_fill_sects()
+	_fill_factions()
+	_fill_bonds()
+
+
+## 지금 고른 등장인물 id ("": 역할로 시작, 테스트용)
+func get_selected_playable_id() -> String:
+	return str(_selected_playable.get("npc", ""))
 
 
 func _on_settings_toggle_pressed() -> void:

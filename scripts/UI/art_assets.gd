@@ -86,6 +86,15 @@ static func role_portrait(role: CharacterData.Role) -> Texture2D:
 	return texture("portraits/role_%s.jpg" % CharacterData.Role.keys()[role].to_lower())
 
 
+## 주인공 초상화: 등장인물로 플레이하면 그 인물(portrait_id)의 초상화, 아니면 역할 초상화
+static func player_portrait(character: CharacterData) -> Texture2D:
+	if not character.portrait_id.is_empty() and NpcRoster.has_npc(character.portrait_id):
+		var found: Texture2D = portrait(character.portrait_id)
+		if found:
+			return found
+	return role_portrait(character.role)
+
+
 ## 세력 문장: 문파 데이터의 "emblem"이 있으면 그것, 없으면 emblems/<sect_id>.png
 static func emblem(sect_id: String) -> Texture2D:
 	var info: Dictionary = SectRegistry.get_sect_info(sect_id)

@@ -1,0 +1,81 @@
+{
+  "id": "s3_ny_hwarin",
+  "title": "강을 건너온 사람",
+  "description": "마화린이 남궁세가에 머물고 있습니다. 아버지의 옛사랑, 흑련의 부맹주. 그녀가 당신을 불렀습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s3_ma_hwarin",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s3_namgung_yeon",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s3_hwarin_turns",
+      "op": ">=",
+      "value": 1
+    },
+    {
+      "type": "flag",
+      "flag": "s3_hwarin_welcomed",
+      "value": true
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_ma_hwarin",
+      "text": "네 아버지는 바보였어. 나를 살리겠다고 칼끝 앞에 섰지. 너도 그 눈을 닮았구나."
+    },
+    {
+      "speaker": "player",
+      "text": "아버지는 지금도 바보예요. 매일 강 쪽을 봐요."
+    }
+  ],
+  "choices": [
+    {
+      "label": "그녀를 믿는다",
+      "message": "그녀는 흑풍도법의 비결 하나를 가르쳐 주었습니다. 마화린 유대 +15",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_ny_hwarin",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s3_ma_hwarin",
+          "add": 15
+        },
+        {
+          "type": "learn_art",
+          "art": "manual_heukpung_black_wind"
+        }
+      ]
+    },
+    {
+      "label": "아버지를 다시 아프게 하면 용서하지 않겠다고 말한다",
+      "message": "\"…남궁의 딸답네.\" 마화린이 웃었습니다. 마화린 유대 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_ny_hwarin",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s3_ma_hwarin",
+          "add": 5
+        }
+      ]
+    }
+  ]
+}

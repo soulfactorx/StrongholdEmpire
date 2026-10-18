@@ -1,0 +1,80 @@
+{
+  "id": "s2_su_revenge_done",
+  "title": "원수의 최후",
+  "description": "진무겸이 당신의 검 아래 쓰러졌습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_jin_mugyeom",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_seokun",
+      "value": true
+    },
+    {
+      "type": "flag",
+      "flag": "s2_su_avenged",
+      "value": true
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s2_jin_mugyeom",
+      "text": "청운검선의… 검법이군. 누구냐, 너는."
+    },
+    {
+      "speaker": "player",
+      "text": "혈월의 피난길에서 살아남은 아이요. 사부님께 이름도 못 여쭤본."
+    },
+    {
+      "speaker": "s2_jin_mugyeom",
+      "text": "…그분은 이름 없는 아이도 제자로 삼으셨겠지. 나와는 달리."
+    }
+  ],
+  "choices": [
+    {
+      "label": "목숨만은 거두지 않는다",
+      "message": "\"사부님은… 나를 용서하셨을까.\" 진무겸은 그 말을 남기고 떠났습니다. 도덕 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_su_revenge_done",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s2_su_spared",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "사부의 원수를 벤다",
+      "message": "스물다섯 해가 끝났습니다. 그러나 마음은 생각보다 비어 있었습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_su_revenge_done",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s2_su_killed_mg",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

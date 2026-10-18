@@ -1,0 +1,30 @@
+{
+  "id": "s3_dokgo_cheon",
+  "display_name": "독고천",
+  "title": "흑련맹주",
+  "sect_id": "heukpung",
+  "role": "LEADER",
+  "description": "천하를 쥔 지 스무 해. 늙은 맹주는 아들조차 믿지 않는다.",
+  "level": 13,
+  "named": true,
+  "portrait": "portraits/npc_tang_head.jpg",
+  "stats": {
+    "strength": 20,
+    "agility": 16,
+    "wisdom": 25,
+    "charisma": 22,
+    "internal_energy_max": 240,
+    "age": 66,
+    "morality": 20
+  },
+  "martial_arts": [
+    {
+      "id": "manual_heukpung_black_wind",
+      "min_level": 1
+    },
+    {
+      "id": "mod_thunder_palm",
+      "min_level": 1
+    }
+  ]
+}

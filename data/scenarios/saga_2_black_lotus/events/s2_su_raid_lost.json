@@ -1,0 +1,43 @@
+{
+  "id": "s2_su_raid_lost",
+  "title": "불타는 청운산",
+  "description": "산문이 무너졌습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_seokun",
+      "value": true
+    },
+    {
+      "type": "flag",
+      "flag": "s2_su_raid_lost",
+      "value": true
+    }
+  ],
+  "choices": [
+    {
+      "label": "마지막까지 검을 쥔다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_su_raid_lost",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s2_bad_fallen_gate"
+        }
+      ]
+    }
+  ]
+}

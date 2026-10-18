@@ -1,0 +1,72 @@
+{
+  "id": "s2_luoyang_wall",
+  "title": "낙양 대전 — 무너지는 성벽",
+  "player_position": [
+    3,
+    5
+  ],
+  "enemies": [
+    {
+      "npc": "npc_bandit",
+      "position": [
+        12,
+        3
+      ],
+      "name": "흑련 무사 갑"
+    },
+    {
+      "npc": "npc_bandit",
+      "position": [
+        12,
+        7
+      ],
+      "name": "흑련 무사 을"
+    },
+    {
+      "npc": "npc_tang_poisoner",
+      "position": [
+        14,
+        5
+      ],
+      "name": "당가 독수"
+    }
+  ],
+  "terrain": {
+    "HIGH": [
+      [
+        5,
+        4
+      ],
+      [
+        5,
+        5
+      ],
+      [
+        5,
+        6
+      ]
+    ]
+  },
+  "disciple_allies": [
+    [
+      2,
+      3
+    ],
+    [
+      2,
+      7
+    ]
+  ],
+  "enemy_hp_scale": 0.6,
+  "enemy_damage_scale": 0.6,
+  "rewards": {
+    "experience": 80,
+    "reputation": 8
+  },
+  "defeat_penalty": {
+    "reputation": 4,
+    "injury_ratio": 0.3
+  },
+  "victory_flag": "s2_luoyang_held",
+  "defeat_flag": "s2_luoyang_broken"
+}

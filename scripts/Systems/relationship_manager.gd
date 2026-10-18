@@ -65,9 +65,9 @@ static func create_from_setup(setup: Dictionary) -> Array[RelationshipData]:
 	return relationships
 
 
-## 명부 인물과의 관계 하나를 만든다. 인물이나 유형이 잘못되면 null
+## 명부 인물과의 관계 하나를 만든다. 인물이나 유형이 잘못되거나 주인공 자신(등장인물로 플레이 중)이면 null
 static func make_relationship(target_id: String, type_key: String, strength: int) -> RelationshipData:
-	if not NpcRoster.has_npc(target_id) or not RelationshipData.BondType.has(type_key):
+	if not NpcRoster.has_npc(target_id) or not RelationshipData.BondType.has(type_key) or target_id == EventManager.player_npc_id:
 		return null
 	var rel := RelationshipData.new()
 	rel.target_id = target_id

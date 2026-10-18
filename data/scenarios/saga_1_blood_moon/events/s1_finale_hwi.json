@@ -1,0 +1,140 @@
+{
+  "id": "s1_finale_hwi",
+  "title": "남궁휘 — 장의 끝",
+  "description": "혈월 5년 봄. 불탄 남궁세가의 터에 봄풀이 돋았습니다. 남궁휘의 이야기가 한 장을 닫으려 합니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_namgung_lady",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_rival",
+      "value": true
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 5
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_crossroads",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "휘야, 아버지 검이 너한테 잘 어울려."
+    },
+    {
+      "speaker": "npc_namgung_enforcer",
+      "text": "가주님, 흩어졌던 남궁의 무사들이 돌아오고 있습니다."
+    }
+  ],
+  "choices": [
+    {
+      "label": "남궁세가를 다시 세운다",
+      "message": "남궁의 깃발이 다시 올랐습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_finale_hwi",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_namgung_rebuilt"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_rebuild",
+          "value": true
+        },
+        {
+          "type": "alignment",
+          "in": [
+            "good",
+            "neutral"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "맹의 생존자들을 이끌고 강남으로 간다",
+      "message": "살아남은 협객들이 당신을 따랐습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_finale_hwi",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_beyond_blood_moon"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "good"
+          ]
+        },
+        {
+          "type": "flag",
+          "flag": "s1_resisted",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "마교에 고개를 숙이고 가문의 이름을 지킨다",
+      "message": "남궁의 이름은 남았지만, 그 이름은 더 이상 빛나지 않습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_finale_hwi",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_fallen_to_demon"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "evil"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "조용히 살아남는다",
+      "message": "검을 벽에 걸었습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_finale_hwi",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_survivor"
+        }
+      ]
+    }
+  ]
+}

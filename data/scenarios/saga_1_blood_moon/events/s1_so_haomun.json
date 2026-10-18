@@ -1,0 +1,85 @@
+{
+  "id": "s1_so_haomun",
+  "title": "하오문의 손짓",
+  "description": "하오문주 묵영이 사람을 보내 왔습니다. 마교 천하가 오면 정보가 곧 목숨이라며, 하오문의 정보상이 되라고 합니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_haomun_master",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_swallow",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_traitor_within",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_haomun_master",
+      "text": "협객 노릇으로는 아무도 못 지켜. 하지만 마교의 진군로를 하루 먼저 안다면? 마을 하나를 통째로 살리지."
+    },
+    {
+      "speaker": "player",
+      "text": "그 소식을 마교에도 팔잖아요."
+    },
+    {
+      "speaker": "npc_haomun_master",
+      "text": "물론이지. 그러니 하오문은 어느 쪽이 이겨도 살아남는다네. 자네도 그래야지."
+    }
+  ],
+  "choices": [
+    {
+      "label": "받아들인다 — '비연'이라는 이름으로",
+      "message": "하오문의 명부에 새 이름이 올랐습니다. 묵영 유대 +15",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_so_haomun",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_haomun_master",
+          "add": 15
+        },
+        {
+          "type": "flag",
+          "flag": "s1_so_haomun",
+          "value": true
+        },
+        {
+          "type": "learn_art",
+          "art": "manual_haomun_ghost_step"
+        }
+      ]
+    },
+    {
+      "label": "거절한다 — 나는 피난민 곁에 있겠다",
+      "message": "\"아깝군. 그래도 마음 바뀌면 언제든.\" 도덕 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_so_haomun",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        }
+      ]
+    }
+  ]
+}

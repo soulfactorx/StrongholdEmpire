@@ -1,0 +1,45 @@
+{
+  "id": "s2_civil_war",
+  "title": "신교 내전 — 총관의 반역",
+  "player_position": [
+    3,
+    5
+  ],
+  "enemies": [
+    {
+      "npc": "s2_jin_mugyeom",
+      "position": [
+        12,
+        5
+      ]
+    },
+    {
+      "npc": "npc_cheonma_cultist",
+      "position": [
+        13,
+        3
+      ],
+      "name": "반역 교도 갑"
+    },
+    {
+      "npc": "npc_cheonma_cultist",
+      "position": [
+        13,
+        7
+      ],
+      "name": "반역 교도 을"
+    }
+  ],
+  "relationship_target": "s2_jin_mugyeom",
+  "enemy_hp_scale": 0.6,
+  "enemy_damage_scale": 0.6,
+  "rewards": {
+    "experience": 90,
+    "reputation": 10
+  },
+  "defeat_penalty": {
+    "injury_ratio": 0.3
+  },
+  "victory_flag": "s2_y_civil_won",
+  "defeat_flag": "s2_y_civil_lost"
+}

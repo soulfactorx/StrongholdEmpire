@@ -1,0 +1,80 @@
+{
+  "id": "s2_y_grave",
+  "title": "바닷가의 무덤",
+  "description": "남쪽 바닷가 언덕. 매화나무 아래 작은 무덤이 있습니다. 열 해 전 당신이 묻은 사람.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_hyeolyeong",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_heaven_falls_ill",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "",
+      "text": "— 열 해 전 —"
+    },
+    {
+      "speaker": "",
+      "text": "(기억 속의 목소리) 다시는 칼 들지 마요. 약속했잖아요."
+    },
+    {
+      "speaker": "player",
+      "text": "미안하오. 당신이 없으니 지킬 약속도 없더군."
+    }
+  ],
+  "choices": [
+    {
+      "label": "남궁휘에게 서신을 보낸다 — 누이의 무덤이 여기 있다고",
+      "message": "답은 오지 않았습니다. 그러나 다음 해 무덤에 매화 가지가 하나 더 놓였습니다. 도덕 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_y_grave",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 8
+        },
+        {
+          "type": "flag",
+          "flag": "s2_y_told_hwi",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "아무에게도 말하지 않는다",
+      "message": "그녀는 당신만의 것으로 남았습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_y_grave",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 1
+        }
+      ]
+    }
+  ]
+}

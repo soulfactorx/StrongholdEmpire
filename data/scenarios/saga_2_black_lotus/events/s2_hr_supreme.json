@@ -1,0 +1,54 @@
+{
+  "id": "s2_hr_supreme",
+  "title": "새 맹주",
+  "description": "독고천이 쓰러졌습니다. 흑련맹의 채주와 문주들이 하나둘 무릎을 꿇었습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_dokgo_cheon",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_ma_hwarin",
+      "value": true
+    },
+    {
+      "type": "flag",
+      "flag": "s2_hr_dokgo_won",
+      "value": true
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s2_dokgo_cheon",
+      "text": "(피를 흘리며) …줄을 끊었구나. 네 아버지는 못 한 일을."
+    },
+    {
+      "speaker": "player",
+      "text": "아버지는 저를 살리려고 줄을 탔어요. 저는 이제 누구의 줄도 타지 않아요."
+    }
+  ],
+  "choices": [
+    {
+      "label": "맹주의 자리에 앉는다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hr_supreme",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s2_lotus_supreme"
+        }
+      ]
+    }
+  ]
+}

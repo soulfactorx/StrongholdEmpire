@@ -1,0 +1,46 @@
+{
+  "id": "s1_shadow_duel",
+  "title": "누이를 노리는 그림자",
+  "player_position": [
+    3,
+    5
+  ],
+  "enemies": [
+    {
+      "npc": "npc_cheonma_envoy",
+      "position": [
+        12,
+        5
+      ]
+    }
+  ],
+  "terrain": {
+    "FOREST": [
+      [
+        9,
+        3
+      ],
+      [
+        9,
+        4
+      ],
+      [
+        10,
+        6
+      ]
+    ]
+  },
+  "relationship_target": "npc_cheonma_envoy",
+  "enemy_hp_scale": 0.55,
+  "enemy_damage_scale": 0.55,
+  "rewards": {
+    "experience": 70,
+    "reputation": 6
+  },
+  "defeat_penalty": {
+    "reputation": 3,
+    "injury_ratio": 0.3
+  },
+  "victory_flag": "s1_hwi_beat_shadow",
+  "defeat_flag": "s1_hwi_lost_shadow"
+}

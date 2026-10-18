@@ -1,0 +1,128 @@
+{
+  "id": "s2_finale_hr",
+  "title": "마화린 — 장의 끝",
+  "description": "흑련 5년 봄. 낙양의 맹부에 검은 연꽃이 피었습니다. 마화린의 이야기가 한 장을 닫으려 합니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_ma_jin",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_ma_hwarin",
+      "value": true
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 5
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_lotus_reign",
+      "op": ">=",
+      "value": 1
+    },
+    {
+      "type": "flag",
+      "flag": "s2_hr_dokgo_won",
+      "value": false
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s2_ma_jin",
+      "text": "화린아, 네가 고른 길이면 아비는 그걸로 됐다."
+    }
+  ],
+  "choices": [
+    {
+      "label": "남궁운과 장강을 건넌다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_finale_hr",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s2_lovers_cross"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s2_hr_elope",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "흑련의 두 번째 자리에 선다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_finale_hr",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s2_lotus_flower"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s2_hr_elope",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "흑련의 사냥개로 산다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_finale_hr",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s2_lotus_hound"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "evil"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "모든 것을 버리고 떠난다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_finale_hr",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s2_survivor"
+        }
+      ]
+    }
+  ]
+}

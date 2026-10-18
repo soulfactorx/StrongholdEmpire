@@ -1,0 +1,49 @@
+{
+  "id": "s1_heaven_duel",
+  "title": "천마를 베다",
+  "player_position": [
+    3,
+    5
+  ],
+  "enemies": [
+    {
+      "npc": "npc_cheonma",
+      "position": [
+        12,
+        5
+      ],
+      "stats": {
+        "strength": -6,
+        "internal_energy_max": -120
+      }
+    }
+  ],
+  "terrain": {
+    "HIGH": [
+      [
+        11,
+        4
+      ],
+      [
+        11,
+        5
+      ],
+      [
+        11,
+        6
+      ]
+    ]
+  },
+  "relationship_target": "npc_cheonma",
+  "enemy_hp_scale": 0.5,
+  "enemy_damage_scale": 0.5,
+  "rewards": {
+    "experience": 150,
+    "reputation": 20
+  },
+  "defeat_penalty": {
+    "injury_ratio": 0.1
+  },
+  "victory_flag": "s1_hy_heaven_won",
+  "defeat_flag": "s1_hy_heaven_lost"
+}

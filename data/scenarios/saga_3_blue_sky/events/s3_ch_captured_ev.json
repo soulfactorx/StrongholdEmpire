@@ -1,0 +1,92 @@
+{
+  "id": "s3_ch_captured_ev",
+  "title": "흑련의 감옥",
+  "description": "처형장에서 졌습니다. 흑련의 사냥개들이 당신을 개봉의 지하 감옥에 가두었습니다.\n독고결이 직접 내려왔습니다. \"함께 봉기한 놈들의 이름을 대라.\"",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s3_dokgo_gyeol",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s3_cheongha",
+      "value": true
+    },
+    {
+      "type": "flag",
+      "flag": "s3_ch_captured",
+      "value": true
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_dokgo_gyeol",
+      "text": "맑은 눈이군. 그런 눈은 처형대 위에서 제일 먼저 흐려지지."
+    },
+    {
+      "speaker": "player",
+      "text": "당신 눈은 이미 흐려요. 그런데 왜 슬퍼 보이죠?"
+    },
+    {
+      "speaker": "s3_dokgo_gyeol",
+      "text": "……"
+    }
+  ],
+  "choices": [
+    {
+      "label": "입을 다문다",
+      "message": "독고결이 한참 당신을 바라보았습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_ch_captured_ev",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        }
+      ],
+      "branches": [
+        {
+          "chance": 50,
+          "message": "다음 날 새벽, 처형대가 준비되었습니다.",
+          "effects": [
+            {
+              "type": "end_game",
+              "ending": "s3_bad_hound"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "동료들의 이름을 댄다",
+      "message": "당신은 살았습니다. 그들은 살지 못했습니다. 도덕 -25",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_ch_captured_ev",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -25
+        },
+        {
+          "type": "flag",
+          "flag": "s3_ch_betrayed",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

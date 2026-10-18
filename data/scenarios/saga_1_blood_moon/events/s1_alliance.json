@@ -1,0 +1,246 @@
+{
+  "id": "s1_alliance",
+  "title": "정도맹 결성",
+  "description": "혈월 원년 가을. 청운검파·남궁세가·무당파의 장문인과 가주들이 낙양에 모여 정도맹을 세웠습니다.\n맹주는 청운검선, 부맹주는 남궁천. 그러나 맹회장의 공기는 생각만큼 뜨겁지 않았습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_master",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_red_moon",
+      "op": ">=",
+      "value": 2
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_master",
+      "text": "오늘부터 우리는 문파의 이름을 내려놓고 하나의 맹이 된다. 천마의 칼은 혼자 막을 수 없다."
+    },
+    {
+      "speaker": "npc_namgung_lord",
+      "text": "남궁은 맹의 방패가 되겠소. 다만 맹주께서 결단이 늦지 않으시길."
+    },
+    {
+      "speaker": "npc_wudang_head",
+      "text": "무량수불. 결단이 빠른 것보다 바른 것이 중하지요."
+    },
+    {
+      "speaker": "npc_senior_brother",
+      "text": "(속으로) 맹주는 사부, 부맹주는 남궁… 나는 언제까지 '대사형'인가.",
+      "only": [
+        "npc_rival",
+        "npc_swallow",
+        "npc_cheonma_envoy"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "(속으로) 저 웃음 뒤에 있는 것을 사부님은 모르시는 걸까.",
+      "only": [
+        "npc_rival"
+      ]
+    },
+    {
+      "speaker": "npc_cheonma_envoy",
+      "text": "(하인의 옷차림으로 술을 따르며) 오늘 이 자리의 얼굴을 모두 기억해 두지.",
+      "only": [
+        "npc_rival",
+        "npc_swallow",
+        "npc_senior_brother"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "(술을 따르며) 남궁천, 청운검선, 청허진인… 그리고 저 대사형. 눈빛이 굶주렸군.",
+      "only": [
+        "npc_cheonma_envoy"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "맹회 말석에서 맹세의 잔을 든다",
+      "message": "정파의 일원으로 이름을 올렸습니다. 도덕 +3, 명성 +3",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_alliance",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 3
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 3
+        },
+        {
+          "type": "flag",
+          "flag": "s1_sworn_alliance",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "good",
+            "neutral"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "부맹주 자리에 앉은 아버지를 지켜본다",
+      "message": "아버지의 어깨가 무거워 보입니다. 남궁천 유대 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_alliance",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lord",
+          "add": 5
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_rival",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "대사형으로서 사부 뒤에 선다",
+      "message": "사람들이 당신을 '청운의 다음 장문인'이라 수군댑니다. 청운검선 유대 +3",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_alliance",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_master",
+          "add": 3
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_senior_brother",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "맹주 자리를 빼앗긴 듯한 분노를 삼킨다",
+      "message": "웃는 얼굴 뒤에서 이를 악물었습니다. 도덕 -5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_alliance",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -5
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_resent",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_senior_brother",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "맹회의 하인으로 위장해 숨어든다",
+      "message": "아무도 당신의 얼굴을 보지 않습니다. 정파는 하인을 보지 않으니까.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_alliance",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hy_infiltrated",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_cheonma_envoy",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "맹회 문밖에서 피난민 대책을 묻는다",
+      "message": "문지기가 당신을 내쫓았습니다. 맹회는 피난민 이야기를 하지 않습니다. 도덕 +2",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_alliance",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 2
+        },
+        {
+          "type": "flag",
+          "flag": "s1_so_ignored",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_swallow",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "멀찍이서 지켜본다",
+      "message": "맹세의 잔이 돌아가는 소리만 들렸습니다. 경험 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_alliance",
+          "value": true
+        },
+        {
+          "type": "experience",
+          "amount": 10
+        }
+      ]
+    }
+  ]
+}

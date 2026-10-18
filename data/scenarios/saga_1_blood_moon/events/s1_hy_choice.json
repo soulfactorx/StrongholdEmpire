@@ -1,0 +1,156 @@
+{
+  "id": "s1_hy_choice",
+  "title": "칼의 주인",
+  "description": "혈월 4년 여름. 천마는 여전히 상처를 숨기고 있습니다. 남궁설의 서신이 또 왔습니다. 「바다가 보이는 곳.」\n당신의 칼은 이제 누구를 위해 움직입니까?",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_cheonma",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_cheonma_envoy",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_demon_reign",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_cheonma",
+      "text": "혈영, 요즘 네 칼이 느리구나. 무엇이 너를 무겁게 하느냐."
+    },
+    {
+      "speaker": "player",
+      "text": "…아무것도 아닙니다."
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "(서신) 당신이 오지 않아도 원망하지 않을게요. 하지만 오면… 다시는 칼 들지 마요."
+    }
+  ],
+  "choices": [
+    {
+      "label": "남궁설과 함께 교를 떠난다",
+      "message": "새벽, 두 사람은 남쪽으로 향하는 배에 올랐습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hy_choice",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hy_fled",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 10
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s1_hy_loves",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s1_seol_dead",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "천마에게 칼을 겨눈다 — 그는 지금 약하다",
+      "message": "상처 입은 천마의 방으로 들어섰습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hy_choice",
+          "value": true
+        },
+        {
+          "type": "combat",
+          "combat": "s1_heaven_duel"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "evil"
+          ]
+        },
+        {
+          "type": "character",
+          "field": "level",
+          "op": ">=",
+          "value": 9
+        }
+      ]
+    },
+    {
+      "label": "지금 천마를 벤다",
+      "message": "준비가 덜 되었다는 것을 칼을 뽑은 뒤에야 알았습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hy_choice",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_bad_heaven_wrath"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "evil"
+          ]
+        },
+        {
+          "type": "character",
+          "field": "level",
+          "op": "<",
+          "value": 9
+        }
+      ]
+    },
+    {
+      "label": "교에 남아 천마의 칼로 산다",
+      "message": "칼은 주인을 고르지 않습니다. 위무량 유대 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hy_choice",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_cheonma",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hy_stayed",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

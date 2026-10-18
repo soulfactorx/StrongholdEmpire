@@ -1,0 +1,27 @@
+{
+  "id": "s3_ma_hwarin",
+  "display_name": "마화린",
+  "title": "흑련맹 부맹주",
+  "sect_id": "heukpung",
+  "role": "MANAGER",
+  "description": "흑련의 꽃. 스무 해 동안 맹의 두 번째 자리를 지켰다. 강 건너에 두고 온 사람을 잊은 적이 없다.",
+  "level": 11,
+  "named": true,
+  "portrait": "portraits/npc_tang_daughter.jpg",
+  "stats": {
+    "strength": 18,
+    "agility": 21,
+    "wisdom": 19,
+    "charisma": 19,
+    "internal_energy_max": 210,
+    "age": 45,
+    "morality": 45
+  },
+  "martial_arts": [
+    {
+      "id": "manual_heukpung_black_wind",
+      "min_level": 1
+    }
+  ],
+  "war_specialty": "FLANK"
+}

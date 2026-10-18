@@ -1,0 +1,82 @@
+{
+  "id": "s3_sa_zealots",
+  "title": "피를 원하는 교도들",
+  "description": "천산의 늙은 교도들이 제단 앞에 모였습니다. 「흑련의 피로 천마의 원수를 갚아야 합니다!」",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_cheonma_cultist",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s3_wi_seola",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s3_cult_reborn_ev",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_cheonma_cultist",
+      "text": "성녀, 천마께서는 피로 중원을 얻으셨습니다!"
+    },
+    {
+      "speaker": "player",
+      "text": "그리고 피로 잃으셨죠. 저는 잃지 않을 거예요."
+    }
+  ],
+  "choices": [
+    {
+      "label": "피의 맹세를 거부한다",
+      "message": "제단의 불이 꺼졌습니다. 교도들이 수군거렸지만, 젊은 교도들이 당신 뒤에 섰습니다. 도덕 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_sa_zealots",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s3_sa_peaceful",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "피의 맹세를 받아들인다",
+      "message": "제단에 피가 뿌려졌습니다. 천마의 시대가 돌아오고 있습니다. 도덕 -15",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_sa_zealots",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -15
+        },
+        {
+          "type": "flag",
+          "flag": "s3_sa_blood_oath",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "id": "s2_survivor",
+  "title": "흑련 아래의 생존자",
+  "description": "흑련의 깃발이 천하에 올랐고, 당신은 그 아래서 고개를 숙이고 살아남았습니다.\n누구의 영웅도 아니었지만, 누구의 제물도 되지 않았습니다.",
+  "tone": "neutral",
+  "auto": false,
+  "conditions": []
+}

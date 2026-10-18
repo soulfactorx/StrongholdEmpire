@@ -1,0 +1,42 @@
+{
+  "id": "s1_duel_mugyeom",
+  "title": "비무 — 청운의 대사형",
+  "player_position": [
+    3,
+    5
+  ],
+  "enemies": [
+    {
+      "npc": "npc_senior_brother",
+      "position": [
+        12,
+        5
+      ]
+    }
+  ],
+  "terrain": {
+    "HIGH": [
+      [
+        7,
+        4
+      ],
+      [
+        8,
+        5
+      ]
+    ]
+  },
+  "relationship_target": "npc_senior_brother",
+  "enemy_hp_scale": 0.8,
+  "enemy_damage_scale": 0.7,
+  "rewards": {
+    "experience": 40,
+    "reputation": 4
+  },
+  "defeat_penalty": {
+    "reputation": 2,
+    "injury_ratio": 0.6
+  },
+  "victory_flag": "s1_hwi_beat_mugyeom",
+  "defeat_flag": "s1_hwi_lost_mugyeom"
+}

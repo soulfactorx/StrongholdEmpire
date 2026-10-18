@@ -1,0 +1,21 @@
+{
+  "id": "s2_wi_muryang",
+  "display_name": "위무량",
+  "title": "천마신교 교주 (와병)",
+  "sect_id": "cheonma",
+  "role": "LEADER",
+  "description": "중원을 정복한 늙은 천마. 청운검선에게 입은 상처가 스물다섯 해 만에 그의 목숨을 갉아먹고 있다.",
+  "level": 14,
+  "named": true,
+  "portrait": "portraits/npc_cheonma.jpg",
+  "stats": {
+    "strength": 18,
+    "agility": 14,
+    "wisdom": 22,
+    "charisma": 20,
+    "internal_energy_max": 200,
+    "age": 69,
+    "morality": 15
+  },
+  "martial_arts": []
+}

@@ -1,0 +1,299 @@
+{
+  "id": "s2_black_lotus_pact",
+  "title": "흑련 대연맹",
+  "description": "흑련 3년 봄. 독고천이 하오문과 사천당가를 끌어들여 흑련 대연맹을 선포했습니다. 비연의 하오문이 마지막으로 서명했습니다.\n「마교를 중원에서 몰아내는 날, 천하는 흑련의 것이다.」 흑련의 사자가 남은 모든 세력을 찾아왔습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_dokgo_cheon",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 3
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_river_lovers",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s2_dokgo_cheon",
+      "text": "하오문주, 그대의 서명이 마지막이오. 망설이시오?"
+    },
+    {
+      "speaker": "s2_biyeon",
+      "text": "스물다섯 해 전 나는 피난민을 이끌고 마교를 피해 강을 건넜소. 마교를 몰아낸다는 말에는 서명하지."
+    },
+    {
+      "speaker": "s2_biyeon",
+      "text": "다만 맹주, 흑련이 마교처럼 되는 날엔 하오문이 가장 먼저 등을 돌릴 거요."
+    },
+    {
+      "speaker": "s2_dokgo_cheon",
+      "text": "하하. 그 말, 맹세문에 적어 두지."
+    },
+    {
+      "speaker": "s2_ma_jin",
+      "text": "(마화린에게) 화린아, 독고천은 웃을 때가 제일 위험하다. 잊지 마라.",
+      "only": [
+        "s2_ma_hwarin"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "흑련과 손잡는다 — 마교를 몰아낼 수만 있다면",
+      "message": "남궁의 깃발 옆에 검은 연꽃이 걸렸습니다. 도덕 -5, 독고천 유대 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_black_lotus_pact",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -5
+        },
+        {
+          "type": "bond",
+          "target": "s2_dokgo_cheon",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hw_lotus_pact",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_namgung_hwi",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "거절한다 — 남궁은 사파와 손잡지 않는다",
+      "message": "사자가 돌아가며 말했습니다. \"마교 다음은 남궁이오.\" 도덕 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_black_lotus_pact",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hw_refused_lotus",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_namgung_hwi",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "흑련 아래 산문을 지킨다 — 고개를 숙인다",
+      "message": "청운은 살아남을 것입니다. 이름만은. 도덕 -3",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_black_lotus_pact",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -3
+        },
+        {
+          "type": "flag",
+          "flag": "s2_su_bowed",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_seokun",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "흑련의 사자를 돌려보낸다",
+      "message": "청운산의 문이 닫혔습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_black_lotus_pact",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 3
+        },
+        {
+          "type": "flag",
+          "flag": "s2_su_defied",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_seokun",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "흑련에 교를 팔아넘긴다 — 천산의 길을 알려 준다",
+      "message": "독고천이 당신을 맹의 객경으로 맞았습니다. 도덕 -20",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_black_lotus_pact",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -20
+        },
+        {
+          "type": "bond",
+          "target": "s2_dokgo_cheon",
+          "add": 20
+        },
+        {
+          "type": "flag",
+          "flag": "s2_y_sold_cult",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_hyeolyeong",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "남은 교도들을 천산으로 물릴 준비를 한다",
+      "message": "중원을 버리고 교를 살립니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_black_lotus_pact",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s2_y_retreat_plan",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_hyeolyeong",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "맹주 곁에서 대연맹의 맹세를 받든다",
+      "message": "독고천의 오른편에 섰습니다. 독고천 유대 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_black_lotus_pact",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_dokgo_cheon",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hr_loyal",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_ma_hwarin",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "맹세하는 척하며 맹주의 빈틈을 본다",
+      "message": "독고천의 등이 생각보다 넓지 않다는 걸 알았습니다. 도덕 -5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_black_lotus_pact",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -5
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hr_scheming",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_ma_hwarin",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "맹세의 자리를 지켜본다",
+      "message": "검은 연꽃이 천하를 덮으려 합니다. 경험 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_black_lotus_pact",
+          "value": true
+        },
+        {
+          "type": "experience",
+          "amount": 10
+        }
+      ]
+    }
+  ]
+}

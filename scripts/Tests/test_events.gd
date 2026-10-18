@@ -537,3 +537,271 @@ func _test_story_arcs() -> void:
 	gm._sync_event_context()
 	_check(not EventManager.conditions_met(EventManager.get_event("arc_cheonma_omen").conditions, gm.player_character, gm.player_sect, gm.player_relationships, "봄", gm.story_flags), "마교와 밀약했으면 대침공 아크 없음")
 	_completed["_test_story_arcs"] = true
+
+
+# ── 메인 시나리오 「강호삼란」 ──
+
+const SAGA_IDS: Array = ["saga_1_blood_moon", "saga_2_black_lotus", "saga_3_blue_sky"]
+
+
+func gm() -> Node:
+	return root.get_node("GameManager")
+
+
+## 등장인물로 새 게임을 시작한다 (기연 확률 0: 우선 기연만 일어난다).
+func _start_saga(scenario_id: String, npc_id: String) -> void:
+	gm().start_new_game("", "young_disciple", scenario_id, {"event_rate": 0.0}, false, false, {"playable": npc_id})
+
+
+## 등장인물로 계절을 넘기며 끝까지 플레이한다. plan: {기연 id: 선택지 글 앞부분}, 없는 기연은 보이는 마지막 선택지.
+## outcomes: {기연 id: 전투 결과} (기본 승리). 일어난 기연 id 목록을 돌려준다.
+## start_level을 주면 그 레벨로 시작한다 (수련으로 경지를 쌓은 셈).
+func _play_saga(scenario_id: String, npc_id: String, plan: Dictionary, outcomes: Dictionary = {}, start_level: int = 0) -> Array:
+	_start_saga(scenario_id, npc_id)
+	if start_level > 0:
+		gm().player_character.level = start_level
+	var seen: Array = []
+	for i in 40:
+		if gm().is_game_over():
+			break
+		if gm().pending_event.is_empty():
+			gm().advance_turn()
+			continue
+		var event: Dictionary = gm().pending_event
+		seen.append(event["id"])
+		# 계획에 없는 기연은 보이는 마지막 선택지 (대개 누구나 고를 수 있는 무난한 선택지)
+		var shown: int = (event["choices"] as Array).size() - 1
+		if plan.has(event["id"]):
+			shown = -1
+			var labels: Array = Array(event["choices"])
+			for j in labels.size():
+				if str(labels[j]).begins_with(plan[event["id"]]):
+					shown = j
+			if shown < 0:
+				_check(false, "%s(%s): 「%s」 선택지가 보이지 않음 — 보이는 선택지 %s" % [scenario_id, npc_id, plan[event["id"]], labels])
+				return seen
+		var original: int = int(event["choice_map"][shown])
+		gm().pending_event = {}
+		var result: Dictionary = EventManager.resolve_choice(
+			event["id"], original, gm().player_character, gm().player_sect, gm().player_relationships, gm().story_flags, str(event.get("subject", ""))
+		)
+		if result.has("combat"):
+			CombatManager.apply_outcome(
+				result["combat"], outcomes.get(event["id"], CombatManager.Outcome.VICTORY),
+				gm().player_character, gm().player_sect, gm().player_relationships, gm().story_flags
+			)
+		if result.has("end_game"):
+			gm()._force_end(result["end_game"])
+		gm()._check_end_states()
+		# 전투 결과로 이어지는 기연(승리·패배 뒤의 장면)은 다음 계절을 기다리지 않고 바로 확인한다.
+		if not gm().is_game_over():
+			gm()._try_trigger_event()
+	return seen
+
+
+func _test_main_saga_system() -> void:
+	for scenario_id in SAGA_IDS:
+		var scenario: Dictionary = ScenarioManager.get_scenario(scenario_id)
+		_check(not scenario.is_empty(), "메인 시나리오 정의: %s" % scenario_id)
+		ScenarioManager.activate(scenario_id)
+		# 등장인물 데이터: 명부에 있고, 인연 대상도 명부에 있다. 이 시나리오의 기연과 엔딩만 읽는다.
+		for entry in ScenarioManager.get_playables(scenario):
+			_check(NpcRoster.has_npc(entry["npc"]), "%s 등장인물 명부: %s" % [scenario_id, entry["npc"]])
+			for target in entry.get("bonds", {}):
+				_check(NpcRoster.has_npc(target) and target != entry["npc"], "%s 등장인물 %s 인연 대상: %s" % [scenario_id, entry["npc"], target])
+		_check(EventManager.get_event("rival_duel") == null and EventManager.get_event("arc_cheonma_omen") == null, "%s: 정한 공용 기연 폴더만 읽음" % scenario_id)
+		_check(not EndingManager.has_ending("conquer_world"), "%s: 공용 엔딩을 읽지 않음" % scenario_id)
+		for ending_id in scenario.get("victory_endings", []):
+			_check(EndingManager.has_ending(ending_id), "%s 엔딩: %s" % [scenario_id, ending_id])
+
+	# 남궁휘로 시작: 인물의 이름·초상화·소속·인연·플래그, 자기 자신과는 관계가 없다.
+	_start_saga("saga_1_blood_moon", "npc_rival")
+	var hero: CharacterData = gm().player_character
+	_check(hero.display_name == "남궁휘" and hero.portrait_id == "npc_rival" and hero.level == 3, "등장인물: 이름·초상화·레벨")
+	_check(hero.knows_martial_art("manual_namgung_plum_sword"), "등장인물: 시작 무공")
+	_check(gm().player_sect.id == "namgung" and gm().player_npc_id == "npc_rival", "등장인물: 소속 문파")
+	_check(gm().story_flags.get("playing_npc_rival", false) == true, "등장인물: playing_ 플래그")
+	_check(_rel(gm(), "npc_namgung_lord") != null and _rel(gm(), "npc_namgung_lady") != null and _rel(gm(), "npc_rival") == null, "등장인물: 시작 인연 (자기 자신은 없음)")
+	_check(hero.get_alignment() == "good" and hero.get_alignment_name() == "선(협객)", "성향: 도덕 66은 선")
+	# 안내형 시나리오라 첫 기연(붉은 달)이 바로 뜬다. 남궁휘의 선택지와 장면 대사만 보인다.
+	var opening: Dictionary = gm().pending_event
+	_check(opening.get("id", "") == "s1_red_moon", "메인 시나리오: 시작하자마자 붉은 달")
+	var labels: Array = Array(opening.get("choices", []))
+	_check(labels.has("서신을 찢는다 — 정파는 무릎 꿇지 않는다") and not labels.has("교주의 명을 받든다"), "선택지 조건: 주인공별 선택지")
+	_check(labels.size() == (opening["choice_map"] as Array).size() and labels.size() < EventManager.get_event("s1_red_moon").choices.size(), "선택지 조건: 보이는 것만 choice_map에")
+	var text: String = str(opening.get("description", ""))
+	_check(text.contains("남궁천: 천마가") and text.contains("남궁휘: 누이는 빠져") and not text.contains("위무량: 혈영"), "장면 대사: 주인공 대사와 only 줄")
+	# 보이는 순번으로 고르면 원래 선택지가 적용된다.
+	var morality: int = hero.morality
+	gm().resolve_pending_event(labels.find("서신을 찢는다 — 정파는 무릎 꿇지 않는다"))
+	_check(hero.morality == morality + 3 and gm().story_flags.get("s1_defiant", false), "choice_map: 보이는 순번 → 원래 선택지")
+
+	# 혈영으로 시작: 무공·악 성향, 같은 기연의 다른 선택지
+	_start_saga("saga_1_blood_moon", "npc_cheonma_envoy")
+	_check(gm().player_character.get_alignment() == "evil" and gm().player_sect.id == "cheonma", "혈영: 악 성향, 천마신교")
+	_check(Array(gm().pending_event.get("choices", [])).has("교주의 명을 받든다"), "혈영: 자기 선택지")
+	_check(str(gm().pending_event.get("description", "")).contains("혈영: 명을 받듭니다"), "혈영: player 대사는 주인공 이름으로")
+	# 저장·불러오기: 등장인물 id와 초상화가 이어진다.
+	var state: Dictionary = gm()._build_save_state()
+	gm().player_npc_id = ""
+	gm()._apply_save_data(state)
+	_check(gm().player_npc_id == "npc_cheonma_envoy" and gm().player_character.portrait_id == "npc_cheonma_envoy", "저장/불러오기: 등장인물")
+	_check(ArtAssets.player_portrait(gm().player_character) == ArtAssets.portrait("npc_cheonma_envoy"), "주인공 초상화: 등장인물의 초상화")
+	_completed["_test_main_saga_system"] = true
+
+
+func _test_main_saga_paths() -> void:
+	var D: CombatManager.Outcome = CombatManager.Outcome.DEFEAT
+	var sid: String = "saga_1_blood_moon"
+	# 남궁휘: 선의 길 → 남궁의 재건
+	var seen: Array = _play_saga(sid, "npc_rival", {
+		"s1_red_moon": "서신을 찢는다", "s1_hwi_shadow_of_father": "명을 따르고", "s1_alliance": "맹회 말석",
+		"s1_hwi_rival": "웃으며", "s1_black_wind_offer": "사파와 손잡는", "s1_lady_and_shadow": "누이를 찾아가",
+		"s1_hwi_sister_secret": "누이의 마음을", "s1_traitor_within": "의심을 접고", "s1_blood_night": "무너지는 서문",
+		"s1_hwi_father_falls": "가문을", "s1_demon_reign": "저항한다", "s1_crossroads": "지켜야 할",
+		"s1_finale_hwi": "남궁세가를",
+	})
+	_check(gm().current_ending_id == "s1_namgung_rebuilt" and gm().game_over_id == "scenario_complete", "1장 남궁휘: 남궁의 재건 (%s)" % [seen])
+	_check(seen.find("s1_blood_night") > seen.find("s1_traitor_within") and seen.find("s1_traitor_within") > seen.find("s1_lady_and_shadow"), "1장: 연표 순서")
+	# 남궁휘: 혈월의 밤 무모한 돌격 → 배드 엔딩
+	_play_saga(sid, "npc_rival", {"s1_blood_night": "홀로 천마의", "s1_black_wind_offer": "사파와 손잡는"})
+	_check(gm().current_ending_id == "s1_bad_sacrifice" and gm().game_over_id == "story_end", "1장 남궁휘: 혈월의 제물 (배드)")
+	# 연소화: 마진의 금화를 받으면 흑풍의 덫
+	_play_saga(sid, "npc_swallow", {"s1_so_majin_deal": "금화를", "s1_so_trap_springs": "끝까지"})
+	_check(gm().current_ending_id == "s1_bad_black_wind_trap", "1장 연소화: 흑풍의 덫 (배드)")
+	# 연소화: 피난민을 이끌어 강남으로
+	_play_saga(sid, "npc_swallow", {
+		"s1_red_moon": "피난 보따리", "s1_so_orphan": "소년을 데려간다", "s1_so_majin_deal": "거절하고",
+		"s1_so_haomun": "거절한다", "s1_blood_night": "부상자와", "s1_so_exodus": "행렬의 맨 앞",
+		"s1_demon_reign": "저항한다", "s1_crossroads": "지켜야 할", "s1_finale_so": "피난민들의",
+	})
+	_check(gm().current_ending_id == "s1_lantern_refugees", "1장 연소화: 피난길의 등불")
+	_check(_rel(gm(), "npc_orphan") != null and _rel(gm(), "npc_orphan").bond_type == RelationshipData.BondType.PUPIL, "1장 연소화: 석두를 제자로")
+	# 진무겸: 마교와 손잡고 서문을 연다 → 마교의 총관
+	_play_saga(sid, "npc_senior_brother", {
+		"s1_red_moon": "서신을 다시 접어", "s1_mu_heir": "왜 제가", "s1_alliance": "맹주 자리를",
+		"s1_black_wind_offer": "소문만", "s1_mu_envoy": "손을 잡는다", "s1_mu_soha": "거짓말로",
+		"s1_traitor_within": "사형제 하나에게", "s1_blood_night": "약속대로", "s1_mu_aftermath": "마교의 총관",
+		"s1_demon_reign": "투항한다", "s1_crossroads": "더 높은", "s1_finale_mu": "마교의 중원 총관",
+	})
+	_check(gm().current_ending_id == "s1_demon_steward", "1장 진무겸: 마교의 총관")
+	# 진무겸: 마음을 돌려 사부의 등 뒤를 지킨다 → 참회의 검
+	_play_saga(sid, "npc_senior_brother", {
+		"s1_red_moon": "사부께", "s1_mu_heir": "사부의 뜻에", "s1_alliance": "대사형으로서",
+		"s1_mu_envoy": "거절하고", "s1_blood_night": "문을 열지 않고", "s1_mu_aftermath": "사부의 검을",
+		"s1_demon_reign": "저항한다", "s1_crossroads": "지켜야 할", "s1_finale_mu": "사부의 빈자리",
+	})
+	_check(gm().current_ending_id == "s1_repentant_sword", "1장 진무겸: 참회의 검")
+	# 혈영: 남궁설을 사랑해 칼을 거둔다
+	_play_saga(sid, "npc_cheonma_envoy", {
+		"s1_red_moon": "붉은 달을 오래", "s1_hy_blade": "칼을 받으며", "s1_alliance": "맹회의 하인으로",
+		"s1_lady_and_shadow": "그녀의 손을", "s1_hy_seol_again": "그녀와 함께", "s1_traitor_within": "첩자 노릇",
+		"s1_blood_night": "불길 속에서 남궁설", "s1_hy_after_night": "남궁설이 무사한지", "s1_demon_reign": "잔당 사냥에서",
+		"s1_hy_choice": "남궁설과 함께", "s1_finale_hy": "바닷가",
+	})
+	_check(gm().current_ending_id == "s1_sheathed_blade", "1장 혈영: 칼을 거둔 자객")
+	# 혈영: 상처 입은 천마를 꺾고 교주가 된다 (지존). 레벨이 모자라면 천마의 분노.
+	var supreme_plan: Dictionary = {
+		"s1_red_moon": "교주의 명을", "s1_hy_blade": "무릎 꿇고", "s1_alliance": "맹회의 하인으로",
+		"s1_lady_and_shadow": "얼굴을 본 자는", "s1_traitor_within": "첩자 노릇", "s1_blood_night": "교주의 명대로",
+		"s1_hy_after_night": "교주의 상처를 오래", "s1_demon_reign": "교주의 오른팔로", "s1_hy_choice": "천마에게 칼을",
+	}
+	_play_saga(sid, "npc_cheonma_envoy", supreme_plan, {}, 9)
+	_check(gm().current_ending_id == "s1_demon_supreme", "1장 혈영: 마도지존")
+	_play_saga(sid, "npc_cheonma_envoy", supreme_plan, {"s1_hy_choice": D}, 9)
+	_check(gm().current_ending_id == "s1_bad_heaven_wrath", "1장 혈영: 천마에게 지면 천마의 분노")
+	# 경지가 모자라면 천마를 노리는 길은 곧바로 천마의 분노다.
+	supreme_plan["s1_hy_choice"] = "지금 천마를"
+	_play_saga(sid, "npc_cheonma_envoy", supreme_plan)
+	_check(gm().current_ending_id == "s1_bad_heaven_wrath", "1장 혈영: 준비 없이 천마에게 칼을 들면 천마의 분노")
+
+	# ── 2장 흑련천하 ──
+	sid = "saga_2_black_lotus"
+	_start_saga(sid, "s2_ma_hwarin")
+	_check(not NpcRoster.is_listed(NpcRoster.get_npc("npc_rival")) and NpcRoster.is_listed(NpcRoster.get_npc("s2_namgung_un")), "2장: 다른 시대의 인물은 숨김")
+	_check(gm().player_sect.sect_name == "흑련맹" and gm().player_sect.leader_id == "s2_dokgo_cheon" and gm().player_sect.leader_name == "독고천", "2장: 문파 이름·문주 바꾸기")
+	_check(NpcAgent.get_officers(gm().player_sect)[0]["npc"] == "s2_dokgo_cheon", "2장: 바뀐 문주가 문주 직책을 맡음")
+	_check(EventManager.get_event("bond_meet_swallow") == null and EventManager.get_event("bond_g_friend_drink") != null, "2장: 공용 기연 파일 앞부분으로 고르기")
+	var lovers: Dictionary = {
+		"s2_hr_fathers_shadow": "거절한다", "s2_hr_test": "베는 척", "s2_river_lovers": "밧줄을",
+		"s2_black_lotus_pact": "맹주 곁에서", "s2_hr_crossroad": "남궁운에게", "s2_great_march": "검을 간다",
+		"s2_luoyang_battle": "혼란 속에서 남궁운", "s2_lotus_reign": "흑련의 법 아래", "s2_finale_hr": "남궁운과",
+	}
+	_play_saga(sid, "s2_ma_hwarin", lovers)
+	_check(gm().current_ending_id == "s2_lovers_cross", "2장 마화린: 강을 건넌 연인")
+	_play_saga(sid, "s2_ma_hwarin", {
+		"s2_black_lotus_pact": "맹세하는 척", "s2_hr_crossroad": "맹주의 자리를", "s2_luoyang_battle": "맹주의 선봉",
+		"s2_hr_dokgo": "검을 뽑는다",
+	}, {}, 10)
+	_check(gm().current_ending_id == "s2_lotus_supreme", "2장 마화린: 흑련맹주 (지존)")
+	_play_saga(sid, "s2_ma_hwarin", {"s2_black_lotus_pact": "맹세하는 척", "s2_luoyang_battle": "지금 맹주의"})
+	_check(gm().current_ending_id == "s2_bad_lotus_blade", "2장 마화린: 맹주의 칼 (배드)")
+	_play_saga(sid, "s2_namgung_hwi", {
+		"s2_hw_sister": "혈영을 용서한다", "s2_hw_sons_love": "허락한다", "s2_black_lotus_pact": "거절한다",
+		"s2_luoyang_battle": "무너지는 성벽", "s2_hw_after_luoyang": "세가의 문을", "s2_lotus_reign": "흑련의 법 아래",
+		"s2_finale_hw": "손녀에게",
+	})
+	_check(gm().current_ending_id == "s2_righteous_lantern", "2장 남궁휘: 정파의 등불")
+	var hy_rel: RelationshipData = _rel(gm(), "s2_hyeolyeong")
+	_check(hy_rel != null and hy_rel.bond_type == RelationshipData.BondType.ACQUAINTANCE, "2장 남궁휘: 혈영을 용서하면 원한이 풀린다 (%s)" % [hy_rel.get_bond_name() if hy_rel else "없음"])
+	_play_saga(sid, "s2_hyeolyeong", {
+		"s2_y_granddaughter": "아기를", "s2_mugyeom_revolt": "반역자", "s2_black_lotus_pact": "남은 교도들을",
+		"s2_luoyang_battle": "교도들을 이끌고", "s2_y_ring": "반지를 받는다", "s2_finale_y": "천마의 자리를",
+	})
+	_check(gm().current_ending_id == "s2_heaven_heir", "2장 혈영: 천마의 계승")
+	_play_saga(sid, "s2_hyeolyeong", {"s2_mugyeom_revolt": "반역자"}, {"s2_mugyeom_revolt": D})
+	_check(gm().current_ending_id == "s2_bad_civil_war", "2장 혈영: 내전에서 지면 내전의 제물 (배드)")
+	_play_saga(sid, "s2_seokun", {
+		"s2_mugyeom_revolt": "사부의 원수를", "s2_su_revenge_done": "목숨만은", "s2_black_lotus_pact": "흑련 아래",
+		"s2_luoyang_battle": "무너지는 성벽", "s2_lotus_reign": "흑련의 법을 따르지", "s2_finale_su": "조용히",
+	})
+	_check(gm().current_ending_id == "s2_qingyun_rebuilt" and gm().story_flags.get("s2_su_spared", false), "2장 석운: 청운재건")
+	_play_saga(sid, "s2_seokun", {"s2_black_lotus_pact": "흑련의 사자를", "s2_su_gate_test": "산문을 걸고"}, {"s2_su_gate_test": D})
+	_check(gm().current_ending_id == "s2_bad_fallen_gate", "2장 석운: 산문이 다시 불타다 (배드)")
+
+	# ── 3장 청천재명 ──
+	sid = "saga_3_blue_sky"
+	var supreme: Dictionary = {
+		"s3_tyranny": "사부께", "s3_ch_master": "사부의 검을", "s3_uprising": "처형장으로", "s3_ch_saintess": "손을 내민다",
+		"s3_hwarin_turns": "마화린을 받아들인다", "s3_murim_alliance": "맹주로 추대받는다", "s3_last_order": "개봉으로 갈",
+		"s3_kaifeng_battle": "흑련의 성문을", "s3_ch_gyeol": "살려 준다", "s3_new_dawn": "흑련에 짓밟힌",
+		"s3_finale_ch": "정·사·마를",
+	}
+	_play_saga(sid, "s3_cheongha", supreme, {}, 9)
+	_check(gm().current_ending_id == "s3_murim_supreme", "3장 청하: 무림맹주 (지존)")
+	supreme["s3_finale_ch"] = "무림맹의 검으로"
+	_play_saga(sid, "s3_cheongha", supreme)
+	_check(gm().current_ending_id == "s3_blue_sky_sword", "3장 청하: 청천의 검")
+	_play_saga(sid, "s3_cheongha", {"s3_uprising": "처형장으로", "s3_ch_captured_ev": "입을 다문다"}, {"s3_uprising": D})
+	_check(gm().current_ending_id in ["s3_bad_hound", "s3_survivor"] and gm().story_flags.get("s3_ch_captured", false), "3장 청하: 붙잡히면 흑련의 감옥 (%s)" % gm().current_ending_id)
+	_play_saga(sid, "s3_cheongha", {"s3_kaifeng_battle": "홀로"})
+	_check(gm().current_ending_id == "s3_bad_kaifeng", "3장 청하: 개봉의 불길 (배드)")
+	_play_saga(sid, "s3_namgung_yeon", {
+		"s3_ny_grandfather": "할아버지의 검을", "s3_uprising": "봉기한 사람들에게 남궁", "s3_hwarin_turns": "마화린을 받아들인다",
+		"s3_ny_hwarin": "그녀를 믿는다", "s3_murim_alliance": "맹주로 청하를", "s3_kaifeng_battle": "흑련의 성문을",
+		"s3_finale_ny": "남궁의 깃발을",
+	})
+	_check(gm().current_ending_id == "s3_namgung_return", "3장 남궁연: 남궁의 귀환")
+	_play_saga(sid, "s3_dokgo_gyeol", {
+		"s3_tyranny": "처형을 미루라고", "s3_dg_childhood": "마음을", "s3_uprising": "봉기의 주모자를", "s3_dg_envoy": "아버지 몰래",
+		"s3_hwarin_turns": "그녀를 놓아준다", "s3_last_order": "흑련을 떠난다", "s3_kaifeng_battle": "흑련의 깃발을",
+		"s3_finale_dg": "흑련이 짓밟은",
+	})
+	_check(gm().current_ending_id == "s3_beyond_father", "3장 독고결: 아버지를 넘어 (%s %s)" % [gm().current_ending_id, gm().game_over_id])
+	_play_saga(sid, "s3_dokgo_gyeol", {
+		"s3_tyranny": "법을 어긴 자들을", "s3_uprising": "봉기한 마을을", "s3_hwarin_turns": "배신자를",
+		"s3_dg_hwarin_caught": "아버지의 명대로", "s3_last_order": "아버지에게 칼을", "s3_dg_father_won_ev": "맹주의 자리에",
+		"s3_kaifeng_battle": "마지막 성루", "s3_finale_dg": "끝까지",
+	})
+	_check(gm().current_ending_id == "s3_blood_heir" and gm().story_flags.get("s3_hwarin_dead", false), "3장 독고결: 피의 계승자 (%s %s)" % [gm().current_ending_id, gm().game_over_id])
+	_play_saga(sid, "s3_wi_seola", {
+		"s3_sa_story": "그 여인의", "s3_sa_zealots": "피의 맹세를 거부", "s3_sa_alliance_offer": "받아들인다",
+		"s3_kaifeng_battle": "교도들을 이끌고", "s3_sa_peace_mission": "혈영과 함께", "s3_finale_sa": "무림맹과",
+	})
+	_check(gm().current_ending_id == "s3_saintess_peace", "3장 위설아: 성녀의 화친")
+	_play_saga(sid, "s3_wi_seola", {
+		"s3_tyranny": "할아버지의 원수", "s3_sa_story": "할아버지 위무량의", "s3_sa_zealots": "피의 맹세를 받아들",
+		"s3_cult_reborn_ev": "교도들에게", "s3_kaifeng_battle": "싸움이 끝나기를", "s3_new_dawn": "빈자리를", "s3_finale_sa": "천마의 자리에",
+	})
+	_check(gm().current_ending_id == "s3_heaven_returns", "3장 위설아: 천마의 재림")
+	_completed["_test_main_saga_paths"] = true

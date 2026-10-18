@@ -1,0 +1,26 @@
+{
+  "id": "s2_namgung_un",
+  "display_name": "남궁운",
+  "title": "남궁세가 소가주",
+  "sect_id": "namgung",
+  "role": "YOUNG_DISCIPLE",
+  "description": "남궁휘의 아들. 아버지의 젊은 날을 꼭 닮았다. 정의감이 지나쳐 늘 위험한 곳에 서 있다.",
+  "level": 4,
+  "named": true,
+  "portrait": "portraits/npc_rival.jpg",
+  "stats": {
+    "strength": 15,
+    "agility": 15,
+    "wisdom": 13,
+    "charisma": 14,
+    "internal_energy_max": 120,
+    "age": 22,
+    "morality": 74
+  },
+  "martial_arts": [
+    {
+      "id": "manual_namgung_plum_sword",
+      "min_level": 1
+    }
+  ]
+}

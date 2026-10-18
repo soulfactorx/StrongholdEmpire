@@ -1,0 +1,108 @@
+{
+  "id": "s2_finale_su",
+  "title": "석운 — 장의 끝",
+  "description": "흑련 5년 봄. 청운산에 다시 봄이 왔습니다. 떠돌이 소년이었던 장문인의 이야기가 한 장을 닫으려 합니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_biyeon",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_seokun",
+      "value": true
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 5
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_lotus_reign",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s2_biyeon",
+      "text": "석두야, 그 청하라는 아이 말이야. 눈이 꼭 너 어릴 때 같더라."
+    }
+  ],
+  "choices": [
+    {
+      "label": "조용히 제자를 기른다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_finale_su",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s2_qingyun_rebuilt"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s2_su_lost_mountain",
+          "value": false
+        },
+        {
+          "type": "alignment",
+          "in": [
+            "good",
+            "neutral"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "흑련 아래서 살아남는다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_finale_su",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s2_survivor"
+        }
+      ]
+    },
+    {
+      "label": "흑련에 정파의 비밀을 판다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_finale_su",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s2_lotus_hound"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "evil"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "id": "s1_finale_hy",
+  "title": "혈영 — 장의 끝",
+  "description": "혈월 5년 봄. 천산의 눈이 녹기 시작했습니다. 혈영의 이야기가 한 장을 닫으려 합니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_cheonma",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_cheonma_envoy",
+      "value": true
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 5
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_crossroads",
+      "op": ">=",
+      "value": 1
+    },
+    {
+      "type": "flag",
+      "flag": "s1_hy_heaven_won",
+      "value": false
+    }
+  ],
+  "choices": [
+    {
+      "label": "바닷가 마을에서 그녀와 산다",
+      "message": "다시는 칼을 잡지 않았습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_finale_hy",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_sheathed_blade"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s1_hy_fled",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "천마의 오른팔로 남는다",
+      "message": "신교의 2인자. 그것이 혈영의 자리입니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_finale_hy",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_shadow_of_heaven"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s1_hy_fled",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "모든 것을 버리고 강호를 떠돈다",
+      "message": "이름 없는 낭인이 되었습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_finale_hy",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_survivor"
+        }
+      ]
+    }
+  ]
+}

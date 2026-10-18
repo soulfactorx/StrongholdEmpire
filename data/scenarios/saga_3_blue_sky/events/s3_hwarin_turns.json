@@ -1,0 +1,188 @@
+{
+  "id": "s3_hwarin_turns",
+  "title": "흑련의 꽃이 지다",
+  "description": "청천 2년 가을. 흑련맹의 부맹주 마화린이 맹부를 떠났습니다. 맹의 비밀 장부와 함께.\n그녀가 향한 곳은 남궁세가였습니다. 스무 해 전 강 건너에 두고 온 사람이 있는 곳.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s3_ma_hwarin",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s3_cult_reborn_ev",
+      "op": ">=",
+      "value": 2
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_ma_hwarin",
+      "text": "스무 해 동안 독고천의 두 번째 자리에 앉아 있었어요. 첫 번째 자리가 얼마나 차가운지 매일 봤죠."
+    },
+    {
+      "speaker": "s3_namgung_un",
+      "text": "…화린.",
+      "only": [
+        "s3_cheongha",
+        "s3_namgung_yeon",
+        "s3_wi_seola"
+      ]
+    },
+    {
+      "speaker": "s3_ma_hwarin",
+      "text": "늦었죠. 너무 늦었어요. 그래도 이번엔 강을 건너고 싶어요."
+    },
+    {
+      "speaker": "s3_namgung_yeon",
+      "text": "(아버지의 얼굴을 보며) 아버지… 이분이세요?",
+      "only": [
+        "s3_cheongha",
+        "s3_wi_seola"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "(아버지의 얼굴을 보며) 아버지… 이분이세요?",
+      "only": [
+        "s3_namgung_yeon"
+      ]
+    },
+    {
+      "speaker": "s3_dokgo_cheon",
+      "text": "화린이가? …결아, 그 계집의 목을 가져와라. 맹의 비밀이 새면 흑련이 무너진다.",
+      "only": [
+        "s3_dokgo_gyeol"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "마화린을 받아들인다",
+      "message": "흑련의 장부가 정파의 손에 들어왔습니다. 흑련의 약점이 드러났습니다. 도덕 +3",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_hwarin_turns",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 3
+        },
+        {
+          "type": "flag",
+          "flag": "s3_hwarin_welcomed",
+          "value": true
+        },
+        {
+          "type": "add_relationship",
+          "target": "s3_ma_hwarin",
+          "bond_type": "ACQUAINTANCE",
+          "strength": 30
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_dokgo_gyeol",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "흑련의 부맹주를 믿을 수 없다",
+      "message": "그녀는 고개를 끄덕이고 혼자 떠났습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_hwarin_turns",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s3_hwarin_rejected",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_dokgo_gyeol",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "배신자를 쫓는다",
+      "message": "아버지의 명이 떨어지기도 전에 말에 올랐습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_hwarin_turns",
+          "value": true
+        },
+        {
+          "type": "combat",
+          "combat": "s3_hunt_hwarin"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_dokgo_gyeol",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "그녀를 놓아준다",
+      "message": "\"…어릴 때 저를 업어 주던 사람입니다.\" 도덕 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_hwarin_turns",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s3_dg_let_hwarin_go",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_dokgo_gyeol",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "소식을 듣는다",
+      "message": "흑련의 꽃이 졌다는 소문이 강호를 돌았습니다. 경험 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_hwarin_turns",
+          "value": true
+        },
+        {
+          "type": "experience",
+          "amount": 10
+        }
+      ]
+    }
+  ]
+}

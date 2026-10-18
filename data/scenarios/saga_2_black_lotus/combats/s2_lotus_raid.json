@@ -1,0 +1,72 @@
+{
+  "id": "s2_lotus_raid",
+  "title": "청운산의 두 번째 밤",
+  "player_position": [
+    3,
+    5
+  ],
+  "enemies": [
+    {
+      "npc": "npc_bandit",
+      "position": [
+        12,
+        3
+      ],
+      "name": "흑련 무사 갑"
+    },
+    {
+      "npc": "npc_bandit",
+      "position": [
+        12,
+        7
+      ],
+      "name": "흑련 무사 을"
+    },
+    {
+      "npc": "npc_shadow_blade",
+      "position": [
+        14,
+        5
+      ],
+      "name": "흑련 자객"
+    }
+  ],
+  "terrain": {
+    "FOREST": [
+      [
+        7,
+        2
+      ],
+      [
+        7,
+        3
+      ],
+      [
+        7,
+        7
+      ]
+    ]
+  },
+  "disciple_allies": [
+    [
+      2,
+      3
+    ],
+    [
+      2,
+      7
+    ]
+  ],
+  "enemy_hp_scale": 0.6,
+  "enemy_damage_scale": 0.6,
+  "rewards": {
+    "experience": 80,
+    "reputation": 10
+  },
+  "defeat_penalty": {
+    "reputation": 5,
+    "injury_ratio": 0.3
+  },
+  "victory_flag": "s2_su_raid_won",
+  "defeat_flag": "s2_su_raid_lost"
+}

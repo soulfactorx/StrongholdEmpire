@@ -1,0 +1,108 @@
+{
+  "id": "s1_so_orphan",
+  "title": "잿더미 속의 소년",
+  "description": "북쪽에서 내려온 피난 행렬 끝에, 불탄 마을에서 혼자 살아남은 소년이 있었습니다. 이름은 석두라고 했습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_orphan",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_swallow",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_red_moon",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_orphan",
+      "text": "…누나는 검 쓸 줄 알아요? 그럼 나도 가르쳐 줘요. 다음엔 내가 지킬 거예요."
+    },
+    {
+      "speaker": "player",
+      "text": "뭘 지키게?"
+    },
+    {
+      "speaker": "npc_orphan",
+      "text": "몰라요. 아무거나요. 이번엔 아무것도 못 지켰으니까."
+    },
+    {
+      "speaker": "npc_innkeeper",
+      "text": "소화야, 너 또 떠돌이 하나 주웠구나."
+    }
+  ],
+  "choices": [
+    {
+      "label": "소년을 데려간다",
+      "message": "\"오늘부터 내가 네 누나다.\" 석두를 제자로 거두었습니다. 도덕 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_so_orphan",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        },
+        {
+          "type": "add_relationship",
+          "target": "npc_orphan",
+          "bond_type": "PUPIL",
+          "strength": 40
+        }
+      ]
+    },
+    {
+      "label": "객잔에 맡기고 떠난다",
+      "message": "한매향이 혀를 찼지만 소년을 받아 주었습니다. 한매향 유대 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_so_orphan",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_innkeeper",
+          "add": 5
+        },
+        {
+          "type": "add_relationship",
+          "target": "npc_orphan",
+          "bond_type": "ACQUAINTANCE",
+          "strength": 20
+        }
+      ]
+    },
+    {
+      "label": "먹을 것만 쥐여 주고 지나친다",
+      "message": "난세의 아이를 다 거둘 수는 없습니다. 도덕 -3",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_so_orphan",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -3
+        }
+      ]
+    }
+  ]
+}

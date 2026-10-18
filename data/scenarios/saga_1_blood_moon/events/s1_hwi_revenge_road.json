@@ -1,0 +1,95 @@
+{
+  "id": "s1_hwi_revenge_road",
+  "title": "복수의 길",
+  "description": "천마 위무량이 낙양 맹부에 머문다는 소식이 들어왔습니다. 마교 순찰대의 길도 알아냈습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_namgung_lady",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_rival",
+      "value": true
+    },
+    {
+      "type": "flag",
+      "flag": "s1_hwi_revenge",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_demon_reign",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "휘야, 아버지가 원하신 건 복수가 아니야. 네가 사는 거야."
+    },
+    {
+      "speaker": "player",
+      "text": "누이는 아버지가 어떻게 죽었는지 못 봤잖아."
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "봤어. 그래서 너까지 그렇게 보내고 싶지 않은 거야."
+    }
+  ],
+  "choices": [
+    {
+      "label": "지금 당장 낙양으로 간다",
+      "message": "아무도 당신을 막지 못했습니다. 누이조차도.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_revenge_road",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_bad_heaven_wrath"
+        }
+      ]
+    },
+    {
+      "label": "복수를 미루고 힘을 기른다",
+      "message": "\"아버지라면 지금 칼을 뽑지 않으셨을 것이다.\" 도덕 +8, 지혜 +2",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_revenge_road",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 8
+        },
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 2
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hwi_revenge",
+          "value": false
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hwi_rebuild",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

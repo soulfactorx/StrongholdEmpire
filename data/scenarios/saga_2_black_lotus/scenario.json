@@ -1,0 +1,132 @@
+{
+  "id": "saga_2_black_lotus",
+  "title": "강호삼란 2장 — 흑련천하",
+  "order": 11,
+  "era_name": "흑련",
+  "guided": true,
+  "description": "혈월의 난으로부터 스물다섯 해. 마교가 다스리는 중원 북부에서 늙은 천마의 후계를 두고 혈영과 진무겸이 갈라섭니다. 그 틈에 사파의 패자 독고천이 흑풍채·하오문·당가를 모아 흑련맹을 세웁니다.\n2차 정사마 대전 — 이 대전은 사파가 이깁니다.\n마화린·남궁휘·혈영·석운 가운데 한 명을 골라 5년의 난세를 겪습니다.",
+  "player_sect": "qingyun",
+  "sects": [
+    "namgung",
+    "wudang",
+    "heukpung",
+    "haomun",
+    "tang",
+    "cheonma"
+  ],
+  "sect_overrides": {
+    "qingyun": {
+      "leader_id": "s2_seokun",
+      "disciple_count": 8,
+      "reputation": 30
+    },
+    "namgung": {
+      "leader_id": "s2_namgung_hwi",
+      "disciple_count": 14
+    },
+    "heukpung": {
+      "sect_name": "흑련맹",
+      "leader_id": "s2_dokgo_cheon",
+      "disciple_count": 30,
+      "max_disciples": 60,
+      "reputation": 70,
+      "attitude": -40,
+      "food": 500,
+      "gold": 400
+    },
+    "haomun": {
+      "leader_id": "s2_biyeon",
+      "attitude": 10
+    },
+    "cheonma": {
+      "leader_id": "s2_wi_muryang",
+      "disciple_count": 30,
+      "attitude": -60
+    }
+  },
+  "hidden_npcs": [
+    "npc_rival",
+    "npc_swallow",
+    "npc_senior_brother",
+    "npc_cheonma_envoy",
+    "npc_cheonma",
+    "npc_master",
+    "npc_namgung_lord",
+    "npc_namgung_lady",
+    "npc_heukpung_chief",
+    "npc_haomun_master",
+    "npc_orphan",
+    "npc_healer",
+    "npc_innkeeper",
+    "npc_heukpung_second"
+  ],
+  "parameters": {
+    "time_limit_years": 5,
+    "legacy_enabled": false,
+    "exp_scale": 1.5,
+    "end_on_victory": true
+  },
+  "common_events": [
+    "bonds/bond_g_",
+    "manuals"
+  ],
+  "common_endings": false,
+  "victory_endings": [
+    "s2_lotus_flower",
+    "s2_lotus_supreme",
+    "s2_lovers_cross",
+    "s2_righteous_lantern",
+    "s2_qingyun_rebuilt",
+    "s2_to_tianshan",
+    "s2_heaven_heir",
+    "s2_survivor",
+    "s2_lotus_hound"
+  ],
+  "playables": [
+    {
+      "npc": "s2_ma_hwarin",
+      "start_role": "manager",
+      "sect": "heukpung",
+      "summary": "흑풍채주 마진의 딸, 흑련맹의 소채주. 아버지의 줄타기와 독고천의 손아귀 사이에서 제 길을 찾는다.\n흑련의 꽃이 될 것인가, 맹주의 자리를 넘볼 것인가, 정파의 아들과 강을 건널 것인가.",
+      "bonds": {
+        "s2_ma_jin": "MASTER_DISCIPLE",
+        "s2_dokgo_cheon": "ACQUAINTANCE",
+        "s2_biyeon": "ACQUAINTANCE"
+      }
+    },
+    {
+      "npc": "s2_namgung_hwi",
+      "start_role": "leader",
+      "sect": "namgung",
+      "summary": "혈월의 밤에 아버지를 잃고 가문을 다시 세운 남궁세가 가주. 이제는 아들 남궁운이 스물다섯 해 전의 자신처럼 피가 끓는다.\n사파와 손잡을 것인가, 가문을 지켜 다음 대를 기약할 것인가.",
+      "bonds": {
+        "s2_namgung_un": "PUPIL",
+        "s2_seokun": "FRIEND",
+        "s2_biyeon": "BENEFACTOR",
+        "s2_hyeolyeong": "HATRED"
+      }
+    },
+    {
+      "npc": "s2_hyeolyeong",
+      "start_role": "manager",
+      "sect": "cheonma",
+      "summary": "천마신교의 혈영대주, 신교의 2인자. 아내를 잃고 다시 칼을 든 늙은 칼은 병든 천마 대신 교를 지킨다.\n반역자 진무겸을 꺾고 교를 지킬 것인가, 천마의 자리를 이을 것인가.",
+      "bonds": {
+        "s2_wi_muryang": "MASTER_DISCIPLE",
+        "s2_jin_mugyeom": "RIVALRY",
+        "s2_biyeon": "ACQUAINTANCE"
+      }
+    },
+    {
+      "npc": "s2_seokun",
+      "start_role": "leader",
+      "sect": "qingyun",
+      "summary": "혈월의 피난길에서 연소화가 거둔 떠돌이 소년 석두. 무너진 청운산을 홀로 올라 청운검파를 다시 세웠다.\n사부를 배신한 진무겸에게 복수할 것인가, 흑련의 천하에서 산문을 지킬 것인가.",
+      "bonds": {
+        "s2_biyeon": "BENEFACTOR",
+        "s2_namgung_hwi": "FRIEND",
+        "s2_namgung_un": "ACQUAINTANCE"
+      }
+    }
+  ]
+}

@@ -33,10 +33,29 @@ enum Role {
 @export var level: int = 1
 @export var experience: int = 0
 @export var age: int = 18
+## 초상화로 쓸 명부 인물 id (등장인물 선택 플레이). 비우면 역할 초상화
+@export var portrait_id: String = ""
 @export var morality: int = 55
 
 @export_group("무공")
 @export var martial_arts: Array[MartialArtData] = []
+
+
+## 성향: 도덕 GOOD_MORALITY 이상이면 협(선), EVIL_MORALITY 이하면 마(악), 그 사이 중립
+const GOOD_MORALITY := 65
+const EVIL_MORALITY := 35
+
+
+func get_alignment() -> String:
+	if morality >= GOOD_MORALITY:
+		return "good"
+	if morality <= EVIL_MORALITY:
+		return "evil"
+	return "neutral"
+
+
+func get_alignment_name() -> String:
+	return {"good": "선(협객)", "neutral": "중립", "evil": "악(마도)"}[get_alignment()]
 
 
 func get_role_name() -> String:

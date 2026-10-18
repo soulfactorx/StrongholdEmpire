@@ -1,0 +1,31 @@
+{
+  "id": "s2_dokgo_cheon",
+  "display_name": "독고천",
+  "title": "흑련맹주",
+  "sect_id": "heukpung",
+  "role": "LEADER",
+  "description": "흑풍채·하오문·당가를 하나로 묶은 사파의 패자. 웃으며 계산하고, 계산이 끝나면 벤다.",
+  "level": 12,
+  "named": true,
+  "portrait": "portraits/npc_tang_head.jpg",
+  "stats": {
+    "strength": 22,
+    "agility": 19,
+    "wisdom": 24,
+    "charisma": 22,
+    "internal_energy_max": 260,
+    "age": 45,
+    "morality": 25
+  },
+  "martial_arts": [
+    {
+      "id": "manual_heukpung_black_wind",
+      "min_level": 1
+    },
+    {
+      "id": "mod_thunder_palm",
+      "min_level": 1
+    }
+  ],
+  "war_specialty": "FLANK"
+}

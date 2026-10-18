@@ -1,0 +1,330 @@
+{
+  "id": "s2_lotus_rises",
+  "title": "검은 연꽃",
+  "description": "흑련 원년 봄 — 혈월의 난이 끝난 지 스물다섯 해. 천마신교가 다스리는 중원 북부에 검은 연꽃이 그려진 방이 나붙었습니다.\n「마교의 시대는 끝났다. 정파는 이미 죽었다. 이제 우리의 차례다. — 흑련」\n사파의 패자 독고천이 흑풍채를 손에 넣고 하오문과 당가에 손을 내밀었다는 소문입니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_dokgo_cheon",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "",
+      "text": "— 흑풍채 산채 —",
+      "only": [
+        "s2_ma_hwarin"
+      ]
+    },
+    {
+      "speaker": "s2_ma_jin",
+      "text": "화린아, 독고천이 산채를 달라더구나. 줬다. 우리 목숨값으로.",
+      "only": [
+        "s2_ma_hwarin"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "아버지! 흑풍채는 아버지가 평생 지킨 곳이에요!",
+      "only": [
+        "s2_ma_hwarin"
+      ]
+    },
+    {
+      "speaker": "s2_ma_jin",
+      "text": "평생 줄을 탔지. 줄 위에서 살아남는 법은 하나다. 더 강한 놈 쪽으로 기우는 것.",
+      "only": [
+        "s2_ma_hwarin"
+      ]
+    },
+    {
+      "speaker": "",
+      "text": "— 남궁세가 —",
+      "only": [
+        "s2_namgung_hwi"
+      ]
+    },
+    {
+      "speaker": "s2_namgung_un",
+      "text": "아버지, 흑련이 마교를 친다면 우리도 함께 싸워야 하지 않습니까?",
+      "only": [
+        "s2_namgung_hwi"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "운아. 적의 적이 친구라는 말은, 그 친구가 등을 보이기 전까지만 맞는 말이다.",
+      "only": [
+        "s2_namgung_hwi"
+      ]
+    },
+    {
+      "speaker": "",
+      "text": "— 천산 신교 —",
+      "only": [
+        "s2_hyeolyeong"
+      ]
+    },
+    {
+      "speaker": "s2_wi_muryang",
+      "text": "(기침) 혈영… 중원의 늑대들이 냄새를 맡았구나. 내가 죽어 가는 냄새를.",
+      "only": [
+        "s2_hyeolyeong"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "교주께서는 아직 살아 계십니다.",
+      "only": [
+        "s2_hyeolyeong"
+      ]
+    },
+    {
+      "speaker": "s2_wi_muryang",
+      "text": "살아 있는 것과 다스리는 것은 다르다. 진무겸 그놈이 눈을 번득이고 있겠지.",
+      "only": [
+        "s2_hyeolyeong"
+      ]
+    },
+    {
+      "speaker": "",
+      "text": "— 청운산 —",
+      "only": [
+        "s2_seokun"
+      ]
+    },
+    {
+      "speaker": "s2_biyeon",
+      "text": "(서신) 석두야, 흑련은 정파의 남은 문파부터 길들이려 할 거야. 네 산이 첫 번째일지도 몰라.",
+      "only": [
+        "s2_seokun"
+      ]
+    },
+    {
+      "speaker": "s2_dokgo_cheon",
+      "text": "마교는 늙었고 정파는 죽었다. 남은 건 우리뿐이다. 흑련 아래 모여라."
+    }
+  ],
+  "choices": [
+    {
+      "label": "독고천의 연회에 아버지 대신 나간다",
+      "message": "독고천이 당신의 잔을 직접 채웠습니다. 독고천 유대 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_lotus_rises",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_dokgo_cheon",
+          "add": 8
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_ma_hwarin",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "아버지와 함께 산채에 남는다",
+      "message": "아버지가 오랜만에 웃었습니다. 마진 유대 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_lotus_rises",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_ma_jin",
+          "add": 8
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_ma_hwarin",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "방을 찢는다 — 사파의 천하는 오지 않는다",
+      "message": "가문의 무사들이 함성을 질렀습니다. 도덕 +3, 명성 +3",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_lotus_rises",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 3
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 3
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_namgung_hwi",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "흑련의 사자를 맞아 속을 떠본다",
+      "message": "\"남궁은 마교만 몰아낼 수 있다면 누구와도 이야기하오.\" 독고천 유대 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_lotus_rises",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_dokgo_cheon",
+          "add": 5
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hw_talked_lotus",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_namgung_hwi",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "교주의 병상을 지킨다",
+      "message": "늙은 천마가 당신의 손을 꽉 쥐었습니다. 위무량 유대 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_lotus_rises",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_wi_muryang",
+          "add": 8
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_hyeolyeong",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "흑련의 사자를 베어 답한다",
+      "message": "신교의 답은 칼이었습니다. 도덕 -5, 흑련맹 태도 -15",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_lotus_rises",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -5
+        },
+        {
+          "type": "world_sect",
+          "sect": "heukpung",
+          "field": "attitude",
+          "add": -15
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_hyeolyeong",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "산문을 닫고 제자들에게 검을 더 가르친다",
+      "message": "청운산의 종소리가 조금 더 크게 울렸습니다. 경험 +20",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_lotus_rises",
+          "value": true
+        },
+        {
+          "type": "experience",
+          "amount": 20
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_seokun",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "누나에게 서신을 보낸다",
+      "message": "하오문에서 짧은 답이 왔습니다. 「몸조심해, 석두.」 비연 유대 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_lotus_rises",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_biyeon",
+          "add": 8
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_seokun",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "방을 바라본다",
+      "message": "새 시대의 바람이 붑니다. 경험 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_lotus_rises",
+          "value": true
+        },
+        {
+          "type": "experience",
+          "amount": 10
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "id": "s1_hy_after_night",
+  "title": "피 묻은 새벽",
+  "description": "혈월의 밤이 지났습니다. 위무량은 청운검선을 절벽 아래로 떨어뜨렸지만, 그 자신도 깊은 상처를 입었습니다.\n교주가 당신을 불렀습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_cheonma",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_cheonma_envoy",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_blood_night",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_cheonma",
+      "text": "(피를 토하며) 청운검선… 마지막 일검이 내 단전을 갈랐다. 한두 해는 칼을 들기 어렵겠군."
+    },
+    {
+      "speaker": "npc_cheonma",
+      "text": "혈영, 이 일은 너만 알아라. 교도들이 알면 늑대들이 고개를 들 테니."
+    },
+    {
+      "speaker": "player",
+      "text": "…명을 받듭니다."
+    }
+  ],
+  "choices": [
+    {
+      "label": "교주의 상처를 치료할 영약을 구해 온다",
+      "message": "\"역시 너뿐이구나.\" 위무량 유대 +15",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hy_after_night",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_cheonma",
+          "add": 15
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hy_loyal",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "교주의 상처를 오래 바라본다",
+      "message": "검선의 마지막 일검이 천마의 내공을 반이나 앗아 갔습니다. 당신은 그것을 기억해 둡니다. 도덕 -5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hy_after_night",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -5
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hy_saw_wound",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "남궁설이 무사한지 몰래 확인하러 간다",
+      "message": "그녀는 살아 있었습니다. 당신의 칼보다 그것이 더 중요하다는 걸 알았습니다. 남궁설 유대 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hy_after_night",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lady",
+          "add": 10
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s1_seol_dead",
+          "value": false
+        }
+      ]
+    }
+  ]
+}

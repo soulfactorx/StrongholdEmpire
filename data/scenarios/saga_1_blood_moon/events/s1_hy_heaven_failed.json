@@ -1,0 +1,44 @@
+{
+  "id": "s1_hy_heaven_failed",
+  "title": "천마의 손",
+  "description": "칼이 부러졌습니다. 상처 입은 천마조차 당신보다 강했습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_cheonma",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_cheonma_envoy",
+      "value": true
+    },
+    {
+      "type": "flag",
+      "flag": "s1_hy_heaven_lost",
+      "value": true
+    }
+  ],
+  "choices": [
+    {
+      "label": "마지막으로 교주를 올려다본다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hy_heaven_failed",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_bad_heaven_wrath"
+        }
+      ]
+    }
+  ]
+}

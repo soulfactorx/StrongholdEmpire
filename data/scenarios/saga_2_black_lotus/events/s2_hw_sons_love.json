@@ -1,0 +1,108 @@
+{
+  "id": "s2_hw_sons_love",
+  "title": "아들의 연인",
+  "description": "남궁운이 사파의 딸, 흑풍채 소채주 마화린을 사랑한다고 털어놓았습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_namgung_un",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_namgung_hwi",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_river_lovers",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s2_namgung_un",
+      "text": "아버지, 그 사람은 저를 살려 줬어요. 자기 목숨을 걸고요."
+    },
+    {
+      "speaker": "player",
+      "text": "사파의 딸이다."
+    },
+    {
+      "speaker": "s2_namgung_un",
+      "text": "고모님은 마교의 사람을 사랑하셨잖아요."
+    }
+  ],
+  "choices": [
+    {
+      "label": "허락한다 — 누이가 그랬듯이",
+      "message": "\"…네 고모도 그랬다. 나는 그때 아무것도 못 해 줬지.\" 남궁운 유대 +15, 도덕 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hw_sons_love",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_namgung_un",
+          "add": 15
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hw_blessed",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "반대한다 — 가문을 생각해라",
+      "message": "아들이 고개를 숙였지만 눈은 숙이지 않았습니다. 남궁운 유대 -10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hw_sons_love",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_namgung_un",
+          "add": -10
+        }
+      ]
+    },
+    {
+      "label": "마화린을 직접 만나 본다",
+      "message": "그녀는 남궁 가주 앞에서도 고개를 숙이지 않았습니다. 마음에 들었습니다. 마화린과 알게 되었습니다",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hw_sons_love",
+          "value": true
+        },
+        {
+          "type": "add_relationship",
+          "target": "s2_ma_hwarin",
+          "bond_type": "ACQUAINTANCE",
+          "strength": 25
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hw_met_hr",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

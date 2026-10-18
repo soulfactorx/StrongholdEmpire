@@ -1,0 +1,116 @@
+{
+  "id": "s1_mu_heir",
+  "title": "대사형의 자리",
+  "description": "사부 청운검선이 다음 장문인 이야기를 꺼냈습니다. 그러나 사부가 부른 이름은 당신이 아니었습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_master",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_senior_brother",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_red_moon",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_master",
+      "text": "청운의 다음 장문인은… 아직 정하지 않겠다. 다만 무겸, 너는 아니다."
+    },
+    {
+      "speaker": "player",
+      "text": "사부님. 저는 스무 해를 이 산에서 보냈습니다."
+    },
+    {
+      "speaker": "npc_master",
+      "text": "알고 있다. 그래서 더 아프게 말하는 게다. 너는 이기려고 검을 든다. 지키려고 드는 게 아니라."
+    },
+    {
+      "speaker": "npc_healer",
+      "text": "(문밖에서) 사형…"
+    }
+  ],
+  "choices": [
+    {
+      "label": "사부의 뜻에 승복한다",
+      "message": "\"…사부님 뜻대로 하십시오.\" 사부가 당신의 손을 오래 잡았습니다. 도덕 +5, 청운검선 유대 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_heir",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        },
+        {
+          "type": "bond",
+          "target": "npc_master",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_loyal",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "왜 제가 아닙니까 — 따져 묻는다",
+      "message": "\"너는 검은 높으나 마음이 아직 낮다.\" 그 말이 가슴에 박혔습니다. 도덕 -5, 청운검선 유대 -5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_heir",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -5
+        },
+        {
+          "type": "bond",
+          "target": "npc_master",
+          "add": -5
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_resent",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "웃으며 물러나 밤새 술을 마신다",
+      "message": "백소하가 새벽까지 곁을 지켰습니다. 백소하 유대 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_heir",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_healer",
+          "add": 10
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "id": "s3_dg_childhood",
+  "title": "부맹주의 등",
+  "description": "흑련의 부맹주 마화린이 당신을 불렀습니다. 어릴 적 아버지 대신 당신을 업어 키운 사람입니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s3_ma_hwarin",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s3_dokgo_gyeol",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s3_tyranny",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_ma_hwarin",
+      "text": "결아, 사람을 더 벤다고 네 아버지가 너를 봐 주지 않아. 나는 스무 해를 그 옆에 있었어. 알아."
+    },
+    {
+      "speaker": "player",
+      "text": "그럼 저는 어떻게 해야 합니까?"
+    },
+    {
+      "speaker": "s3_ma_hwarin",
+      "text": "네가 누구인지 네가 정해. 아버지가 아니라."
+    }
+  ],
+  "choices": [
+    {
+      "label": "마음을 털어놓는다",
+      "message": "\"아버지는 저를 한 번도 아들이라 부르지 않으셨어요.\" 마화린 유대 +10, 도덕 +3",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_dg_childhood",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s3_ma_hwarin",
+          "add": 10
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 3
+        }
+      ]
+    },
+    {
+      "label": "부맹주라도 맹의 일에 끼어들지 말라고 한다",
+      "message": "그녀는 슬프게 웃었습니다. 마화린 유대 -10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_dg_childhood",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s3_ma_hwarin",
+          "add": -10
+        }
+      ]
+    }
+  ]
+}

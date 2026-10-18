@@ -1,0 +1,296 @@
+{
+  "id": "s1_lady_and_shadow",
+  "title": "달빛 아래의 두 사람",
+  "description": "혈월 2년 가을. 남궁세가 뒤뜰의 매화나무 아래, 남궁설이 다친 사내 하나를 숨겨 주었다는 소문이 돌았습니다.\n그 사내의 소매에는 천마신교의 핏빛 수가 놓여 있었다고 합니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_namgung_lady",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_black_wind_offer",
+      "op": ">=",
+      "value": 2
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "움직이지 마세요. 상처가 벌어져요."
+    },
+    {
+      "speaker": "npc_cheonma_envoy",
+      "text": "…나를 알면서도 숨겨 주는 거요? 내가 누군지 알면 그런 말 못 할 텐데.",
+      "only": [
+        "npc_rival",
+        "npc_swallow",
+        "npc_senior_brother"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "…나를 알면서도 숨겨 주는 거요? 내가 누군지 알면 그런 말 못 할 텐데.",
+      "only": [
+        "npc_cheonma_envoy"
+      ]
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "알아요. 천마신교의 사람이죠. 그래도 피 흘리는 사람은 사람이에요."
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "당신 눈은 사람을 죽이는 눈인데… 지금은 조금 슬퍼 보여요."
+    },
+    {
+      "speaker": "",
+      "text": "— 담장 너머 —",
+      "only": [
+        "npc_rival"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "(누이… 저자는 마교의 혈영이다. 어떻게 해야 하지.)",
+      "only": [
+        "npc_rival"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "누이를 찾아가 사실을 묻는다",
+      "message": "누이는 대답 대신 울었습니다. 남궁설 유대 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_lady_and_shadow",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lady",
+          "add": 5
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hwi_knows",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_rival",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "아버지께 알린다",
+      "message": "집법당이 뒤뜰을 뒤집었습니다. 남궁설 유대 -25, 남궁천 유대 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_lady_and_shadow",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lady",
+          "add": -25
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lord",
+          "add": 5
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hwi_exposed_sister",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_rival",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "그 사내를 직접 찾아 벤다",
+      "message": "매화나무 그림자 속에서 붉은 눈이 빛났습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_lady_and_shadow",
+          "value": true
+        },
+        {
+          "type": "combat",
+          "combat": "s1_shadow_duel"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_rival",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "그녀의 손을 잡는다",
+      "message": "처음으로 칼이 아닌 것을 쥐었습니다. 도덕 +10, 남궁설과 연인이 되었습니다",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_lady_and_shadow",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 10
+        },
+        {
+          "type": "add_relationship",
+          "target": "npc_namgung_lady",
+          "bond_type": "ROMANCE",
+          "strength": 45
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hy_loves",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_cheonma_envoy",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "은혜를 입었으니 이번만은 살려 둔다",
+      "message": "그녀는 당신의 정체를 알면서도 웃었습니다. 도덕 +4, 남궁설과 알게 되었습니다",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_lady_and_shadow",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 4
+        },
+        {
+          "type": "add_relationship",
+          "target": "npc_namgung_lady",
+          "bond_type": "ACQUAINTANCE",
+          "strength": 30
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_cheonma_envoy",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "얼굴을 본 자는 살려 두지 않는다",
+      "message": "매화 꽃잎 위로 붉은 것이 떨어졌습니다. 도덕 -20",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_lady_and_shadow",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -20
+        },
+        {
+          "type": "flag",
+          "flag": "s1_seol_dead",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hy_killed_seol",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_cheonma_envoy",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "소문을 하오문에 판다",
+      "message": "좋은 값을 받았습니다. 금화 +30, 도덕 -3",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_lady_and_shadow",
+          "value": true
+        },
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": 30
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -3
+        },
+        {
+          "type": "bond",
+          "target": "npc_haomun_master",
+          "add": 5
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_swallow",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "소문을 흘려듣는다",
+      "message": "남의 집 담장 안 일입니다. 경험 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_lady_and_shadow",
+          "value": true
+        },
+        {
+          "type": "experience",
+          "amount": 10
+        }
+      ]
+    }
+  ]
+}

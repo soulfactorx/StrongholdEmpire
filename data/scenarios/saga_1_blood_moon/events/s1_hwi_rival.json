@@ -1,0 +1,105 @@
+{
+  "id": "s1_hwi_rival",
+  "title": "청운의 대사형",
+  "description": "정도맹의 연회에서 청운검파의 대사형 진무겸이 당신에게 잔을 내밀었습니다.\n\"남궁의 어린 매화가 꽃을 피우려면 몇 해나 더 걸리려나.\"",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_senior_brother",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_rival",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_alliance",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_senior_brother",
+      "text": "자네 아버지가 부맹주라지. 좋겠군, 태어날 때부터 자리가 정해져 있으니."
+    },
+    {
+      "speaker": "player",
+      "text": "자리는 정해져 있어도, 검은 정해져 있지 않소."
+    },
+    {
+      "speaker": "npc_senior_brother",
+      "text": "하하, 그 말 기억해 두지. 언젠가 자네가 내 앞을 막아서는 날이 오면."
+    },
+    {
+      "speaker": "npc_healer",
+      "text": "(진무겸의 소매를 당기며) 대사형, 취하셨어요."
+    }
+  ],
+  "choices": [
+    {
+      "label": "비무를 청한다",
+      "message": "연회장 한가운데에 자리가 비었습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_rival",
+          "value": true
+        },
+        {
+          "type": "combat",
+          "combat": "s1_duel_mugyeom"
+        }
+      ]
+    },
+    {
+      "label": "웃으며 잔을 받는다",
+      "message": "\"…생각보다 그릇이 크군.\" 진무겸 유대 +10, 도덕 +2",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_rival",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_senior_brother",
+          "add": 10
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 2
+        }
+      ]
+    },
+    {
+      "label": "잔을 엎고 자리를 뜬다",
+      "message": "연회장이 술렁였습니다. 진무겸 유대 -10, 명성 -2",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_rival",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_senior_brother",
+          "add": -10
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": -2
+        }
+      ]
+    }
+  ]
+}

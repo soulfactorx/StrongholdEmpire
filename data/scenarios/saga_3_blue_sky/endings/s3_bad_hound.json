@@ -1,0 +1,9 @@
+{
+  "id": "s3_bad_hound",
+  "title": "흑련의 사냥개",
+  "description": "흑련의 사냥개들에게 붙잡혔습니다. 끝까지 동료의 이름을 말하지 않았습니다.\n개봉의 처형대 위에서 당신은 하늘을 보았습니다. 아직은 흐린 하늘이었습니다.",
+  "tone": "tragedy",
+  "auto": false,
+  "conditions": [],
+  "final": true
+}

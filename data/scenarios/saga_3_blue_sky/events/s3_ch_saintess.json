@@ -1,0 +1,88 @@
+{
+  "id": "s3_ch_saintess",
+  "title": "천산의 성녀",
+  "description": "흑련의 추격을 피해 숨은 산골 마을에서, 마교의 의원을 이끄는 여인을 만났습니다. 천마신교의 성녀 위설아였습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s3_wi_seola",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s3_cheongha",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s3_cult_reborn_ev",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_wi_seola",
+      "text": "정파의 검객이 마교의 성녀를 베지 않네요?"
+    },
+    {
+      "speaker": "player",
+      "text": "베어야 할 이유를 아직 못 찾았어요."
+    },
+    {
+      "speaker": "s3_wi_seola",
+      "text": "저도요. 백 년 동안 다들 그 이유를 너무 쉽게 찾았죠."
+    }
+  ],
+  "choices": [
+    {
+      "label": "손을 내민다",
+      "message": "정파의 검과 마교의 성녀가 같은 모닥불 앞에 앉았습니다. 위설아와 벗이 되었습니다. 도덕 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_ch_saintess",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        },
+        {
+          "type": "add_relationship",
+          "target": "s3_wi_seola",
+          "bond_type": "FRIEND",
+          "strength": 40
+        },
+        {
+          "type": "flag",
+          "flag": "s3_ch_sa_friends",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "경계하며 거리를 둔다",
+      "message": "그녀는 웃으며 약초 주머니만 건네고 떠났습니다. 위설아와 알게 되었습니다",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_ch_saintess",
+          "value": true
+        },
+        {
+          "type": "add_relationship",
+          "target": "s3_wi_seola",
+          "bond_type": "ACQUAINTANCE",
+          "strength": 20
+        }
+      ]
+    }
+  ]
+}

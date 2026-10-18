@@ -1,0 +1,364 @@
+{
+  "id": "s1_red_moon",
+  "title": "붉은 달",
+  "description": "혈월 원년 봄. 밤하늘에 핏빛 달이 떴습니다. 같은 밤, 천산의 천마신교 교주 위무량이 중원의 모든 문파에 서신을 보냈습니다.\n「무릎 꿇는 자는 살리고, 검을 드는 자는 벤다. 다음 붉은 달이 뜨기 전에 답하라.」",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_cheonma",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "",
+      "text": "— 남궁세가 연무장 —",
+      "only": [
+        "npc_rival"
+      ]
+    },
+    {
+      "speaker": "npc_namgung_lord",
+      "text": "천마가 감히 남궁의 문 앞에 종이 한 장을 던졌구나.",
+      "only": [
+        "npc_rival"
+      ]
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "아버지, 휘는 벌써 검을 닦고 있어요. 말려 주세요.",
+      "only": [
+        "npc_rival"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "누이는 빠져. 아버지, 저도 출정하겠습니다.",
+      "only": [
+        "npc_rival"
+      ]
+    },
+    {
+      "speaker": "npc_namgung_lord",
+      "text": "네가 나설 자리는 내가 정한다. 남궁의 검은 성급하지 않다.",
+      "only": [
+        "npc_rival"
+      ]
+    },
+    {
+      "speaker": "",
+      "text": "— 낙양 취운객잔 —",
+      "only": [
+        "npc_swallow"
+      ]
+    },
+    {
+      "speaker": "npc_innkeeper",
+      "text": "소화야, 북쪽에서 온 상단이 그러는데 천산 쪽 마을이 통째로 비었단다.",
+      "only": [
+        "npc_swallow"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "…사람들이 남쪽으로 내려오겠네요. 길이 막히기 전에.",
+      "only": [
+        "npc_swallow"
+      ]
+    },
+    {
+      "speaker": "npc_innkeeper",
+      "text": "또 남 걱정이지. 네 몸 하나 챙기기도 바쁜 세상이야.",
+      "only": [
+        "npc_swallow"
+      ]
+    },
+    {
+      "speaker": "",
+      "text": "— 청운산 장문인 처소 —",
+      "only": [
+        "npc_senior_brother"
+      ]
+    },
+    {
+      "speaker": "npc_master",
+      "text": "무겸아, 정도맹이 다시 모일 게다. 맹주는… 남궁 가주가 맡는 게 옳겠지.",
+      "only": [
+        "npc_senior_brother"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "사부님. 사부님만 한 고수가 정파에 또 누가 있습니까.",
+      "only": [
+        "npc_senior_brother"
+      ]
+    },
+    {
+      "speaker": "npc_master",
+      "text": "검이 높다고 사람을 이끄는 것은 아니다. 너도 그걸 알아야 한다.",
+      "only": [
+        "npc_senior_brother"
+      ]
+    },
+    {
+      "speaker": "",
+      "text": "— 천산 신교 대전 —",
+      "only": [
+        "npc_cheonma_envoy"
+      ]
+    },
+    {
+      "speaker": "npc_cheonma",
+      "text": "혈영. 중원은 겁먹은 양 떼다. 양치기를 먼저 벤다. 정도맹에 숨어들어라.",
+      "only": [
+        "npc_cheonma_envoy"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "명을 받듭니다, 교주.",
+      "only": [
+        "npc_cheonma_envoy"
+      ]
+    },
+    {
+      "speaker": "npc_cheonma",
+      "text": "너는 내가 아끼는 칼이다. 칼이 스스로 생각하기 시작하면… 부러뜨려야 하겠지.",
+      "only": [
+        "npc_cheonma_envoy"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "서신을 찢는다 — 정파는 무릎 꿇지 않는다",
+      "message": "가슴속에 불이 붙었습니다. 도덕 +3, 남궁천 유대 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_red_moon",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 3
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lord",
+          "add": 5
+        },
+        {
+          "type": "flag",
+          "flag": "s1_defiant",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_rival",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "아버지 뒤에 서서 명을 기다린다",
+      "message": "아버지가 당신의 어깨를 짚었습니다. 남궁천 유대 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_red_moon",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lord",
+          "add": 8
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_rival",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "피난 보따리를 싸는 사람들을 돕는다",
+      "message": "객잔 앞에 짐수레가 줄지어 섰습니다. 도덕 +4, 한매향 유대 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_red_moon",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 4
+        },
+        {
+          "type": "bond",
+          "target": "npc_innkeeper",
+          "add": 5
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_swallow",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "술값부터 챙겨 길을 뜬다",
+      "message": "남의 난리에 목숨 걸 이유는 없습니다. 도덕 -3, 금화 +20",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_red_moon",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -3
+        },
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": 20
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_swallow",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "사부께 맹주로 나서시라 간한다",
+      "message": "사부는 대답 대신 오래 달을 보았습니다. 청운검선 유대 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_red_moon",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_master",
+          "add": 5
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_senior_brother",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "서신을 다시 접어 품에 넣는다",
+      "message": "마교의 글씨가 묘하게 눈에 밟힙니다. 도덕 -3",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_red_moon",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -3
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_kept_letter",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_senior_brother",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "교주의 명을 받든다",
+      "message": "천마가 고개를 끄덕였습니다. 위무량 유대 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_red_moon",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_cheonma",
+          "add": 8
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_cheonma_envoy",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "붉은 달을 오래 올려다본다",
+      "message": "왜인지 칼이 무겁게 느껴집니다. 도덕 +3",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_red_moon",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 3
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_cheonma_envoy",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "붉은 달을 바라본다",
+      "message": "강호가 흔들리기 시작했습니다. 경험 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_red_moon",
+          "value": true
+        },
+        {
+          "type": "experience",
+          "amount": 10
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,125 @@
+{
+  "id": "s1_hy_seol_again",
+  "title": "매화나무 아래 다시",
+  "description": "남궁설이 서신을 보내 왔습니다. 「매화가 지기 전에 한 번만 더.」",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_namgung_lady",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_cheonma_envoy",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_lady_and_shadow",
+      "op": ">=",
+      "value": 1
+    },
+    {
+      "type": "flag",
+      "flag": "s1_seol_dead",
+      "value": false
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "당신 이름이 뭐예요? 혈영 말고, 진짜 이름이요."
+    },
+    {
+      "speaker": "player",
+      "text": "…없소. 교주께서 주신 이름뿐이오."
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "그럼 제가 지어 줄게요. 매화 아래서 만났으니까… 아니, 웃지 마세요. 진지해요."
+    },
+    {
+      "speaker": "player",
+      "text": "(웃은 적이 있었던가. 기억나지 않는다.)"
+    }
+  ],
+  "choices": [
+    {
+      "label": "간다",
+      "message": "그녀는 당신에게 매화 가지 하나를 꺾어 주었습니다. 남궁설 유대 +15, 도덕 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hy_seol_again",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lady",
+          "add": 15
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s1_hy_loves",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "그녀와 함께 떠나자고 말한다",
+      "message": "\"…혈월의 밤이 지나면요. 그때도 살아 있으면.\" 남궁설 유대 +15",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hy_seol_again",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lady",
+          "add": 15
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hy_promise",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s1_hy_loves",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "서신을 태운다",
+      "message": "칼은 마음을 갖지 않는다. 그렇게 배웠습니다. 위무량 유대 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hy_seol_again",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_cheonma",
+          "add": 5
+        }
+      ]
+    }
+  ]
+}
