@@ -1,0 +1,245 @@
+{
+  "id": "s2_river_lovers",
+  "title": "장강의 두 사람",
+  "description": "흑련 2년 가을. 흑련맹의 순찰대가 정파 잔당을 쫓던 밤, 남궁세가의 소가주 남궁운이 장강 나루에서 붙잡혔습니다.\n그를 붙잡은 것은 흑풍채의 소채주 마화린이었습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_namgung_un",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_mugyeom_revolt",
+      "op": ">=",
+      "value": 2
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s2_namgung_un",
+      "text": "죽일 거면 빨리 죽이시오. 남궁은 구걸하지 않소."
+    },
+    {
+      "speaker": "s2_ma_hwarin",
+      "text": "(칼끝을 내리며) 정파는 다 그렇게 말해요. 죽을 때까지.",
+      "only": [
+        "s2_namgung_hwi",
+        "s2_seokun",
+        "s2_hyeolyeong"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "(칼끝을 내리며) 정파는 다 그렇게 말해요. 죽을 때까지.",
+      "only": [
+        "s2_ma_hwarin"
+      ]
+    },
+    {
+      "speaker": "s2_namgung_un",
+      "text": "사파는 다 그렇게 웃소? 사람 묶어 놓고."
+    },
+    {
+      "speaker": "s2_ma_hwarin",
+      "text": "…웃은 거 아니에요. 바보 같아서 그래요.",
+      "only": [
+        "s2_namgung_hwi",
+        "s2_seokun",
+        "s2_hyeolyeong"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "…웃은 거 아니에요. 바보 같아서 그래요.",
+      "only": [
+        "s2_ma_hwarin"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "밧줄을 끊어 몰래 풀어 준다",
+      "message": "\"…다음에 만나면 그땐 진짜 벨 거예요.\" 남궁운과 연인이 되었습니다. 도덕 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_river_lovers",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 10
+        },
+        {
+          "type": "add_relationship",
+          "target": "s2_namgung_un",
+          "bond_type": "ROMANCE",
+          "strength": 45
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hr_loves_un",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_ma_hwarin",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "독고천에게 넘긴다",
+      "message": "맹주가 당신의 공을 치하했습니다. 독고천 유대 +15, 도덕 -10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_river_lovers",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_dokgo_cheon",
+          "add": 15
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -10
+        },
+        {
+          "type": "flag",
+          "flag": "s2_un_captured",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_ma_hwarin",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "인질로 잡아 두고 남궁과 거래한다",
+      "message": "남궁세가에서 금화를 보내왔습니다. 금화 +80",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_river_lovers",
+          "value": true
+        },
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": 80
+        },
+        {
+          "type": "add_relationship",
+          "target": "s2_namgung_un",
+          "bond_type": "ACQUAINTANCE",
+          "strength": 25
+        },
+        {
+          "type": "flag",
+          "flag": "s2_un_ransomed",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_ma_hwarin",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "아들을 구하러 직접 나루로 간다",
+      "message": "그러나 아들은 이미 풀려나 있었습니다. 사파의 딸이 풀어 주었다고 합니다. 남궁운 유대 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_river_lovers",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_namgung_un",
+          "add": 5
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hw_heard_lovers",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_namgung_hwi",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "흑련의 순찰대를 피해 두 사람을 숨겨 준다",
+      "message": "청운산의 동굴에 두 사람이 숨었습니다. 도덕 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_river_lovers",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 8
+        },
+        {
+          "type": "flag",
+          "flag": "s2_su_hid_lovers",
+          "value": true
+        },
+        {
+          "type": "add_relationship",
+          "target": "s2_namgung_un",
+          "bond_type": "FRIEND",
+          "strength": 30
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_seokun",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "소문을 듣는다",
+      "message": "사파의 딸과 정파의 아들 이야기가 강호를 돌았습니다. 경험 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_river_lovers",
+          "value": true
+        },
+        {
+          "type": "experience",
+          "amount": 10
+        }
+      ]
+    }
+  ]
+}

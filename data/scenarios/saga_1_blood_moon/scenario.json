@@ -1,0 +1,117 @@
+{
+  "id": "saga_1_blood_moon",
+  "title": "강호삼란 1장 — 혈월지란",
+  "order": 10,
+  "era_name": "혈월",
+  "guided": true,
+  "description": "붉은 달이 뜬 해, 천마신교 교주 위무량이 중원 침공을 선언합니다. 정도맹은 청운검선을 맹주로 모여 막으려 하지만, 맹 안에는 이미 마교와 손잡은 자가 있습니다.\n1차 정사마 대전 — 이 대전은 마교가 이깁니다. 그 안에서 누가 살아남아 무엇이 되는지는 당신의 선택에 달렸습니다.\n남궁휘·연소화·진무겸·혈영 가운데 한 명을 골라 5년의 난세를 겪습니다. 잘못된 선택은 이야기를 일찍 끝냅니다.",
+  "sects": [
+    "namgung",
+    "wudang",
+    "heukpung",
+    "haomun",
+    "tang",
+    "cheonma"
+  ],
+  "sect_overrides": {
+    "cheonma": {
+      "disciple_count": 40,
+      "max_disciples": 60,
+      "attitude": -90
+    },
+    "heukpung": {
+      "attitude": -20
+    }
+  },
+  "parameters": {
+    "time_limit_years": 5,
+    "legacy_enabled": false,
+    "exp_scale": 1.5,
+    "end_on_victory": true
+  },
+  "common_events": [
+    "bonds",
+    "manuals"
+  ],
+  "common_endings": false,
+  "victory_endings": [
+    "s1_beyond_blood_moon",
+    "s1_namgung_rebuilt",
+    "s1_lantern_refugees",
+    "s1_haomun_swallow",
+    "s1_demon_steward",
+    "s1_repentant_sword",
+    "s1_sheathed_blade",
+    "s1_demon_supreme",
+    "s1_shadow_of_heaven",
+    "s1_survivor",
+    "s1_fallen_to_demon"
+  ],
+  "playables": [
+    {
+      "npc": "npc_rival",
+      "start_role": "young_disciple",
+      "sect": "namgung",
+      "level": 3,
+      "morality": 66,
+      "summary": "남궁세가의 소가주. 피 끓는 후계자는 아버지의 그늘과 청운의 대사형 사이에서 흔들린다.\n아버지를 넘어 가문을 지킬 것인가, 복수에 눈멀 것인가.",
+      "bonds": {
+        "npc_namgung_lord": "MASTER_DISCIPLE",
+        "npc_namgung_lady": "FELLOW",
+        "npc_namgung_enforcer": "FELLOW",
+        "npc_senior_brother": "RIVALRY"
+      },
+      "arts": [
+        "manual_namgung_plum_sword"
+      ]
+    },
+    {
+      "npc": "npc_swallow",
+      "start_role": "wanderer",
+      "sect": "none",
+      "level": 3,
+      "morality": 66,
+      "region": "luoyang",
+      "summary": "비연검을 쓰는 떠돌이 여협. 전쟁이 시작되자 피난민들이 그녀를 따르기 시작한다.\n그들을 지킬 것인가, 혼자 살아남을 것인가.",
+      "bonds": {
+        "npc_innkeeper": "FRIEND",
+        "npc_iron_blade": "ACQUAINTANCE",
+        "npc_haomun_master": "ACQUAINTANCE"
+      },
+      "arts": [
+        "preset_soul_chase_sword"
+      ]
+    },
+    {
+      "npc": "npc_senior_brother",
+      "start_role": "manager",
+      "sect": "qingyun",
+      "level": 5,
+      "morality": 50,
+      "summary": "청운검선의 첫 제자이자 청운검파의 총관. 스무 해를 사부의 그림자로 살았다.\n마교의 손을 잡고 높은 자리에 오를 것인가, 마음을 돌려 사부를 지킬 것인가.",
+      "bonds": {
+        "npc_master": "MASTER_DISCIPLE",
+        "npc_healer": "FELLOW",
+        "npc_rival": "RIVALRY"
+      },
+      "arts": [
+        "manual_qingyun_cloud_sword"
+      ]
+    },
+    {
+      "npc": "npc_cheonma_envoy",
+      "start_role": "assassin",
+      "sect": "cheonma",
+      "level": 7,
+      "morality": 20,
+      "summary": "천마신교 혈영대주. 열 살에 천마에게 주워져 칼로 길러졌다.\n천마의 칼로 남을 것인가, 사랑을 위해 칼을 거둘 것인가, 천마를 넘볼 것인가.",
+      "bonds": {
+        "npc_cheonma": "MASTER_DISCIPLE",
+        "npc_haomun_master": "ACQUAINTANCE"
+      },
+      "arts": [
+        "manual_cheonma_blood_palm"
+      ]
+    }
+  ]
+}

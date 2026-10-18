@@ -1,0 +1,88 @@
+{
+  "id": "s3_ch_gyeol",
+  "title": "패장의 눈",
+  "description": "개봉 대전이 끝났습니다. 흑련의 소맹주 독고결이 무릎을 꿇고 당신 앞에 있습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s3_dokgo_gyeol",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s3_cheongha",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s3_kaifeng_battle",
+      "op": ">=",
+      "value": 1
+    },
+    {
+      "type": "flag",
+      "flag": "s3_ch_betrayed",
+      "value": false
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_dokgo_gyeol",
+      "text": "베어라. 아버지는 졌고, 나는 아무것도 아니다."
+    },
+    {
+      "speaker": "player",
+      "text": "당신은 아무것도 아닌 게 아니에요. 아직 아무것도 되지 않았을 뿐이에요."
+    }
+  ],
+  "choices": [
+    {
+      "label": "살려 준다 — 그도 흑련의 피해자다",
+      "message": "\"…왜 살려 주지?\" \"당신을 그 천하에서 꺼내러 왔다고 했잖아요.\" 도덕 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_ch_gyeol",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 10
+        },
+        {
+          "type": "add_relationship",
+          "target": "s3_dokgo_gyeol",
+          "bond_type": "ACQUAINTANCE",
+          "strength": 20
+        },
+        {
+          "type": "flag",
+          "flag": "s3_ch_spared_gyeol",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "무림맹의 법에 맡긴다",
+      "message": "맹의 장로들이 그를 데려갔습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_ch_gyeol",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s3_ch_judged_gyeol",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

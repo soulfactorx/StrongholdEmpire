@@ -1,0 +1,84 @@
+{
+  "id": "s2_su_gate_test",
+  "title": "흑련의 최후통첩",
+  "description": "흑련의 사자가 다시 왔습니다. 이번에는 오백의 무사와 함께. \"청운산을 흑련의 지부로 내놓으시오.\"",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_seokun",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_luoyang_battle",
+      "op": ">=",
+      "value": 1
+    },
+    {
+      "type": "flag",
+      "flag": "s2_su_defied",
+      "value": true
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_disciple",
+      "text": "장문인, 무사들이 산 아래를 가득 메웠습니다!"
+    },
+    {
+      "speaker": "player",
+      "text": "청하야, 너는 뒷길로 내려가거라. 무슨 일이 있어도 살아야 한다."
+    },
+    {
+      "speaker": "",
+      "text": "(어린 제자 청하) 싫어요, 사부님!"
+    }
+  ],
+  "choices": [
+    {
+      "label": "산문을 걸고 맞선다",
+      "message": "청운산의 종이 미친 듯이 울렸습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_su_gate_test",
+          "value": true
+        },
+        {
+          "type": "combat",
+          "combat": "s2_lotus_raid"
+        }
+      ]
+    },
+    {
+      "label": "제자들을 살리기 위해 산을 내준다",
+      "message": "청운의 이름은 남았습니다. 산은 잃었습니다. 도덕 -3",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_su_gate_test",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -3
+        },
+        {
+          "type": "flag",
+          "flag": "s2_su_lost_mountain",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

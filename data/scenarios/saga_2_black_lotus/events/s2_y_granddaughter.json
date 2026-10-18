@@ -1,0 +1,81 @@
+{
+  "id": "s2_y_granddaughter",
+  "title": "천마의 손녀",
+  "description": "늙은 천마가 강보에 싸인 아기를 당신에게 내밀었습니다. 천마의 하나뿐인 핏줄, 위설아.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_wi_muryang",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_hyeolyeong",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_lotus_rises",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s2_wi_muryang",
+      "text": "이 아이 이름은 설아다. …네가 지어 준 이름이 있었다지. 바닷가에서 죽은 그 여인의 이름."
+    },
+    {
+      "speaker": "player",
+      "text": "……"
+    },
+    {
+      "speaker": "s2_wi_muryang",
+      "text": "혈영. 나는 너를 칼로 길렀다. 이 아이는 칼이 아니게 해 다오."
+    }
+  ],
+  "choices": [
+    {
+      "label": "아기를 받아 안는다",
+      "message": "아기가 당신의 손가락을 꼭 쥐었습니다. 이름이… 설아라고 했습니다. 도덕 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_y_granddaughter",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 8
+        },
+        {
+          "type": "flag",
+          "flag": "s2_y_guardian",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "교의 시녀에게 맡긴다",
+      "message": "칼을 쥔 손으로 아기를 안을 수는 없습니다. 위무량 유대 -5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_y_granddaughter",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_wi_muryang",
+          "add": -5
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "id": "s3_seokun",
+  "display_name": "석운",
+  "title": "청운검파 장문인",
+  "sect_id": "qingyun",
+  "role": "LEADER",
+  "description": "피난길의 소년 석두. 흑련 천하의 스무 해 동안 청운산에서 조용히 제자를 길렀다.",
+  "level": 11,
+  "named": true,
+  "portrait": "portraits/npc_master.jpg",
+  "stats": {
+    "strength": 20,
+    "agility": 16,
+    "wisdom": 20,
+    "charisma": 18,
+    "internal_energy_max": 230,
+    "age": 58,
+    "morality": 74
+  },
+  "martial_arts": [
+    {
+      "id": "manual_qingyun_cloud_sword",
+      "min_level": 1
+    }
+  ],
+  "war_specialty": "DEFEND"
+}

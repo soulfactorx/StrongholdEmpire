@@ -1,0 +1,112 @@
+{
+  "id": "s2_hr_test",
+  "title": "맹주의 시험",
+  "description": "독고천이 사로잡은 무당파 제자 하나를 당신 앞에 꿇어앉혔습니다. \"흑련의 사람이라면 망설이지 않겠지.\"",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_dokgo_cheon",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_ma_hwarin",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_heaven_falls_ill",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s2_dokgo_cheon",
+      "text": "정파는 명분으로 묶고, 마교는 신앙으로 묶지. 흑련은 무엇으로 묶는지 아나?"
+    },
+    {
+      "speaker": "player",
+      "text": "…돈이요?"
+    },
+    {
+      "speaker": "s2_dokgo_cheon",
+      "text": "피다. 같이 피를 묻힌 사람은 서로를 배신하지 못하지."
+    }
+  ],
+  "choices": [
+    {
+      "label": "벤다",
+      "message": "맹주가 만족스럽게 고개를 끄덕였습니다. 독고천 유대 +15, 도덕 -15",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hr_test",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_dokgo_cheon",
+          "add": 15
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -15
+        }
+      ]
+    },
+    {
+      "label": "칼을 거두고 맹주를 똑바로 본다",
+      "message": "\"…재미있군.\" 독고천 유대 -5, 도덕 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hr_test",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_dokgo_cheon",
+          "add": -5
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 8
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hr_defied_test",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "베는 척하고 몰래 도망치게 한다",
+      "message": "피 묻은 옷만 남았습니다. 도덕 +5, 지혜 +2",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hr_test",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        },
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 2
+        }
+      ]
+    }
+  ]
+}

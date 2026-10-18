@@ -1,0 +1,9 @@
+{
+  "id": "s1_bad_traitor",
+  "title": "배신자의 최후",
+  "description": "마교와 주고받은 서신이 맹회의 탁자 위에 펼쳐졌습니다.\n변명할 틈도 없이 집법당의 검이 내려왔습니다. 역사는 당신을 '혈월의 배신자'로만 기억합니다.",
+  "tone": "tragedy",
+  "auto": false,
+  "conditions": [],
+  "final": true
+}

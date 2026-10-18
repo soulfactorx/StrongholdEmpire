@@ -1,0 +1,143 @@
+{
+  "id": "s2_lotus_reign",
+  "title": "흑련 천하",
+  "description": "흑련 4년 가을. 마교는 천산으로 물러났고, 흑련맹이 낙양에 맹부를 열었습니다. 정파의 남은 문파들은 숨을 죽였습니다.\n독고천이 천하에 선언했습니다. 「오늘부터 강호의 법은 흑련이 정한다.」",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_dokgo_cheon",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_luoyang_battle",
+      "op": ">=",
+      "value": 2
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s2_dokgo_cheon",
+      "text": "마화린, 그대의 공이 크다. 맹의 두 번째 자리를 주마. 다만… 남궁의 아들은 잊어라.",
+      "only": [
+        "s2_ma_hwarin"
+      ]
+    },
+    {
+      "speaker": "s2_namgung_un",
+      "text": "(서신) 화린, 강남으로 가자. 거기엔 흑련도 남궁도 없어.",
+      "only": [
+        "s2_ma_hwarin"
+      ]
+    },
+    {
+      "speaker": "s2_dokgo_cheon",
+      "text": "남궁 가주, 고개만 숙이면 세가는 남겨 두지.",
+      "only": [
+        "s2_namgung_hwi"
+      ]
+    },
+    {
+      "speaker": "s2_wi_muryang",
+      "text": "(천산에서, 마지막 숨을 몰아쉬며) 혈영… 반지를… 받아라.",
+      "only": [
+        "s2_hyeolyeong"
+      ]
+    },
+    {
+      "speaker": "s2_biyeon",
+      "text": "석두야, 흑련이 청운에 사람을 보낸대. 무릎을 꿇든, 산을 내놓든 하라고.",
+      "only": [
+        "s2_seokun"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "흑련의 법 아래 조용히 살아간다",
+      "message": "고개를 숙였지만 마음까지 숙이지는 않았습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_lotus_reign",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s2_endured",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "흑련의 법을 따르지 않는 이들을 숨겨 준다",
+      "message": "밤마다 문을 두드리는 손이 늘었습니다. 도덕 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_lotus_reign",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 8
+        },
+        {
+          "type": "flag",
+          "flag": "s2_sheltered",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "good",
+            "neutral"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "흑련에 옛 동료들의 은신처를 넘긴다",
+      "message": "금과 자리가 들어왔습니다. 도덕 -20",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_lotus_reign",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -20
+        },
+        {
+          "type": "flag",
+          "flag": "s2_informer",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_dokgo_cheon",
+          "add": 10
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "evil",
+            "neutral"
+          ]
+        }
+      ]
+    }
+  ]
+}

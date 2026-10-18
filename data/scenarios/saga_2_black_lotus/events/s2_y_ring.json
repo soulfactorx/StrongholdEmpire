@@ -1,0 +1,82 @@
+{
+  "id": "s2_y_ring",
+  "title": "천마의 반지",
+  "description": "천산으로 물러난 신교. 늙은 천마가 마지막 숨을 몰아쉬며 반지를 내밀었습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_wi_muryang",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_hyeolyeong",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_lotus_reign",
+      "op": ">=",
+      "value": 0
+    },
+    {
+      "type": "flag",
+      "flag": "s2_y_sold_cult",
+      "value": false
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s2_wi_muryang",
+      "text": "혈영… 너를 주운 게… 내 생에 가장 잘한 일이었다."
+    },
+    {
+      "speaker": "player",
+      "text": "교주…"
+    }
+  ],
+  "choices": [
+    {
+      "label": "반지를 받는다 — 교주가 된다",
+      "message": "새 천마가 되었습니다. 그리고 그 품에는 어린 설아가 있었습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_y_ring",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s2_y_heir",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "반지를 설아에게 남겨 두라고 한다",
+      "message": "\"교주는 이 아이입니다. 저는 지키겠습니다.\" 도덕 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_y_ring",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 8
+        },
+        {
+          "type": "flag",
+          "flag": "s2_y_regent",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

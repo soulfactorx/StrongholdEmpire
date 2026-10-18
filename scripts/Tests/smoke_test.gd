@@ -80,6 +80,8 @@ const RUNTIME_SEQUENCE: Array = [
 	["roles", "_test_role_actions_hub"],
 	["combat", "_test_combat_library"],
 	["events", "_test_story_arcs"],
+	["events", "_test_main_saga_system"],
+	["events", "_test_main_saga_paths"],
 	["roles", "_test_starting_sect"],
 	["roles", "_test_disciple_roster"],
 	["roles", "_test_disciple_roster_flow"],
@@ -158,7 +160,11 @@ func _run_runtime_tests() -> void:
 	GameSettings.action_preview = false
 	GameSettings.faction_report = false
 	# 각 검사가 끝까지 실행됐는지 확인한다. 스크립트 오류로 중단되면 완료 표시가 남지 않는다.
+	# 환경 변수 SMOKE_ONLY="검사1,검사2"를 주면 그 런타임 검사만 돌린다 (개발 중 빠른 확인용).
+	var only: PackedStringArray = OS.get_environment("SMOKE_ONLY").split(",", false)
 	for entry in RUNTIME_SEQUENCE:
+		if not only.is_empty() and not entry[1] in only:
+			continue
 		await _suites[entry[0]].call(entry[1])
 		_check(_completed.has(entry[1]), "%s 끝까지 실행" % entry[1])
 

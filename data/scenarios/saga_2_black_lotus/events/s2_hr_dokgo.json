@@ -1,0 +1,113 @@
+{
+  "id": "s2_hr_dokgo",
+  "title": "흑련맹주의 방",
+  "description": "낙양 대전의 승리 잔치가 끝난 밤. 독고천이 홀로 맹부의 방에 앉아 있습니다. 당신이 올 줄 알았다는 얼굴로.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_dokgo_cheon",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_ma_hwarin",
+      "value": true
+    },
+    {
+      "type": "flag",
+      "flag": "s2_hr_coup",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_luoyang_battle",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s2_dokgo_cheon",
+      "text": "앉아라. 술 한잔 하지. 네 아버지와도 이렇게 마셨다. 산채를 넘기던 날."
+    }
+  ],
+  "choices": [
+    {
+      "label": "검을 뽑는다",
+      "message": "\"마진의 딸이 이 정도일 줄은 알았지.\"",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hr_dokgo",
+          "value": true
+        },
+        {
+          "type": "combat",
+          "combat": "s2_dokgo_duel"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "character",
+          "field": "level",
+          "op": ">=",
+          "value": 10
+        }
+      ]
+    },
+    {
+      "label": "검을 뽑는다 — 지금 아니면 기회는 없다",
+      "message": "독고천이 웃었습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hr_dokgo",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s2_bad_lotus_blade"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "character",
+          "field": "level",
+          "op": "<",
+          "value": 10
+        }
+      ]
+    },
+    {
+      "label": "물러나 때를 더 기다린다",
+      "message": "\"현명하군. 아직은.\" 독고천 유대 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hr_dokgo",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_dokgo_cheon",
+          "add": 5
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hr_coup",
+          "value": false
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hr_second",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

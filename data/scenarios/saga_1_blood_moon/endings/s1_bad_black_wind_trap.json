@@ -1,0 +1,9 @@
+{
+  "id": "s1_bad_black_wind_trap",
+  "title": "흑풍의 덫",
+  "description": "마진의 금화를 받고 피난민을 산길로 이끌었습니다. 그 길 끝에서 기다린 것은 흑풍채의 칼이었습니다.\n\"수고했소, 여협. 그런데 입은 하나라도 적은 게 좋지.\"\n당신이 마지막으로 본 것은 피난민 아이들의 겁에 질린 눈이었습니다.",
+  "tone": "tragedy",
+  "auto": false,
+  "conditions": [],
+  "final": true
+}

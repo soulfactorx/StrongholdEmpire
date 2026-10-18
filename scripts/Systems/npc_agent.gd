@@ -102,7 +102,11 @@ static func get_officers(sect: SectData) -> Array[Dictionary]:
 	var info: Dictionary = SectRegistry.get_sect_info(sect.id)
 	for entry in info.get("officers", []):
 		if entry is Dictionary and NpcRoster.has_npc(str(entry.get("npc", ""))) and POST_NAMES.has(str(entry.get("post", ""))):
-			result.append({"npc": str(entry["npc"]), "post": str(entry["post"])})
+			# 시나리오에서 문주를 바꿨으면 문주 직책은 새 문주가 맡는다.
+			var npc_id: String = sect.leader_id if entry["post"] == "leader" and NpcRoster.has_npc(sect.leader_id) else str(entry["npc"])
+			if NpcRoster.is_hidden(npc_id):
+				continue
+			result.append({"npc": npc_id, "post": str(entry["post"])})
 	if result.is_empty() and NpcRoster.has_npc(sect.leader_id):
 		result.append({"npc": sect.leader_id, "post": "leader"})
 	return result
@@ -125,6 +129,9 @@ static func run_season(gm: Node) -> Array[Dictionary]:
 	for officer in get_officers(sect):
 		var npc_id: String = officer["npc"]
 		var post: String = officer["post"]
+		# 등장인물로 플레이 중이면 그 인물의 직책 일은 주인공이 한다.
+		if npc_id == gm.player_npc_id:
+			continue
 		var outcome: Dictionary = {}
 		match post:
 			"leader":

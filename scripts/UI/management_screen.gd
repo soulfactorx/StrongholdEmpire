@@ -440,14 +440,15 @@ func _update_character_display(character: CharacterData) -> void:
 		AudioManager.play_level_up()
 	_shown_level = character.level
 	_ensure_character_portrait()
-	character_portrait.texture = ArtAssets.role_portrait(character.role)
+	# 등장인물로 플레이하면 그 인물의 초상화
+	character_portrait.texture = ArtAssets.player_portrait(character)
 	character_portrait.visible = character_portrait.texture != null
 	character_name_label.text = "%s (%d세)" % [character.display_name, character.age]
 	# 지금 있는 지역 (경영 화면 배경도 그 지역의 그림으로)
 	character_role_label.text = "%s · 지역: %s" % [character.get_role_name(), GameManager.get_location_text()]
 	ArtAssets.set_background(self, ArtAssets.region_background(GameManager.player_region))
 	character_stats_label.text = (
-		"무력 %d | 신법 %d | 지혜 %d | 매력 %d\n내공 %d/%d | 전투력 %d | 도덕 %d | Lv.%d (경험 %d/%d)"
+		"무력 %d | 신법 %d | 지혜 %d | 매력 %d\n내공 %d/%d | 전투력 %d | 도덕 %d %s | Lv.%d (경험 %d/%d)"
 		% [
 			character.strength,
 			character.agility,
@@ -457,6 +458,7 @@ func _update_character_display(character: CharacterData) -> void:
 			character.internal_energy_max,
 			character.get_combat_power(),
 			character.morality,
+			character.get_alignment_name(),
 			character.level,
 			character.experience,
 			character.get_next_level_experience(),

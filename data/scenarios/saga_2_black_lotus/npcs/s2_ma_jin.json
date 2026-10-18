@@ -1,0 +1,21 @@
+{
+  "id": "s2_ma_jin",
+  "display_name": "마진",
+  "title": "흑풍채 전대 채주",
+  "sect_id": "heukpung",
+  "role": "WANDERER",
+  "description": "혈월의 난세를 줄타기로 살아남은 늙은 채주. 독고천에게 산채를 넘기고 딸의 앞날만 걱정한다.",
+  "level": 6,
+  "named": true,
+  "portrait": "portraits/npc_heukpung_chief.jpg",
+  "stats": {
+    "strength": 16,
+    "agility": 12,
+    "wisdom": 15,
+    "charisma": 14,
+    "internal_energy_max": 150,
+    "age": 63,
+    "morality": 30
+  },
+  "martial_arts": []
+}

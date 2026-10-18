@@ -1,0 +1,246 @@
+{
+  "id": "s1_demon_reign",
+  "title": "마교 천하",
+  "description": "혈월 4년 봄. 정도맹이 무너지고 청운검선은 행방불명이 되었습니다. 남궁천은 혈월의 밤에 전사했습니다.\n장강 북쪽의 모든 성에 천마신교의 깃발이 올랐습니다. 마교의 순찰대가 정파 잔당을 사냥하고, 마을마다 '귀순'의 방이 붙었습니다.\n살아남은 자들은 선택해야 합니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_cheonma",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 4
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_blood_night",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "",
+      "text": "남궁천의 장례는 치러지지 못했습니다. 그의 검만이 남궁세가로 돌아왔습니다.",
+      "only": [
+        "npc_rival"
+      ]
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "휘야… 아버지 검이야. 네가 들어.",
+      "only": [
+        "npc_rival"
+      ]
+    },
+    {
+      "speaker": "npc_healer",
+      "text": "사부님은… 돌아오실 거예요. 그렇죠, 사형?",
+      "only": [
+        "npc_senior_brother"
+      ]
+    },
+    {
+      "speaker": "npc_cheonma",
+      "text": "청운검선은 강했다. 그만한 적이 다시는 없겠지. (기침하며 피를 뱉는다)",
+      "only": [
+        "npc_cheonma_envoy"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "(교주의 기침에 피가 섞였다. 검선의 마지막 일검이 깊었구나.)",
+      "only": [
+        "npc_cheonma_envoy"
+      ]
+    },
+    {
+      "speaker": "npc_orphan",
+      "text": "누나, 우리 이제 어디로 가요?",
+      "only": [
+        "npc_swallow"
+      ]
+    },
+    {
+      "speaker": "npc_haomun_master",
+      "text": "난세에는 소식이 금보다 비싸지. 비연검, 하오문에 오지 않겠나?",
+      "only": [
+        "npc_swallow"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "저항한다 — 정파의 잔당을 모은다",
+      "message": "산속 동굴에 스무 명이 모였습니다. 작지만 꺼지지 않는 불입니다. 도덕 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_demon_reign",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 8
+        },
+        {
+          "type": "flag",
+          "flag": "s1_resistance",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_cheonma_envoy",
+          "value": false
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_opened_gate",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "순응한다 — 고개를 숙이고 때를 기다린다",
+      "message": "귀순 방 아래에 이름을 적지 않고 조용히 지나쳤습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_demon_reign",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s1_endured",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_cheonma_envoy",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "투항한다 — 마교에 이름을 올린다",
+      "message": "마교의 문서에 이름을 적었습니다. 옛 동료의 은신처도 함께. 도덕 -20",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_demon_reign",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -20
+        },
+        {
+          "type": "flag",
+          "flag": "s1_surrendered",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_cheonma",
+          "add": 10
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_cheonma_envoy",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "교주의 오른팔로 잔당 사냥을 지휘한다",
+      "message": "당신이 지나간 마을에는 귀순의 방만 남았습니다. 도덕 -10, 위무량 유대 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_demon_reign",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -10
+        },
+        {
+          "type": "bond",
+          "target": "npc_cheonma",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hy_hunter",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_cheonma_envoy",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "잔당 사냥에서 일부러 길을 비켜 준다",
+      "message": "쫓던 정파 아이들이 숲으로 사라지는 것을 모른 척했습니다. 도덕 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_demon_reign",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hy_mercy",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_cheonma_envoy",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "숨을 죽이고 세상이 어디로 가는지 지켜본다",
+      "message": "마교의 깃발이 바람에 펄럭였습니다. 경험 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_demon_reign",
+          "value": true
+        },
+        {
+          "type": "experience",
+          "amount": 10
+        }
+      ]
+    }
+  ]
+}

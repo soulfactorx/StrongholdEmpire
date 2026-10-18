@@ -1,0 +1,58 @@
+{
+  "id": "s3_rescue",
+  "title": "처형장의 첫 검",
+  "player_position": [
+    3,
+    5
+  ],
+  "enemies": [
+    {
+      "npc": "npc_bandit",
+      "position": [
+        12,
+        3
+      ],
+      "name": "흑련 형리 갑"
+    },
+    {
+      "npc": "npc_bandit",
+      "position": [
+        12,
+        7
+      ],
+      "name": "흑련 형리 을"
+    },
+    {
+      "npc": "npc_shadow_blade",
+      "position": [
+        14,
+        5
+      ],
+      "name": "흑련 사냥개"
+    }
+  ],
+  "terrain": {
+    "HIGH": [
+      [
+        8,
+        4
+      ],
+      [
+        8,
+        5
+      ]
+    ]
+  },
+  "enemy_hp_scale": 0.6,
+  "enemy_damage_scale": 0.6,
+  "rewards": {
+    "experience": 60,
+    "reputation": 8
+  },
+  "defeat_penalty": {
+    "reputation": 3,
+    "injury_ratio": 0.4
+  },
+  "victory_flag": "s3_ch_rescued",
+  "defeat_flag": "s3_ch_captured"
+}

@@ -1,0 +1,254 @@
+{
+  "id": "s1_black_wind_offer",
+  "title": "흑풍채의 줄타기",
+  "description": "혈월 2년 봄. 흑풍채주 마진이 정도맹과 천마신교 양쪽에 사람을 보냈습니다.\n「값을 더 부르는 쪽에 흑풍의 칼을 팔겠소.」 마진의 사자가 당신에게도 찾아왔습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_heukpung_chief",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 2
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_alliance",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_heukpung_chief",
+      "text": "정파는 명분을 주고 마교는 금을 준다지. 나는 둘 다 받을 생각이오."
+    },
+    {
+      "speaker": "npc_heukpung_second",
+      "text": "채주, 양다리는 언젠가 찢어집니다."
+    },
+    {
+      "speaker": "npc_heukpung_chief",
+      "text": "그러니 다리가 찢어지기 전에 어느 쪽이 이길지 보는 거다, 독사."
+    },
+    {
+      "speaker": "npc_namgung_lord",
+      "text": "흑풍 따위와 손을 잡느니 남궁의 이름을 지우겠다.",
+      "only": [
+        "npc_rival"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "아버지, 그럼 제가 먼저 그 산채를 쓸어버리겠습니다!",
+      "only": [
+        "npc_rival"
+      ]
+    },
+    {
+      "speaker": "npc_namgung_lord",
+      "text": "휘야! 혼자 나서는 것은 용기가 아니라 객기다.",
+      "only": [
+        "npc_rival"
+      ]
+    },
+    {
+      "speaker": "npc_haomun_master",
+      "text": "(웃으며) 마진이 양쪽에 팔면, 나는 그 소식을 양쪽에 팔지.",
+      "only": [
+        "npc_swallow",
+        "npc_cheonma_envoy"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "사파와 손잡는 일은 없다 — 사자를 돌려보낸다",
+      "message": "마진의 사자가 침을 뱉고 돌아갔습니다. 도덕 +4, 흑풍채 태도 -10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_black_wind_offer",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 4
+        },
+        {
+          "type": "world_sect",
+          "sect": "heukpung",
+          "field": "attitude",
+          "add": -10
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "good",
+            "neutral"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "마진의 칼을 사서 마교를 막는다",
+      "message": "흑풍채가 정도맹 편에 섰습니다… 금화가 마르지 않는 동안은. 금화 -40, 흑풍채 태도 +20",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_black_wind_offer",
+          "value": true
+        },
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -40
+        },
+        {
+          "type": "world_sect",
+          "sect": "heukpung",
+          "field": "attitude",
+          "add": 20
+        },
+        {
+          "type": "flag",
+          "flag": "s1_bought_heukpung",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_cheonma_envoy",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "마진에게 마교 쪽 값을 더 얹어 준다",
+      "message": "흑풍채가 정도맹의 뒤를 칠 겁니다. 도덕 -8, 위무량 유대 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_black_wind_offer",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -8
+        },
+        {
+          "type": "bond",
+          "target": "npc_cheonma",
+          "add": 5
+        },
+        {
+          "type": "flag",
+          "flag": "s1_heukpung_to_cult",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_cheonma_envoy",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "마진과 몰래 거래한다 — 혈월의 밤에 맹의 후방을 비워 달라",
+      "message": "누구에게도 말할 수 없는 약속이 하나 늘었습니다. 도덕 -10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_black_wind_offer",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -10
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_heukpung_deal",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_senior_brother",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_pact",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "흑풍채 산채로 단신 쳐들어간다",
+      "message": "아버지의 만류가 귀에 들어오지 않았습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_black_wind_offer",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 2
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_npc_rival",
+          "value": true
+        }
+      ],
+      "branches": [
+        {
+          "chance": 45,
+          "message": "산채의 문은 열려 있었습니다. 너무 쉽게.",
+          "effects": [
+            {
+              "type": "end_game",
+              "ending": "s1_bad_reckless"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "소문만 듣고 넘긴다",
+      "message": "사파의 일은 사파가 알아서 하겠지요. 경험 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_black_wind_offer",
+          "value": true
+        },
+        {
+          "type": "experience",
+          "amount": 10
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,213 @@
+{
+  "id": "s3_uprising",
+  "title": "반흑련의 불씨",
+  "description": "청천 원년 가을. 개봉 외곽의 마을에서 흑련의 형리들이 습격당했습니다. 처형될 사람들이 풀려났습니다.\n누가 했는지 아무도 모르지만, 사람들은 그것을 '청천의 검'이라 불렀습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s3_dokgo_gyeol",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s3_tyranny",
+      "op": ">=",
+      "value": 2
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_cheongha",
+      "text": "(처형대 앞에서) 그 사람들을 놓아주세요. 아니면 제가 놓아 드리겠습니다.",
+      "only": [
+        "s3_namgung_yeon",
+        "s3_dokgo_gyeol",
+        "s3_wi_seola"
+      ]
+    },
+    {
+      "speaker": "s3_dokgo_gyeol",
+      "text": "청운산의 계집이로군. 흑련의 사냥개들을 풀어라.",
+      "only": [
+        "s3_cheongha",
+        "s3_namgung_yeon",
+        "s3_wi_seola"
+      ]
+    },
+    {
+      "speaker": "npc_disciple",
+      "text": "사저, 정말 가시는 거예요? 사부님이 아시면—",
+      "only": [
+        "s3_cheongha"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "사부님은 아실 거야. 그래서 나를 가르치신 거니까.",
+      "only": [
+        "s3_cheongha"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "처형장으로 간다 — 내가 그 검이 된다",
+      "message": "처형대 앞에서 검을 뽑았습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_uprising",
+          "value": true
+        },
+        {
+          "type": "combat",
+          "combat": "s3_rescue"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_cheongha",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "봉기한 사람들에게 남궁의 무사를 보낸다",
+      "message": "남궁의 매화 문장이 스무 해 만에 싸움터에 나섰습니다. 명성 +5, 도덕 +3",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_uprising",
+          "value": true
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 5
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 3
+        },
+        {
+          "type": "flag",
+          "flag": "s3_ny_sent_aid",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_namgung_yeon",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "봉기한 마을을 불태워 본보기로 삼는다",
+      "message": "개봉 외곽의 하늘이 붉었습니다. 도덕 -15",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_uprising",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -15
+        },
+        {
+          "type": "flag",
+          "flag": "s3_dg_burned",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_dokgo_gyeol",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "봉기의 주모자를 몰래 놓아준다",
+      "message": "아무도 모르게 문을 열어 두었습니다. 도덕 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_uprising",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 8
+        },
+        {
+          "type": "flag",
+          "flag": "s3_dg_released",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_dokgo_gyeol",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "봉기한 사람들에게 신교의 의원을 보낸다",
+      "message": "마교의 의원이 정파의 상처를 꿰맸습니다. 도덕 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_uprising",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 8
+        },
+        {
+          "type": "flag",
+          "flag": "s3_sa_healers",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_wi_seola",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "소식을 듣는다",
+      "message": "불씨가 번지고 있습니다. 경험 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_uprising",
+          "value": true
+        },
+        {
+          "type": "experience",
+          "amount": 10
+        }
+      ]
+    }
+  ]
+}

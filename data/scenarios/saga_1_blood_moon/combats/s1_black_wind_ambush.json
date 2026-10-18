@@ -1,0 +1,65 @@
+{
+  "id": "s1_black_wind_ambush",
+  "title": "흑풍채의 매복",
+  "player_position": [
+    3,
+    5
+  ],
+  "enemies": [
+    {
+      "npc": "npc_heukpung_second",
+      "position": [
+        12,
+        5
+      ]
+    },
+    {
+      "npc": "npc_bandit",
+      "position": [
+        13,
+        3
+      ],
+      "name": "흑풍 도적 갑"
+    },
+    {
+      "npc": "npc_bandit",
+      "position": [
+        13,
+        7
+      ],
+      "name": "흑풍 도적 을"
+    }
+  ],
+  "terrain": {
+    "FOREST": [
+      [
+        8,
+        2
+      ],
+      [
+        8,
+        3
+      ],
+      [
+        9,
+        7
+      ],
+      [
+        9,
+        8
+      ]
+    ]
+  },
+  "enemy_hp_scale": 0.6,
+  "enemy_damage_scale": 0.6,
+  "rewards": {
+    "experience": 50,
+    "reputation": 5
+  },
+  "defeat_penalty": {
+    "gold": 20,
+    "injury_ratio": 0.4
+  },
+  "victory_flag": "s1_so_ambush_won",
+  "defeat_flag": "s1_so_ambush_lost"
+}

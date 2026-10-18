@@ -1,0 +1,92 @@
+{
+  "id": "s1_hy_mugyeom",
+  "title": "굶주린 눈",
+  "description": "맹회에서 본 청운검파의 대사형. 그의 눈에는 맹세보다 야심이 더 많았습니다. 교주는 문 하나를 열 사람이 필요합니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_senior_brother",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_cheonma_envoy",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_alliance",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_senior_brother",
+      "text": "마교의 개가 청운산까지 무슨 볼일이오."
+    },
+    {
+      "speaker": "player",
+      "text": "그대를 몰라본 자들을 떠나라는 말을 전하러 왔소."
+    },
+    {
+      "speaker": "npc_senior_brother",
+      "text": "……한 계절만 생각할 시간을 주시오."
+    }
+  ],
+  "choices": [
+    {
+      "label": "진무겸을 포섭한다",
+      "message": "\"혈월의 밤에 서문을 여시오. 그대는 중원의 총관이 된다.\" 진무겸이 서신을 받았습니다. 위무량 유대 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hy_mugyeom",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_cheonma",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hy_turned_mugyeom",
+          "value": true
+        },
+        {
+          "type": "add_relationship",
+          "target": "npc_senior_brother",
+          "bond_type": "ACQUAINTANCE",
+          "strength": 25
+        }
+      ]
+    },
+    {
+      "label": "하오문을 통해 맹의 기밀을 산다",
+      "message": "비싸지만 확실한 길입니다. 금화 -30",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hy_mugyeom",
+          "value": true
+        },
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -30
+        },
+        {
+          "type": "bond",
+          "target": "npc_haomun_master",
+          "add": 10
+        }
+      ]
+    }
+  ]
+}

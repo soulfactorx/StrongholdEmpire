@@ -1,0 +1,27 @@
+{
+  "id": "s2_namgung_hwi",
+  "display_name": "남궁휘",
+  "title": "남궁세가 가주",
+  "sect_id": "namgung",
+  "role": "LEADER",
+  "description": "혈월의 밤에 아버지를 잃고 불탄 가문을 다시 세운 가주. 스물다섯 해 동안 단 한 번도 무릎 꿇지 않았다.",
+  "level": 10,
+  "named": true,
+  "portrait": "portraits/npc_namgung_lord.jpg",
+  "stats": {
+    "strength": 20,
+    "agility": 17,
+    "wisdom": 17,
+    "charisma": 18,
+    "internal_energy_max": 220,
+    "age": 44,
+    "morality": 68
+  },
+  "martial_arts": [
+    {
+      "id": "manual_namgung_plum_sword",
+      "min_level": 1
+    }
+  ],
+  "war_specialty": "DEFEND"
+}

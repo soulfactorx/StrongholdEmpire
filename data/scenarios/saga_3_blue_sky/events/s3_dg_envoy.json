@@ -1,0 +1,73 @@
+{
+  "id": "s3_dg_envoy",
+  "title": "성녀의 사자",
+  "description": "천산 신교의 사자가 흑련 맹부에 왔습니다. 「신교는 흑련과 싸우지 않겠다. 흑련도 천산을 넘지 말라.」",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s3_wi_seola",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s3_dokgo_gyeol",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s3_cult_reborn_ev",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "사자를 베어 답한다",
+      "message": "천산과의 전쟁이 시작되었습니다. 도덕 -10, 천마신교 태도 -30",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_dg_envoy",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -10
+        },
+        {
+          "type": "world_sect",
+          "sect": "cheonma",
+          "field": "attitude",
+          "add": -30
+        }
+      ]
+    },
+    {
+      "label": "아버지 몰래 불가침을 약속한다",
+      "message": "흑련의 북쪽이 조용해졌습니다. 도덕 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_dg_envoy",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        },
+        {
+          "type": "flag",
+          "flag": "s3_dg_pact_cult",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

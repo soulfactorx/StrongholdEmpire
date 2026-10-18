@@ -1,0 +1,85 @@
+{
+  "id": "s3_ch_master",
+  "title": "사부의 그림자",
+  "description": "사부 석운이 청운산의 옛이야기를 들려주었습니다. 피난길의 소년, 그를 거둔 여협, 그리고 다시 불탄 산.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s3_seokun",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s3_cheongha",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s3_tyranny",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_seokun",
+      "text": "나를 거둔 누나는 늘 말했다. 아무도 버리지 말라고. 그게 청운의 검이다."
+    },
+    {
+      "speaker": "player",
+      "text": "그분은 지금 어디 계세요?"
+    },
+    {
+      "speaker": "s3_seokun",
+      "text": "하오문의 비연. 강호의 비밀을 다 아는 분이지. 아마 지금도 우리를 보고 계실 게다."
+    }
+  ],
+  "choices": [
+    {
+      "label": "사부의 검을 이어받겠다고 맹세한다",
+      "message": "\"내 검이 아니라 네 검을 써라.\" 석운 유대 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_ch_master",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s3_seokun",
+          "add": 10
+        },
+        {
+          "type": "experience",
+          "amount": 20
+        }
+      ]
+    },
+    {
+      "label": "사부께 왜 스무 해를 숨어 지냈는지 묻는다",
+      "message": "\"살아야 다음이 있으니까. 너라는 다음이.\" 지혜 +2",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_ch_master",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 2
+        },
+        {
+          "type": "bond",
+          "target": "s3_seokun",
+          "add": 5
+        }
+      ]
+    }
+  ]
+}

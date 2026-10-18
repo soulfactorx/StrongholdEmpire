@@ -1,0 +1,102 @@
+{
+  "id": "s2_finale_hw",
+  "title": "남궁휘 — 장의 끝",
+  "description": "흑련 5년 봄. 남궁세가의 매화가 피었습니다. 늙은 가주의 이야기가 한 장을 닫으려 합니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_namgung_un",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_namgung_hwi",
+      "value": true
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 5
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_lotus_reign",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "손녀에게 매화검법을 가르친다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_finale_hw",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s2_righteous_lantern"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "good",
+            "neutral"
+          ]
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hw_submitted",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "흑련 아래서 가문의 이름을 지킨다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_finale_hw",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s2_survivor"
+        }
+      ]
+    },
+    {
+      "label": "흑련의 개가 된다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_finale_hw",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s2_lotus_hound"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "evil"
+          ]
+        }
+      ]
+    }
+  ]
+}

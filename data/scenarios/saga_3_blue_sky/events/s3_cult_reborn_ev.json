@@ -1,0 +1,186 @@
+{
+  "id": "s3_cult_reborn_ev",
+  "title": "천산의 성녀",
+  "description": "청천 2년 봄. 천산의 천마신교가 스무 해 만에 문을 열었습니다. 새 교주는 천마의 손녀, 성녀 위설아.\n「신교는 흑련과 싸운다. 그러나 정파와 싸우지 않는다.」 강호가 술렁였습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s3_wi_seola",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 2
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s3_uprising",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_wi_seola",
+      "text": "할아버지 위무량은 중원을 피로 얻었습니다. 저는 그 피를 씻으려 합니다.",
+      "only": [
+        "s3_cheongha",
+        "s3_namgung_yeon",
+        "s3_dokgo_gyeol"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "할아버지 위무량은 중원을 피로 얻었습니다. 저는 그 피를 씻으려 합니다.",
+      "only": [
+        "s3_wi_seola"
+      ]
+    },
+    {
+      "speaker": "s3_hyeolyeong",
+      "text": "(성녀 뒤에서) …설아야, 네 이름을 지은 사람이 들었으면 좋아했을 게다."
+    },
+    {
+      "speaker": "s3_dokgo_cheon",
+      "text": "마교의 계집이 감히 화친을 말한다고? 결아, 천산부터 짓밟아라.",
+      "only": [
+        "s3_dokgo_gyeol"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "신교의 손을 믿어 본다",
+      "message": "적의 적이 친구가 될 수 있을지도 모릅니다. 도덕 +3",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_cult_reborn_ev",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 3
+        },
+        {
+          "type": "flag",
+          "flag": "s3_trust_cult",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_wi_seola",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "마교는 마교다 — 믿지 않는다",
+      "message": "백 년의 원한은 쉽게 지워지지 않습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_cult_reborn_ev",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s3_distrust_cult",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_wi_seola",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "천하에 화친의 서신을 보낸다",
+      "message": "정파의 문파들에 신교의 서신이 닿았습니다. 도덕 +5, 명성 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_cult_reborn_ev",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 5
+        },
+        {
+          "type": "flag",
+          "flag": "s3_sa_letters",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_wi_seola",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "교도들에게 흑련과의 전쟁을 선포한다",
+      "message": "천산이 함성으로 울렸습니다. 도덕 -5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_cult_reborn_ev",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -5
+        },
+        {
+          "type": "flag",
+          "flag": "s3_sa_war",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_wi_seola",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "소식을 듣는다",
+      "message": "천산의 바람이 남쪽으로 불어옵니다. 경험 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_cult_reborn_ev",
+          "value": true
+        },
+        {
+          "type": "experience",
+          "amount": 10
+        }
+      ]
+    }
+  ]
+}

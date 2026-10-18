@@ -1,0 +1,86 @@
+{
+  "id": "s3_sa_story",
+  "title": "늙은 칼의 이야기",
+  "description": "늙은 혈영이 처음으로 옛이야기를 들려주었습니다. 붉은 달, 매화나무 아래의 여인, 그리고 그녀의 이름.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s3_hyeolyeong",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s3_wi_seola",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s3_tyranny",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_hyeolyeong",
+      "text": "그 사람이 나한테 이름을 지어 주겠다고 했지. 끝내 못 들었다. 그 전에 네 할아버지의 칼이 되었으니까."
+    },
+    {
+      "speaker": "player",
+      "text": "그래서 제 이름을 설아라고 지으셨어요?"
+    },
+    {
+      "speaker": "s3_hyeolyeong",
+      "text": "네 할아버지가 지었다. 내가 그 사람 이야기를 한 번 했을 뿐인데. …그 늙은이도 사람이었던 게지."
+    }
+  ],
+  "choices": [
+    {
+      "label": "그 여인의 이름을 물려받은 뜻을 새긴다",
+      "message": "\"설… 그 사람처럼 피 흘리는 사람은 누구든 사람으로 보라는 거군요.\" 도덕 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_sa_story",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 8
+        },
+        {
+          "type": "bond",
+          "target": "s3_hyeolyeong",
+          "add": 10
+        }
+      ]
+    },
+    {
+      "label": "할아버지 위무량의 칼을 꺼내 본다",
+      "message": "천마의 칼은 여전히 무거웠습니다. 무력 +2, 도덕 -3",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_sa_story",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "strength",
+          "add": 2
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -3
+        }
+      ]
+    }
+  ]
+}

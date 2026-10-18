@@ -1,0 +1,119 @@
+{
+  "id": "s3_finale_ny",
+  "title": "남궁연 — 삼란의 끝",
+  "description": "청천 5년 봄. 남궁세가의 매화가 개봉에도 피었습니다. 백 년의 이야기가 마지막 장을 닫으려 합니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s3_namgung_un",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s3_namgung_yeon",
+      "value": true
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 5
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s3_new_dawn",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_namgung_un",
+      "text": "연아, 할아버지께 인사드리자. 봄이 왔다고."
+    }
+  ],
+  "choices": [
+    {
+      "label": "정·사·마를 모아 무림맹주가 된다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_finale_ny",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s3_murim_supreme"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "good"
+          ]
+        },
+        {
+          "type": "flag",
+          "flag": "s3_ny_leader",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s3_kaifeng_won",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "level",
+          "op": ">=",
+          "value": 9
+        }
+      ]
+    },
+    {
+      "label": "남궁의 깃발을 개봉에 올린다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_finale_ny",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s3_namgung_return"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "good",
+            "neutral"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "조용히 세가로 돌아간다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_finale_ny",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s3_survivor"
+        }
+      ]
+    }
+  ]
+}

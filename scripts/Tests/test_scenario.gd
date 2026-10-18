@@ -203,7 +203,38 @@ func _test_new_game_screen_scenarios() -> void:
 	await process_frame
 	await process_frame
 	_check(bus.game_over.get_connections().is_empty() and bus.turn_advanced.get_connections().is_empty(), "경영 화면을 떠나면 신호 연결 해제")
-	root.get_node("GameManager").start_new_game("정리", "young_disciple")
+
+	# 등장인물이 있는 시나리오(메인 시나리오): 역할 대신 인물을 고르고, 이름·소속은 정해져 있다.
+	SceneRouter.goto(tree, SceneRouter.NEW_GAME)
+	await process_frame
+	await process_frame
+	screen = current_scene
+	var before_id: String = ScenarioManager.current_id
+	var saga_index: int = ScenarioManager.list_scenarios().map(func(x): return x["id"]).find("saga_2_black_lotus")
+	screen.scenario_list.select(saga_index)
+	screen._on_scenario_selected(saga_index)
+	_check(screen.role_list.item_count == 4 and screen.role_list.get_item_text(0).begins_with("마화린"), "새 게임 화면: 등장인물 목록 (시나리오 전용 인물도)")
+	screen.role_list.select(1)
+	screen._on_role_selected(1)
+	_check(screen.name_edit.text == "남궁휘" and not screen.name_edit.editable and screen.sect_option.disabled, "새 게임 화면: 등장인물의 이름·소속은 고정")
+	_check(screen.get_faction_setup().get("playable", "") == "s2_namgung_hwi" and screen.role_desc_label.text.contains("44세"), "새 게임 화면: 등장인물 소개와 시작 설정")
+	_check(ScenarioManager.current_id == before_id, "등장인물을 둘러봐도 현재 게임은 그대로")
+	screen._on_start_pressed()
+	await process_frame
+	await process_frame
+	var gm: Node = root.get_node("GameManager")
+	_check(gm.player_npc_id == "s2_namgung_hwi" and gm.player_character.display_name == "남궁휘" and gm.player_sect.id == "namgung", "새 게임 화면에서 등장인물로 시작")
+	# 다른 시나리오로 돌아가면 이름을 다시 쓸 수 있다.
+	SceneRouter.goto(tree, SceneRouter.NEW_GAME)
+	await process_frame
+	await process_frame
+	screen = current_scene
+	screen._on_scenario_selected(saga_index)
+	screen._on_scenario_selected(0)
+	_check(screen.name_edit.editable and screen.name_edit.text != "마화린", "역할 시나리오로 돌아가면 이름 입력")
+	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
+	await process_frame
+	gm.start_new_game("정리", "young_disciple")
 	_completed["_test_new_game_screen_scenarios"] = true
 
 

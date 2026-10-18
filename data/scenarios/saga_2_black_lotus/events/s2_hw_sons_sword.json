@@ -1,0 +1,110 @@
+{
+  "id": "s2_hw_sons_sword",
+  "title": "아들의 검",
+  "description": "남궁운이 마교 순찰대를 쳐서 포로로 잡힌 정파 아이들을 구하겠다고 나섰습니다. 스물다섯 해 전의 당신처럼.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_namgung_un",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_namgung_hwi",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_lotus_rises",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s2_namgung_un",
+      "text": "아버지도 젊을 때 흑풍채에 혼자 쳐들어가려 하셨다면서요."
+    },
+    {
+      "speaker": "player",
+      "text": "…누가 그러더냐."
+    },
+    {
+      "speaker": "s2_namgung_un",
+      "text": "고모님이 살아 계실 때요. 아버지는 그때 할아버지 말을 들었다고."
+    },
+    {
+      "speaker": "player",
+      "text": "그래. 들었지. 그래서 살았다. 너도 그랬으면 좋겠구나."
+    }
+  ],
+  "choices": [
+    {
+      "label": "함께 간다",
+      "message": "아비와 아들이 나란히 검을 뽑았습니다. 남궁운 유대 +10, 도덕 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hw_sons_sword",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_namgung_un",
+          "add": 10
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        },
+        {
+          "type": "experience",
+          "amount": 30
+        }
+      ]
+    },
+    {
+      "label": "막는다 — 아버지가 그랬듯이",
+      "message": "\"…아버지는 늘 막기만 하시는군요.\" 남궁운 유대 -10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hw_sons_sword",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_namgung_un",
+          "add": -10
+        }
+      ]
+    },
+    {
+      "label": "혼자 보내고 뒤에서 지켜본다",
+      "message": "아들은 해냈습니다. 당신이 뒤에서 벤 세 명은 모르는 채로. 남궁운 유대 +5, 명성 +3",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hw_sons_sword",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_namgung_un",
+          "add": 5
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 3
+        }
+      ]
+    }
+  ]
+}

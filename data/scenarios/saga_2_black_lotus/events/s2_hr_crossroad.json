@@ -1,0 +1,115 @@
+{
+  "id": "s2_hr_crossroad",
+  "title": "꽃과 칼",
+  "description": "독고천이 은밀히 당신을 불렀습니다. \"남궁 가주의 목을 가져오면 맹의 두 번째 자리를 주마.\"\n같은 날 남궁운의 서신이 왔습니다. 「강남으로 가자.」",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_dokgo_cheon",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_ma_hwarin",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_black_lotus_pact",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s2_namgung_un",
+      "text": "(서신) 사파니 정파니, 그건 우리 아버지들의 싸움이야. 우리 싸움이 아니야."
+    },
+    {
+      "speaker": "s2_ma_jin",
+      "text": "화린아, 맹주의 두 번째 자리는 맹주의 칼이 제일 먼저 닿는 자리다."
+    }
+  ],
+  "choices": [
+    {
+      "label": "맹주의 명을 받든다",
+      "message": "남궁운의 서신을 불에 넣었습니다. 도덕 -10, 독고천 유대 +15",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hr_crossroad",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -10
+        },
+        {
+          "type": "bond",
+          "target": "s2_dokgo_cheon",
+          "add": 15
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hr_second",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "맹주의 자리를 노린다 — 때를 기다린다",
+      "message": "웃으며 고개를 숙였습니다. 속으로 칼을 갈면서. 도덕 -5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hr_crossroad",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -5
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hr_coup",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "남궁운에게 간다",
+      "message": "\"…강남은 따뜻해요?\" 도덕 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hr_crossroad",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hr_elope",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s2_hr_loves_un",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

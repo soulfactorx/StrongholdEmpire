@@ -1,0 +1,31 @@
+{
+  "id": "s2_hyeolyeong",
+  "display_name": "혈영",
+  "title": "천마신교 혈영대주",
+  "sect_id": "cheonma",
+  "role": "MANAGER",
+  "description": "천마의 칼. 한때 칼을 거두었으나 아내를 잃고 신교로 돌아왔다. 늙은 천마 대신 교를 지킨다.",
+  "level": 12,
+  "named": true,
+  "portrait": "portraits/npc_cheonma_envoy.jpg",
+  "stats": {
+    "strength": 20,
+    "agility": 24,
+    "wisdom": 17,
+    "charisma": 12,
+    "internal_energy_max": 240,
+    "age": 54,
+    "morality": 30
+  },
+  "martial_arts": [
+    {
+      "id": "manual_cheonma_blood_palm",
+      "min_level": 1
+    },
+    {
+      "id": "mod_thunder_palm",
+      "min_level": 1
+    }
+  ],
+  "war_specialty": "CHARGE"
+}

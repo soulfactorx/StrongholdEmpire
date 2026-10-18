@@ -1,0 +1,141 @@
+{
+  "id": "s3_finale_ch",
+  "title": "청하 — 삼란의 끝",
+  "description": "청천 5년 봄. 청운산의 종이 맑게 울립니다. 백 년의 이야기가 마지막 장을 닫으려 합니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s3_seokun",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s3_cheongha",
+      "value": true
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 5
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s3_new_dawn",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_seokun",
+      "text": "청하야, 하늘이 맑다. 이제 네 하늘이다."
+    }
+  ],
+  "choices": [
+    {
+      "label": "정·사·마를 모아 무림맹주가 된다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_finale_ch",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s3_murim_supreme"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "good"
+          ]
+        },
+        {
+          "type": "flag",
+          "flag": "s3_ch_leader",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s3_kaifeng_won",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "level",
+          "op": ">=",
+          "value": 9
+        }
+      ]
+    },
+    {
+      "label": "무림맹의 검으로 남는다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_finale_ch",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s3_blue_sky_sword"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "good",
+            "neutral"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "성녀와 함께 화친의 길을 연다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_finale_ch",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s3_saintess_peace"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s3_ch_sa_friends",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "조용히 산으로 돌아간다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_finale_ch",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s3_survivor"
+        }
+      ]
+    }
+  ]
+}

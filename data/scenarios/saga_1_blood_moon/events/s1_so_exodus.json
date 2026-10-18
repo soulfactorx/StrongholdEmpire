@@ -1,0 +1,117 @@
+{
+  "id": "s1_so_exodus",
+  "title": "장강을 건너",
+  "description": "혈월의 밤 이후, 장강 북쪽은 마교의 땅이 되었습니다. 피난민 삼천 명이 당신만 바라보고 있습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_orphan",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_swallow",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_blood_night",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_orphan",
+      "text": "누나, 나 이제 검 들 수 있어요. 뒤에서 아이들 지킬게요."
+    },
+    {
+      "speaker": "player",
+      "text": "…그래, 석두. 네가 뒤를 맡아."
+    },
+    {
+      "speaker": "npc_innkeeper",
+      "text": "소화야, 객잔은 버렸다. 나도 따라가마. 밥은 누가 해 먹이니."
+    }
+  ],
+  "choices": [
+    {
+      "label": "행렬의 맨 앞에 선다 — 모두 강남으로",
+      "message": "배를 구하고, 길을 열고, 밤마다 순찰대를 따돌렸습니다. 도덕 +10, 명성 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_so_exodus",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 10
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s1_so_led",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "길만 알려 주고 혼자 간다",
+      "message": "\"각자 살아남아요.\" 도덕 -8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_so_exodus",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -8
+        },
+        {
+          "type": "flag",
+          "flag": "s1_so_left",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "마교 순찰대에 피난로를 팔아 넘긴다",
+      "message": "금화가 쏟아졌습니다. 그리고 비명도. 도덕 -25, 금화 +150",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_so_exodus",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -25
+        },
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": 150
+        },
+        {
+          "type": "flag",
+          "flag": "s1_so_sold_refugees",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

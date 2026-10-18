@@ -1,0 +1,117 @@
+{
+  "id": "s2_hw_sister",
+  "title": "누이의 무덤",
+  "description": "하오문주 비연이 찾아와 오래 묻어 둔 이야기를 꺼냈습니다. 남궁설은 열 해 전, 남쪽 바닷가 마을에서 병으로 죽었다고 합니다.\n그녀를 묻은 사람은 혈영이었습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_biyeon",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_namgung_hwi",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_heaven_falls_ill",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s2_biyeon",
+      "text": "남궁 가주, 설 언니는 행복했어요. 마지막까지 웃었대요."
+    },
+    {
+      "speaker": "player",
+      "text": "…혈영 그자가 누이를 데려갔소. 남궁의 딸을 마교의 칼잡이가."
+    },
+    {
+      "speaker": "s2_biyeon",
+      "text": "데려간 게 아니라 같이 간 거예요. 그리고 그 사람, 언니를 묻고 나서 다시 칼을 들었어요. 더 이상 지킬 게 없어서."
+    }
+  ],
+  "choices": [
+    {
+      "label": "혈영을 용서한다 — 누이가 사랑한 사람이다",
+      "message": "스물다섯 해의 원한이 바닷바람에 흩어졌습니다. 도덕 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hw_sister",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 10
+        },
+        {
+          "type": "set_bond_type",
+          "target": "s2_hyeolyeong",
+          "bond_type": "ACQUAINTANCE"
+        },
+        {
+          "type": "bond",
+          "target": "s2_hyeolyeong",
+          "add": 20
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hw_forgave",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "혈영을 찾아 누이의 원수를 갚는다",
+      "message": "원한이 더 깊어졌습니다. 도덕 -5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hw_sister",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -5
+        },
+        {
+          "type": "bond",
+          "target": "s2_hyeolyeong",
+          "add": -20
+        }
+      ]
+    },
+    {
+      "label": "누이의 무덤에 먼저 간다",
+      "message": "바다가 보이는 언덕에 작은 무덤이 있었습니다. 매화나무 한 그루와 함께. 지혜 +2",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hw_sister",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 2
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hw_visited_grave",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,120 @@
+{
+  "id": "s1_so_majin_deal",
+  "title": "마진의 제안",
+  "description": "흑풍채주 마진이 직접 객잔에 나타났습니다. 피난민들을 '안전한 산길'로 이끌어 주면 금화 백 냥을 주겠다고 합니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_heukpung_chief",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_swallow",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_black_wind_offer",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_heukpung_chief",
+      "text": "비연검, 피난민들이 그대를 따른다지. 그 길을 내가 정해 주겠소."
+    },
+    {
+      "speaker": "player",
+      "text": "흑풍채가 정해 주는 길 끝에 뭐가 있는지는 강호가 다 알아요."
+    },
+    {
+      "speaker": "npc_heukpung_chief",
+      "text": "세상에 공짜 길은 없소. 금화 백 냥이면 그 아이 하나쯤은 평생 배불리 먹이지."
+    },
+    {
+      "speaker": "npc_orphan",
+      "text": "(뒤에서 옷자락을 잡으며) 누나…"
+    }
+  ],
+  "choices": [
+    {
+      "label": "거절하고 피난민에게 산길을 피하라 알린다",
+      "message": "마진의 웃음이 굳었습니다. 그날 밤, 흑풍채가 객잔을 덮쳤습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_so_majin_deal",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        },
+        {
+          "type": "combat",
+          "combat": "s1_black_wind_ambush"
+        }
+      ]
+    },
+    {
+      "label": "금화를 받는다",
+      "message": "금화 주머니가 묵직합니다. 도덕 -15, 금화 +100",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_so_majin_deal",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -15
+        },
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": 100
+        },
+        {
+          "type": "flag",
+          "flag": "s1_so_took_deal",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "하오문에 마진의 속셈을 판다",
+      "message": "묵영이 흥미롭다는 듯 웃었습니다. 묵영 유대 +10, 금화 +30",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_so_majin_deal",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_haomun_master",
+          "add": 10
+        },
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": 30
+        },
+        {
+          "type": "flag",
+          "flag": "s1_so_sold_majin",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

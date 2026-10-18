@@ -1,0 +1,124 @@
+{
+  "id": "saga_3_blue_sky",
+  "title": "강호삼란 3장 — 청천재명",
+  "order": 12,
+  "era_name": "청천",
+  "guided": true,
+  "description": "흑련맹의 폭정이 스무 해. 맹주의 아들 독고결은 피로 강호를 다스립니다. 천산에서는 천마의 손녀 위설아가 신교를 일으키고, 청운산에서는 석운의 제자들이 검을 듭니다.\n3차 정사마 대전 — 이 대전은 정파가 이기고, 백 년의 삼란이 끝납니다.\n청하·남궁연·독고결·위설아 가운데 한 명을 골라 5년의 난세를 겪습니다.",
+  "player_sect": "qingyun",
+  "sects": [
+    "namgung",
+    "wudang",
+    "heukpung",
+    "haomun",
+    "tang",
+    "cheonma"
+  ],
+  "sect_overrides": {
+    "qingyun": {
+      "leader_id": "s3_seokun",
+      "disciple_count": 14,
+      "reputation": 45
+    },
+    "namgung": {
+      "leader_id": "s3_namgung_un",
+      "disciple_count": 16
+    },
+    "heukpung": {
+      "sect_name": "흑련맹",
+      "leader_id": "s3_dokgo_cheon",
+      "disciple_count": 30,
+      "max_disciples": 70,
+      "reputation": 80,
+      "attitude": -60,
+      "food": 600,
+      "gold": 500
+    },
+    "cheonma": {
+      "leader_id": "s3_wi_seola",
+      "disciple_count": 20,
+      "attitude": 0
+    }
+  },
+  "hidden_npcs": [
+    "npc_rival",
+    "npc_swallow",
+    "npc_senior_brother",
+    "npc_cheonma_envoy",
+    "npc_cheonma",
+    "npc_master",
+    "npc_namgung_lord",
+    "npc_namgung_lady",
+    "npc_heukpung_chief",
+    "npc_haomun_master",
+    "npc_orphan",
+    "npc_healer",
+    "npc_innkeeper",
+    "npc_heukpung_second",
+    "npc_namgung_enforcer",
+    "npc_old_drunk"
+  ],
+  "parameters": {
+    "time_limit_years": 5,
+    "legacy_enabled": false,
+    "exp_scale": 1.5,
+    "end_on_victory": true
+  },
+  "common_events": [
+    "bonds/bond_g_",
+    "manuals"
+  ],
+  "common_endings": false,
+  "victory_endings": [
+    "s3_blue_sky_sword",
+    "s3_murim_supreme",
+    "s3_namgung_return",
+    "s3_beyond_father",
+    "s3_blood_heir",
+    "s3_saintess_peace",
+    "s3_cult_reborn",
+    "s3_heaven_returns",
+    "s3_survivor"
+  ],
+  "playables": [
+    {
+      "npc": "s3_cheongha",
+      "start_role": "young_disciple",
+      "sect": "qingyun",
+      "summary": "석운의 제자. 흑련의 습격 속에서 살아남아 맑은 검을 들었다.\n무림맹을 다시 세워 백 년의 대란을 끝낼 것인가.",
+      "bonds": {
+        "s3_seokun": "MASTER_DISCIPLE",
+        "s3_namgung_yeon": "FRIEND"
+      }
+    },
+    {
+      "npc": "s3_namgung_yeon",
+      "start_role": "young_disciple",
+      "sect": "namgung",
+      "summary": "남궁운의 딸, 할아버지 남궁휘에게 매화검법을 배운 남궁의 소가주.\n삼대의 기다림을 끝내고 남궁의 깃발을 다시 올릴 것인가.",
+      "bonds": {
+        "s3_namgung_un": "MASTER_DISCIPLE",
+        "s3_cheongha": "FRIEND"
+      }
+    },
+    {
+      "npc": "s3_dokgo_gyeol",
+      "start_role": "manager",
+      "sect": "heukpung",
+      "summary": "흑련맹주 독고천의 아들. 피로 강호를 다스리지만 아버지의 인정에 굶주렸다.\n아버지를 넘어설 것인가, 피의 계승자로 끝날 것인가.",
+      "bonds": {
+        "s3_dokgo_cheon": "MASTER_DISCIPLE",
+        "s3_ma_hwarin": "BENEFACTOR"
+      }
+    },
+    {
+      "npc": "s3_wi_seola",
+      "start_role": "leader",
+      "sect": "cheonma",
+      "summary": "천마 위무량의 손녀, 천마신교의 성녀. 늙은 혈영의 손에 자랐다.\n신교를 되살리되 피를 흘리지 않을 수 있을까. 아니면 천마가 다시 올 것인가.",
+      "bonds": {
+        "s3_hyeolyeong": "BENEFACTOR"
+      }
+    }
+  ]
+}

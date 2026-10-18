@@ -1,0 +1,81 @@
+{
+  "id": "s3_ny_grandfather",
+  "title": "할아버지의 검",
+  "description": "할아버지 남궁휘가 세상을 떠나며 남긴 검을 아버지가 건넸습니다. 「남궁은 기다린다. 다음 봄을.」",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s3_namgung_un",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s3_namgung_yeon",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s3_tyranny",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_namgung_un",
+      "text": "네 할아버지는 혈월의 밤에 아버지를 잃었고, 흑련의 천하에서 고개를 숙였다. 그래도 무릎은 꿇지 않았지."
+    },
+    {
+      "speaker": "player",
+      "text": "아버지는요? 아버지는 무엇을 잃으셨어요?"
+    },
+    {
+      "speaker": "s3_namgung_un",
+      "text": "…강 건너에 두고 온 사람."
+    }
+  ],
+  "choices": [
+    {
+      "label": "할아버지의 검을 든다 — 내가 그 봄이 된다",
+      "message": "검이 손에 꼭 맞았습니다. 무력 +2",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_ny_grandfather",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "strength",
+          "add": 2
+        },
+        {
+          "type": "flag",
+          "flag": "s3_ny_sword",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "검을 사당에 두고 내 검으로 싸운다",
+      "message": "\"할아버지 검은 이긴 다음에 들게요.\" 지혜 +2",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_ny_grandfather",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 2
+        }
+      ]
+    }
+  ]
+}

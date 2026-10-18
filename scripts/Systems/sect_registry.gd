@@ -109,6 +109,12 @@ static func create_sect(sect_id: String, overrides: Dictionary = {}) -> SectData
 	for key in overrides:
 		if key in NUMERIC_FIELDS:
 			sect.set(key, int(overrides[key]))
+	# 시대가 바뀐 시나리오: 문파 이름과 문주를 바꿀 수 있다.
+	if overrides.has("sect_name"):
+		sect.sect_name = str(overrides["sect_name"])
+	if overrides.has("leader_id"):
+		sect.leader_id = str(overrides["leader_id"])
+		sect.leader_name = NpcRoster.get_display_name(sect.leader_id)
 	return sect
 
 

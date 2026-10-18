@@ -1,0 +1,266 @@
+{
+  "id": "s3_murim_alliance",
+  "title": "무림맹 재건",
+  "description": "청천 3년 봄. 청운검파·남궁세가·무당파가 개봉 남쪽 들판에 모였습니다. 백 년 만에 정파의 맹이 다시 섭니다.\n이번 맹의 이름은 '무림맹'. 정파만의 맹이 아니라, 흑련에 맞서는 모든 이의 맹입니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s3_seokun",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 3
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s3_hwarin_turns",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_seokun",
+      "text": "백 년 전 정도맹은 맹 안의 야심으로 무너졌다. 이번 맹에는 야심이 아니라 사람을 앉혀야 한다."
+    },
+    {
+      "speaker": "s3_namgung_un",
+      "text": "청하의 검은 맑고, 연이의 검은 뜨겁다. 둘 다 이 맹에 필요하다."
+    },
+    {
+      "speaker": "s3_ma_hwarin",
+      "text": "흑련의 장부를 드리죠. 개봉의 성문 아래 비밀 수로가 있어요."
+    },
+    {
+      "speaker": "s3_cheongha",
+      "text": "저는 맹주가 아니라도 괜찮아요. 하지만 이번 맹은 아무도 버리지 않았으면 해요.",
+      "only": [
+        "s3_namgung_yeon",
+        "s3_dokgo_gyeol",
+        "s3_wi_seola"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "맹주로 추대받는다",
+      "message": "맹세의 잔이 당신 앞에 놓였습니다. 명성 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_murim_alliance",
+          "value": true
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s3_ch_leader",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_cheongha",
+          "value": true
+        },
+        {
+          "type": "alignment",
+          "in": [
+            "good"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "맹주 자리를 남궁연에게 양보한다",
+      "message": "\"저는 검이면 됩니다.\" 남궁연 유대 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_murim_alliance",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s3_namgung_yeon",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s3_ch_yielded",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_cheongha",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "맹주로 추대받는다",
+      "message": "할아버지의 검을 들고 맹세의 잔 앞에 섰습니다. 명성 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_murim_alliance",
+          "value": true
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s3_ny_leader",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_namgung_yeon",
+          "value": true
+        },
+        {
+          "type": "alignment",
+          "in": [
+            "good"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "맹주로 청하를 추천한다",
+      "message": "\"맑은 검이 앞에 서야 합니다.\" 청하 유대 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_murim_alliance",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s3_cheongha",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s3_ny_backed_ch",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_namgung_yeon",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "무림맹에 신교의 사자를 보낸다",
+      "message": "정파의 장문인들이 마교의 사자를 맞았습니다. 처음으로.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_murim_alliance",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s3_sa_envoy",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_wi_seola",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "무림맹의 결성을 깨뜨릴 자객을 보낸다",
+      "message": "맹세의 자리에 독이 든 잔이 섞였습니다. 도덕 -15",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_murim_alliance",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -15
+        },
+        {
+          "type": "flag",
+          "flag": "s3_dg_poison",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_dokgo_gyeol",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "무림맹 소식을 아버지께 숨긴다",
+      "message": "\"…저쪽도 사람이 모였군.\" 혼잣말이 나왔습니다. 도덕 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_murim_alliance",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_dokgo_gyeol",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "맹세를 지켜본다",
+      "message": "흐린 하늘에 틈이 생겼습니다. 경험 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_murim_alliance",
+          "value": true
+        },
+        {
+          "type": "experience",
+          "amount": 10
+        }
+      ]
+    }
+  ]
+}

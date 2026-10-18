@@ -1,0 +1,87 @@
+{
+  "id": "s1_mu_envoy_again",
+  "title": "다시 찾아온 밀사",
+  "description": "한 계절이 지났습니다. 혈영이 다시 주막에 앉아 있습니다. \"답을 들으러 왔소.\"",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 8,
+  "npc": "npc_cheonma_envoy",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_senior_brother",
+      "value": true
+    },
+    {
+      "type": "flag",
+      "flag": "s1_mu_wavering",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_mu_envoy",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "손을 잡는다",
+      "message": "천마의 인장이 찍힌 서신을 받았습니다. 도덕 -15",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_envoy_again",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -15
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_pact",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_wavering",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "검을 뽑아 내쫓는다",
+      "message": "\"다음에 만나면 벤다.\" 도덕 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_envoy_again",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 8
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_refused",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_wavering",
+          "value": false
+        }
+      ]
+    }
+  ]
+}

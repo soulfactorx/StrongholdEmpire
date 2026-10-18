@@ -1,0 +1,250 @@
+{
+  "id": "s2_mugyeom_revolt",
+  "title": "총관의 반역",
+  "description": "흑련 2년 봄. 진무겸이 중원의 교도들을 이끌고 반역했습니다. 「병든 천마는 물러나라.」\n천마신교가 둘로 갈라졌습니다. 낙양과 천산 사이에 교도들의 피가 흐릅니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_jin_mugyeom",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 2
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_heaven_falls_ill",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s2_jin_mugyeom",
+      "text": "스물다섯 해 동안 중원을 다스린 건 나다. 늙은이는 천산에서 기침이나 하고 있었지."
+    },
+    {
+      "speaker": "s2_wi_muryang",
+      "text": "(피를 토하며) 무겸아… 너는 네 사부를 팔 때도 그렇게 말했겠지.",
+      "only": [
+        "s2_hyeolyeong"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "교주, 명을 주십시오.",
+      "only": [
+        "s2_hyeolyeong"
+      ]
+    },
+    {
+      "speaker": "s2_biyeon",
+      "text": "(석운에게) 석두야, 복수는 네 사부가 원한 게 아니었을 거야. 그래도 네가 가겠다면 말리진 않을게.",
+      "only": [
+        "s2_seokun"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "누나, 저는 청운검선의 무덤 앞에서 스물다섯 해를 맹세했어요.",
+      "only": [
+        "s2_seokun"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "반역자 진무겸을 친다",
+      "message": "천산의 교도들이 당신을 따라 낙양으로 향했습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_mugyeom_revolt",
+          "value": true
+        },
+        {
+          "type": "combat",
+          "combat": "s2_civil_war"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_hyeolyeong",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "진무겸과 손잡고 천마를 끌어내린다",
+      "message": "\"현명하군, 혈영.\" 도덕 -15",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_mugyeom_revolt",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -15
+        },
+        {
+          "type": "flag",
+          "flag": "s2_y_joined_mugyeom",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_jin_mugyeom",
+          "add": 20
+        },
+        {
+          "type": "bond",
+          "target": "s2_wi_muryang",
+          "add": -40
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_hyeolyeong",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "사부의 원수를 베러 낙양으로 간다",
+      "message": "스물다섯 해를 기다린 길입니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_mugyeom_revolt",
+          "value": true
+        },
+        {
+          "type": "combat",
+          "combat": "s2_master_avenged"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_seokun",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "원수를 하늘에 맡기고 산문을 지킨다",
+      "message": "\"사부님이라면 복수보다 제자를 택하셨을 겁니다.\" 도덕 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_mugyeom_revolt",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 8
+        },
+        {
+          "type": "flag",
+          "flag": "s2_su_forgave",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_seokun",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "마교 내전을 틈타 북쪽 성 하나를 되찾는다",
+      "message": "남궁의 깃발이 스물다섯 해 만에 북쪽에 올랐습니다. 명성 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_mugyeom_revolt",
+          "value": true
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 8
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hw_retook",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_namgung_hwi",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "흑련의 명으로 양쪽에 무기를 판다",
+      "message": "흑풍채의 창고가 금화로 찼습니다. 금화 +60, 도덕 -5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_mugyeom_revolt",
+          "value": true
+        },
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": 60
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -5
+        },
+        {
+          "type": "bond",
+          "target": "s2_dokgo_cheon",
+          "add": 5
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_ma_hwarin",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "멀리서 지켜본다",
+      "message": "마교가 스스로를 갉아먹고 있습니다. 경험 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_mugyeom_revolt",
+          "value": true
+        },
+        {
+          "type": "experience",
+          "amount": 10
+        }
+      ]
+    }
+  ]
+}

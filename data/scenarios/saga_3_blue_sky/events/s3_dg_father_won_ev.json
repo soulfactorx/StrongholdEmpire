@@ -1,0 +1,55 @@
+{
+  "id": "s3_dg_father_won_ev",
+  "title": "흑련의 새 주인",
+  "description": "병상의 독고천이 당신의 칼 아래 쓰러졌습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s3_dokgo_cheon",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s3_dokgo_gyeol",
+      "value": true
+    },
+    {
+      "type": "flag",
+      "flag": "s3_dg_father_won",
+      "value": true
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_dokgo_cheon",
+      "text": "드디어… 칼이 되었구나. 내 아들이."
+    },
+    {
+      "speaker": "player",
+      "text": "이제야 아들이라 부르십니까."
+    }
+  ],
+  "choices": [
+    {
+      "label": "맹주의 자리에 앉는다",
+      "message": "흑련의 모든 칼이 당신을 향해 고개를 숙였습니다. 그러나 가을이 오고 있습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_dg_father_won_ev",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s3_dg_lord",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

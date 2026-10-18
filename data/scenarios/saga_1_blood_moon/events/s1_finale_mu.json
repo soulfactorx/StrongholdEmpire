@@ -1,0 +1,163 @@
+{
+  "id": "s1_finale_mu",
+  "title": "진무겸 — 장의 끝",
+  "description": "혈월 5년 봄. 낙양에 봄비가 내립니다. 진무겸의 이야기가 한 장을 닫으려 합니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_healer",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_senior_brother",
+      "value": true
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 5
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_crossroads",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_healer",
+      "text": "사형, 이제 어디로 가실 거예요? 저는… 따라갈게요."
+    }
+  ],
+  "choices": [
+    {
+      "label": "마교의 중원 총관으로 남는다",
+      "message": "높은 자리는 생각보다 춥습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_finale_mu",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_demon_steward"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_steward",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "사부의 빈자리를 지킨다",
+      "message": "청운의 검이 다시 산에 걸렸습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_finale_mu",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_repentant_sword"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_repent",
+          "value": true
+        },
+        {
+          "type": "alignment",
+          "in": [
+            "good",
+            "neutral"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "맹의 생존자들과 함께 강남으로 간다",
+      "message": "혈월을 넘어선 이들 가운데 당신도 있었습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_finale_mu",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_beyond_blood_moon"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "good"
+          ]
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_opened_gate",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "마교에 투항해 살아남는다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_finale_mu",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_fallen_to_demon"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "evil"
+          ]
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_steward",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "모든 것을 버리고 떠돈다",
+      "message": "청운의 대사형이라는 이름도 버렸습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_finale_mu",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_survivor"
+        }
+      ]
+    }
+  ]
+}

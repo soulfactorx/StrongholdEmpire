@@ -1,0 +1,112 @@
+{
+  "id": "s2_hr_fathers_shadow",
+  "title": "아버지의 줄",
+  "description": "아버지 마진이 독고천의 조카와 혼인 이야기를 꺼냈습니다. 흑풍채가 흑련 안에서 살아남는 길이라고 합니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_ma_jin",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_ma_hwarin",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_lotus_rises",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s2_ma_jin",
+      "text": "화린아, 흑련 안에서 흑풍은 작은 산채일 뿐이다. 줄을 대야 산다."
+    },
+    {
+      "speaker": "player",
+      "text": "아버지는 평생 줄만 대셨잖아요. 그래서 뭐가 남았어요?"
+    },
+    {
+      "speaker": "s2_ma_jin",
+      "text": "…네가 남았지. 살아 있는 딸 하나."
+    }
+  ],
+  "choices": [
+    {
+      "label": "거절한다 — 나는 아버지의 줄이 아니다",
+      "message": "아버지가 처음으로 당신에게 소리를 질렀습니다. 그리고 한참 뒤에 웃었습니다. 마진 유대 +5, 도덕 +3",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hr_fathers_shadow",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_ma_jin",
+          "add": 5
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 3
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hr_free",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "받아들인다 — 산채를 위해",
+      "message": "독고천이 당신을 '조카며느리'라 불렀습니다. 독고천 유대 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hr_fathers_shadow",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_dokgo_cheon",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hr_betrothed",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "독고천에게 직접 담판을 짓는다",
+      "message": "\"혼인 말고 칼로 쓰시오. 그게 더 쓸모 있을 테니.\" 독고천 유대 +8, 매력 +2",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hr_fathers_shadow",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_dokgo_cheon",
+          "add": 8
+        },
+        {
+          "type": "character",
+          "field": "charisma",
+          "add": 2
+        }
+      ]
+    }
+  ]
+}

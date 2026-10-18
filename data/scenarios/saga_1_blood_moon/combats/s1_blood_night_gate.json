@@ -1,0 +1,72 @@
+{
+  "id": "s1_blood_night_gate",
+  "title": "혈월의 밤 — 무너지는 맹부",
+  "player_position": [
+    3,
+    5
+  ],
+  "enemies": [
+    {
+      "npc": "npc_cheonma_cultist",
+      "position": [
+        12,
+        3
+      ],
+      "name": "혈교도 갑"
+    },
+    {
+      "npc": "npc_cheonma_cultist",
+      "position": [
+        12,
+        7
+      ],
+      "name": "혈교도 을"
+    },
+    {
+      "npc": "npc_cheonma_cultist",
+      "position": [
+        14,
+        5
+      ],
+      "name": "혈교도 병"
+    }
+  ],
+  "terrain": {
+    "HIGH": [
+      [
+        6,
+        4
+      ],
+      [
+        6,
+        5
+      ],
+      [
+        6,
+        6
+      ]
+    ]
+  },
+  "disciple_allies": [
+    [
+      2,
+      3
+    ],
+    [
+      2,
+      7
+    ]
+  ],
+  "enemy_hp_scale": 0.6,
+  "enemy_damage_scale": 0.6,
+  "rewards": {
+    "experience": 80,
+    "reputation": 8
+  },
+  "defeat_penalty": {
+    "reputation": 4,
+    "injury_ratio": 0.3
+  },
+  "victory_flag": "s1_night_held",
+  "defeat_flag": "s1_night_broken"
+}

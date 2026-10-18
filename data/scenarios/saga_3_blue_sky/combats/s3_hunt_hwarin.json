@@ -1,0 +1,45 @@
+{
+  "id": "s3_hunt_hwarin",
+  "title": "배신자를 쫓다",
+  "player_position": [
+    3,
+    5
+  ],
+  "enemies": [
+    {
+      "npc": "s3_ma_hwarin",
+      "position": [
+        12,
+        5
+      ]
+    }
+  ],
+  "terrain": {
+    "FOREST": [
+      [
+        8,
+        3
+      ],
+      [
+        8,
+        4
+      ],
+      [
+        9,
+        6
+      ]
+    ]
+  },
+  "relationship_target": "s3_ma_hwarin",
+  "enemy_hp_scale": 0.55,
+  "enemy_damage_scale": 0.55,
+  "rewards": {
+    "experience": 80,
+    "reputation": 8
+  },
+  "defeat_penalty": {
+    "injury_ratio": 0.4
+  },
+  "victory_flag": "s3_dg_caught_hwarin",
+  "defeat_flag": "s3_dg_lost_hwarin"
+}

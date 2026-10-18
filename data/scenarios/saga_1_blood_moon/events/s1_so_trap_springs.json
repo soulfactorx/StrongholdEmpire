@@ -1,0 +1,91 @@
+{
+  "id": "s1_so_trap_springs",
+  "title": "산길의 끝",
+  "description": "마진이 정해 준 산길로 피난민을 이끈 지 사흘째. 골짜기가 너무 조용합니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_heukpung_second",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_swallow",
+      "value": true
+    },
+    {
+      "type": "flag",
+      "flag": "s1_so_took_deal",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_so_majin_deal",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_orphan",
+      "text": "누나, 저기 바위 뒤에 사람이 있어요."
+    },
+    {
+      "speaker": "npc_heukpung_second",
+      "text": "(멀리서) 채주께서 말씀하셨지. 입은 적을수록 좋다고."
+    }
+  ],
+  "choices": [
+    {
+      "label": "끝까지 앞장선다",
+      "message": "골짜기 위에서 흑풍의 깃발이 올랐습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_so_trap_springs",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_bad_black_wind_trap"
+        }
+      ]
+    },
+    {
+      "label": "피난민을 되돌려 원래 길로 달린다",
+      "message": "등 뒤로 화살이 쏟아졌지만, 대부분은 살았습니다. 도덕 +12, 금화 -50",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_so_trap_springs",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 12
+        },
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -50
+        },
+        {
+          "type": "flag",
+          "flag": "s1_so_took_deal",
+          "value": false
+        },
+        {
+          "type": "flag",
+          "flag": "s1_so_redeemed",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

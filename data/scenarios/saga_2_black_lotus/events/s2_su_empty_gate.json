@@ -1,0 +1,102 @@
+{
+  "id": "s2_su_empty_gate",
+  "title": "빈 산문",
+  "description": "청운산의 제자는 여덟 명뿐입니다. 흑련의 사자가 '보호비'를 내면 산문을 건드리지 않겠다고 했습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_biyeon",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_seokun",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_lotus_rises",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_disciple",
+      "text": "장문인, 쌀이 한 달 치밖에 없습니다."
+    },
+    {
+      "speaker": "player",
+      "text": "나는 여덟 살에 쌀 한 톨 없이 피난길을 걸었다. 한 달이면 충분하다."
+    },
+    {
+      "speaker": "s2_biyeon",
+      "text": "(서신) 석두야, 고집은 여전하구나. 그래서 좋아."
+    }
+  ],
+  "choices": [
+    {
+      "label": "보호비를 낸다",
+      "message": "제자들이 굶지 않고 겨울을 날 것입니다. 금화 -40",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_su_empty_gate",
+          "value": true
+        },
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -40
+        },
+        {
+          "type": "flag",
+          "flag": "s2_su_paid",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "거절하고 제자들과 산문을 지킨다",
+      "message": "\"청운은 돈으로 사는 산이 아니오.\" 도덕 +5, 명성 +3",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_su_empty_gate",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 3
+        }
+      ]
+    },
+    {
+      "label": "하오문의 누나에게 도움을 청한다",
+      "message": "비연이 흑련의 사자를 돌려보냈습니다. 어떻게 했는지는 묻지 않았습니다. 비연 유대 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_su_empty_gate",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_biyeon",
+          "add": 10
+        }
+      ]
+    }
+  ]
+}

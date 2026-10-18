@@ -1,0 +1,43 @@
+{
+  "id": "s3_kaifeng_last",
+  "title": "개봉 대전 — 마지막 성루",
+  "player_position": [
+    3,
+    5
+  ],
+  "enemies": [
+    {
+      "npc": "s3_cheongha",
+      "position": [
+        12,
+        4
+      ]
+    },
+    {
+      "npc": "s3_namgung_yeon",
+      "position": [
+        12,
+        6
+      ]
+    },
+    {
+      "npc": "npc_disciple",
+      "position": [
+        14,
+        5
+      ],
+      "name": "무림맹 검수"
+    }
+  ],
+  "enemy_hp_scale": 0.55,
+  "enemy_damage_scale": 0.55,
+  "rewards": {
+    "experience": 100,
+    "reputation": 5
+  },
+  "defeat_penalty": {
+    "injury_ratio": 0.2
+  },
+  "victory_flag": "s3_dg_last_won",
+  "defeat_flag": "s3_dg_last_lost"
+}

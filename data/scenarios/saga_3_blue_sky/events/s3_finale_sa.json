@@ -1,0 +1,132 @@
+{
+  "id": "s3_finale_sa",
+  "title": "위설아 — 삼란의 끝",
+  "description": "청천 5년 봄. 천산의 눈이 녹았습니다. 천마의 손녀의 이야기가 마지막 장을 닫으려 합니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s3_hyeolyeong",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s3_wi_seola",
+      "value": true
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 5
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s3_new_dawn",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_hyeolyeong",
+      "text": "설아야, 바다를 보러 가자. 그 사람이 보고 싶어 하던 바다."
+    }
+  ],
+  "choices": [
+    {
+      "label": "무림맹과 화친을 맺는다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_finale_sa",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s3_saintess_peace"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s3_sa_went",
+          "value": true
+        },
+        {
+          "type": "alignment",
+          "in": [
+            "good",
+            "neutral"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "천산을 지키며 신교를 다시 세운다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_finale_sa",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s3_cult_reborn"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "good",
+            "neutral"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "천마의 자리에 오른다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_finale_sa",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s3_heaven_returns"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "evil"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "교를 맡기고 강호를 떠돈다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_finale_sa",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s3_survivor"
+        }
+      ]
+    }
+  ]
+}

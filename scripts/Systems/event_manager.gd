@@ -29,6 +29,7 @@ extends RefCounted
 ##   subjugated_count op, value    — 굴복시킨 강호 세력 수
 ##   regions_owned op, value       — 강호 지도에서 우리 문파가 가진 땅 수 (본거지 포함)
 ##   generation op, value          — 현재 세대 (1세대부터)
+##   alignment  in: ["good","neutral","evil"] — 주인공의 성향 (도덕 65 이상 선, 35 이하 악, 그 사이 중립)
 ##   role_state field, op, value   — 역할 자원 비교 (RoleActions.NUMERIC_FIELDS: discontent, trust, exposure, bounty ...)
 ##   (world_sect의 field에는 subjugated(0/1)도 쓸 수 있다)
 ##   op: ">=" "<=" ">" "<" "==" "!="
@@ -61,6 +62,12 @@ extends RefCounted
 ## ■ 비급
 ##   gain_manual art — 비급을 얻는다 (무공 연구소에서 연구할 수 있게 됨). art가 "random"이면 아직 연구할 수 없고
 ##                     익히지도 않은 비급 중 하나 (효과)
+##
+## ■ 선택지 조건과 장면 대사
+##   선택지에 "conditions"(조건 목록)를 주면 조건을 채울 때만 그 선택지가 보인다 (성향·인물·관계별 선택지).
+##   최상위 "scene": [{ "speaker": 인물 id 또는 "player"(주인공) 또는 ""(서술), "text": 대사, "only": [인물 id] (선택) }]
+##   — 설명 아래에 인물들의 대사로 보인다. only가 있으면 그 등장인물로 플레이할 때만 보이고,
+##   주인공이 연기하는 인물의 대사 줄은 빠진다. 글 속 {player}는 주인공 이름으로 바뀐다.
 ##
 ## ■ 가중치
 ##   최상위 "weight"(기본 1): 발생 후보 중에서 뽑힐 상대적 확률. 스토리 핵심 기연은 높게 준다.
@@ -106,6 +113,9 @@ static var role_state: Dictionary = {}
 ## 강호 지도 상태 (GameManager.map_state)와 플레이어 문파 id — regions_owned 조건
 static var map_state: Dictionary = {}
 static var player_sect_id: String = ""
+## 주인공 이름 ({player}) · 주인공이 된 명부 인물 (등장인물 선택 플레이. 새 인연 후보에서 뺀다)
+static var player_name: String = ""
+static var player_npc_id: String = ""
 ## 금화·식량을 내고 받는 곳 (GameManager.get_wallet). 개인 재산을 쓰는 역할이면 주머니다.
 ## sect 조건·효과의 gold·food는 여기를 본다. null이면 문파.
 static var wallet: SectData = null
@@ -162,7 +172,7 @@ static func _subject_candidates(spec: Dictionary, relationships: Array[Relations
 	var result: Array[String] = []
 	if spec.get("stranger", false) == true:
 		for npc in NpcRoster.get_all():
-			if not NpcRoster.is_listed(npc) or npc.get("role", "") == "LEADER":
+			if not NpcRoster.is_listed(npc) or npc.get("role", "") == "LEADER" or npc["id"] == player_npc_id:
 				continue
 			if RelationshipManager.get_bond_with(relationships, npc["id"]) == null and _subject_fits(spec, npc):
 				result.append(npc["id"])
@@ -226,7 +236,22 @@ static func check_turn_events(
 	var chosen: EventData = _pick_weighted(pool)
 	if not chosen.can_repeat:
 		triggered_ids.append(chosen.id)
-	return chosen.to_popup_dict(str(_picked_subjects.get(chosen.id, "")))
+	var subject_id: String = str(_picked_subjects.get(chosen.id, ""))
+	return chosen.to_popup_dict(subject_id, visible_choices(chosen, character, sect, relationships, season, story_flags, subject_id))
+
+
+## 조건을 채운 선택지 번호 (선택지 conditions). 조건이 없으면 모두.
+static func visible_choices(
+	event: EventData, character: CharacterData, sect: SectData, relationships: Array[RelationshipData],
+	season: String, story_flags: Dictionary, subject_id: String = ""
+) -> Array:
+	var result: Array = []
+	_subject = subject_id
+	for i in event.choices.size():
+		if conditions_met(event.choices[i].get("conditions", []), character, sect, relationships, season, story_flags):
+			result.append(i)
+	_subject = ""
+	return result
 
 
 static func resolve_choice(
@@ -288,8 +313,9 @@ static func get_event(event_id: String) -> EventData:
 
 
 ## 기연 폴더를 다시 읽는다. extra_dirs(시나리오 전용 기연 등)가 있으면 이어서 읽는다.
+## only_folders가 있으면 첫 폴더(공용 기연)에서는 그 하위 폴더의 기연만 읽는다.
 ## 잘못된 파일과 중복 id는 경고를 남기고 건너뛴다.
-static func reload_definitions(dir_path: String = EVENTS_DIR, extra_dirs: Array = []) -> void:
+static func reload_definitions(dir_path: String = EVENTS_DIR, extra_dirs: Array = [], only_folders: Array = []) -> void:
 	_definitions.clear()
 	_loaded = true
 	var seen_ids: Dictionary = {}
@@ -301,6 +327,8 @@ static func reload_definitions(dir_path: String = EVENTS_DIR, extra_dirs: Array 
 			push_warning("기연 폴더를 열 수 없습니다: %s" % current_dir)
 			continue
 		for path in collect_json_files(current_dir):
+			if i == 0 and not only_folders.is_empty() and not _in_folders(path, current_dir, only_folders):
+				continue
 			var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
 			if not data is Dictionary:
 				push_warning("기연 JSON 파싱 실패: %s" % path)
@@ -313,6 +341,18 @@ static func reload_definitions(dir_path: String = EVENTS_DIR, extra_dirs: Array 
 				continue
 			seen_ids[data["id"]] = true
 			_definitions.append(_to_event_data(data))
+
+
+## folders 항목: 하위 폴더 이름("bonds") 또는 파일 경로 앞부분("bonds/bond_g_")
+static func _in_folders(path: String, base: String, folders: Array) -> bool:
+	var relative: String = path.trim_prefix(base).trim_prefix("/")
+	for folder in folders:
+		var prefix: String = str(folder)
+		if DirAccess.dir_exists_absolute(base.path_join(prefix)):
+			prefix = prefix.trim_suffix("/") + "/"
+		if relative.begins_with(prefix):
+			return true
+	return false
 
 
 ## 폴더와 하위 폴더(스토리 아크 등)의 JSON 파일 경로를 이름순으로 모은다.
@@ -342,6 +382,13 @@ static func validate_event_dict(data: Dictionary) -> PackedStringArray:
 		errors.append("priority는 true/false여야 함")
 	if data.has("weight") and not ((data["weight"] is float or data["weight"] is int) and data["weight"] > 0):
 		errors.append("weight는 0보다 큰 숫자여야 함")
+	for line in data.get("scene", []):
+		if not line is Dictionary or not line.get("text") is String:
+			errors.append("scene 줄은 { speaker, text } 형식이어야 함")
+		elif not str(line.get("speaker", "")) in ["", "player"] and not NpcRoster.has_npc(str(line.get("speaker", ""))):
+			errors.append("scene에 명부에 없는 인물: %s" % line.get("speaker"))
+		elif line.has("only") and not line["only"] is Array:
+			errors.append("scene 줄의 only는 인물 id 목록이어야 함")
 	if data.has("subject"):
 		_validate_subject(data["subject"], errors)
 	elif JSON.stringify(data).contains("$subject"):
@@ -350,6 +397,8 @@ static func validate_event_dict(data: Dictionary) -> PackedStringArray:
 	var choices: Variant = data.get("choices")
 	if not choices is Array or (choices as Array).is_empty():
 		errors.append("choices가 비어 있음")
+	elif (choices as Array).all(func(c: Variant) -> bool: return c is Dictionary and not c.get("conditions", []).is_empty()):
+		errors.append("조건 없는 선택지가 적어도 하나 있어야 함 (모든 선택지가 숨으면 고를 수 없음)")
 		return errors
 	for i in (choices as Array).size():
 		var choice: Variant = choices[i]
@@ -358,6 +407,8 @@ static func validate_event_dict(data: Dictionary) -> PackedStringArray:
 			continue
 		for effect in choice.get("effects", []):
 			_validate_effect(effect, errors)
+		if choice.has("conditions"):
+			validate_conditions(choice["conditions"], errors)
 		for branch in choice.get("branches", []):
 			if not branch is Dictionary or not branch.has("chance"):
 				errors.append("선택지 %d: branch에 chance 필요" % i)
@@ -440,6 +491,9 @@ static func _validate_condition(condition: Variant, errors: PackedStringArray) -
 			if not c.get("field") in RoleActions.NUMERIC_FIELDS:
 				errors.append("알 수 없는 역할 자원: %s" % c.get("field"))
 			_validate_compare(c, errors)
+		"alignment":
+			if not c.get("in") is Array or (c["in"] as Array).any(func(a: Variant) -> bool: return not str(a) in ["good", "neutral", "evil"]):
+				errors.append("alignment 조건의 in은 good·neutral·evil 목록")
 		_:
 			errors.append("알 수 없는 조건 type: %s" % c.get("type"))
 
@@ -562,6 +616,8 @@ static func _to_event_data(data: Dictionary) -> EventData:
 	event.priority = data.get("priority", false) == true
 	event.npc = str(data.get("npc", _infer_npc(data)))
 	event.subject = data.get("subject", {})
+	for line in data.get("scene", []):
+		event.scene.append(line)
 	for condition in data.get("conditions", []):
 		event.conditions.append(condition)
 	for choice in data["choices"]:
@@ -663,6 +719,8 @@ static func _condition_met(
 			return _compare(current_generation, c["op"], c["value"])
 		"role_state":
 			return _compare(int(role_state.get(c["field"], 0)), c["op"], c["value"])
+		"alignment":
+			return character.get_alignment() in c["in"]
 	return false
 
 
@@ -754,7 +812,9 @@ static func _apply_effect(
 		"add_relationship":
 			var target_id: String = _target(e)
 			if NpcRoster.has_npc(target_id) and RelationshipManager.get_bond_with(relationships, target_id) == null:
-				relationships.append(RelationshipManager.make_relationship(target_id, e["bond_type"], int(e.get("strength", 10))))
+				var made: RelationshipData = RelationshipManager.make_relationship(target_id, e["bond_type"], int(e.get("strength", 10)))
+				if made:
+					relationships.append(made)
 		"marry":
 			var rel: RelationshipData = RelationshipManager.get_bond_with(relationships, _target(e))
 			if rel and rel.bond_type != RelationshipData.BondType.SPOUSE:

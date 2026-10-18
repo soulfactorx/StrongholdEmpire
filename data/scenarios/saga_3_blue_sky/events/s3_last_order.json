@@ -1,0 +1,195 @@
+{
+  "id": "s3_last_order",
+  "title": "늙은 맹주의 명",
+  "description": "청천 4년 봄. 독고천이 병상에서 일어나 마지막 명을 내렸습니다. 「개봉에서 무림맹을 끝장내라.」\n흑련의 모든 칼이 개봉으로 모입니다. 가을이면 모든 것이 결판날 것입니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s3_dokgo_cheon",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 4
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s3_murim_alliance",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_dokgo_cheon",
+      "text": "결아. 너는 내 아들이 아니라 내 칼이다. 칼은 휘두르라고 있는 것이다.",
+      "only": [
+        "s3_dokgo_gyeol"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "아버지, 저는 한 번이라도 아버지의 아들이었던 적이 있습니까?",
+      "only": [
+        "s3_dokgo_gyeol"
+      ]
+    },
+    {
+      "speaker": "s3_dokgo_cheon",
+      "text": "…그런 질문을 하는 걸 보니, 아직 칼이 덜 되었구나.",
+      "only": [
+        "s3_dokgo_gyeol"
+      ]
+    },
+    {
+      "speaker": "s3_ma_hwarin",
+      "text": "결이는 어릴 때 제 등에 업혀서 잠들곤 했어요. 그 아이가 흑련의 칼이 된 건 독고천 탓이에요.",
+      "only": [
+        "s3_cheongha",
+        "s3_namgung_yeon",
+        "s3_wi_seola"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "개봉으로 갈 준비를 한다 — 지켜야 할 사람들을 위해",
+      "message": "검을 갈고, 이름 없는 사람들을 떠올렸습니다. 도덕 +3",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_last_order",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 3
+        },
+        {
+          "type": "experience",
+          "amount": 20
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_dokgo_gyeol",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "아버지의 명을 받든다",
+      "message": "\"네가 선봉이다.\" 아버지가 처음으로 당신의 이름을 불렀습니다. 독고천 유대 +15",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_last_order",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s3_dokgo_cheon",
+          "add": 15
+        },
+        {
+          "type": "flag",
+          "flag": "s3_dg_obeyed",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_dokgo_gyeol",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "아버지에게 칼을 겨눈다 — 흑련은 내가 이끈다",
+      "message": "병상의 아버지가 웃었습니다. \"드디어구나.\"",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_last_order",
+          "value": true
+        },
+        {
+          "type": "combat",
+          "combat": "s3_father_duel"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_dokgo_gyeol",
+          "value": true
+        },
+        {
+          "type": "alignment",
+          "in": [
+            "evil"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "흑련을 떠난다",
+      "message": "맹부를 나서는 당신을 아무도 막지 않았습니다. 도덕 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_last_order",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s3_dg_left",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s3_dokgo_gyeol",
+          "value": true
+        },
+        {
+          "type": "alignment",
+          "in": [
+            "good",
+            "neutral"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "때를 기다린다",
+      "message": "가을이 오고 있습니다. 경험 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_last_order",
+          "value": true
+        },
+        {
+          "type": "experience",
+          "amount": 10
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,304 @@
+{
+  "id": "s2_luoyang_battle",
+  "title": "낙양 대전",
+  "description": "흑련 4년 봄. 흑련 대연맹이 낙양을 에워쌌습니다. 내전으로 지친 마교는 사흘을 버티지 못했습니다.\n성벽이 무너지고, 천마신교의 깃발이 불길 속에 떨어졌습니다. 이 대전은 사파가 이깁니다.\n불길 속에서 당신은 무엇을 하겠습니까?",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_dokgo_cheon",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 4
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_great_march",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s2_dokgo_cheon",
+      "text": "마교의 시대는 오늘로 끝이다! 낙양을 흑련의 꽃으로 덮어라!"
+    },
+    {
+      "speaker": "s2_jin_mugyeom",
+      "text": "(불타는 맹부에서) 스물다섯 해… 나는 결국 아무것도 갖지 못했구나.",
+      "only": [
+        "s2_ma_hwarin",
+        "s2_namgung_hwi",
+        "s2_seokun"
+      ]
+    },
+    {
+      "speaker": "s2_namgung_un",
+      "text": "아버지! 서문이 무너집니다!",
+      "only": [
+        "s2_namgung_hwi"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "운아, 살아라! 남궁의 피는 너 하나면 된다!",
+      "only": [
+        "s2_namgung_hwi"
+      ]
+    },
+    {
+      "speaker": "",
+      "text": "— 그 말은 스물다섯 해 전, 남궁천이 혈월의 밤에 아들에게 남긴 말과 같았습니다 —",
+      "only": [
+        "s2_namgung_hwi"
+      ]
+    },
+    {
+      "speaker": "s2_wi_muryang",
+      "text": "(천산에서 온 마지막 서신) 혈영, 낙양은 버려라. 교를 살려라.",
+      "only": [
+        "s2_hyeolyeong"
+      ]
+    },
+    {
+      "speaker": "s2_namgung_un",
+      "text": "(성벽 아래에서) 화린!",
+      "only": [
+        "s2_ma_hwarin"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "홀로 흑련의 본진에 뛰어든다",
+      "message": "불길 속으로 몸을 던졌습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_luoyang_battle",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s2_bad_luoyang"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_ma_hwarin",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "무너지는 성벽에서 사람들을 지킨다",
+      "message": "성벽 위에서 검을 뽑았습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_luoyang_battle",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        },
+        {
+          "type": "combat",
+          "combat": "s2_luoyang_wall"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_ma_hwarin",
+          "value": false
+        },
+        {
+          "type": "flag",
+          "flag": "playing_s2_hyeolyeong",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "교도들을 이끌고 천산으로 물러난다",
+      "message": "낙양을 버렸습니다. 교는 살았습니다. 도덕 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_luoyang_battle",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        },
+        {
+          "type": "flag",
+          "flag": "s2_y_retreated",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_hyeolyeong",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "낙양의 대전에서 최후까지 싸운다",
+      "message": "천마신교의 마지막 깃발 아래 섰습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_luoyang_battle",
+          "value": true
+        },
+        {
+          "type": "combat",
+          "combat": "s2_luoyang_wall"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_hyeolyeong",
+          "value": true
+        }
+      ],
+      "branches": [
+        {
+          "chance": 50,
+          "message": "흑련의 칼이 사방에서 쏟아졌습니다.",
+          "effects": [
+            {
+              "type": "end_game",
+              "ending": "s2_bad_civil_war"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "맹주의 선봉에 서서 성문을 깬다",
+      "message": "낙양의 성문이 당신의 칼에 무너졌습니다. 독고천 유대 +15, 명성 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_luoyang_battle",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_dokgo_cheon",
+          "add": 15
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hr_vanguard",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_ma_hwarin",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "혼란 속에서 남궁운을 찾아 빼낸다",
+      "message": "불길 속에서 그의 손을 잡았습니다. 남궁운 유대 +20",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_luoyang_battle",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_namgung_un",
+          "add": 20
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hr_saved_un",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_ma_hwarin",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hr_loves_un",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "지금 맹주의 등을 친다",
+      "message": "흑련의 승리에 취한 독고천의 등 뒤로 다가갔습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_luoyang_battle",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s2_bad_lotus_blade"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_ma_hwarin",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hr_scheming",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "불길을 피해 살아남는다",
+      "message": "그 밤을 어떻게 넘겼는지 기억나지 않습니다. 경험 +20",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_luoyang_battle",
+          "value": true
+        },
+        {
+          "type": "experience",
+          "amount": 20
+        }
+      ]
+    }
+  ]
+}

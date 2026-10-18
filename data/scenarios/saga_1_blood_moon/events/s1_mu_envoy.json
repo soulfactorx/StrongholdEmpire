@@ -1,0 +1,125 @@
+{
+  "id": "s1_mu_envoy",
+  "title": "어둠 속의 밀사",
+  "description": "청운산 아래 주막에서 붉은 소매의 사내가 당신 앞에 앉았습니다. 천마신교의 혈영이었습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_cheonma_envoy",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_senior_brother",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_black_wind_offer",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_cheonma_envoy",
+      "text": "청운의 대사형. 스무 해 동안 사부의 그림자였다지."
+    },
+    {
+      "speaker": "player",
+      "text": "마교의 개가 청운산까지 무슨 볼일이오."
+    },
+    {
+      "speaker": "npc_cheonma_envoy",
+      "text": "교주께서 전하라 하셨소. '중원은 넓고, 그것을 다스릴 사람이 필요하다.'"
+    },
+    {
+      "speaker": "npc_cheonma_envoy",
+      "text": "혈월의 밤에 서문 하나만 열어 주시오. 그대는 맹주가 아니라 중원의 총관이 된다."
+    },
+    {
+      "speaker": "player",
+      "text": "……사부를 배신하라는 말이군."
+    },
+    {
+      "speaker": "npc_cheonma_envoy",
+      "text": "아니. 그대를 몰라본 자들을 떠나라는 말이오."
+    }
+  ],
+  "choices": [
+    {
+      "label": "거절하고 사부께 고한다",
+      "message": "혈영이 웃으며 사라졌습니다. 사부는 당신의 어깨를 두드렸습니다. 도덕 +10, 청운검선 유대 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_envoy",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 10
+        },
+        {
+          "type": "bond",
+          "target": "npc_master",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_refused",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "손을 잡는다 — 중원 총관의 자리를 약속받는다",
+      "message": "천마의 인장이 찍힌 서신이 품에 들어왔습니다. 도덕 -15",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_envoy",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -15
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_pact",
+          "value": true
+        },
+        {
+          "type": "add_relationship",
+          "target": "npc_cheonma_envoy",
+          "bond_type": "ACQUAINTANCE",
+          "strength": 30
+        }
+      ]
+    },
+    {
+      "label": "대답을 미룬다",
+      "message": "\"생각할 시간을 주시오.\" 혈영은 한 계절을 주겠다고 했습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_envoy",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_wavering",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

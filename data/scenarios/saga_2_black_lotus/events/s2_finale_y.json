@@ -1,0 +1,121 @@
+{
+  "id": "s2_finale_y",
+  "title": "혈영 — 장의 끝",
+  "description": "흑련 5년 봄. 천산에 눈이 녹지 않았습니다. 늙은 칼의 이야기가 한 장을 닫으려 합니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_wi_muryang",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_hyeolyeong",
+      "value": true
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 5
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_lotus_reign",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "choices": [
+    {
+      "label": "설아를 안고 천산을 지킨다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_finale_y",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s2_to_tianshan"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s2_y_sold_cult",
+          "value": false
+        },
+        {
+          "type": "flag",
+          "flag": "s2_y_heir",
+          "value": false
+        }
+      ]
+    },
+    {
+      "label": "천마의 자리를 잇는다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_finale_y",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s2_heaven_heir"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s2_y_heir",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "흑련의 객경으로 산다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_finale_y",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s2_lotus_hound"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s2_y_sold_cult",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "칼을 버리고 바닷가로 간다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_finale_y",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s2_survivor"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,165 @@
+{
+  "id": "s1_finale_so",
+  "title": "연소화 — 장의 끝",
+  "description": "혈월 5년 봄. 장강의 물빛이 푸르게 돌아왔습니다. 연소화의 이야기가 한 장을 닫으려 합니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_orphan",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_swallow",
+      "value": true
+    },
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 5
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_crossroads",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_orphan",
+      "text": "누나, 나 크면 청운검파 같은 문파 만들 거예요. 아무도 안 버리는 문파요."
+    },
+    {
+      "speaker": "player",
+      "text": "그래. 그땐 나도 받아 줄 거지?"
+    },
+    {
+      "speaker": "npc_orphan",
+      "text": "누나는 장로 시켜 줄게요."
+    }
+  ],
+  "choices": [
+    {
+      "label": "피난민들의 새 마을에 남는다",
+      "message": "아이들이 그녀를 '제비 누이'라 불렀습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_finale_so",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_lantern_refugees"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s1_so_led",
+          "value": true
+        },
+        {
+          "type": "alignment",
+          "in": [
+            "good"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "하오문의 '비연'이 된다",
+      "message": "이름을 버리고 소식을 얻었습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_finale_so",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_haomun_swallow"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s1_so_haomun",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "정도맹 잔당과 함께 다시 검을 든다",
+      "message": "혈월을 넘어선 협객으로 이름이 남았습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_finale_so",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_beyond_blood_moon"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "s1_resisted",
+          "value": true
+        },
+        {
+          "type": "alignment",
+          "in": [
+            "good"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "마교의 돈으로 배를 불린다",
+      "message": "피난민을 판 금화로 강남에 큰 집을 샀습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_finale_so",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_fallen_to_demon"
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "evil"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "혼자 강호를 떠돈다",
+      "message": "제비는 다시 혼자 날았습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_finale_so",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s1_survivor"
+        }
+      ]
+    }
+  ]
+}

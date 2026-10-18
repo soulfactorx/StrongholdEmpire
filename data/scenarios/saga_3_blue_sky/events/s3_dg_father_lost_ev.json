@@ -1,0 +1,44 @@
+{
+  "id": "s3_dg_father_lost_ev",
+  "title": "아버지의 칼",
+  "description": "늙은 맹주의 칼은 여전히 빨랐습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s3_dokgo_cheon",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s3_dokgo_gyeol",
+      "value": true
+    },
+    {
+      "type": "flag",
+      "flag": "s3_dg_father_lost",
+      "value": true
+    }
+  ],
+  "choices": [
+    {
+      "label": "쓰러진다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_dg_father_lost_ev",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s3_blood_heir"
+        }
+      ]
+    }
+  ]
+}

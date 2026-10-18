@@ -1,0 +1,44 @@
+{
+  "id": "s2_hr_failed",
+  "title": "맹주의 칼끝",
+  "description": "칼이 부러졌습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_dokgo_cheon",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_ma_hwarin",
+      "value": true
+    },
+    {
+      "type": "flag",
+      "flag": "s2_hr_dokgo_lost",
+      "value": true
+    }
+  ],
+  "choices": [
+    {
+      "label": "눈을 감는다",
+      "message": "",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hr_failed",
+          "value": true
+        },
+        {
+          "type": "end_game",
+          "ending": "s2_bad_lotus_blade"
+        }
+      ]
+    }
+  ]
+}

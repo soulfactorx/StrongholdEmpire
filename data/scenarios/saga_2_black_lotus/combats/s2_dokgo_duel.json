@@ -1,0 +1,47 @@
+{
+  "id": "s2_dokgo_duel",
+  "title": "흑련맹주를 베다",
+  "player_position": [
+    3,
+    5
+  ],
+  "enemies": [
+    {
+      "npc": "s2_dokgo_cheon",
+      "position": [
+        12,
+        5
+      ]
+    }
+  ],
+  "terrain": {
+    "FOREST": [
+      [
+        8,
+        3
+      ],
+      [
+        8,
+        7
+      ]
+    ],
+    "HIGH": [
+      [
+        11,
+        5
+      ]
+    ]
+  },
+  "relationship_target": "s2_dokgo_cheon",
+  "enemy_hp_scale": 0.55,
+  "enemy_damage_scale": 0.55,
+  "rewards": {
+    "experience": 150,
+    "reputation": 20
+  },
+  "defeat_penalty": {
+    "injury_ratio": 0.1
+  },
+  "victory_flag": "s2_hr_dokgo_won",
+  "defeat_flag": "s2_hr_dokgo_lost"
+}

@@ -1,0 +1,77 @@
+{
+  "id": "s3_sa_alliance_offer",
+  "title": "무림맹의 사자",
+  "description": "무림맹이 신교에 사자를 보냈습니다. 「흑련을 함께 치자. 그 뒤에는 서로의 땅을 넘지 않는다.」",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s3_seokun",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s3_wi_seola",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s3_murim_alliance",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_seokun",
+      "text": "(서신) 성녀, 나는 혈월의 피난길에서 마교를 피해 도망친 아이였소. 그런데 지금은 당신 손을 잡으려 하오. 세상이 이상하지요."
+    },
+    {
+      "speaker": "s3_hyeolyeong",
+      "text": "설아야, 저 늙은이가 석두다. 바닷가 그 사람의 친구가 거둔 아이."
+    }
+  ],
+  "choices": [
+    {
+      "label": "받아들인다",
+      "message": "백 년 만에 정과 마가 같은 적을 향했습니다. 도덕 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_sa_alliance_offer",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        },
+        {
+          "type": "flag",
+          "flag": "s3_sa_allied",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "거절한다 — 신교는 홀로 선다",
+      "message": "천산의 문이 다시 닫혔습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_sa_alliance_offer",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s3_sa_alone",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

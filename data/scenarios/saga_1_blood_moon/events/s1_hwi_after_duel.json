@@ -1,0 +1,91 @@
+{
+  "id": "s1_hwi_after_duel",
+  "title": "패배의 맛",
+  "description": "진무겸과의 비무에서 졌습니다. 연회장의 웃음소리가 귀에 남았습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 8,
+  "npc": "npc_namgung_lady",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_rival",
+      "value": true
+    },
+    {
+      "type": "flag",
+      "flag": "s1_hwi_lost_mugyeom",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_hwi_rival",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "졌다고 끝난 건 아니야. 아버지도 젊을 때 청운검선께 세 번 졌대."
+    },
+    {
+      "speaker": "player",
+      "text": "…그건 처음 듣는 얘기야."
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "그리고 네 번째에 비겼대. 그래서 친구가 되셨대."
+    }
+  ],
+  "choices": [
+    {
+      "label": "패배를 인정하고 가르침을 청한다",
+      "message": "진무겸이 의외라는 듯 웃었습니다. \"…자네, 좋은 검객이 되겠군.\" 진무겸 유대 +15, 지혜 +2",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_after_duel",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_senior_brother",
+          "add": 15
+        },
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 2
+        }
+      ]
+    },
+    {
+      "label": "이를 악물고 수련한다",
+      "message": "손바닥이 터질 때까지 검을 휘둘렀습니다. 무력 +2, 신법 +1",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_after_duel",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "strength",
+          "add": 2
+        },
+        {
+          "type": "character",
+          "field": "agility",
+          "add": 1
+        }
+      ]
+    }
+  ]
+}

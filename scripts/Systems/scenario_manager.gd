@@ -11,9 +11,28 @@ extends RefCounted
 ##   sect_overrides { 문파 id: { 수치 필드: 값 } } — 플레이어 문파도 가능
 ##   parameters    ScenarioRules 파라미터 덮어쓰기
 ##   victory_endings 이 시나리오에서 승리로 치는 엔딩 id 목록 (공용 엔딩 또는 endings/ 폴더의 전용 엔딩)
+##   playables     고를 수 있는 등장인물 목록. 있으면 시작 역할 대신 인물을 골라 그 인물로 플레이한다 (PLAYABLE_KEYS)
+##   common_events 공용 기연(data/events/) 가운데 읽을 하위 폴더 또는 파일 경로 앞부분 목록
+##                 (예: ["bonds", "manuals"], ["bonds/bond_g_"]). 생략하면 전부
+##   hidden_npcs   이 시나리오에 나오지 않는 공용 인물 id (다른 시대의 인물). 인연·기연 대상과 직책에서 빠진다
+##   sect_overrides에는 수치 말고 sect_name(이름), leader_id(문주 인물 id)도 줄 수 있다
+##   common_endings false면 공용 엔딩(data/endings/)을 읽지 않고 이 시나리오의 엔딩만 쓴다 (기본 true)
 
 const SCENARIO_DIR := "res://data/scenarios/"
 const DEFAULT_ID := "cheonha"
+## 등장인물(playables) 항목의 필드
+##   npc        인물 id (공용 또는 이 시나리오 npcs/의 인물). 능력치·무공·나이·도덕·초상화를 이 인물에게서 가져온다
+##   start_role 시작 역할 id (StartingRoles). 역할과 역할 화면이 이것으로 정해진다
+##   sect       소속 문파 id. "none"이면 무소속
+##   summary    새 게임 화면에 보일 소개
+##   level, morality, age  (선택) 인물 데이터 대신 쓸 값
+##   bonds      { 인물 id: 관계 유형 키 } 시작 인연
+##   flags      시작 이야기 플래그 (playing_<인물 id> 플래그는 저절로 켜진다)
+##   region     (선택) 시작 지역 id
+##   arts       (선택) 더 익히고 시작할 무공 id 목록
+const PLAYABLE_KEYS: PackedStringArray = [
+	"npc", "start_role", "sect", "summary", "level", "morality", "age", "bonds", "flags", "region", "arts",
+]
 
 static var current_id: String = ""
 static var current: Dictionary = {}
@@ -61,9 +80,12 @@ static func activate(scenario_id: String, overrides: Dictionary = {}) -> PackedS
 
 	NpcRoster.reload_data(NpcRoster.NPC_DIR, [dir.path_join("npcs")])
 	SectRegistry.reload_data(SectRegistry.SECT_DIR, [dir.path_join("sects")])
-	EndingManager.reload_data(EndingManager.ENDING_DIR, [dir.path_join("endings")])
+	if current.get("common_endings", true) == false:
+		EndingManager.reload_data(dir.path_join("endings"))
+	else:
+		EndingManager.reload_data(EndingManager.ENDING_DIR, [dir.path_join("endings")])
 	CombatLibrary.reload_data(CombatLibrary.COMBAT_DIR, [dir.path_join("combats")])
-	EventManager.reload_definitions(EventManager.EVENTS_DIR, [dir.path_join("events")])
+	EventManager.reload_definitions(EventManager.EVENTS_DIR, [dir.path_join("events")], current.get("common_events", []))
 
 	ScenarioRules.reset()
 	errors.append_array(ScenarioRules.apply(current.get("parameters", {})))
@@ -90,6 +112,41 @@ static func get_start_role_ids(scenario: Dictionary = {}) -> Array:
 		all_ids.append(entry["id"])
 	var allowed: Array = scenario.get("start_roles", [])
 	return all_ids.filter(func(id: String) -> bool: return allowed.is_empty() or allowed.has(id))
+
+
+## 고를 수 있는 등장인물 목록 (없으면 빈 배열 → 시작 역할을 고른다)
+static func get_playables(scenario: Dictionary = {}) -> Array:
+	if scenario.is_empty():
+		scenario = current
+	return scenario.get("playables", [])
+
+
+## 현재 시나리오의 등장인물 항목 (없으면 {})
+static func get_playable(npc_id: String) -> Dictionary:
+	for entry in get_playables():
+		if str(entry.get("npc", "")) == npc_id:
+			return entry
+	return {}
+
+
+## 인물 데이터를 시나리오를 켜지 않고 본다: 명부에 있으면 그것, 없으면 그 시나리오의 npcs/ 폴더에서 찾는다.
+static func peek_npc(npc_id: String, scenario: Dictionary = {}) -> Dictionary:
+	if NpcRoster.has_npc(npc_id):
+		return NpcRoster.get_npc(npc_id)
+	var dir: String = get_dir(str(scenario.get("id", current_id))).path_join("npcs")
+	if DirAccess.dir_exists_absolute(dir):
+		for data in ModLoader.load_json_dir(dir):
+			if data.get("id") == npc_id:
+				return data
+	return {}
+
+
+## 시나리오에서 보이는 문파 이름 (sect_overrides의 sect_name이 있으면 그것)
+static func sect_display_name(sect_id: String, scenario: Dictionary = {}) -> String:
+	if scenario.is_empty():
+		scenario = current
+	var override: Dictionary = scenario.get("sect_overrides", {}).get(sect_id, {})
+	return str(override.get("sect_name", SectRegistry.get_sect_info(sect_id).get("sect_name", sect_id)))
 
 
 static func create_player_sect() -> SectData:
@@ -134,6 +191,12 @@ static func validate_scenario_dict(data: Dictionary) -> PackedStringArray:
 	for role_id in data.get("start_roles", []):
 		if not role_ids.has(role_id):
 			errors.append("알 수 없는 시작 역할: %s" % role_id)
+	for entry in data.get("playables", []):
+		errors.append_array(_validate_playable(entry, role_ids))
+	var common_files: PackedStringArray = EventManager.collect_json_files(EventManager.EVENTS_DIR)
+	for folder in data.get("common_events", []):
+		if not Array(common_files).any(func(path: String) -> bool: return EventManager._in_folders(path, EventManager.EVENTS_DIR, [folder])):
+			errors.append("공용 기연 폴더(앞부분)에 맞는 파일이 없음: %s" % folder)
 	if data.has("endings"):
 		errors.append("전용 엔딩은 scenario.json이 아니라 endings/ 폴더의 JSON으로 정의함")
 	var own_endings: Array = _read_ids(SCENARIO_DIR.path_join(str(data.get("id", ""))).path_join("endings"))
@@ -150,6 +213,29 @@ static func validate_scenario_dict(data: Dictionary) -> PackedStringArray:
 		for sect_id in sect_ids:
 			if not SectRegistry.has_sect(sect_id):
 				errors.append("알 수 없는 문파: %s" % sect_id)
+	return errors
+
+
+## 등장인물 항목 하나를 검사한다. 인물 id는 시나리오 전용 인물도 있으므로 활성화 뒤에 확인한다 (스모크 테스트).
+static func _validate_playable(entry: Variant, role_ids: Array) -> PackedStringArray:
+	var errors: PackedStringArray = []
+	if not entry is Dictionary or str(entry.get("npc", "")).is_empty():
+		errors.append("등장인물에 npc가 없음: %s" % entry)
+		return errors
+	for key in entry:
+		if not key in PLAYABLE_KEYS:
+			errors.append("등장인물 %s: 알 수 없는 필드 %s" % [entry["npc"], key])
+	if not role_ids.has(str(entry.get("start_role", ""))):
+		errors.append("등장인물 %s: 알 수 없는 시작 역할 %s" % [entry["npc"], entry.get("start_role")])
+	if str(entry.get("summary", "")).is_empty():
+		errors.append("등장인물 %s: summary가 비어 있음" % entry["npc"])
+	var bonds: Variant = entry.get("bonds", {})
+	if not bonds is Dictionary:
+		errors.append("등장인물 %s: bonds는 { 인물 id: 관계 유형 }" % entry["npc"])
+	else:
+		for target in bonds:
+			if not RelationshipData.BondType.has(str(bonds[target])):
+				errors.append("등장인물 %s: 알 수 없는 관계 유형 %s" % [entry["npc"], bonds[target]])
 	return errors
 
 

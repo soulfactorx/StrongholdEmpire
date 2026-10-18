@@ -1,0 +1,26 @@
+{
+  "id": "s2_jin_mugyeom",
+  "display_name": "진무겸",
+  "title": "천마신교 중원 총관",
+  "sect_id": "cheonma",
+  "role": "MANAGER",
+  "description": "혈월의 밤 사부를 배신하고 마교의 중원 총관이 된 사내. 이제 천마의 자리를 노린다.",
+  "level": 11,
+  "named": true,
+  "portrait": "portraits/npc_senior_brother.jpg",
+  "stats": {
+    "strength": 18,
+    "agility": 16,
+    "wisdom": 22,
+    "charisma": 19,
+    "internal_energy_max": 220,
+    "age": 59,
+    "morality": 20
+  },
+  "martial_arts": [
+    {
+      "id": "manual_qingyun_cloud_sword",
+      "min_level": 1
+    }
+  ]
+}

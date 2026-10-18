@@ -1,0 +1,204 @@
+{
+  "id": "s2_heaven_falls_ill",
+  "title": "쓰러진 천마",
+  "description": "흑련 원년 가을. 천마 위무량이 대전에서 피를 토하고 쓰러졌습니다. 신교의 후계를 두고 두 사람의 이름이 오르내립니다.\n천마의 칼 혈영, 그리고 중원 총관 진무겸.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "s2_wi_muryang",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s2_lotus_rises",
+      "op": ">=",
+      "value": 2
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s2_jin_mugyeom",
+      "text": "교주께서 쓰러지셨으니 중원은 내가 지킨다. 천산의 칼잡이가 아니라.",
+      "only": [
+        "s2_ma_hwarin",
+        "s2_namgung_hwi",
+        "s2_seokun"
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "(속으로) 진무겸의 눈. 스물다섯 해 전 맹회에서 보던 그 눈 그대로다.",
+      "only": [
+        "s2_hyeolyeong"
+      ]
+    },
+    {
+      "speaker": "s2_jin_mugyeom",
+      "text": "혈영, 자네는 칼이지 머리가 아니야. 교는 머리가 이끈다.",
+      "only": [
+        "s2_hyeolyeong"
+      ]
+    },
+    {
+      "speaker": "s2_dokgo_cheon",
+      "text": "늙은 사자가 쓰러지면 하이에나들이 서로 물어뜯지. 우리는 기다리면 된다.",
+      "only": [
+        "s2_ma_hwarin",
+        "s2_namgung_hwi",
+        "s2_seokun"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "마교의 혼란을 흑련에 알린다",
+      "message": "독고천이 만족스럽게 웃었습니다. 독고천 유대 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_heaven_falls_ill",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_dokgo_cheon",
+          "add": 8
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_ma_hwarin",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "이 혼란을 틈타 북쪽 땅을 되찾을 준비를 한다",
+      "message": "가문의 무사들이 칼을 갈기 시작했습니다. 명성 +3",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_heaven_falls_ill",
+          "value": true
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 3
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hw_preparing",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_namgung_hwi",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "교주의 뜻을 받들어 교를 지키겠다고 맹세한다",
+      "message": "\"너뿐이다, 혈영.\" 위무량 유대 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_heaven_falls_ill",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_wi_muryang",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s2_y_sworn",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_hyeolyeong",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "총관 진무겸을 먼저 칠 계획을 세운다",
+      "message": "칼은 먼저 뽑는 자가 이깁니다. 도덕 -5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_heaven_falls_ill",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -5
+        },
+        {
+          "type": "flag",
+          "flag": "s2_y_strike_first",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_hyeolyeong",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "사부의 원수가 흔들린다는 소식에 잠을 이루지 못한다",
+      "message": "청운검선의 검을 오래 닦았습니다. 무력 +1",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_heaven_falls_ill",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "strength",
+          "add": 1
+        }
+      ],
+      "conditions": [
+        {
+          "type": "flag",
+          "flag": "playing_s2_seokun",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "소식을 듣는다",
+      "message": "천하가 다시 흔들립니다. 경험 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_heaven_falls_ill",
+          "value": true
+        },
+        {
+          "type": "experience",
+          "amount": 10
+        }
+      ]
+    }
+  ]
+}

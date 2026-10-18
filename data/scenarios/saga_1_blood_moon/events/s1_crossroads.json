@@ -1,0 +1,158 @@
+{
+  "id": "s1_crossroads",
+  "title": "갈림길",
+  "description": "혈월 4년 가을. 마교의 천하는 단단해 보이지만, 그 아래에서 저마다의 길이 갈라지고 있습니다.\n한 해 뒤면 이 난세의 한 장이 닫힙니다. 당신은 어디에 서 있겠습니까?",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_demon_reign",
+      "op": ">=",
+      "value": 2
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "휘야, 아버지가 늘 그러셨잖아. 남궁은 무너져도 다시 세우면 된다고.",
+      "only": [
+        "npc_rival"
+      ]
+    },
+    {
+      "speaker": "npc_orphan",
+      "text": "누나, 강남에는 마교가 없대요. 거기까지 가면 살 수 있어요?",
+      "only": [
+        "npc_swallow"
+      ]
+    },
+    {
+      "speaker": "npc_healer",
+      "text": "사형, 이제라도… 사형이 어떤 사람인지 사형 스스로 정하세요.",
+      "only": [
+        "npc_senior_brother"
+      ]
+    },
+    {
+      "speaker": "npc_cheonma",
+      "text": "혈영, 내 몸이 예전 같지 않다. 너는 내 칼이냐, 내 뒤를 노리는 늑대냐?",
+      "only": [
+        "npc_cheonma_envoy"
+      ]
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "(남몰래 보낸 서신) 바다가 보이는 곳에 가 보고 싶어요. 당신과.",
+      "only": [
+        "npc_cheonma_envoy"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "지켜야 할 사람들 곁에 선다",
+      "message": "이름 없는 이들의 등불이 되기로 했습니다. 도덕 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_crossroads",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        },
+        {
+          "type": "flag",
+          "flag": "s1_guardian",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "good"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "누구의 편도 아닌 길을 걷는다",
+      "message": "칼을 반쯤만 뽑은 채 세상을 지켜봅니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_crossroads",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s1_neutral_path",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "neutral"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "더 높은 곳을 노린다",
+      "message": "힘이 곧 길입니다. 도덕 -5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_crossroads",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": -5
+        },
+        {
+          "type": "flag",
+          "flag": "s1_ambition",
+          "value": true
+        }
+      ],
+      "conditions": [
+        {
+          "type": "alignment",
+          "in": [
+            "evil"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "오늘을 버틴다",
+      "message": "내일은 내일의 바람이 붑니다. 경험 +15",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_crossroads",
+          "value": true
+        },
+        {
+          "type": "experience",
+          "amount": 15
+        }
+      ]
+    }
+  ]
+}
