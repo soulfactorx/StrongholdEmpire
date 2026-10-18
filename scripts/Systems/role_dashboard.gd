@@ -5,6 +5,8 @@ extends RefCounted
 ## 역할마다 할 수 있는 일이 달라서, 할 일이 없는 버튼은 숨기고 그 역할의 목표를 위에 적는다.
 ## 역할 고유 행동(문파 회의·정보 수집 등)은 RoleActions가 따로 버튼을 만든다.
 
+const _Balance = preload("res://scripts/Systems/game_balance.gd")
+
 ## 경영 화면의 행동 버튼 (노드 이름)
 const ACTION_BUTTONS: PackedStringArray = [
 	"AdvanceTurnButton", "TrainButton", "FacilityButton", "ElixirButton", "FeastButton", "MartialArtButton",
@@ -84,3 +86,38 @@ static func describe_role(role: CharacterData.Role) -> String:
 	return "%s\n고유 행동: %s\n경영 화면: %s" % [
 		layout["focus"], ", ".join(actions) if not actions.is_empty() else "없음", ", ".join(common),
 	]
+
+
+## 이번 계절에 지금 역할로 아직 할 수 있는 일 (계절 넘기기 미리보기 안내). 역할에 없는 일과 자원이 모자란 일은 뺀다.
+## gm은 GameManager 노드다.
+static func get_unused_actions(gm: Node) -> PackedStringArray:
+	var role: CharacterData.Role = gm.player_character.role
+	var sect: SectData = gm.player_sect
+	var turn: int = gm._get_turn_index()
+	var result: PackedStringArray = []
+	if RoleActions.can_act(gm.role_state, turn) and not RoleActions.get_actions(role).is_empty():
+		var titles: PackedStringArray = []
+		for action in RoleActions.get_actions(role):
+			titles.append(action["title"])
+		result.append("고유 행동(%s)" % "·".join(titles))
+	var interactions: int = RelationshipManager.get_interactions_left(gm.story_flags, turn)
+	if interactions > 0 and not gm.player_relationships.is_empty():
+		result.append("인연 돌보기 %d번" % interactions)
+	if is_button_visible(role, "ElixirButton") and gm.can_do_seasonal("last_elixir_turn") and sect.gold >= _Balance.ELIXIR_GOLD:
+		result.append("영약 구매")
+	if is_button_visible(role, "FeastButton") and gm.can_do_seasonal("last_feast_turn") and sect.gold >= _Balance.FEAST_GOLD and sect.food >= _Balance.FEAST_FOOD:
+		result.append("문파 연회")
+	if is_button_visible(role, "CombatButton") and gm.can_spar():
+		result.append("연습 비무")
+	if is_button_visible(role, "DiscipleButton") and sect.gold >= _Balance.DISCIPLE_TRAIN_GOLD and sect.disciples.any(
+		func(d: DiscipleData) -> bool: return d.last_train_turn != turn and d.level < _Balance.DISCIPLE_MAX_LEVEL
+	):
+		result.append("제자 개별 수련")
+	if is_button_visible(role, "SectWarButton") and gm.can_wage_war() and not gm.get_war_targets().is_empty():
+		result.append("문파전")
+	if gm.can_command_conquest() and gm.can_do_seasonal("last_pacify_turn"):
+		for region_id in WorldMap.frontier(gm.map_state, sect.id, true):
+			if gm.get_region_action(region_id)["reason"].is_empty():
+				result.append("땅 평정")
+				break
+	return result

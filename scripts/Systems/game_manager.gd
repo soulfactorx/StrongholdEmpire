@@ -80,6 +80,31 @@ func _ready() -> void:
 	_initialize_new_game()
 	if SelfCheck.requested():
 		_run_self_check.call_deferred()
+	# 웹(설치형 앱)은 서비스 워커가 옛 파일을 보관하므로, 새 버전이 배포되면 알리고 바로 바꿀 수 있게 한다.
+	if OS.has_feature("web"):
+		JavaScriptBridge.pwa_update_available.connect(_on_web_update_available)
+		if JavaScriptBridge.pwa_needs_update():
+			_on_web_update_available.call_deferred()
+
+
+func _on_web_update_available() -> void:
+	var scene: Node = get_tree().current_scene
+	if scene == null:
+		return
+	ActionPreview.get_popup(scene).open(
+		"새 버전이 있습니다",
+		"게임이 새로 배포되었습니다. 지금 바꾸면 화면을 다시 불러옵니다.%s" % (
+			"\n진행 중인 이야기는 먼저 자동 저장합니다. 다시 열고 [이어하기]를 누르세요." if is_game_active else ""
+		),
+		apply_web_update, "지금 업데이트", "나중에"
+	)
+
+
+## 웹: 진행 중이면 자동 저장한 뒤 새 버전으로 바꾸고 다시 불러온다.
+func apply_web_update() -> void:
+	if is_game_active and not is_game_over():
+		autosave()
+	JavaScriptBridge.pwa_update()
 
 
 ## 내보낸 빌드 자체 점검 (--self-check): 결과를 출력하고 종료 코드로 알린다.

@@ -511,6 +511,14 @@ func _test_diplomacy_screen() -> void:
 	for label in screen.sect_list.find_children("*", "Label", true, false):
 		titles += label.text
 	_check(titles.contains("동맹"), "세력 목록에 동맹 표시")
+	# 외교를 할 수 없는 역할은 버튼 없이 까닭을 보인다 (눌러도 반응이 없는 것처럼 보이지 않게)
+	_new_quiet_game(gm, "young_disciple")
+	SceneRouter.goto(tree, SceneRouter.WORLD)
+	await process_frame
+	await process_frame
+	screen = current_scene
+	buttons = screen.sect_list.get_children().filter(func(c: Node) -> bool: return c is Button)
+	_check(buttons.is_empty() and screen.log_label.text.contains("막내 제자"), "외교할 수 없는 역할: 버튼 대신 까닭")
 	gm.start_new_game("정리", "young_disciple")
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
 	await process_frame
