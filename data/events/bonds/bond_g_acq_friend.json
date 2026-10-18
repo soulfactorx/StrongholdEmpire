@@ -1,0 +1,55 @@
+{
+  "id": "bond_g_acq_friend",
+  "title": "마음을 트다",
+  "description": "{name}이(가) 술잔을 내려놓으며 말합니다. 「그대와 이야기하면 마음이 편하오. 벗으로 지내지 않겠소?」",
+  "can_repeat": true,
+  "weight": 3,
+  "priority": true,
+  "subject": {
+    "bond_types": [
+      "ACQUAINTANCE"
+    ],
+    "min": 40
+  },
+  "conditions": [],
+  "choices": [
+    {
+      "label": "벗이 되자고 답한다",
+      "message": "{name}와(과) 벗이 되었습니다. 유대 +5",
+      "effects": [
+        {
+          "type": "set_bond_type",
+          "target": "$subject",
+          "bond_type": "FRIEND"
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 5
+        }
+      ]
+    },
+    {
+      "label": "벗보다 더한 마음을 전한다",
+      "message": "{name}의 얼굴이 붉어집니다. 연인이 되었습니다.",
+      "effects": [
+        {
+          "type": "set_bond_type",
+          "target": "$subject",
+          "bond_type": "ROMANCE"
+        }
+      ]
+    },
+    {
+      "label": "아직은 거리를 둔다",
+      "message": "{name}이(가) 서운한 얼굴로 웃습니다. 유대 -10",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": -10
+        }
+      ]
+    }
+  ]
+}

@@ -31,7 +31,7 @@
     },
     {
       "label": "혼례를 올리고 강호행을 이어 간다",
-      "message": "혼례를 올렸습니다. 남궁세가 태도 +40, 명성 +10, 유대 +20",
+      "message": "혼례를 올렸습니다. 남궁설이 배우자가 되었습니다. 남궁세가 태도 +40, 명성 +10, 유대 +20",
       "effects": [
         {
           "type": "world_sect",
@@ -53,6 +53,10 @@
           "type": "flag",
           "flag": "arc_love_married",
           "value": true
+        },
+        {
+          "type": "marry",
+          "target": "npc_namgung_lady"
         }
       ]
     }

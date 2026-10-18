@@ -1,0 +1,43 @@
+{
+  "id": "bond_g_rival_respect",
+  "title": "맞수에서 벗으로",
+  "description": "비무가 끝난 뒤 {name}이(가) 검을 거두며 손을 내밉니다. 「그대만 한 맞수는 없었소. 이제 벗으로 지냅시다.」",
+  "can_repeat": true,
+  "weight": 2,
+  "priority": true,
+  "subject": {
+    "bond_types": [
+      "RIVALRY"
+    ],
+    "min": 70
+  },
+  "conditions": [],
+  "choices": [
+    {
+      "label": "손을 맞잡는다",
+      "message": "{name}와(과) 벗이 되었습니다.",
+      "effects": [
+        {
+          "type": "set_bond_type",
+          "target": "$subject",
+          "bond_type": "FRIEND"
+        }
+      ]
+    },
+    {
+      "label": "영원한 맞수로 남자고 한다",
+      "message": "{name}이(가) 씩 웃습니다. 경험치 +20",
+      "effects": [
+        {
+          "type": "experience",
+          "amount": 20
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": -10
+        }
+      ]
+    }
+  ]
+}

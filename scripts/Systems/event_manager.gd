@@ -47,6 +47,17 @@ extends RefCounted
 ##   end_game    ending            — 지정한 엔딩 또는 게임오버로 이야기를 끝낸다
 ##   role_state  field, add        — 역할 자원 증감 (0~100으로 제한)
 ##
+## ■ 관계 대상 기연 (subject)
+##   최상위 "subject"가 있으면 기연이 일어날 때 조건에 맞는 인물 하나를 고른다.
+##   조건·효과의 target "$subject"가 그 인물이고, 제목·설명·선택지·결과 글의 {name}·{title}이 그 인물의 이름·호칭으로 바뀐다.
+##   subject { bond_types: [관계 유형] — 그 관계인 인물 중에서,
+##             stranger: true — 아직 관계가 없는 이름 있는 인물 중에서 (문주 제외),
+##             min, max — 유대 범위 (bond_types일 때), sect: "same"|"other"|"none"|"any" — 인물의 소속,
+##             min_age, max_age — 인물의 나이 }
+##   bond_count bond_type, op, value — 그 관계인 인물 수 비교 (조건)
+##   marry target                    — 연인(또는 누구든)을 배우자로 맞는다. 배우자는 여럿 둘 수 있다 (효과)
+##   end_relationship target         — 관계를 끝낸다 (이별·사별, 효과)
+##
 ## ■ 가중치
 ##   최상위 "weight"(기본 1): 발생 후보 중에서 뽑힐 상대적 확률. 스토리 핵심 기연은 높게 준다.
 ##   최상위 "priority"(기본 false): true면 조건을 채운 계절에 기연 발생 확률과 관계없이 먼저 일어난다.
@@ -91,6 +102,13 @@ static var role_state: Dictionary = {}
 ## 강호 지도 상태 (GameManager.map_state)와 플레이어 문파 id — regions_owned 조건
 static var map_state: Dictionary = {}
 static var player_sect_id: String = ""
+## 관계 대상 기연에서 지금 판정·적용 중인 대상 인물 ("$subject")
+static var _subject: String = ""
+## get_candidates가 관계 대상 기연마다 고른 대상 (기연 id → 인물 id)
+static var _picked_subjects: Dictionary = {}
+
+const SUBJECT_KEYS: PackedStringArray = ["bond_types", "stranger", "min", "max", "sect", "min_age", "max_age"]
+const SUBJECT_SECTS: PackedStringArray = ["same", "other", "none", "any"]
 
 
 ## 스토리 플래그를 설정하고 켜진 계절을 기록한다. 플래그는 항상 이 함수로 설정한다.
@@ -109,12 +127,68 @@ static func get_candidates(
 	story_flags: Dictionary
 ) -> Array[EventData]:
 	var pool: Array[EventData] = []
+	_picked_subjects.clear()
 	for event in get_definitions():
 		if not event.can_repeat and triggered_ids.has(event.id):
 			continue
-		if _conditions_met(event, character, sect, relationships, season, story_flags):
+		if event.subject.is_empty():
+			if _conditions_met(event, character, sect, relationships, season, story_flags):
+				pool.append(event)
+			continue
+		# 관계 대상 기연: 조건을 채우는 대상 중 하나를 고른다.
+		var fits: Array[String] = []
+		for subject_id in _subject_candidates(event.subject, relationships):
+			_subject = subject_id
+			if _conditions_met(event, character, sect, relationships, season, story_flags):
+				fits.append(subject_id)
+		_subject = ""
+		if not fits.is_empty():
+			_picked_subjects[event.id] = fits.pick_random()
 			pool.append(event)
 	return pool
+
+
+## 관계 대상 기연의 대상 후보 인물 id
+static func _subject_candidates(spec: Dictionary, relationships: Array[RelationshipData]) -> Array[String]:
+	var result: Array[String] = []
+	if spec.get("stranger", false) == true:
+		for npc in NpcRoster.get_all():
+			if not NpcRoster.is_listed(npc) or npc.get("role", "") == "LEADER":
+				continue
+			if RelationshipManager.get_bond_with(relationships, npc["id"]) == null and _subject_fits(spec, npc):
+				result.append(npc["id"])
+		return result
+	var types: Array = spec.get("bond_types", [])
+	for rel in relationships:
+		if not types.is_empty() and not RelationshipData.BondType.keys()[rel.bond_type] in types:
+			continue
+		if rel.bond_strength < int(spec.get("min", 0)) or rel.bond_strength > int(spec.get("max", 100)):
+			continue
+		if NpcRoster.has_npc(rel.target_id) and _subject_fits(spec, NpcRoster.get_npc(rel.target_id)):
+			result.append(rel.target_id)
+	return result
+
+
+static func _subject_fits(spec: Dictionary, npc: Dictionary) -> bool:
+	var npc_sect: String = str(npc.get("sect_id", ""))
+	match str(spec.get("sect", "any")):
+		"same":
+			if npc_sect != player_sect_id or npc_sect == NpcRoster.NO_SECT:
+				return false
+		"other":
+			if npc_sect == player_sect_id or npc_sect == NpcRoster.NO_SECT:
+				return false
+		"none":
+			if npc_sect != NpcRoster.NO_SECT:
+				return false
+	var age: int = int(npc.get("stats", {}).get("age", 30))
+	return age >= int(spec.get("min_age", 0)) and age <= int(spec.get("max_age", 999))
+
+
+## 조건·효과의 target: "$subject"면 지금 대상 인물
+static func _target(entry: Dictionary) -> String:
+	var target: String = str(entry.get("target", ""))
+	return _subject if target == "$subject" else target
 
 
 static func check_turn_events(
@@ -133,13 +207,17 @@ static func check_turn_events(
 			urgent.append(event)
 	if not urgent.is_empty():
 		pool = urgent
+		# 인물을 콕 집은 이야기 기연이 누구에게나 일어나는 관계 기연보다 먼저다.
+		var named: Array[EventData] = urgent.filter(func(e: EventData) -> bool: return e.subject.is_empty())
+		if not named.is_empty():
+			pool = named
 	if pool.is_empty():
 		return {}
 
 	var chosen: EventData = _pick_weighted(pool)
 	if not chosen.can_repeat:
 		triggered_ids.append(chosen.id)
-	return chosen.to_popup_dict()
+	return chosen.to_popup_dict(str(_picked_subjects.get(chosen.id, "")))
 
 
 static func resolve_choice(
@@ -148,7 +226,8 @@ static func resolve_choice(
 	character: CharacterData,
 	sect: SectData,
 	relationships: Array[RelationshipData],
-	story_flags: Dictionary
+	story_flags: Dictionary,
+	subject_id: String = ""
 ) -> Dictionary:
 	var event: EventData = get_event(event_id)
 	if event == null or choice_index < 0 or choice_index >= event.choices.size():
@@ -165,10 +244,12 @@ static func resolve_choice(
 
 	var result: Dictionary = {
 		"success": choice.get("success", true),
-		"message": message,
+		"message": EventData.fill_text(message, subject_id),
 	}
+	_subject = subject_id
 	for effect in effects:
 		_apply_effect(effect, character, sect, relationships, story_flags, result)
+	_subject = ""
 	return result
 
 
@@ -252,6 +333,10 @@ static func validate_event_dict(data: Dictionary) -> PackedStringArray:
 		errors.append("priority는 true/false여야 함")
 	if data.has("weight") and not ((data["weight"] is float or data["weight"] is int) and data["weight"] > 0):
 		errors.append("weight는 0보다 큰 숫자여야 함")
+	if data.has("subject"):
+		_validate_subject(data["subject"], errors)
+	elif JSON.stringify(data).contains("$subject"):
+		errors.append("$subject를 쓰려면 subject가 필요함")
 	validate_conditions(data.get("conditions", []), errors)
 	var choices: Variant = data.get("choices")
 	if not choices is Array or (choices as Array).is_empty():
@@ -271,6 +356,22 @@ static func validate_event_dict(data: Dictionary) -> PackedStringArray:
 			for effect in branch.get("effects", []):
 				_validate_effect(effect, errors)
 	return errors
+
+
+static func _validate_subject(spec: Variant, errors: PackedStringArray) -> void:
+	if not spec is Dictionary:
+		errors.append("subject는 객체여야 함")
+		return
+	for key in spec:
+		if not key in SUBJECT_KEYS:
+			errors.append("알 수 없는 subject 필드: %s" % key)
+	for type_key in spec.get("bond_types", []):
+		if not RelationshipData.BondType.has(str(type_key)):
+			errors.append("알 수 없는 관계 유형: %s" % type_key)
+	if spec.has("sect") and not str(spec["sect"]) in SUBJECT_SECTS:
+		errors.append("알 수 없는 subject sect: %s" % spec["sect"])
+	if spec.get("stranger", false) != true and not spec.has("bond_types"):
+		errors.append("subject에 bond_types나 stranger 필요")
 
 
 static func _validate_condition(condition: Variant, errors: PackedStringArray) -> void:
@@ -315,6 +416,9 @@ static func _validate_condition(condition: Variant, errors: PackedStringArray) -
 			if not c.get("target") is String:
 				errors.append("relationship_type 조건에 target 필요")
 			_validate_bond_type(c, errors)
+		"bond_count":
+			_validate_bond_type(c, errors)
+			_validate_compare(c, errors)
 		"role_history":
 			if not CharacterData.Role.has(c.get("role", "")):
 				errors.append("알 수 없는 역할: %s" % c.get("role"))
@@ -369,9 +473,12 @@ static func _validate_effect(effect: Variant, errors: PackedStringArray) -> void
 				errors.append("set_bond_type 효과에 target 필요")
 			_validate_bond_type(e, errors)
 		"add_relationship":
-			if not NpcRoster.has_npc(str(e.get("target", ""))):
+			if not NpcRoster.has_npc(str(e.get("target", ""))) and e.get("target") != "$subject":
 				errors.append("명부에 없는 인물: %s" % e.get("target"))
 			_validate_bond_type(e, errors)
+		"marry", "end_relationship":
+			if not e.get("target") is String:
+				errors.append("%s 효과에 target 필요" % e.get("type"))
 		"learn_art":
 			if not MartialArtLibrary.has_art(str(e.get("art", ""))):
 				errors.append("알 수 없는 무공: %s" % e.get("art"))
@@ -441,6 +548,7 @@ static func _to_event_data(data: Dictionary) -> EventData:
 	event.weight = float(data.get("weight", 1.0))
 	event.priority = data.get("priority", false) == true
 	event.npc = str(data.get("npc", _infer_npc(data)))
+	event.subject = data.get("subject", {})
 	for condition in data.get("conditions", []):
 		event.conditions.append(condition)
 	for choice in data["choices"]:
@@ -502,8 +610,10 @@ static func _condition_met(
 		"sect":
 			return _compare(sect.get(c["field"]), c["op"], c["value"])
 		"bond":
-			var bond: RelationshipData = RelationshipManager.get_bond_with(relationships, c["target"])
+			var bond: RelationshipData = RelationshipManager.get_bond_with(relationships, _target(c))
 			return bond != null and _compare(bond.bond_strength, c["op"], c["value"])
+		"bond_count":
+			return _compare(RelationshipManager.count_type(relationships, RelationshipData.BondType.get(c["bond_type"])), c["op"], c["value"])
 		"role":
 			return str(CharacterData.Role.find_key(character.role)) in c["in"]
 		"season":
@@ -520,7 +630,7 @@ static func _condition_met(
 				return false
 			return _compare(current_turn - int(flag_turns[c["flag"]]), c["op"], c["value"])
 		"relationship_type":
-			var rel: RelationshipData = RelationshipManager.get_bond_with(relationships, c["target"])
+			var rel: RelationshipData = RelationshipManager.get_bond_with(relationships, _target(c))
 			return rel != null and rel.bond_type == RelationshipData.BondType.get(c["bond_type"])
 		"role_history":
 			return role_history.has(c["role"]) == c.get("value", true)
@@ -581,7 +691,7 @@ static func _apply_effect(
 		"experience":
 			character.gain_experience(int(e["amount"]))
 		"bond":
-			var bond: RelationshipData = RelationshipManager.get_bond_with(relationships, e["target"])
+			var bond: RelationshipData = RelationshipManager.get_bond_with(relationships, _target(e))
 			if bond:
 				bond.increase_bond(int(e.get("add", 0)))
 		"flag":
@@ -598,17 +708,23 @@ static func _apply_effect(
 					value = maxi(0, value)
 				world_sect.set(e["field"], value)
 		"set_bond_type":
-			var rel: RelationshipData = RelationshipManager.get_bond_with(relationships, e["target"])
+			var rel: RelationshipData = RelationshipManager.get_bond_with(relationships, _target(e))
 			if rel:
 				rel.bond_type = RelationshipData.BondType.get(e["bond_type"])
 		"add_relationship":
-			if RelationshipManager.get_bond_with(relationships, e["target"]) == null:
-				var rel := RelationshipData.new()
-				rel.target_id = e["target"]
-				rel.target_name = NpcRoster.get_display_name(e["target"])
-				rel.bond_type = RelationshipData.BondType.get(e["bond_type"])
-				rel.increase_bond(int(e.get("strength", 10)))
-				relationships.append(rel)
+			var target_id: String = _target(e)
+			if NpcRoster.has_npc(target_id) and RelationshipManager.get_bond_with(relationships, target_id) == null:
+				relationships.append(RelationshipManager.make_relationship(target_id, e["bond_type"], int(e.get("strength", 10))))
+		"marry":
+			var rel: RelationshipData = RelationshipManager.get_bond_with(relationships, _target(e))
+			if rel and rel.bond_type != RelationshipData.BondType.SPOUSE:
+				var wedding: String = RelationshipManager.marry(relationships, rel, world_sects)
+				result["message"] = (str(result.get("message", "")) + " " + wedding).strip_edges()
+				set_flag(story_flags, "married")
+		"end_relationship":
+			var rel: RelationshipData = RelationshipManager.get_bond_with(relationships, _target(e))
+			if rel:
+				relationships.erase(rel)
 		"learn_art":
 			var art: MartialArtData = MartialArtLibrary.create_art(e["art"])
 			if art:

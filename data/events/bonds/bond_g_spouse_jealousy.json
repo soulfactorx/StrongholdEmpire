@@ -1,0 +1,60 @@
+{
+  "id": "bond_g_spouse_jealousy",
+  "title": "질투",
+  "description": "{name}이(가) 등을 돌린 채 말합니다. 「다른 사람 방에서 자고 오시니 좋으셨어요?」",
+  "can_repeat": true,
+  "weight": 2,
+  "subject": {
+    "bond_types": [
+      "SPOUSE"
+    ]
+  },
+  "conditions": [
+    {
+      "type": "bond_count",
+      "bond_type": "SPOUSE",
+      "op": ">=",
+      "value": 2
+    }
+  ],
+  "choices": [
+    {
+      "label": "정성껏 달랜다",
+      "message": "{name}의 마음이 조금 풀렸습니다. 유대 +8",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 8
+        }
+      ]
+    },
+    {
+      "label": "모두를 똑같이 아낀다고 말한다",
+      "message": "{name}이(가) 한숨을 쉽니다. 유대 +2, 매력 +1",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 2
+        },
+        {
+          "type": "character",
+          "field": "charisma",
+          "add": 1
+        }
+      ]
+    },
+    {
+      "label": "못 들은 척한다",
+      "message": "{name}의 마음에 금이 갔습니다. 유대 -12",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": -12
+        }
+      ]
+    }
+  ]
+}

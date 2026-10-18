@@ -1,0 +1,44 @@
+{
+  "id": "bond_g_benefactor_repaid",
+  "title": "은혜를 다 갚다",
+  "description": "{name}이(가) 웃으며 말합니다. 「이제 그대에게 받은 것이 더 많소. 은혜니 뭐니 하는 말은 그만둡시다.」",
+  "can_repeat": true,
+  "weight": 3,
+  "priority": true,
+  "subject": {
+    "bond_types": [
+      "BENEFACTOR"
+    ],
+    "min": 70
+  },
+  "conditions": [],
+  "choices": [
+    {
+      "label": "벗으로 지내자고 한다",
+      "message": "{name}와(과) 벗이 되었습니다.",
+      "effects": [
+        {
+          "type": "set_bond_type",
+          "target": "$subject",
+          "bond_type": "FRIEND"
+        }
+      ]
+    },
+    {
+      "label": "평생 은인으로 모시겠다고 한다",
+      "message": "{name}이(가) 허허 웃습니다. 도덕 +2",
+      "effects": [
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 2
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": -5
+        }
+      ]
+    }
+  ]
+}

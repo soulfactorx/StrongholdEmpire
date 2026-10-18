@@ -109,10 +109,17 @@ func _test_save_screens() -> void:
 	_check(not screen.sect_option.disabled and screen.sect_option.item_count > 1, "새 게임: 소속 문파를 고를 수 있음")
 	screen.set_player_sect("namgung")
 	_check(screen.get_faction_setup().get("player_sect") == "namgung", "새 게임: 고른 문파가 세력 설정에 담김")
+	# 시작 인연: 처음엔 문파 기준, 직접 바꾸면 세력 설정에 담긴다
+	_check(screen.get_bond_setup().get("npc_namgung_lord") == "MASTER_DISCIPLE" and not screen.get_faction_setup().has("bonds"), "새 게임: 시작 인연은 고른 문파 기준")
+	screen.set_start_bond("npc_swallow", "SPOUSE")
+	_check(screen.get_faction_setup().get("bonds", {}).get("npc_swallow") == "SPOUSE", "새 게임: 직접 정한 인연이 담김")
+	screen._apply_bond_preset("clear")
+	_check(screen.get_faction_setup().get("bonds", {}).is_empty() and screen.get_faction_setup().has("bonds"), "새 게임: 인연 모두 비우기")
 	var wanderer_index: int = screen._role_ids.find("wanderer")
 	if wanderer_index >= 0:
 		screen._on_role_selected(wanderer_index)
 		_check(screen.sect_option.disabled and screen.get_player_sect_choice().is_empty(), "새 게임: 낭인은 무소속")
+		_check(screen.get_bond_setup().is_empty(), "새 게임: 낭인은 시작 인연 없음")
 		screen._on_role_selected(screen._role_ids.find("young_disciple"))
 	screen.ironman_check.button_pressed = true
 	screen._on_start_pressed()

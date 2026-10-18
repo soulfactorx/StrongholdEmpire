@@ -1,0 +1,44 @@
+{
+  "id": "bond_g_friend_love",
+  "title": "벗 이상의 마음",
+  "description": "{name}이(가) 평소와 달리 말끝을 흐립니다. 「…자네를 벗으로만 보기가 어려워졌어.」",
+  "can_repeat": true,
+  "weight": 1.2,
+  "subject": {
+    "bond_types": [
+      "FRIEND"
+    ],
+    "min": 55,
+    "min_age": 18
+  },
+  "conditions": [],
+  "choices": [
+    {
+      "label": "같은 마음이라고 고백한다",
+      "message": "{name}와(과) 연인이 되었습니다. 유대 +5",
+      "effects": [
+        {
+          "type": "set_bond_type",
+          "target": "$subject",
+          "bond_type": "ROMANCE"
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 5
+        }
+      ]
+    },
+    {
+      "label": "벗으로 남자고 한다",
+      "message": "{name}이(가) 고개를 끄덕입니다. 유대 -8",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": -8
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "id": "npc_old_drunk",
+  "display_name": "취개",
+  "title": "술 취한 거지 노인",
+  "sect_id": "none",
+  "role": "WANDERER",
+  "named": true,
+  "description": "늘 술병을 끼고 다니는 거지 노인. 가끔 보여 주는 손놀림이 예사롭지 않다.",
+  "level": 6,
+  "stats": {
+    "strength": 15,
+    "agility": 16,
+    "wisdom": 18,
+    "charisma": 8,
+    "internal_energy_max": 180,
+    "age": 71,
+    "morality": 60
+  },
+  "scaling": {
+    "base_level": 6,
+    "level_offset": 0,
+    "per_level": {
+      "strength": 1,
+      "wisdom": 1,
+      "internal_energy_max": 10
+    }
+  },
+  "war_specialty": "DEFEND",
+  "dialogue": {
+    "talk": [
+      "끅… 젊은이, 술 한 잔 사겠나?",
+      "옛날에 말이야, 천하제일이라던 놈이 하나 있었지…",
+      "검은 손이 아니라 마음으로 쥐는 게야."
+    ],
+    "gift": [
+      "오호, 술이로구나! 이 늙은이를 아는구먼.",
+      "끌끌, 착한 놈이로고."
+    ],
+    "spar": [
+      "늙은이 뼈 부러뜨리지나 말게."
+    ]
+  },
+  "traits": {
+    "caution": 80,
+    "greed": 30,
+    "benevolence": 65
+  },
+  "likes": [
+    "gift"
+  ],
+  "favorite": "독한 고량주"
+}

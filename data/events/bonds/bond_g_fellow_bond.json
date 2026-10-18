@@ -1,0 +1,50 @@
+{
+  "id": "bond_g_fellow_bond",
+  "title": "사형제 이상의 정",
+  "description": "{name}이(가) 술잔을 들며 말합니다. 「문파 일을 떠나서도 그대와는 평생 함께하고 싶소.」",
+  "can_repeat": true,
+  "weight": 3,
+  "priority": true,
+  "subject": {
+    "bond_types": [
+      "FELLOW"
+    ],
+    "min": 60
+  },
+  "conditions": [],
+  "choices": [
+    {
+      "label": "벗이 되자고 답한다",
+      "message": "{name}와(과) 벗이 되었습니다.",
+      "effects": [
+        {
+          "type": "set_bond_type",
+          "target": "$subject",
+          "bond_type": "FRIEND"
+        }
+      ]
+    },
+    {
+      "label": "의형제를 맺는다",
+      "message": "{name}와(과) 혈맹(의형제)을 맺었습니다.",
+      "effects": [
+        {
+          "type": "set_bond_type",
+          "target": "$subject",
+          "bond_type": "BLOOD_OATH"
+        }
+      ]
+    },
+    {
+      "label": "동문으로 충분하다",
+      "message": "{name}이(가) 고개를 끄덕입니다. 유대 -8",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": -8
+        }
+      ]
+    }
+  ]
+}

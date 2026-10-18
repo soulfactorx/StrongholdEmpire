@@ -87,6 +87,7 @@ const RUNTIME_SEQUENCE: Array = [
 	["combat", "_test_martial_art_screen_actions"],
 	["roles", "_test_bond_evolution"],
 	["roles", "_test_bond_flow"],
+	["roles", "_test_bond_system"],
 	["roles", "_test_npc_agents"],
 	["world", "_test_diplomacy"],
 	["world", "_test_diplomacy_screen"],

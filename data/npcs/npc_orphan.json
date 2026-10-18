@@ -1,0 +1,52 @@
+{
+  "id": "npc_orphan",
+  "display_name": "석두",
+  "title": "떠돌이 소년",
+  "sect_id": "none",
+  "role": "WANDERER",
+  "named": true,
+  "description": "부모를 잃고 저잣거리를 떠도는 소년. 눈빛만은 누구보다 날카롭다.",
+  "level": 1,
+  "stats": {
+    "strength": 8,
+    "agility": 11,
+    "wisdom": 9,
+    "charisma": 8,
+    "internal_energy_max": 50,
+    "age": 13,
+    "morality": 60
+  },
+  "scaling": {
+    "base_level": 1,
+    "level_offset": 0,
+    "per_level": {
+      "strength": 2,
+      "agility": 2,
+      "internal_energy_max": 10
+    }
+  },
+  "war_specialty": "CHARGE",
+  "dialogue": {
+    "talk": [
+      "저도 언젠가 검을 배우고 싶어요!",
+      "배고픈 건 참을 수 있어요. 무시당하는 건 못 참아요.",
+      "오늘은 장터에서 소매치기를 잡았어요!"
+    ],
+    "gift": [
+      "이거 진짜 저 주시는 거예요?",
+      "…고맙습니다. 꼭 갚을게요."
+    ],
+    "spar": [
+      "한 수만 가르쳐 주세요!"
+    ]
+  },
+  "traits": {
+    "ambition": 80,
+    "loyalty": 85
+  },
+  "likes": [
+    "spar",
+    "talk"
+  ],
+  "favorite": "따뜻한 만두"
+}

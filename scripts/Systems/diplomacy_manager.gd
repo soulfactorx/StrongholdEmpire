@@ -156,8 +156,11 @@ static func perform(gm: Node, sect_id: String, action_id: String) -> Dictionary:
 			# 연애 아크(남궁설)의 혼례와 같은 결말로 친다.
 			if partner.target_id == "npc_namgung_lady":
 				EventManager.set_flag(gm.story_flags, "arc_love_married")
-			message = "%s와(과)의 혼담이 성사되었습니다. %s와(과) 사돈이자 동맹이 되었습니다. 명성 +%d" % [
-				partner.target_name, sect.sect_name, _Balance.MARRIAGE_REPUTATION,
+			EventManager.set_flag(gm.story_flags, "married")
+			# 연인은 배우자가 되고 그 세력의 문주와는 인척이 된다 (세력 태도는 위에서 올렸다)
+			var wedding: String = RelationshipManager.marry(gm.player_relationships, partner)
+			message = "%s와(과)의 혼담이 성사되었습니다. %s와(과) 사돈이자 동맹이 되었습니다. 명성 +%d\n%s" % [
+				partner.target_name, sect.sect_name, _Balance.MARRIAGE_REPUTATION, wedding,
 			]
 		"challenge":
 			gm.challenge_target = sect.id

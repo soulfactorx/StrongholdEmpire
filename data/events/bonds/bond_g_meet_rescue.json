@@ -1,0 +1,47 @@
+{
+  "id": "bond_g_meet_rescue",
+  "title": "위기의 손길",
+  "description": "산길에서 독사에게 물려 쓰러진 순간, {title} {name}이(가) 나타나 독을 빨아내고 상처를 싸매 줍니다.",
+  "can_repeat": true,
+  "weight": 1,
+  "subject": {
+    "stranger": true
+  },
+  "conditions": [],
+  "choices": [
+    {
+      "label": "깊이 머리 숙여 감사한다",
+      "message": "{name}이(가) 은인이 되었습니다. 내공 +30",
+      "effects": [
+        {
+          "type": "add_relationship",
+          "target": "$subject",
+          "bond_type": "BENEFACTOR",
+          "strength": 30
+        },
+        {
+          "type": "character",
+          "field": "internal_energy_current",
+          "add": 30
+        }
+      ]
+    },
+    {
+      "label": "이 은혜 반드시 갚겠다고 맹세한다",
+      "message": "{name}이(가) 은인이 되었습니다. 은혜를 갚겠다는 다짐에 도덕 +2 (유대 40)",
+      "effects": [
+        {
+          "type": "add_relationship",
+          "target": "$subject",
+          "bond_type": "BENEFACTOR",
+          "strength": 40
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 2
+        }
+      ]
+    }
+  ]
+}

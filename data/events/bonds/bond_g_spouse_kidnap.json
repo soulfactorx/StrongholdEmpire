@@ -1,0 +1,54 @@
+{
+  "id": "bond_g_spouse_kidnap",
+  "title": "사라진 배우자",
+  "description": "{name}이(가) 장에 나갔다가 돌아오지 않았습니다. 산적들이 몸값을 요구하는 쪽지를 보냈습니다.",
+  "can_repeat": true,
+  "weight": 0.6,
+  "subject": {
+    "bond_types": [
+      "SPOUSE"
+    ],
+    "min": 30
+  },
+  "conditions": [
+    {
+      "type": "sect",
+      "field": "gold",
+      "op": ">=",
+      "value": 120
+    }
+  ],
+  "choices": [
+    {
+      "label": "직접 구하러 간다",
+      "message": "산채로 쳐들어갑니다! 유대 +15",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 15
+        },
+        {
+          "type": "combat",
+          "combat": "bandit_hunt"
+        }
+      ]
+    },
+    {
+      "label": "몸값을 치른다 (금화 120)",
+      "message": "{name}이(가) 무사히 돌아왔습니다. 유대 +5",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -120
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 5
+        }
+      ]
+    }
+  ]
+}

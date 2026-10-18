@@ -10,6 +10,7 @@ extends RefCounted
 ##       — 없으면 성향별 기본값(GameBalance.WAR_TACTICS, WAR_FORMATIONS)
 ##       officers(선택) [{npc, post}] 직책 인물 (NpcAgent.POST_NAMES: leader·instructor·healer·elder·steward·heir)
 ##       strategy(선택) 세력 AI 전략 (FactionStrategy), optional(선택) true면 새 게임에서 골라야 등장하는 세력
+##       initial_bonds(선택) [{target, type, strength}] 이 문파에 몸담고 시작할 때의 인연 (없으면 문주를 사부로)
 
 const SECT_DIR := "res://data/sects/"
 const NUMERIC_FIELDS: PackedStringArray = [
@@ -122,7 +123,7 @@ static func validate_sect_dict(data: Dictionary) -> PackedStringArray:
 	for key in data:
 		if not (key in NUMERIC_FIELDS or key in [
 			"id", "sect_name", "alignment", "leader_id", "description", "is_player_sect", "_path",
-			"war_tactics", "war_formation", "soldier_npc", "champion_npc", "emblem", "strategy", "optional", "officers",
+			"war_tactics", "war_formation", "soldier_npc", "champion_npc", "emblem", "strategy", "optional", "officers", "initial_bonds",
 		]):
 			errors.append("알 수 없는 필드: %s" % key)
 	var tactics: Variant = data.get("war_tactics", {})
@@ -142,6 +143,9 @@ static func validate_sect_dict(data: Dictionary) -> PackedStringArray:
 	for officer in data.get("officers", []):
 		if not officer is Dictionary or not NpcRoster.has_npc(str(officer.get("npc", ""))) or not NpcAgent.POST_NAMES.has(str(officer.get("post", ""))):
 			errors.append("잘못된 직책 인물: %s" % [officer])
+	for bond in data.get("initial_bonds", []):
+		if not bond is Dictionary or not NpcRoster.has_npc(str(bond.get("target", ""))) or not RelationshipData.BondType.has(str(bond.get("type", ""))):
+			errors.append("잘못된 시작 인연: %s" % [bond])
 	if data.has("strategy") and not FactionStrategy.is_valid(str(data["strategy"])):
 		errors.append("알 수 없는 전략: %s" % data["strategy"])
 	if data.has("war_formation") and not data["war_formation"] in ["NONE", "CRANE", "FISH", "CIRCLE"]:

@@ -1,0 +1,49 @@
+{
+  "id": "bond_g_hatred_fade",
+  "title": "원한이 풀리다",
+  "description": "{name}이(가) 찾아와 오래 망설이다 말합니다. 「…이제 그만합시다. 원한을 품고 사는 것도 지쳤소.」",
+  "can_repeat": true,
+  "weight": 3,
+  "priority": true,
+  "subject": {
+    "bond_types": [
+      "HATRED"
+    ],
+    "max": 10
+  },
+  "conditions": [],
+  "choices": [
+    {
+      "label": "화해한다",
+      "message": "{name}와(과)의 원한이 풀렸습니다. 지인이 되었습니다. 도덕 +3",
+      "effects": [
+        {
+          "type": "set_bond_type",
+          "target": "$subject",
+          "bond_type": "ACQUAINTANCE"
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 10
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 3
+        }
+      ]
+    },
+    {
+      "label": "용서할 수 없다",
+      "message": "{name}이(가) 다시 칼을 갈기 시작합니다. 원한 +20",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 20
+        }
+      ]
+    }
+  ]
+}

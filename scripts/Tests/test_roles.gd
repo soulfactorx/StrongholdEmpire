@@ -697,14 +697,14 @@ func _test_bond_flow() -> void:
 	popup.visible = false
 
 	# 경영 화면은 인연이 많아도 세 줄까지만
-	for npc_id in ["npc_swallow", "npc_iron_blade", "npc_healer"]:
+	for npc_id in ["npc_swallow", "npc_iron_blade", "npc_scholar"]:
 		var rel := RelationshipData.new()
 		rel.target_id = npc_id
 		rel.target_name = NpcRoster.get_display_name(npc_id)
 		rel.bond_type = RelationshipData.BondType.ACQUAINTANCE
 		gm.player_relationships.append(rel)
 	hub._update_relationships_display(gm.player_relationships)
-	_check(hub.relationship_label.text.split("\n").size() == 3 and hub.relationship_label.text.contains("외 3명"), "경영 화면 인연 표시는 세 줄")
+	_check(hub.relationship_label.text.split("\n").size() == 3 and hub.relationship_label.text.contains("외 %d명" % (gm.player_relationships.size() - 2)), "경영 화면 인연 표시는 세 줄")
 
 	# 방어전에 스승이 합류해 싸운다
 	_rel(gm, "npc_master").increase_bond(40)
@@ -800,3 +800,74 @@ func _test_npc_agents() -> void:
 	_check(NpcAgent.format_season(gm.last_npc_report, []).contains("우리 문파 인물"), "강호 동향 글: 우리 문파 인물")
 	NpcAgent.active = false
 	_completed["_test_npc_agents"] = true
+
+
+func _test_bond_system() -> void:
+	var gm: Node = root.get_node("GameManager")
+	# 시작 인연: 소속 문파 기준, 낭인은 없음
+	_new_quiet_game(gm, "young_disciple")
+	_check(_rel(gm, "npc_master").bond_type == RelationshipData.BondType.MASTER_DISCIPLE and _rel(gm, "npc_senior_brother").bond_type == RelationshipData.BondType.FELLOW, "청운검파: 사부·동문으로 시작")
+	gm.start_new_game("남궁", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0}, false, false, {"player_sect": "namgung"})
+	_check(_rel(gm, "npc_master") == null and _rel(gm, "npc_namgung_lord").bond_type == RelationshipData.BondType.MASTER_DISCIPLE, "남궁세가: 가주가 사부, 청운검선과는 인연 없음")
+	_check(_rel(gm, "npc_namgung_lady").bond_type == RelationshipData.BondType.FELLOW, "남궁세가: 남궁설이 동문")
+	_new_quiet_game(gm, "wanderer")
+	_check(gm.player_relationships.is_empty(), "낭인은 인연 없이 시작")
+
+	# 처음부터 정한 인연: 배우자 둘
+	gm.start_new_game("직접", "wanderer", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0}, false, false,
+		{"bonds": {"npc_swallow": "SPOUSE", "npc_musician": "SPOUSE", "npc_orphan": "PUPIL", "npc_master": ""}})
+	_check(RelationshipManager.count_type(gm.player_relationships, RelationshipData.BondType.SPOUSE) == 2 and gm.player_relationships.size() == 3, "직접 정한 시작 인연 (배우자 둘·제자)")
+	_check(_rel(gm, "npc_swallow").bond_strength == RelationshipManager.START_STRENGTH["SPOUSE"], "시작 유대는 관계 유형별")
+	_check(_rel(gm, "npc_orphan").get_bond_name() == "제자", "관계 이름: 제자")
+
+	# 청혼: 깊은 연인만, 배우자는 여럿, 다른 배우자는 서운해함, 문파 인물이면 문주와 인척
+	_new_quiet_game(gm, "young_disciple")
+	gm.player_sect.gold = 1000
+	gm.player_relationships.append(RelationshipManager.make_relationship("npc_namgung_lady", "ROMANCE", 40))
+	var lady: RelationshipData = _rel(gm, "npc_namgung_lady")
+	_check(not gm.interact_with("npc_namgung_lady", RelationshipManager.PROPOSE)["success"], "유대가 모자라면 청혼 불가")
+	lady.increase_bond(30)
+	var attitude: int = gm.get_world_sect("namgung").attitude
+	var result: Dictionary = gm.interact_with("npc_namgung_lady", RelationshipManager.PROPOSE)
+	_check(result["success"] and lady.bond_type == RelationshipData.BondType.SPOUSE and gm.player_sect.gold == 1000 - _Balance.WEDDING_GOLD, "청혼: 배우자가 됨 (혼례 비용)")
+	_check(_rel(gm, "npc_namgung_lord") != null and _rel(gm, "npc_namgung_lord").bond_type == RelationshipData.BondType.IN_LAW, "배우자 문파의 문주와 인척")
+	_check(gm.get_world_sect("namgung").attitude == attitude + _Balance.WEDDING_ATTITUDE, "배우자 문파 태도 상승")
+	gm.player_relationships.append(RelationshipManager.make_relationship("npc_swallow", "ROMANCE", 80))
+	gm.story_flags.erase("interaction_turn")
+	var lady_bond: int = lady.bond_strength
+	gm.interact_with("npc_swallow", RelationshipManager.PROPOSE)
+	_check(RelationshipManager.count_type(gm.player_relationships, RelationshipData.BondType.SPOUSE) == 2 and lady.bond_strength == lady_bond - _Balance.SPOUSE_JEALOUSY_BOND, "두 번째 배우자: 먼저 맞은 배우자가 서운해함")
+
+	# 관계 대상 기연: 조건에 맞는 인물을 골라 이름을 채운다
+	var candidates: Array[EventData] = EventManager.get_candidates(gm.player_character, gm.player_sect, gm.player_relationships, "봄", gm.triggered_event_ids, gm.story_flags)
+	_check(candidates.any(func(e: EventData) -> bool: return e.id == "bond_g_spouse_jealousy"), "배우자가 둘이면 질투 기연 후보")
+	_new_quiet_game(gm, "wanderer")
+	gm.player_relationships.append(RelationshipManager.make_relationship("npc_iron_blade", "FRIEND", 70))
+	_check(_priority_event_after_turn(gm) == "bond_g_friend_oath", "벗 유대 70: 의형제 결의 기연")
+	_check(gm.pending_event.get("subject") == "npc_iron_blade" and str(gm.pending_event["description"]).contains("고무진") and not str(gm.pending_event["description"]).contains("{name}"), "기연 글에 대상 이름이 채워짐")
+	_check(str(gm.pending_event["description"]).contains("고무진이 ") and not str(gm.pending_event["description"]).contains("이(가)"), "이름 뒤 조사를 받침에 맞춤 (고무진이)")
+	_check(EventData.fill_text("{name}이(가) {name}와(과) {name}(으)로", "npc_swallow") == "연소화가 연소화와 연소화로", "받침 없는 이름의 조사 (연소화가·와·로)")
+	gm.resolve_pending_event(0)
+	_check(_rel(gm, "npc_iron_blade").bond_type == RelationshipData.BondType.BLOOD_OATH, "벗 → 혈맹")
+
+	# 새 인연: 아직 모르는 인물과 만나기 (낭인도 인연을 늘려 간다)
+	candidates = EventManager.get_candidates(gm.player_character, gm.player_sect, gm.player_relationships, "봄", gm.triggered_event_ids, gm.story_flags)
+	_check(candidates.any(func(e: EventData) -> bool: return e.id == "bond_g_meet_inn"), "낭인: 새 인연 기연 후보")
+	var before: int = gm.player_relationships.size()
+	gm.pending_event = {"id": "bond_g_meet_child", "subject": "npc_orphan"}
+	gm.resolve_pending_event(0)
+	_check(gm.player_relationships.size() == before + 1 and _rel(gm, "npc_orphan").bond_type == RelationshipData.BondType.PUPIL, "만남 기연으로 제자를 거둠")
+	var young: Array[String] = EventManager._subject_candidates({"stranger": true, "max_age": 16}, gm.player_relationships)
+	_check(not young.has("npc_orphan") and not young.has("npc_master"), "이미 인연이 있는 인물·문주는 새 인연 후보가 아님")
+
+	# 기연으로 혼인·이별
+	gm.player_relationships.append(RelationshipManager.make_relationship("npc_musician", "ROMANCE", 75))
+	gm.player_sect.gold = 500
+	gm.pending_event = {"id": "bond_g_romance_proposal", "subject": "npc_musician"}
+	gm.resolve_pending_event(0)
+	_check(_rel(gm, "npc_musician").bond_type == RelationshipData.BondType.SPOUSE and gm.story_flags.get("married", false), "기연 혼례: 배우자")
+	_rel(gm, "npc_musician").decrease_bond(100)
+	gm.pending_event = {"id": "bond_g_spouse_cold", "subject": "npc_musician"}
+	gm.resolve_pending_event(1)
+	_check(_rel(gm, "npc_musician") == null, "식어 버린 정: 놓아 주면 관계가 끝남")
+	_completed["_test_bond_system"] = true

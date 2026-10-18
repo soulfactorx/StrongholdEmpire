@@ -1,0 +1,41 @@
+{
+  "id": "bond_g_fellow_spar",
+  "title": "동문 대련",
+  "description": "{name}이(가) 목검을 던져 줍니다. 「오늘은 내가 이기겠소!」",
+  "can_repeat": true,
+  "weight": 2,
+  "subject": {
+    "bond_types": [
+      "FELLOW"
+    ]
+  },
+  "conditions": [],
+  "choices": [
+    {
+      "label": "전력으로 맞선다",
+      "message": "땀에 흠뻑 젖도록 겨루었습니다. 경험치 +20, 유대 +4",
+      "effects": [
+        {
+          "type": "experience",
+          "amount": 20
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 4
+        }
+      ]
+    },
+    {
+      "label": "가르치듯 받아 준다",
+      "message": "{name}이(가) 한 수 배웠다며 고마워합니다. 유대 +7",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 7
+        }
+      ]
+    }
+  ]
+}

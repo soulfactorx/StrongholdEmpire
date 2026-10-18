@@ -18,8 +18,8 @@
   "description": "남궁세가의 젊은 후계자.",
   "level": 2,
   "stats": { "strength": 14, "agility": 13, "wisdom": 10, "charisma": 9, "internal_energy_max": 100 },
-  "scaling": { "base_level": 2, "level_offset": 0, "per_level": { "strength": 1, "agility": 1 } },
-  "initial_bond": { "type": "RIVALRY", "strength": 15, "stage": 0 }
+  "named": true,
+  "scaling": { "base_level": 2, "level_offset": 0, "per_level": { "strength": 1, "agility": 1 } }
 }
 ```
 
@@ -31,10 +31,10 @@
 | `role` | `LEADER`, `MANAGER`, `YOUNG_DISCIPLE`, `WANDERER`, `SPY`, `ASSASSIN`, `MERCENARY` |
 | `level`, `stats` | 레벨과 능력치 (`strength`, `agility`, `wisdom`, `charisma`, `internal_energy_max`, `age`, `morality`) |
 | `scaling` | (선택) 플레이어와 함께 성장. 레벨 = max(`base_level`, 플레이어 레벨 + `level_offset`), `per_level` 능력치가 레벨당 증가 |
-| `initial_bond` | (선택) 새 게임 시작 관계. `type`은 `MASTER_DISCIPLE`, `ROMANCE`, `BLOOD_OATH`, `RIVALRY`, `HATRED` |
+| `named` | (선택) `true`면 이름 있는 인물. 인물 목록에 오르고 인연(만남 기연·새 게임 시작 인연)을 맺을 수 있습니다 |
 
-`scaling`이 있고 `initial_bond`가 없는 인물(예: 도적)은 이름 없는 졸개로 보고 인물 목록에서 뺍니다.
-플레이어와 함께 성장하는 이름 있는 인물은 `"named": true`로 목록에 올립니다.
+`scaling`이 있고 `named`가 없는 인물(예: 도적)은 이름 없는 졸개로 보고 인물 목록과 인연에서 뺍니다.
+시작 관계는 인물이 아니라 문파의 `initial_bonds`가 정합니다.
 어느 문파에도 속하지 않은 인물(낭인 등)은 `sect_id`를 `"none"`으로 씁니다.
 
 | (선택) `war_specialty` | 문파전 장수로 참전할 때 보너스를 주는 명령: `CHARGE`(돌격) · `DEFEND`(방어) · `FLANK`(측면) |
@@ -78,6 +78,7 @@
 | `war_tactics` | (선택) 문파전 명령 선택 가중치. 예: `{ "CHARGE": 0.4, "DEFEND": 0.15, "FLANK": 0.4, "RETREAT": 0.05 }`. 없으면 성향별 기본값 |
 | `war_formation` | (선택) 문파전 진형: `CRANE`(학익진) · `FISH`(어린진) · `CIRCLE`(방원진) · `NONE`. 없으면 성향별 기본값 |
 | `soldier_npc` | (선택) 이 세력이 침공할 때 오는 졸개 인물 id. 없으면 `npc_bandit` |
+| `initial_bonds` | (선택) 이 문파에 몸담고 시작할 때의 인연 `[{ "target": 인물 id, "type": 관계 유형, "strength": 유대 }]`. 없으면 문주를 사부(유대 30)로 모십니다. 무소속(낭인)은 인연 없이 시작하고, 새 게임의 "시작 인연 설정"에서 직접 정하면 그 설정을 씁니다. 관계 유형은 `docs/기연_데이터_형식.md` 참고 |
 | `champion_npc` | (선택) 침공을 이끄는 우두머리 인물 id. 없으면 졸개만 온다 |
 | `emblem` | (선택) 문장 그림 경로 (`assets/art/` 아래). 없으면 `emblems/<id>.png`. 256×256 투명 PNG 권장 |
 | `strategy` | (선택) 세력 AI 전략: `expansion`(영토 확장) · `military`(무력 강병) · `economy`(내실 부강) · `diplomacy`(합종연횡) · `opportunist`(기회주의). 없으면 성향별 기본값(정파 합종연횡, 사파 기회주의, 마교 무력 강병). 새 게임 화면에서 바꿀 수 있다 |

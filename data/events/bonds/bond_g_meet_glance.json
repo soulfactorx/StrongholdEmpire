@@ -1,0 +1,46 @@
+{
+  "id": "bond_g_meet_glance",
+  "title": "스치는 눈길",
+  "description": "꽃비 내리는 다리 위에서 {title} {name}와(과) 눈이 마주쳤습니다. 상대가 먼저 미소를 짓습니다.",
+  "can_repeat": true,
+  "weight": 1,
+  "subject": {
+    "stranger": true,
+    "min_age": 18,
+    "max_age": 40
+  },
+  "conditions": [
+    {
+      "type": "character",
+      "field": "charisma",
+      "op": ">=",
+      "value": 10
+    }
+  ],
+  "choices": [
+    {
+      "label": "말을 건넨다",
+      "message": "{name}와(과) 이름을 주고받았습니다. 지인이 되었습니다. (유대 25)",
+      "effects": [
+        {
+          "type": "add_relationship",
+          "target": "$subject",
+          "bond_type": "ACQUAINTANCE",
+          "strength": 25
+        }
+      ]
+    },
+    {
+      "label": "가볍게 목례만 한다",
+      "message": "{name}이(가) 웃으며 지나갑니다. 지인이 되었습니다.",
+      "effects": [
+        {
+          "type": "add_relationship",
+          "target": "$subject",
+          "bond_type": "ACQUAINTANCE",
+          "strength": 10
+        }
+      ]
+    }
+  ]
+}

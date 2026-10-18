@@ -1,0 +1,50 @@
+{
+  "id": "npc_merchant",
+  "display_name": "왕부귀",
+  "title": "만금상단 상단주",
+  "sect_id": "none",
+  "role": "WANDERER",
+  "named": true,
+  "description": "천하를 오가는 만금상단의 주인. 은혜와 원수를 장부에 꼼꼼히 적어 둔다.",
+  "level": 1,
+  "stats": {
+    "strength": 6,
+    "agility": 7,
+    "wisdom": 17,
+    "charisma": 15,
+    "internal_energy_max": 60,
+    "age": 47,
+    "morality": 50
+  },
+  "scaling": {
+    "base_level": 1,
+    "level_offset": 0,
+    "per_level": {
+      "wisdom": 1,
+      "internal_energy_max": 4
+    }
+  },
+  "war_specialty": "DEFEND",
+  "dialogue": {
+    "talk": [
+      "장사든 강호든 신용이 전부지요.",
+      "남쪽 비단값이 또 올랐소. 세상이 어수선하면 늘 그렇지.",
+      "은혜는 반드시 갚는 게 왕가의 가훈이오."
+    ],
+    "gift": [
+      "허허, 장사꾼에게 선물이라니. 장부에 적어 두겠소.",
+      "값을 매길 수 없는 물건이로군."
+    ],
+    "spar": [
+      "나는 주판알만 튕기오. 칼은 호위에게 맡기시오."
+    ]
+  },
+  "traits": {
+    "greed": 70,
+    "caution": 70
+  },
+  "likes": [
+    "gift"
+  ],
+  "favorite": "옥 주판"
+}

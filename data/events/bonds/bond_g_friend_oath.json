@@ -1,0 +1,44 @@
+{
+  "id": "bond_g_friend_oath",
+  "title": "의형제 결의",
+  "description": "복숭아꽃 아래, {name}이(가) 잔에 피 한 방울을 떨어뜨립니다. 「태어난 날은 달라도 죽는 날은 같기를.」",
+  "can_repeat": true,
+  "weight": 3,
+  "priority": true,
+  "subject": {
+    "bond_types": [
+      "FRIEND"
+    ],
+    "min": 65
+  },
+  "conditions": [],
+  "choices": [
+    {
+      "label": "잔을 받아 결의한다",
+      "message": "{name}와(과) 혈맹(의형제)을 맺었습니다. 유대 +5",
+      "effects": [
+        {
+          "type": "set_bond_type",
+          "target": "$subject",
+          "bond_type": "BLOOD_OATH"
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 5
+        }
+      ]
+    },
+    {
+      "label": "지금 이대로의 벗이 좋다",
+      "message": "{name}이(가) 웃으며 잔을 비웁니다. 유대 -8",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": -8
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "id": "bond_g_spouse_child",
+  "title": "경사",
+  "description": "{name}이(가) 수줍게 배를 쓰다듬습니다. 「…아이가 생겼어요.」",
+  "can_repeat": true,
+  "weight": 0.8,
+  "subject": {
+    "bond_types": [
+      "SPOUSE"
+    ],
+    "min": 60
+  },
+  "conditions": [
+    {
+      "type": "sect",
+      "field": "gold",
+      "op": ">=",
+      "value": 50
+    }
+  ],
+  "choices": [
+    {
+      "label": "크게 기뻐하며 잔치를 연다 (금화 50)",
+      "message": "온 마을이 축하했습니다. 명성 +6, 유대 +10",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -50
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 6
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "has_child",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "조용히 손을 맞잡는다",
+      "message": "둘만의 기쁨을 나누었습니다. 유대 +12",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 12
+        },
+        {
+          "type": "flag",
+          "flag": "has_child",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

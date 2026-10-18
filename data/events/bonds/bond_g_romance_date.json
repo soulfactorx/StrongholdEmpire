@@ -1,0 +1,47 @@
+{
+  "id": "bond_g_romance_date",
+  "title": "달밤의 밀회",
+  "description": "보름달 아래 {name}이(가) 기다리고 있습니다. 「오늘은 아무 일도 생각하지 말아요.」",
+  "can_repeat": true,
+  "weight": 2,
+  "subject": {
+    "bond_types": [
+      "ROMANCE"
+    ]
+  },
+  "conditions": [],
+  "choices": [
+    {
+      "label": "함께 강가를 걷는다",
+      "message": "{name}와(과)의 시간이 고요히 흘렀습니다. 유대 +6, 내공 +30",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 6
+        },
+        {
+          "type": "character",
+          "field": "internal_energy_current",
+          "add": 30
+        }
+      ]
+    },
+    {
+      "label": "선물을 건넨다 (금화 30)",
+      "message": "{name}이(가) 선물을 품에 안고 웃습니다. 유대 +10",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -30
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 10
+        }
+      ]
+    }
+  ]
+}

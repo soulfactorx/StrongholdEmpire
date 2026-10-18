@@ -1,0 +1,50 @@
+{
+  "id": "bond_g_friend_request",
+  "title": "벗의 부탁",
+  "description": "{name}이(가) 어렵게 입을 엽니다. 「…빚쟁이에게 쫓기고 있네. 금화 50만 빌려줄 수 있겠나?」",
+  "can_repeat": true,
+  "weight": 1,
+  "subject": {
+    "bond_types": [
+      "FRIEND"
+    ],
+    "min": 25
+  },
+  "conditions": [
+    {
+      "type": "sect",
+      "field": "gold",
+      "op": ">=",
+      "value": 50
+    }
+  ],
+  "choices": [
+    {
+      "label": "두말없이 빌려준다 (금화 50)",
+      "message": "{name}이(가) 손을 꼭 잡습니다. 유대 +12",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -50
+        },
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": 12
+        }
+      ]
+    },
+    {
+      "label": "형편이 어렵다며 거절한다",
+      "message": "{name}이(가) 쓸쓸히 돌아섭니다. 유대 -8",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": -8
+        }
+      ]
+    }
+  ]
+}

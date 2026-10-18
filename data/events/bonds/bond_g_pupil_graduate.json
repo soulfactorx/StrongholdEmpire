@@ -1,0 +1,44 @@
+{
+  "id": "bond_g_pupil_graduate",
+  "title": "제자의 하산",
+  "description": "{name}이(가) 큰절을 올립니다. 「스승님, 이제 제 길을 찾아 떠나려 합니다.」",
+  "can_repeat": true,
+  "weight": 3,
+  "priority": true,
+  "subject": {
+    "bond_types": [
+      "PUPIL"
+    ],
+    "min": 80
+  },
+  "conditions": [],
+  "choices": [
+    {
+      "label": "축복하며 보내 준다",
+      "message": "{name}이(가) 강호에 이름을 떨치기 시작합니다. 이제 벗으로 지냅니다. 명성 +8",
+      "effects": [
+        {
+          "type": "set_bond_type",
+          "target": "$subject",
+          "bond_type": "FRIEND"
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 8
+        }
+      ]
+    },
+    {
+      "label": "아직 가르칠 것이 남았다고 붙잡는다",
+      "message": "{name}이(가) 남기로 했습니다. 유대 -10",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": -10
+        }
+      ]
+    }
+  ]
+}

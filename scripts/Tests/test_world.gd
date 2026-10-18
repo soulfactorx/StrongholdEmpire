@@ -35,11 +35,16 @@ func _test_npc_roster() -> void:
 	var relationships: Array[RelationshipData] = RelationshipManager.create_default_relationships()
 	var master_bond: RelationshipData = RelationshipManager.get_bond_with(relationships, "npc_master")
 	var rival_bond: RelationshipData = RelationshipManager.get_bond_with(relationships, "npc_rival")
+	var fellow_bond: RelationshipData = RelationshipManager.get_bond_with(relationships, "npc_senior_brother")
 	_check(
-		relationships.size() == 2 and master_bond.bond_strength == 35 and master_bond.stage == 1
-		and rival_bond.bond_type == RelationshipData.BondType.RIVALRY and rival_bond.bond_strength == 15,
-		"명부의 initial_bond로 시작 관계 생성"
+		relationships.size() == 4 and master_bond.bond_strength == 35 and master_bond.stage == 1
+		and rival_bond.bond_type == RelationshipData.BondType.RIVALRY and rival_bond.bond_strength == 15
+		and fellow_bond.bond_type == RelationshipData.BondType.FELLOW,
+		"문파 데이터의 initial_bonds로 시작 관계 생성 (청운검파: 사부·동문 둘·라이벌)"
 	)
+	_check(RelationshipManager.create_default_relationships("none").is_empty(), "무소속은 시작 인연 없음")
+	var tang: Array[RelationshipData] = RelationshipManager.create_default_relationships("tang")
+	_check(RelationshipManager.get_bond_with(tang, "npc_tang_head").bond_type == RelationshipData.BondType.MASTER_DISCIPLE, "사천당가: 가주가 사부")
 
 	_check(not NpcRoster.validate_npc_dict({"id": "x", "display_name": "x", "sect_id": "s", "role": "KING"}).is_empty(), "잘못된 NPC 역할 검출")
 	_check(

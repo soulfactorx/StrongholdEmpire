@@ -21,5 +21,22 @@
       "npc": "npc_cheonma_envoy",
       "post": "elder"
     }
+  ],
+  "initial_bonds": [
+    {
+      "target": "npc_cheonma",
+      "type": "MASTER_DISCIPLE",
+      "strength": 30
+    },
+    {
+      "target": "npc_cheonma_envoy",
+      "type": "FELLOW",
+      "strength": 20
+    },
+    {
+      "target": "npc_wudang_head",
+      "type": "HATRED",
+      "strength": 15
+    }
   ]
 }

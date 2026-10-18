@@ -1,0 +1,55 @@
+{
+  "id": "bond_g_romance_proposal",
+  "title": "혼인을 청하다",
+  "description": "{name}이(가) 당신의 손을 잡습니다. 「언제까지 이렇게 떠돌 건가요? 이제 한 집에서 살고 싶어요.」",
+  "can_repeat": true,
+  "weight": 3,
+  "priority": true,
+  "subject": {
+    "bond_types": [
+      "ROMANCE"
+    ],
+    "min": 70
+  },
+  "conditions": [
+    {
+      "type": "sect",
+      "field": "gold",
+      "op": ">=",
+      "value": 60
+    }
+  ],
+  "choices": [
+    {
+      "label": "혼례를 올린다 (금화 60)",
+      "message": "조촐하지만 따뜻한 혼례를 올렸습니다. 명성 +3",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "add": -60
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 3
+        },
+        {
+          "type": "marry",
+          "target": "$subject"
+        }
+      ]
+    },
+    {
+      "label": "아직은 이르다고 한다",
+      "message": "{name}이(가) 고개를 떨굽니다. 유대 -10",
+      "effects": [
+        {
+          "type": "bond",
+          "target": "$subject",
+          "add": -10
+        }
+      ]
+    }
+  ]
+}

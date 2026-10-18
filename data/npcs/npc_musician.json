@@ -1,0 +1,52 @@
+{
+  "id": "npc_musician",
+  "display_name": "소옥",
+  "title": "칠현금을 타는 악사",
+  "sect_id": "none",
+  "role": "WANDERER",
+  "named": true,
+  "description": "강호를 떠돌며 칠현금을 타는 악사. 그 가락에는 내공이 실려 있다는 소문이 있다.",
+  "level": 3,
+  "stats": {
+    "strength": 8,
+    "agility": 15,
+    "wisdom": 16,
+    "charisma": 18,
+    "internal_energy_max": 120,
+    "age": 22,
+    "morality": 65
+  },
+  "scaling": {
+    "base_level": 3,
+    "level_offset": 0,
+    "per_level": {
+      "strength": 1,
+      "agility": 1,
+      "internal_energy_max": 8
+    }
+  },
+  "war_specialty": "FLANK",
+  "dialogue": {
+    "talk": [
+      "이 곡은 바람이 지은 노래예요.",
+      "떠도는 사람끼리는 금방 알아보지요.",
+      "오늘 밤 달이 밝네요. 한 곡 들려드릴까요?"
+    ],
+    "gift": [
+      "…이 가락처럼 고운 마음이네요.",
+      "간직할게요. 칠현금 줄보다 소중히."
+    ],
+    "spar": [
+      "제 칠현금 소리를 견딜 수 있겠어요?"
+    ]
+  },
+  "traits": {
+    "benevolence": 70,
+    "caution": 55
+  },
+  "likes": [
+    "talk",
+    "gift"
+  ],
+  "favorite": "오래된 칠현금 줄"
+}

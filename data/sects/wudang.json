@@ -13,5 +13,17 @@
   "library_level": 2,
   "attitude": 10,
   "soldier_npc": "npc_wudang_disciple",
-  "war_formation": "CIRCLE"
+  "war_formation": "CIRCLE",
+  "initial_bonds": [
+    {
+      "target": "npc_wudang_head",
+      "type": "MASTER_DISCIPLE",
+      "strength": 35
+    },
+    {
+      "target": "npc_rival",
+      "type": "RIVALRY",
+      "strength": 10
+    }
+  ]
 }
