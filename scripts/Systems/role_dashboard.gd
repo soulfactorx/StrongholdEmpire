@@ -119,7 +119,7 @@ static func get_season_steps(gm: Node) -> Array[Dictionary]:
 	if is_button_visible(role, "FeastButton") and gm.can_do_seasonal("last_feast_turn") and sect.gold >= _Balance.FEAST_GOLD and sect.food >= _Balance.FEAST_FOOD:
 		result.append({"id": "feast", "title": "문파 연회", "detail": "금화 %d·식량 %d로 명성 +%d" % [_Balance.FEAST_GOLD, _Balance.FEAST_FOOD, _Balance.FEAST_REPUTATION]})
 	if is_button_visible(role, "CombatButton") and gm.can_spar():
-		result.append({"id": "spar", "title": "연습 비무", "detail": "이기면 경험치 +%d" % _Balance.SPAR_EXP})
+		result.append({"id": "spar", "title": "연습 비무 (%s)" % NpcRoster.get_display_name(gm.get_spar_partner()), "detail": "이기면 경험치 +%d" % _Balance.SPAR_EXP})
 	if is_button_visible(role, "DiscipleButton") and sect.gold >= _Balance.DISCIPLE_TRAIN_GOLD and sect.disciples.any(
 		func(d: DiscipleData) -> bool: return d.last_train_turn != turn and d.level < _Balance.DISCIPLE_MAX_LEVEL
 	):

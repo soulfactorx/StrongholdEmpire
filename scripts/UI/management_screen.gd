@@ -256,6 +256,17 @@ func _apply_role_layout() -> void:
 		if button:
 			button.visible = RoleDashboard.is_button_visible(role, button_name)
 	facility_panel.visible = RoleDashboard.get_layout(role)["sect"]
+	_update_spar_button()
+
+
+## 비무 버튼: 겨룰 상대(인연이 있는 인물) 이름을 보이고, 없으면 누를 수 없다.
+func _update_spar_button() -> void:
+	var button: Button = _action_buttons.get("CombatButton")
+	if button == null:
+		return
+	var partner: String = GameManager.get_spar_partner()
+	button.text = "비무 (%s)" % NpcRoster.get_display_name(partner) if not partner.is_empty() else "비무 (상대 없음)"
+	button.disabled = partner.is_empty()
 
 
 ## 버튼이 숨겨진 행동은 단축키로도 열지 않는다.
@@ -514,6 +525,7 @@ func _on_character_updated(character: CharacterData) -> void:
 
 func _on_relationships_changed(relationships: Array[RelationshipData]) -> void:
 	_update_relationships_display(relationships)
+	_update_spar_button()
 	_update_portrait()
 
 

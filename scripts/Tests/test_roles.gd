@@ -812,6 +812,13 @@ func _test_bond_system() -> void:
 	_check(_rel(gm, "npc_namgung_lady").bond_type == RelationshipData.BondType.FELLOW, "남궁세가: 남궁설이 동문")
 	_new_quiet_game(gm, "wanderer")
 	_check(gm.player_relationships.is_empty(), "낭인은 인연 없이 시작")
+	_check(gm.get_spar_partner().is_empty() and not gm.can_spar() and not gm.start_sparring()["success"], "인연이 없으면 경영 화면 비무 불가")
+	_check(not RoleDashboard.get_season_steps(gm).any(func(step: Dictionary) -> bool: return step["id"] == "spar"), "인연이 없으면 할 일에 비무 없음")
+	gm.player_relationships.append(RelationshipManager.make_relationship("npc_iron_blade", "ACQUAINTANCE", 20))
+	gm.player_relationships.append(RelationshipManager.make_relationship("npc_scholar", "HATRED", 50))
+	_check(gm.get_spar_partner() == "npc_iron_blade" and gm.can_spar(), "비무 상대는 인연이 있는 인물 (원한 제외)")
+	gm.player_relationships.append(RelationshipManager.make_relationship("npc_swallow", "RIVALRY", 10))
+	_check(gm.get_spar_partner() == "npc_swallow", "라이벌이 있으면 라이벌과 비무")
 
 	# 처음부터 정한 인연: 배우자 둘
 	gm.start_new_game("직접", "wanderer", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0}, false, false,

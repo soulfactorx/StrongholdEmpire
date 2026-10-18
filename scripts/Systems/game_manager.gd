@@ -1298,17 +1298,45 @@ func upgrade_facility(facility: String) -> Dictionary:
 	return SectManager.upgrade_facility(player_sect, facility)
 
 
+## 경영 화면 비무 상대 순서: 라이벌 → 동문 → 벗·혈맹 → 사부 → 그 밖의 인연 (원한은 빼고)
+const SPAR_PARTNER_ORDER: Array = [
+	RelationshipData.BondType.RIVALRY, RelationshipData.BondType.FELLOW,
+	RelationshipData.BondType.FRIEND, RelationshipData.BondType.BLOOD_OATH, RelationshipData.BondType.MASTER_DISCIPLE,
+]
+
+
+## 경영 화면 비무 상대: 인연이 있는 인물 중 순서가 앞서고 유대가 깊은 사람. 없으면 "" (낭인은 처음엔 상대가 없다)
+func get_spar_partner() -> String:
+	var best: RelationshipData = null
+	var best_rank: int = 99
+	for rel in player_relationships:
+		if rel.bond_type == RelationshipData.BondType.HATRED or not NpcRoster.has_npc(rel.target_id):
+			continue
+		var rank: int = SPAR_PARTNER_ORDER.find(rel.bond_type)
+		if rank < 0:
+			rank = SPAR_PARTNER_ORDER.size()
+		if best == null or rank < best_rank or (rank == best_rank and rel.bond_strength > best.bond_strength):
+			best = rel
+			best_rank = rank
+	return best.target_id if best else ""
+
+
 func can_spar() -> bool:
-	return story_flags.get("last_spar_turn", -1) != _get_turn_index()
+	return story_flags.get("last_spar_turn", -1) != _get_turn_index() and not get_spar_partner().is_empty()
 
 
-## 경영 화면의 비무. 계절마다 한 번만 할 수 있다.
+## 경영 화면의 비무. 계절마다 한 번, 인연이 있는 인물과 겨룬다.
 func start_sparring() -> Dictionary:
+	var partner: String = get_spar_partner()
+	if partner.is_empty():
+		return {"success": false, "message": "겨룰 상대가 없습니다. 강호에서 인연을 맺으면 비무할 수 있습니다."}
 	if not can_spar():
 		return {"success": false, "message": "이번 계절에는 이미 비무를 했습니다."}
 	EventManager.set_flag(story_flags, "last_spar_turn", _get_turn_index())
-	start_combat(CombatManager.create_sparring(player_character))
-	return {"success": true, "message": "남궁휘에게 비무를 청합니다."}
+	var setup: CombatSetup = CombatManager.create_sparring(player_character) if partner == CombatManager.RIVAL_ID \
+		else CombatManager.create_sparring_with(partner, player_character)
+	start_combat(setup)
+	return {"success": true, "message": "%s에게 비무를 청합니다." % NpcRoster.get_display_name(partner)}
 
 
 ## 전투 결과를 반영하고 결과(message, outcome 포함)를 돌려준다.
