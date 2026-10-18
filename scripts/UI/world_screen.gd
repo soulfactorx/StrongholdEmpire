@@ -25,6 +25,8 @@ func _ready() -> void:
 	_build_sect_list()
 	_build_news()
 	_build_npc_list()
+	if not DiplomacyManager.can_negotiate(GameManager.player_character):
+		log_label.text = "외교는 문파를 대표하는 문주·중간관리자(총관)만 할 수 있습니다. 지금 역할(%s)로는 세력의 형편과 인물만 봅니다." % GameManager.player_character.get_role_name()
 
 
 ## 강호 소식은 인물 목록 위에 최근 것부터 보여 준다.
@@ -139,6 +141,9 @@ func _build_sect_list() -> void:
 			],
 			ArtAssets.emblem(sect.id), EMBLEM_SIZE
 		)
+		# 외교를 할 수 없는 역할에게는 버튼을 보이지 않는다 (눌러도 아무 일이 없는 것처럼 보이지 않게)
+		if not DiplomacyManager.can_negotiate(GameManager.player_character):
+			continue
 		var button := Button.new()
 		button.text = "외교"
 		button.custom_minimum_size = Vector2(160, 48)

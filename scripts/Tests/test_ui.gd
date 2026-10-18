@@ -319,6 +319,10 @@ func _test_action_preview() -> void:
 	_check(popup.visible and popup._message.text.contains("금화") and gm.get_date_text() == date, "계절 넘기기 미리보기: 예상 수입·유지비")
 	popup._answer(false)
 	_check(gm.get_date_text() == date and gm.world_news.size() >= news, "계절 넘기기 취소")
+	# 웹: 새 버전이 배포되면 알림 창 (설치형 앱의 옛 파일 보관 때문에 안 바뀌는 문제)
+	gm._on_web_update_available()
+	_check(popup.visible and popup._message.text.contains("새로 배포") and popup._message.text.contains("자동 저장"), "웹 새 버전 알림")
+	popup._answer(false)
 	GameSettings.action_preview = false
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
 	await process_frame
@@ -398,6 +402,15 @@ func _test_chronicle_and_dialogue() -> void:
 func _test_role_dashboard() -> void:
 	var gm: Node = root.get_node("GameManager")
 	_check(StartingRoles.ROLES.size() >= 7, "시작 역할 7가지")
+	# 계절 넘기기 안내의 "아직 하지 않은 일"은 역할에 맞게
+	_new_quiet_game(gm, "young_disciple")
+	var unused: String = ", ".join(RoleDashboard.get_unused_actions(gm))
+	_check(unused.contains("고유 행동(스승에게 가르침·외출)") and unused.contains("영약") and not unused.contains("연회") and not unused.contains("문파전") and not unused.contains("평정"), "막내 제자의 남은 일: %s" % unused)
+	_new_quiet_game(gm, "leader")
+	unused = ", ".join(RoleDashboard.get_unused_actions(gm))
+	_check(unused.contains("문파 연회") and unused.contains("문파전") and unused.contains("땅 평정") and unused.contains("인연 돌보기"), "문주의 남은 일: %s" % unused)
+	gm.hold_feast()
+	_check(not ", ".join(RoleDashboard.get_unused_actions(gm)).contains("연회"), "이미 한 일은 빠짐")
 	_new_quiet_game(gm, "spy")
 	_check(gm.player_character.role == CharacterData.Role.SPY and gm.story_flags.get("spy_recruitment", false), "간자로 시작: 포섭 플래그")
 	_new_quiet_game(gm, "assassin")

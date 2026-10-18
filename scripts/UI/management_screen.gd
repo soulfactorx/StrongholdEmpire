@@ -551,12 +551,10 @@ func _advance_preview_text() -> String:
 		lines.append("자원이 모자라 유지비를 다 내지 못하면 제자가 떠납니다.")
 	lines.append("")
 	lines.append("나이·시설 효과·역할 자원도 계절에 맞춰 바뀌고, 기연·강호 세력의 움직임·침공은 넘긴 뒤에 알 수 있습니다.")
-	var left: PackedStringArray = []
-	for flag in [["last_elixir_turn", "영약"], ["last_feast_turn", "연회"], ["last_spar_turn", "연습 비무"]]:
-		if GameManager.can_do_seasonal(flag[0]):
-			left.append(flag[1])
+	# 지금 역할로 할 수 있는 일만 (막내 제자에게 연회를 권하지 않는다)
+	var left: PackedStringArray = RoleDashboard.get_unused_actions(GameManager)
 	if not left.is_empty():
-		lines.append("이번 계절에 아직 하지 않은 일: " + ", ".join(left))
+		lines.append("이번 계절에 아직 하지 않은 일 (%s): %s" % [GameManager.player_character.get_role_name(), ", ".join(left)])
 	return "\n".join(lines)
 
 
