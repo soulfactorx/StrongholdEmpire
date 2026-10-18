@@ -115,12 +115,14 @@ static func interact(
 	var message: String
 	match kind:
 		"talk":
-			var amount: int = _Balance.TALK_BOND + character.charisma / _Balance.TALK_CHARISMA_DIVISOR
-			message = _change(rel, amount, hatred, "%s와(과) 이야기를 나누었습니다." % rel.target_name)
+			var amount: int = _like_bonus(target_id, kind, _Balance.TALK_BOND + character.charisma / _Balance.TALK_CHARISMA_DIVISOR)
+			message = _change(rel, amount, hatred, "%s와(과) 이야기를 나누었습니다.%s" % [rel.target_name, _like_text(target_id, kind)])
 		"gift":
 			if not sect.spend_resources(_Balance.GIFT_GOLD):
 				return {"success": false, "message": "금화가 부족합니다. (%d 필요)" % _Balance.GIFT_GOLD}
-			message = _change(rel, _Balance.GIFT_BOND, hatred, "%s에게 선물을 보냈습니다. (금화 -%d)" % [rel.target_name, _Balance.GIFT_GOLD])
+			message = _change(rel, _like_bonus(target_id, kind, _Balance.GIFT_BOND), hatred, "%s에게 선물을 보냈습니다. (금화 -%d)%s" % [
+				rel.target_name, _Balance.GIFT_GOLD, _like_text(target_id, kind),
+			])
 		"spar":
 			if hatred:
 				return {"success": false, "message": "원한이 있는 상대와는 비무가 아니라 목숨을 건 싸움이 됩니다."}
@@ -136,6 +138,15 @@ static func interact(
 	if rel.stage > stage_before:
 		message += " 관계가 깊어졌습니다: %s" % rel.get_stage_name()
 	return {"success": true, "message": message}
+
+
+## 취향: 좋아하는 상호작용(인물의 likes)이면 유대가 더 오른다.
+static func _like_bonus(target_id: String, kind: String, amount: int) -> int:
+	return roundi(amount * _Balance.LIKE_BOND_MULTIPLIER) if NpcAgent.likes(target_id, kind) else amount
+
+
+static func _like_text(target_id: String, kind: String) -> String:
+	return " 마음에 드는 일이라 크게 반깁니다." if NpcAgent.likes(target_id, kind) else ""
 
 
 ## 원한이면 유대(원한의 깊이)가 줄어 누그러지고, 아니면 유대가 오른다.

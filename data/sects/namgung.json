@@ -11,5 +11,19 @@
   "attitude": 0,
   "soldier_npc": "npc_namgung_guard",
   "champion_npc": "npc_namgung_enforcer",
-  "strategy": "expansion"
+  "strategy": "expansion",
+  "officers": [
+    {
+      "npc": "npc_namgung_lord",
+      "post": "leader"
+    },
+    {
+      "npc": "npc_rival",
+      "post": "heir"
+    },
+    {
+      "npc": "npc_namgung_enforcer",
+      "post": "elder"
+    }
+  ]
 }

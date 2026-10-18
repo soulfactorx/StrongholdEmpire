@@ -112,7 +112,7 @@ func _ready() -> void:
 	action_preview_check.toggled.connect(func(on: bool) -> void: GameSettings.set_and_save("action_preview", on, get_tree()))
 	box.add_child(action_preview_check)
 	faction_report_check = CheckButton.new()
-	faction_report_check.text = "계절마다 강호 세력 동향 보기"
+	faction_report_check.text = "계절마다 강호 동향(우리 문파 인물·강호 세력) 보기"
 	faction_report_check.custom_minimum_size = Vector2(0, 48)
 	faction_report_check.toggled.connect(func(on: bool) -> void: GameSettings.set_and_save("faction_report", on, get_tree()))
 	box.add_child(faction_report_check)

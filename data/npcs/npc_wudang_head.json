@@ -29,5 +29,14 @@
     "spar": [
       "태극은 부드러움으로 굳셈을 이깁니다. 한 수 청하지요."
     ]
-  }
+  },
+  "traits": {
+    "ambition": 25,
+    "caution": 85,
+    "benevolence": 85
+  },
+  "likes": [
+    "talk"
+  ],
+  "favorite": "태극권 수련"
 }

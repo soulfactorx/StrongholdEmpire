@@ -431,11 +431,15 @@ func _on_turn_advanced(_year: int, _season: String) -> void:
 	_show_faction_report()
 
 
-## 계절을 넘기면 강호 세력마다 어떤 전략으로 무엇을 했는지 보여 준다. (설정에서 끌 수 있다)
+## 계절을 넘기면 우리 문파 인물(문주·교두·의원)과 강호 세력이 무엇을 했는지 보여 준다. (설정에서 끌 수 있다)
 func _show_faction_report() -> void:
-	if not GameSettings.faction_report or GameManager.last_faction_report.is_empty():
+	if not GameSettings.faction_report:
 		return
-	faction_popup.open("강호 세력 동향 — %s" % GameManager.get_date_text(), SectAI.format_reports(GameManager.last_faction_report), Callable(), "확인", "")
+	if GameManager.last_faction_report.is_empty() and GameManager.last_npc_report.is_empty():
+		return
+	faction_popup.open("강호 동향 — %s" % GameManager.get_date_text(), NpcAgent.format_season(
+		GameManager.last_npc_report, GameManager.last_faction_report
+	), Callable(), "확인", "")
 
 
 ## 해가 바뀌면 1년 결산을 보여 준다.

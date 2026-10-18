@@ -66,8 +66,11 @@ static func create_sparring_with(npc_id: String, player: CharacterData) -> Comba
 	setup.blocked_tiles = _central_wall()
 	_add_arena_terrain(setup)
 	setup.add_enemy(NpcRoster.create_character(npc_id, player), Vector2i(13, 5))
-	setup.rewards = {"experience": _Balance.SPAR_EXP, "bond": _Balance.SPAR_BOND_WIN}
-	setup.defeat_penalty = {"injury_ratio": 0.5, "bond": _Balance.SPAR_BOND_LOSE}
+	# 비무를 좋아하는 인물은 겨루기만 해도 더 가까워진다.
+	var bond_win: int = RelationshipManager._like_bonus(npc_id, "spar", _Balance.SPAR_BOND_WIN)
+	var bond_lose: int = RelationshipManager._like_bonus(npc_id, "spar", _Balance.SPAR_BOND_LOSE)
+	setup.rewards = {"experience": _Balance.SPAR_EXP, "bond": bond_win}
+	setup.defeat_penalty = {"injury_ratio": 0.5, "bond": bond_lose}
 	return setup
 
 

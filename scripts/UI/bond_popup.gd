@@ -102,10 +102,18 @@ func _make_row(rel: RelationshipData, can_act: bool) -> HBoxContainer:
 	var label := Label.new()
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var npc: Dictionary = NpcRoster.get_npc(rel.target_id)
-	label.text = "%s — %s\n%s %d · %s" % [
-		rel.target_name, npc.get("title", ""), rel.get_bond_name(), rel.bond_strength, rel.get_stage_name(),
+	var liked: PackedStringArray = []
+	for like in NpcAgent.get_likes(rel.target_id):
+		liked.append(NpcAgent.LIKE_NAMES[like])
+	label.text = "%s — %s\n%s %d · %s · 좋아함: %s" % [
+		rel.target_name, npc.get("title", ""), rel.get_bond_name(), rel.bond_strength, rel.get_stage_name(), ", ".join(liked),
 	]
 	row.add_child(label)
+	# 길게 누르면(마우스는 올려 두면) 성향과 취향을 본다.
+	var target_id: String = rel.target_id
+	LongPressTip.attach(label, func() -> String: return "%s의 성향\n%s\n좋아하는 일을 하면 유대가 %d%% 더 오릅니다." % [
+		NpcRoster.get_display_name(target_id), NpcAgent.describe(target_id), roundi((_Balance.LIKE_BOND_MULTIPLIER - 1.0) * 100),
+	])
 	for kind in RelationshipManager.INTERACTIONS:
 		var button := Button.new()
 		button.custom_minimum_size = Vector2(130, 48)

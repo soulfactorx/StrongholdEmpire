@@ -40,6 +40,9 @@
 | (선택) `war_specialty` | 문파전 장수로 참전할 때 보너스를 주는 명령: `CHARGE`(돌격) · `DEFEND`(방어) · `FLANK`(측면) |
 | (선택) `portrait` | 초상화 그림 경로 (`assets/art/` 아래, 예: `"portraits/npc_rival.jpg"`). 없으면 `portraits/<id>.jpg`. 256×320 권장 |
 | (선택) `martial_arts` | `[{ "id": 무공 id, "min_level": 레벨 }]` — 그 레벨 이상이면 전투에서 해당 무공을 씁니다. 무공 id는 `resources/MartialArts/`의 프리셋 또는 `data/martial_arts/`의 모드 무공 |
+| (선택) `traits` | 성향 0~100: `ambition`(야망) · `caution`(신중) · `benevolence`(인정) · `greed`(탐욕) · `loyalty`(의리). 빠진 것은 능력치에서 끌어낸다(무력+매력 → 야망, 지혜 → 신중, 도덕 → 인정·탐욕·의리). 문주의 성향은 세력 AI와 NPC 문주의 살림 결정에 쓰인다 (`NpcAgent`) |
+| (선택) `likes` | 좋아하는 상호작용 `talk`(담소) · `gift`(선물) · `spar`(비무). 그 일을 하면 유대가 1.5배 오른다. 없으면 능력치에서(매력 → 담소, 탐욕 → 선물, 무력 → 비무) |
+| (선택) `favorite` | 좋아하는 것 (화면에 보이는 글) |
 | (선택) `dialogue` | 인연 상호작용 때 이 인물이 하는 말. `{ "talk": [...], "gift": [...], "spar": [...], "hatred": [...] }` — 각각 대화·선물·비무 신청·원한 관계일 때 고를 대사 문자열 배열. 없는 종류는 관계 유형과 유대에 맞는 기본 대사(`scripts/Systems/dialogue_lines.gd`)를 씁니다. 오간 대사는 연대기에 남습니다. |
 
 특수 용도 인물:
@@ -78,6 +81,7 @@
 | `champion_npc` | (선택) 침공을 이끄는 우두머리 인물 id. 없으면 졸개만 온다 |
 | `emblem` | (선택) 문장 그림 경로 (`assets/art/` 아래). 없으면 `emblems/<id>.png`. 256×256 투명 PNG 권장 |
 | `strategy` | (선택) 세력 AI 전략: `expansion`(영토 확장) · `military`(무력 강병) · `economy`(내실 부강) · `diplomacy`(합종연횡) · `opportunist`(기회주의). 없으면 성향별 기본값(정파 합종연횡, 사파 기회주의, 마교 무력 강병). 새 게임 화면에서 바꿀 수 있다 |
+| `officers` | (선택) 직책 인물 `[{ "npc": 인물 id, "post": 직책 }]`. 직책: `leader`(문주) · `instructor`(교두) · `healer`(의원) · `elder`(장로) · `steward`(총관) · `heir`(후계자). 없으면 문주만. 플레이어 문파의 직책 인물은 계절마다 일한다: 문주(플레이어가 문주가 아니면 제자 모집·시설·연회·평정·사절·저축 중 성향에 맞는 것), 교두(가장 약한 제자 지도), 의원(주인공 내공 치료 또는 약초 채집) |
 | `optional` | (선택) `true`면 기본으로 나오지 않고, 새 게임 화면의 "강호 세력 설정"에서 켜야 나오는 세력 |
 
 ## 문파전과의 관계

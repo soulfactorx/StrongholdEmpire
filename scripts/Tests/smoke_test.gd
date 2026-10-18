@@ -86,6 +86,7 @@ const RUNTIME_SEQUENCE: Array = [
 	["combat", "_test_martial_art_screen_actions"],
 	["roles", "_test_bond_evolution"],
 	["roles", "_test_bond_flow"],
+	["roles", "_test_npc_agents"],
 	["world", "_test_diplomacy"],
 	["world", "_test_diplomacy_screen"],
 	["world", "_test_sect_ai"],
@@ -127,6 +128,8 @@ func _initialize() -> void:
 	GameSettings.faction_report = false
 	# 세력 AI는 계절마다 강호 세력 수치를 바꾸므로, 그 영향을 시험하는 곳에서만 켠다.
 	SectAI.active = false
+	# 우리 문파 직책 인물(NpcAgent)도 문파 수치를 바꾸므로 시험하는 곳에서만 켠다.
+	NpcAgent.active = false
 	# 피해 흔들림·회심은 끄고 정확한 값으로 시험한다 (켠 상태는 test_combat의 _test_damage_randomness에서 따로)
 	CombatRules.randomness = false
 	for key in SUITES:

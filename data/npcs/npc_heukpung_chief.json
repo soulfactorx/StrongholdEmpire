@@ -31,5 +31,13 @@
     "hatred": [
       "네 놈 산채부터 불태워 주마!"
     ]
-  }
+  },
+  "traits": {
+    "greed": 90,
+    "caution": 25
+  },
+  "likes": [
+    "gift"
+  ],
+  "favorite": "재물"
 }

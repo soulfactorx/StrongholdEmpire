@@ -14,5 +14,19 @@
   "training_ground_level": 1,
   "treasury_level": 1,
   "soldier_npc": "npc_disciple",
-  "champion_npc": "npc_senior_brother"
+  "champion_npc": "npc_senior_brother",
+  "officers": [
+    {
+      "npc": "npc_master",
+      "post": "leader"
+    },
+    {
+      "npc": "npc_senior_brother",
+      "post": "instructor"
+    },
+    {
+      "npc": "npc_healer",
+      "post": "healer"
+    }
+  ]
 }

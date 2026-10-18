@@ -11,5 +11,15 @@
   "attitude": -60,
   "soldier_npc": "npc_cheonma_cultist",
   "champion_npc": "npc_cheonma_envoy",
-  "strategy": "military"
+  "strategy": "military",
+  "officers": [
+    {
+      "npc": "npc_cheonma",
+      "post": "leader"
+    },
+    {
+      "npc": "npc_cheonma_envoy",
+      "post": "elder"
+    }
+  ]
 }

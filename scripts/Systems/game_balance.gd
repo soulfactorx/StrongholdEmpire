@@ -255,6 +255,8 @@ const GIFT_BOND := 8
 ## 비무: 이기면 유대 +WIN, 져도 +LOSE
 const SPAR_BOND_WIN := 5
 const SPAR_BOND_LOSE := 2
+## 인물이 좋아하는 상호작용(담소·선물·비무)이면 유대 증가 배율
+const LIKE_BOND_MULTIPLIER := 1.5
 ## 이 유대 이상인 사제·혈맹·연인 인물이 방어전에 아군으로 합류한다
 const BOND_ALLY_MIN := 60
 const BOND_ALLY_COUNT := 1

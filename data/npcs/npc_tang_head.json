@@ -32,5 +32,13 @@
     "hatred": [
       "당가의 원한은 독보다 오래 가오."
     ]
-  }
+  },
+  "traits": {
+    "greed": 75,
+    "caution": 65
+  },
+  "likes": [
+    "gift"
+  ],
+  "favorite": "희귀한 독초"
 }
