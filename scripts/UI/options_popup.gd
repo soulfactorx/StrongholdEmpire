@@ -15,6 +15,7 @@ var preview_check: CheckButton
 var enemy_preview_check: CheckButton
 var action_preview_check: CheckButton
 var faction_report_check: CheckButton
+var layout_option: OptionButton
 
 
 func _ready() -> void:
@@ -29,11 +30,17 @@ func _ready() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(560, 0)
+	LayoutMode.fit_width(panel, 600)
 	center.add_child(panel)
+	# 항목이 많아 화면보다 길 수 있으므로 끌어서 스크롤한다.
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.custom_minimum_size.y = (LayoutMode.PORTRAIT_SIZE.y if LayoutMode.is_portrait() else LayoutMode.LANDSCAPE_SIZE.y) - 120
+	panel.add_child(scroll)
 	var box := VBoxContainer.new()
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.add_theme_constant_override("separation", 12)
-	panel.add_child(box)
+	scroll.add_child(box)
 
 	var title := Label.new()
 	title.text = "설정"
@@ -67,6 +74,20 @@ func _ready() -> void:
 	fullscreen_check.custom_minimum_size = Vector2(0, 48)
 	fullscreen_check.toggled.connect(func(on: bool) -> void: GameSettings.set_and_save("fullscreen", on, get_tree()))
 	box.add_child(fullscreen_check)
+
+	var layout_row := HBoxContainer.new()
+	layout_row.add_theme_constant_override("separation", 12)
+	var layout_label := Label.new()
+	layout_label.text = "화면 배치"
+	layout_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	layout_row.add_child(layout_label)
+	layout_option = OptionButton.new()
+	layout_option.custom_minimum_size = Vector2(260, 48)
+	for name in LayoutMode.MODE_NAMES:
+		layout_option.add_item(name)
+	layout_option.item_selected.connect(_on_layout_selected)
+	layout_row.add_child(layout_option)
+	box.add_child(layout_row)
 
 	var text_row := HBoxContainer.new()
 	text_row.add_theme_constant_override("separation", 12)
@@ -116,6 +137,8 @@ func _ready() -> void:
 	faction_report_check.custom_minimum_size = Vector2(0, 48)
 	faction_report_check.toggled.connect(func(on: bool) -> void: GameSettings.set_and_save("faction_report", on, get_tree()))
 	box.add_child(faction_report_check)
+	for check in [fullscreen_check, preview_check, enemy_preview_check, action_preview_check, faction_report_check]:
+		check.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var note := Label.new()
 	note.text = "글자 크기는 다음에 여는 화면부터 적용됩니다."
 	_UiTheme.set_font_size(note, 14)
@@ -138,6 +161,7 @@ func open() -> void:
 	enemy_preview_check.set_pressed_no_signal(GameSettings.enemy_preview)
 	action_preview_check.set_pressed_no_signal(GameSettings.action_preview)
 	faction_report_check.set_pressed_no_signal(GameSettings.faction_report)
+	layout_option.select(GameSettings.layout_mode)
 	for i in GameSettings.TEXT_SCALES.size():
 		if is_equal_approx(GameSettings.TEXT_SCALES[i][1], GameSettings.text_scale):
 			text_option.select(i)
@@ -160,3 +184,11 @@ func _on_volume_changed(value: float) -> void:
 
 func _on_text_scale_selected(index: int) -> void:
 	GameSettings.set_and_save("text_scale", GameSettings.TEXT_SCALES[index][1], get_tree())
+
+
+## 화면 배치를 바꾸면 지금 화면을 새 배치로 다시 연다.
+func _on_layout_selected(index: int) -> void:
+	var was_portrait: bool = LayoutMode.is_portrait()
+	GameSettings.set_and_save("layout_mode", index, get_tree())
+	if LayoutMode.is_portrait() != was_portrait and get_tree().current_scene:
+		SceneRouter.goto(get_tree(), get_tree().current_scene.scene_file_path)

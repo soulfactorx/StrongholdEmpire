@@ -91,33 +91,42 @@ static func describe_role(role: CharacterData.Role) -> String:
 ## 이번 계절에 지금 역할로 아직 할 수 있는 일 (계절 넘기기 미리보기 안내). 역할에 없는 일과 자원이 모자란 일은 뺀다.
 ## gm은 GameManager 노드다.
 static func get_unused_actions(gm: Node) -> PackedStringArray:
+	var result: PackedStringArray = []
+	for step in get_season_steps(gm):
+		result.append(step["title"])
+	return result
+
+
+## 이번 계절 할 일 단계: [{id, title, detail}] (휴대폰 경영 화면의 "할 일" 목록, 계절 넘기기 안내)
+## id: role_action · bond · elixir · feast · spar · disciple_train · sect_war · pacify
+static func get_season_steps(gm: Node) -> Array[Dictionary]:
 	var role: CharacterData.Role = gm.player_character.role
 	var sect: SectData = gm.player_sect
 	var turn: int = gm._get_turn_index()
-	var result: PackedStringArray = []
+	var result: Array[Dictionary] = []
 	if RoleActions.can_act(gm.role_state, turn) and not RoleActions.get_actions(role).is_empty():
 		var titles: PackedStringArray = []
 		for action in RoleActions.get_actions(role):
 			titles.append(action["title"])
-		result.append("고유 행동(%s)" % "·".join(titles))
+		result.append({"id": "role_action", "title": "고유 행동(%s)" % "·".join(titles), "detail": "계절에 한 번, 역할만의 일"})
 	var interactions: int = RelationshipManager.get_interactions_left(gm.story_flags, turn)
 	if interactions > 0 and not gm.player_relationships.is_empty():
-		result.append("인연 돌보기 %d번" % interactions)
+		result.append({"id": "bond", "title": "인연 돌보기 %d번" % interactions, "detail": "대화·선물·비무로 유대를 쌓습니다"})
 	if is_button_visible(role, "ElixirButton") and gm.can_do_seasonal("last_elixir_turn") and sect.gold >= _Balance.ELIXIR_GOLD:
-		result.append("영약 구매")
+		result.append({"id": "elixir", "title": "영약 구매", "detail": "금화 %d로 최대 내공 +%d" % [_Balance.ELIXIR_GOLD, _Balance.ELIXIR_INTERNAL_GAIN]})
 	if is_button_visible(role, "FeastButton") and gm.can_do_seasonal("last_feast_turn") and sect.gold >= _Balance.FEAST_GOLD and sect.food >= _Balance.FEAST_FOOD:
-		result.append("문파 연회")
+		result.append({"id": "feast", "title": "문파 연회", "detail": "금화 %d·식량 %d로 명성 +%d" % [_Balance.FEAST_GOLD, _Balance.FEAST_FOOD, _Balance.FEAST_REPUTATION]})
 	if is_button_visible(role, "CombatButton") and gm.can_spar():
-		result.append("연습 비무")
+		result.append({"id": "spar", "title": "연습 비무", "detail": "이기면 경험치 +%d" % _Balance.SPAR_EXP})
 	if is_button_visible(role, "DiscipleButton") and sect.gold >= _Balance.DISCIPLE_TRAIN_GOLD and sect.disciples.any(
 		func(d: DiscipleData) -> bool: return d.last_train_turn != turn and d.level < _Balance.DISCIPLE_MAX_LEVEL
 	):
-		result.append("제자 개별 수련")
+		result.append({"id": "disciple_train", "title": "제자 개별 수련", "detail": "금화 %d로 제자 경험치 +%d" % [_Balance.DISCIPLE_TRAIN_GOLD, _Balance.DISCIPLE_TRAIN_EXP]})
 	if is_button_visible(role, "SectWarButton") and gm.can_wage_war() and not gm.get_war_targets().is_empty():
-		result.append("문파전")
+		result.append({"id": "sect_war", "title": "문파전", "detail": "강호 세력과 겨뤄 꺾습니다"})
 	if gm.can_command_conquest() and gm.can_do_seasonal("last_pacify_turn"):
 		for region_id in WorldMap.frontier(gm.map_state, sect.id, true):
 			if gm.get_region_action(region_id)["reason"].is_empty():
-				result.append("땅 평정")
+				result.append({"id": "pacify", "title": "땅 평정", "detail": "맞닿은 빈 땅을 차지합니다 (강호 지도)"})
 				break
 	return result

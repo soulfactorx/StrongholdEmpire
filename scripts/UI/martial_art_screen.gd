@@ -28,6 +28,8 @@ const NO_EFFECT := 1000
 
 func _ready() -> void:
 	_UiTheme.apply_to_control(self)
+	# 세로(휴대폰): 창조 칸 위, 연구·보유 무공 칸 아래로 쌓고 끌어서 본다.
+	LayoutMode.stack_scroll($Margin/RootHBox)
 	choice_popup = _ChoicePopup.new()
 	add_child(choice_popup)
 	choice_popup.chosen.connect(_on_choice_made)

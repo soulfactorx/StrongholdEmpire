@@ -34,7 +34,8 @@ func _ready() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(1040, 0)
+	# 세로 화면(휴대폰)에서는 화면 폭에 맞춘다
+	LayoutMode.fit_width(panel, 1040)
 	center.add_child(panel)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 10)
@@ -106,9 +107,11 @@ func refresh() -> void:
 		_rows.add_child(_make_row(disciple, turn))
 
 
-func _make_row(disciple: DiscipleData, turn: int) -> HBoxContainer:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
+## 가로: 한 줄에 이름표와 버튼. 세로(휴대폰): 이름표 아래에 버튼을 줄바꿈으로 둔다.
+func _make_row(disciple: DiscipleData, turn: int) -> Container:
+	var parts: Array = LayoutMode.make_row()
+	var row: Container = parts[0]
+	var buttons: Container = parts[1]
 	var label := Label.new()
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.text = "%s  Lv.%d (%d/%d) · %s\n무력 %d · 신법 %d · 지혜 %d · 참전 %d회" % [
@@ -117,6 +120,8 @@ func _make_row(disciple: DiscipleData, turn: int) -> HBoxContainer:
 		disciple.strength, disciple.agility, disciple.wisdom, disciple.battles,
 	]
 	row.add_child(label)
+	if buttons != row:
+		row.add_child(buttons)
 
 	var assign_button := Button.new()
 	assign_button.custom_minimum_size = Vector2(150, 48)
@@ -125,13 +130,13 @@ func _make_row(disciple: DiscipleData, turn: int) -> HBoxContainer:
 		DiscipleRoster.ASSIGNMENTS[assignment]["name"] if DiscipleRoster.ASSIGNMENTS.has(assignment) else "없음"
 	)
 	assign_button.pressed.connect(_on_assign_pressed.bind(disciple.id))
-	row.add_child(assign_button)
+	buttons.add_child(assign_button)
 
 	var deploy_button := Button.new()
 	deploy_button.custom_minimum_size = Vector2(130, 48)
 	deploy_button.text = "출전 중 ○" if disciple.deployed else "출전 지정"
 	deploy_button.pressed.connect(_on_deploy_pressed.bind(disciple.id))
-	row.add_child(deploy_button)
+	buttons.add_child(deploy_button)
 
 	var train_button := Button.new()
 	train_button.custom_minimum_size = Vector2(130, 48)
@@ -142,14 +147,14 @@ func _make_row(disciple: DiscipleData, turn: int) -> HBoxContainer:
 		or GameManager.player_sect.gold < _Balance.DISCIPLE_TRAIN_GOLD
 	)
 	train_button.pressed.connect(_on_train_pressed.bind(disciple.id))
-	row.add_child(train_button)
+	buttons.add_child(train_button)
 
 	var transmit_button := Button.new()
 	transmit_button.custom_minimum_size = Vector2(110, 48)
 	transmit_button.text = "무공 전수"
 	transmit_button.disabled = GameManager.player_character.martial_arts.is_empty()
 	transmit_button.pressed.connect(_on_transmit_pressed.bind(disciple.id))
-	row.add_child(transmit_button)
+	buttons.add_child(transmit_button)
 	for button in [assign_button, deploy_button, train_button, transmit_button]:
 		_UiTheme.style_button(button)
 	return row

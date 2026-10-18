@@ -19,6 +19,8 @@ var _diplomacy_target: String = ""
 
 func _ready() -> void:
 	_UiTheme.apply_to_control(self)
+	# 세로(휴대폰): 세력 칸 위, 소식·인물 칸 아래
+	LayoutMode.stack($Margin/VBox/HBox)
 	choice_popup = _ChoicePopup.new()
 	add_child(choice_popup)
 	choice_popup.chosen.connect(_on_diplomacy_chosen)

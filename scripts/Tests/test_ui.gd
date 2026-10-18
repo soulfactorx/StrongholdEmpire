@@ -441,6 +441,71 @@ func _test_role_dashboard() -> void:
 	_completed["_test_role_dashboard"] = true
 
 
+## 세로(휴대폰) 배치: 경영 화면은 탭과 할 일 목록, 두 칸 화면은 위아래로, 팝업 줄은 버튼을 아래로, 전투는 격자를 줄여 위에
+func _test_portrait_layout() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_check(not LayoutMode.decide(LayoutMode.Mode.AUTO) and LayoutMode.decide(LayoutMode.Mode.PORTRAIT) and not LayoutMode.decide(LayoutMode.Mode.LANDSCAPE), "화면 배치: PC 자동은 가로, 세로 지정")
+	GameSettings.set_and_save("layout_mode", LayoutMode.Mode.PORTRAIT, tree)
+	_check(LayoutMode.is_portrait() and root.content_scale_size == LayoutMode.PORTRAIT_SIZE, "세로: 기준 크기 720×1280")
+	_new_quiet_game(gm, "leader")
+	gm.player_sect.gold = 500
+	SceneRouter.goto(tree, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	var hub: Node = current_scene
+	_check(hub.pages.size() == 5 and hub.get_current_page() == "todo" and not hub.get_node("Margin/RootHBox").visible, "세로 경영 화면: 쪽 5개, 처음은 할 일")
+	var steps: Array = hub.todo_box.get_children().filter(func(c: Node) -> bool: return c is Button)
+	_check(steps.size() == RoleDashboard.get_season_steps(gm).size() - 1, "할 일 목록: 단계마다 버튼 (고유 행동은 역할 칸)")
+	var elixir_step: Button = hub.todo_box.get_node("Step_elixir")
+	var energy: int = gm.player_character.internal_energy_max
+	elixir_step.pressed.emit()
+	await process_frame
+	_check(gm.player_character.internal_energy_max > energy and not hub.todo_box.has_node("Step_elixir"), "할 일 버튼으로 바로 실행, 한 일은 목록에서 빠짐")
+	_check(hub.status_label.text.contains("금화") and hub.status_label.text.contains("제자"), "맨 위 자원 한 줄")
+	hub.show_page("sect")
+	_check(hub.pages["sect"].visible and not hub.pages["todo"].visible and hub._action_buttons["TrainButton"].is_visible_in_tree(), "탭: 문파 쪽에 문파 운영 버튼")
+	hub.show_page("world")
+	_check(hub._action_buttons["MapButton"].is_visible_in_tree() and hub.world_report_label.text.contains("강호 동향"), "탭: 강호 쪽에 지도·동향")
+	_check(hub._action_buttons["AdvanceTurnButton"].custom_minimum_size.y >= 60, "계절 넘기기는 크게, 늘 보임")
+	# 역할에 따라 버튼 숨김은 세로에서도 그대로
+	gm.apply_role_transition(CharacterData.Role.WANDERER)
+	await process_frame
+	_check(not hub._action_buttons["TrainButton"].visible and not hub.facility_panel.visible, "세로에서도 역할별 버튼 숨김")
+	# 팝업: 화면 폭에 맞고, 줄은 이름표 아래에 버튼
+	hub._on_bond_pressed()
+	var row: Node = hub.bond_popup._rows.get_child(0)
+	_check(row is VBoxContainer and row.get_child(1) is HFlowContainer, "세로 팝업 줄: 이름표 아래에 버튼 줄바꿈")
+	hub.bond_popup.visible = false
+	# 두 칸 화면은 위아래로
+	SceneRouter.goto(tree, SceneRouter.WORLD)
+	await process_frame
+	await process_frame
+	_check(current_scene.get_node("Margin/VBox/HBox") is VBoxContainer, "강호 정세: 위아래로")
+	SceneRouter.goto(tree, SceneRouter.NEW_GAME)
+	await process_frame
+	await process_frame
+	_check(current_scene.get_node("Margin/VBox/Columns") is VBoxContainer, "새 게임: 위아래로")
+	SceneRouter.goto(tree, SceneRouter.MARTIAL_ART)
+	await process_frame
+	await process_frame
+	_check(current_scene.get_node("Margin/RootHBoxScroll/RootHBox") is VBoxContainer and current_scene.known_arts_label != null, "무공 연구소: 위아래로 쌓고 스크롤")
+	# 전투: 격자를 화면 폭에 맞춰 줄이고 칸 판정은 그대로
+	gm.start_combat(CombatManager.create_sparring(gm.player_character))
+	await process_frame
+	await process_frame
+	var c: Node = current_scene
+	var board_bottom: float = c.position.y + c.GRID_HEIGHT * c.GRID_SIZE * c.scale.y
+	_check(c.position == Vector2(8, 8) and c.get_node("HUD/Panel").offset_left == 8 and c.get_node("HUD/Panel").offset_top >= board_bottom, "세로 전투: 격자 위, 조작 칸 아래")
+	c.leave_combat()
+	await process_frame
+	await process_frame
+	GameSettings.set_and_save("layout_mode", LayoutMode.Mode.AUTO, tree)
+	_check(not LayoutMode.is_portrait() and root.content_scale_size == LayoutMode.LANDSCAPE_SIZE, "자동으로 돌리면 가로")
+	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
+	await process_frame
+	_completed["_test_portrait_layout"] = true
+
+
 func _test_input_and_tips() -> void:
 	var gm: Node = root.get_node("GameManager")
 	_clear_test_saves()
