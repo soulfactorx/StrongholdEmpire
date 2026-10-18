@@ -14,7 +14,7 @@ const GM_FIELDS: PackedStringArray = [
 	"pending_invasion", "world_news", "analyzed_elements", "triggered_event_ids", "current_ending_id",
 	"game_over_id", "pending_event", "pending_role_transitions", "is_game_active", "last_turn_report",
 	"player_relationships", "world_sects", "player_character", "player_sect", "pending_combat",
-	"pending_war_plan", "year_start", "chronicle", "map_state", "pending_region_target", "last_faction_report",
+	"pending_war_plan", "year_start", "chronicle", "map_state", "pending_region_target", "last_faction_report", "last_npc_report",
 ]
 const STAT_NAMES: Dictionary = {
 	"strength": "무력", "agility": "신법", "wisdom": "지혜", "charisma": "매력",
@@ -56,6 +56,8 @@ static func get_popup(host: Node) -> Control:
 		scene.add_child(layer)
 		var popup: Control = preload("res://scripts/UI/confirm_popup.gd").new()
 		popup.name = "PreviewPopup"
+		# CanvasLayer 아래는 창 테마를 이어받지 않으므로 직접 준다 (글꼴이 깨지지 않게)
+		popup.theme = tree.root.theme
 		layer.add_child(popup)
 	return layer.get_node("PreviewPopup")
 

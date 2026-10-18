@@ -32,5 +32,14 @@
     "hatred": [
       "하오문을 적으로 돌린 자는 잠을 편히 못 자오."
     ]
-  }
+  },
+  "traits": {
+    "greed": 70,
+    "benevolence": 45
+  },
+  "likes": [
+    "gift",
+    "talk"
+  ],
+  "favorite": "남의 비밀"
 }

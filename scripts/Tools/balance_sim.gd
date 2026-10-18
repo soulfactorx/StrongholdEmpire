@@ -31,6 +31,7 @@ func _initialize() -> void:
 	GameSettings.settings_path = "user://_sim_saves/settings.cfg"
 	GameSettings.combat_delay = 0.0
 	GameSettings.combat_preview = false
+	GameSettings.enemy_preview = false
 	process_frame.connect(_run, CONNECT_ONE_SHOT)
 
 

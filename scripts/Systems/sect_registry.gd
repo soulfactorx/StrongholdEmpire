@@ -8,6 +8,7 @@ extends RefCounted
 ##       is_player_sect(선택), 그리고 SectData의 수치 필드(reputation, disciple_count 등)
 ##       war_tactics(선택) { 명령: 가중치 }, war_formation(선택) CRANE/FISH/CIRCLE/NONE
 ##       — 없으면 성향별 기본값(GameBalance.WAR_TACTICS, WAR_FORMATIONS)
+##       officers(선택) [{npc, post}] 직책 인물 (NpcAgent.POST_NAMES: leader·instructor·healer·elder·steward·heir)
 ##       strategy(선택) 세력 AI 전략 (FactionStrategy), optional(선택) true면 새 게임에서 골라야 등장하는 세력
 
 const SECT_DIR := "res://data/sects/"
@@ -121,7 +122,7 @@ static func validate_sect_dict(data: Dictionary) -> PackedStringArray:
 	for key in data:
 		if not (key in NUMERIC_FIELDS or key in [
 			"id", "sect_name", "alignment", "leader_id", "description", "is_player_sect", "_path",
-			"war_tactics", "war_formation", "soldier_npc", "champion_npc", "emblem", "strategy", "optional",
+			"war_tactics", "war_formation", "soldier_npc", "champion_npc", "emblem", "strategy", "optional", "officers",
 		]):
 			errors.append("알 수 없는 필드: %s" % key)
 	var tactics: Variant = data.get("war_tactics", {})
@@ -138,6 +139,9 @@ static func validate_sect_dict(data: Dictionary) -> PackedStringArray:
 			errors.append("명부에 없는 %s: %s" % [key, data[key]])
 	if data.has("emblem") and not ResourceLoader.exists("res://assets/art/" + str(data["emblem"])):
 		errors.append("문장 그림이 없음: assets/art/%s" % data["emblem"])
+	for officer in data.get("officers", []):
+		if not officer is Dictionary or not NpcRoster.has_npc(str(officer.get("npc", ""))) or not NpcAgent.POST_NAMES.has(str(officer.get("post", ""))):
+			errors.append("잘못된 직책 인물: %s" % [officer])
 	if data.has("strategy") and not FactionStrategy.is_valid(str(data["strategy"])):
 		errors.append("알 수 없는 전략: %s" % data["strategy"])
 	if data.has("war_formation") and not data["war_formation"] in ["NONE", "CRANE", "FISH", "CIRCLE"]:

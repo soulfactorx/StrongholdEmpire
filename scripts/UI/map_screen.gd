@@ -317,7 +317,7 @@ func _pacify(region_id: String) -> void:
 
 func open_report() -> void:
 	AudioManager.play_click()
-	report_popup.open("강호 세력 동향", SectAI.format_reports(GameManager.last_faction_report), Callable(), "확인", "")
+	report_popup.open("강호 동향", NpcAgent.format_season(GameManager.last_npc_report, GameManager.last_faction_report), Callable(), "확인", "")
 
 
 func _unhandled_key_input(event: InputEvent) -> void:

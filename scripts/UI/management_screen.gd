@@ -330,7 +330,7 @@ func _update_time_display() -> void:
 
 func _update_sect_display(sect: SectData) -> void:
 	sect_name_label.text = RoleDashboard.get_sect_title(GameManager.player_character.role, sect)
-	# 다음 계절 예상 수지 (수입 − 유지비)
+	# 다음 계절 예상 수지 (수입 - 유지비)
 	var forecast: Dictionary = GameManager.estimate_next_season()
 	gold_label.text = "금화: %d (다음 계절 %+d, 유지비 %d)" % [sect.gold, forecast["gold"], sect.get_gold_upkeep()]
 	food_label.text = "식량: %d (다음 계절 %+d, 유지비 %d)" % [sect.food, forecast["food"], sect.get_food_upkeep()]
@@ -431,11 +431,15 @@ func _on_turn_advanced(_year: int, _season: String) -> void:
 	_show_faction_report()
 
 
-## 계절을 넘기면 강호 세력마다 어떤 전략으로 무엇을 했는지 보여 준다. (설정에서 끌 수 있다)
+## 계절을 넘기면 우리 문파 인물(문주·교두·의원)과 강호 세력이 무엇을 했는지 보여 준다. (설정에서 끌 수 있다)
 func _show_faction_report() -> void:
-	if not GameSettings.faction_report or GameManager.last_faction_report.is_empty():
+	if not GameSettings.faction_report:
 		return
-	faction_popup.open("강호 세력 동향 — %s" % GameManager.get_date_text(), SectAI.format_reports(GameManager.last_faction_report), Callable(), "확인", "")
+	if GameManager.last_faction_report.is_empty() and GameManager.last_npc_report.is_empty():
+		return
+	faction_popup.open("강호 동향 — %s" % GameManager.get_date_text(), NpcAgent.format_season(
+		GameManager.last_npc_report, GameManager.last_faction_report
+	), Callable(), "확인", "")
 
 
 ## 해가 바뀌면 1년 결산을 보여 준다.
@@ -460,7 +464,7 @@ func _show_invasion() -> void:
 			{"id": "fight", "title": "맞서 싸운다", "description": "방어전: 제자와 인연이 함께 싸웁니다. 막아 내면 %s이(가) 제자를 잃습니다." % invader.sect_name},
 			{"id": "bribe", "title": "금화로 물린다 (금화 %d)" % bribe_gold, "description": "싸우지 않고 돌려보냅니다.",
 				"disabled": GameManager.player_sect.gold < bribe_gold},
-			{"id": "yield", "title": "산문을 내준다", "description": "제자 −%d, 명성 −%d" % [
+			{"id": "yield", "title": "산문을 내준다", "description": "제자 -%d, 명성 -%d" % [
 				_Balance.INVASION_YIELD_DISCIPLES, _Balance.INVASION_YIELD_REPUTATION,
 			]},
 	]

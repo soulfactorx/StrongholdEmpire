@@ -28,7 +28,7 @@ const GOLD_LOSS_RATE := 0.15
 const FOOD_SAFE_AMOUNT := 300
 const FOOD_SPOIL_RATE := 0.2
 
-# 시설: 확장 비용 = base + step × (현재 레벨 − 시작 레벨). 유지비는 시작 레벨을 넘는 단계마다
+# 시설: 확장 비용 = base + step × (현재 레벨 - 시작 레벨). 유지비는 시작 레벨을 넘는 단계마다
 ## { 시설 id: [시작 레벨, 최대 레벨, base 비용, step 비용] }
 const FACILITIES: Dictionary = {
 	"library": [1, 5, 80, 40],
@@ -188,7 +188,7 @@ const AI_MIN_DISCIPLES := 3
 const AI_ATTACK_MIN_TARGET_DISCIPLES := 10
 ## 같은 성향 세력을 공격할 가중치 (다른 성향은 1)
 const AI_SAME_ALIGNMENT_ATTACK := 0.3
-## 침공: 태도가 이 값 미만인 세력만. 태도가 낮을수록 잦다 (−50이면 1배, −100이면 2배)
+## 침공: 태도가 이 값 미만인 세력만. 태도가 낮을수록 잦다 (-50이면 1배, -100이면 2배)
 const AI_INVASION_MAX_ATTITUDE := -20
 const AI_INVASION_COOLDOWN := 4
 ## 첫해에는 침공하지 않는다
@@ -233,7 +233,7 @@ const MARRIAGE_MIN_BOND := 60
 const MARRIAGE_GOLD := 150
 const MARRIAGE_ATTITUDE := 30
 const MARRIAGE_REPUTATION := 8
-## 도전장: 보내면 명성 +, 태도 −. 그 세력과의 문파전 승패에 명성이 더 걸린다
+## 도전장: 보내면 명성 +, 태도 -. 그 세력과의 문파전 승패에 명성이 더 걸린다
 const CHALLENGE_REPUTATION := 3
 const CHALLENGE_ATTITUDE := 15
 const CHALLENGE_WIN_REPUTATION := 10
@@ -255,6 +255,8 @@ const GIFT_BOND := 8
 ## 비무: 이기면 유대 +WIN, 져도 +LOSE
 const SPAR_BOND_WIN := 5
 const SPAR_BOND_LOSE := 2
+## 인물이 좋아하는 상호작용(담소·선물·비무)이면 유대 증가 배율
+const LIKE_BOND_MULTIPLIER := 1.5
 ## 이 유대 이상인 사제·혈맹·연인 인물이 방어전에 아군으로 합류한다
 const BOND_ALLY_MIN := 60
 const BOND_ALLY_COUNT := 1
@@ -331,7 +333,7 @@ const TEACH_BOND := 3
 ## 막내 제자: 외출에서 기연이 없을 때 얻는 소득
 const OUTING_GOLD := 25
 const OUTING_EXP := 15
-## 낭인: 의뢰 게시판. 호위 성공률 = 기본 + (전투력 − 기준) × 배율, 타지에서는 보상 증가·성공률 감소
+## 낭인: 의뢰 게시판. 호위 성공률 = 기본 + (전투력 - 기준) × 배율, 타지에서는 보상 증가·성공률 감소
 const JOB_ESCORT_GOLD := 60
 const JOB_ESCORT_BASE_CHANCE := 60
 const JOB_ESCORT_POWER_BASE := 40

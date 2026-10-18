@@ -129,6 +129,8 @@ static func _get_bubble(anchor: Control) -> PanelContainer:
 		var bubble := PanelContainer.new()
 		bubble.name = "Bubble"
 		bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# CanvasLayer 아래는 창 테마를 이어받지 않으므로 직접 준다 (글꼴이 깨지지 않게)
+		bubble.theme = anchor.get_tree().root.theme
 		bubble.add_theme_stylebox_override("panel", _UiTheme.create_panel_style())
 		var label := Label.new()
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

@@ -58,7 +58,7 @@ var last_combat_history: PackedStringArray = []
 ## 연대기: 이야기에서 일어난 일(기연 선택, 오간 대사, 전투, 역할 변화, 엔딩 등)을 순서대로 남긴다.
 ## 항목: {date, turn, generation, kind, text, lines}. 오래된 것부터 지운다.
 var chronicle: Array[Dictionary] = []
-const CHRONICLE_LIMIT := 600
+const CHRONICLE_LIMIT := 1000
 ## 무공 창조 화면에서 고르던 설정 (다시 열면 이어서): {name, category, element, yin_yang, effects}
 var art_draft: Dictionary = {}
 ## 저장해 둔 무공 창조 설정: [{title, name, category, element, yin_yang, effects}]
@@ -68,6 +68,8 @@ const ART_BLUEPRINT_LIMIT := 10
 var map_state: Dictionary = {}
 ## 지난 계절 세력마다 한 일: [{sect_id, sect_name, strategy, action, detail}] (SectAI.run_season의 reports)
 var last_faction_report: Array[Dictionary] = []
+## 지난 계절 우리 문파 직책 인물이 한 일: [{npc_id, name, post, action, detail}] (NpcAgent.run_season)
+var last_npc_report: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -182,6 +184,7 @@ func _initialize_new_game(
 	_apply_faction_setup(factions)
 	map_state = WorldMap.create_state(_all_sect_ids())
 	last_faction_report.clear()
+	last_npc_report.clear()
 	StartingRoles.apply_sect_setup(role_id, player_sect, player_character)
 	DiscipleRoster.enable(player_sect)
 	player_relationships = RelationshipManager.create_default_relationships()
@@ -307,6 +310,10 @@ func advance_turn() -> void:
 		current_year += 1
 		yearly_report = _process_yearly_events()
 	_sync_event_context()
+	# 우리 문파 직책 인물(문주·교두·의원)이 계절의 일을 한다. 플레이어가 문주가 아니면 문주가 살림을 맡는다.
+	last_npc_report.assign(NpcAgent.run_season(self))
+	if not last_npc_report.is_empty():
+		add_chronicle("인물", "%s의 인물들이 움직였습니다." % player_sect.sect_name, _report_lines(last_npc_report, true))
 	var income: String = _process_seasonal_income()
 	var upkeep: Dictionary = SectManager.pay_upkeep(player_sect)
 	var facility_report: String = _apply_facility_effects()
@@ -333,6 +340,17 @@ func advance_turn() -> void:
 	EventBus.resources_changed.emit(player_sect)
 
 
+## 동향 보고를 연대기 줄로
+func _report_lines(reports: Array, npc: bool) -> PackedStringArray:
+	var lines: PackedStringArray = []
+	for report in reports:
+		if npc:
+			lines.append("%s(%s) %s: %s" % [report["name"], report["post"], report["action"], report["detail"]])
+		else:
+			lines.append("%s [%s 전략] %s: %s" % [report["sect_name"], report["strategy"], report["action"], report["detail"]])
+	return lines
+
+
 ## 세력 AI의 한 계절. 강호 소식을 쌓고, 침공이 있으면 대응을 기다린다. 계절 보고 문구를 돌려준다.
 func _run_sect_ai() -> String:
 	if not SectAI.active:
@@ -342,6 +360,8 @@ func _run_sect_ai() -> String:
 		world_sects, _get_turn_index(), current_year, ScenarioRules.event_rate(), map_state
 	)
 	last_faction_report.assign(result["reports"])
+	if not last_faction_report.is_empty():
+		add_chronicle("세력", "강호 세력이 움직였습니다.", _report_lines(last_faction_report, false))
 	for line in result["news"]:
 		add_world_news(line)
 	pending_invasion = result["invader"]
@@ -1332,6 +1352,7 @@ func _build_save_state() -> Dictionary:
 		"art_blueprints": art_blueprints,
 		"map_state": map_state,
 		"faction_report": last_faction_report,
+		"npc_report": last_npc_report,
 		"analyzed_elements": analyzed_elements,
 		"triggered_event_ids": triggered_event_ids,
 		"current_ending_id": current_ending_id,
@@ -1438,6 +1459,10 @@ func _apply_save_data(data: Dictionary) -> void:
 	for entry in data.get("faction_report", []):
 		if entry is Dictionary:
 			last_faction_report.append(entry)
+	last_npc_report.clear()
+	for entry in data.get("npc_report", []):
+		if entry is Dictionary:
+			last_npc_report.append(entry)
 	pending_region_target = ""
 	_sync_event_context()
 	refresh_role_transitions()

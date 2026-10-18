@@ -540,8 +540,10 @@ func _test_bond_evolution() -> void:
 	var master: RelationshipData = _rel(gm, "npc_master")
 	var bond_before: int = master.bond_strength
 	var talk: Dictionary = gm.interact_with("npc_master", "talk")
-	var talk_gain: int = _Balance.TALK_BOND + gm.player_character.charisma / _Balance.TALK_CHARISMA_DIVISOR
-	_check(talk["success"] and master.bond_strength == bond_before + talk_gain, "대화: 유대 +%d" % talk_gain)
+	# 청운검선은 담소를 좋아해 대화하면 유대가 더 오른다 (취향, LIKE_BOND_MULTIPLIER)
+	var talk_gain: int = roundi((_Balance.TALK_BOND + gm.player_character.charisma / _Balance.TALK_CHARISMA_DIVISOR) * _Balance.LIKE_BOND_MULTIPLIER)
+	_check(NpcAgent.likes("npc_master", "talk") and not NpcAgent.likes("npc_master", "gift"), "인물 취향: 청운검선은 담소")
+	_check(talk["success"] and master.bond_strength == bond_before + talk_gain and talk["message"].contains("반깁니다"), "대화: 좋아하는 일이면 유대 +%d" % talk_gain)
 	var gold_before: int = gm.player_sect.gold
 	_check(gm.interact_with("npc_master", "gift")["success"] and gm.player_sect.gold == gold_before - _Balance.GIFT_GOLD, "선물: 금화 소모")
 	_check(master.bond_strength == bond_before + talk_gain + _Balance.GIFT_BOND, "선물: 유대 +%d" % _Balance.GIFT_BOND)
@@ -550,7 +552,7 @@ func _test_bond_evolution() -> void:
 	gm.pending_event.clear()
 	_check(RelationshipManager.get_interactions_left(gm.story_flags, gm._get_turn_index()) == _Balance.INTERACTIONS_PER_SEASON, "다음 계절에 다시 가능")
 	var spar: Dictionary = RelationshipManager.interact(gm.player_relationships, "npc_rival", "spar", gm.player_character, gm.player_sect, gm.story_flags, gm._get_turn_index())
-	_check(spar["combat"].enemies[0].id == "npc_rival" and spar["combat"].rewards["bond"] == _Balance.SPAR_BOND_WIN, "비무 신청: 그 인물과의 비무")
+	_check(spar["combat"].enemies[0].id == "npc_rival" and spar["combat"].rewards["bond"] == roundi(_Balance.SPAR_BOND_WIN * _Balance.LIKE_BOND_MULTIPLIER), "비무 신청: 그 인물과의 비무 (비무를 좋아해 유대 더)")
 
 	# 원한: 대화로 누그러지고, 비무는 거부
 	master.bond_type = RelationshipData.BondType.HATRED
@@ -678,3 +680,78 @@ func _test_bond_flow() -> void:
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
 	await process_frame
 	_completed["_test_bond_flow"] = true
+
+
+## 인물 AI: 직책 인물이 성향·처지에 맞게 계절의 일을 하고, 그 일을 동향·연대기에 남긴다.
+func _test_npc_agents() -> void:
+	var gm: Node = root.get_node("GameManager")
+	# 성향·취향: 데이터가 있으면 그것, 없으면 능력치에서
+	var all_ok: bool = NpcRoster.get_all().all(func(npc: Dictionary) -> bool:
+		var traits: Dictionary = NpcAgent.get_traits(npc["id"])
+		return traits.size() == NpcAgent.TRAIT_NAMES.size() and traits.values().all(func(v: int) -> bool: return v >= 0 and v <= 100) \
+			and not NpcAgent.get_likes(npc["id"]).is_empty()
+	)
+	_check(all_ok, "모든 인물: 성향 5가지(0~100)와 취향")
+	_check(NpcAgent.get_traits("npc_master")["caution"] == 75 and NpcAgent.get_traits("npc_cheonma")["ambition"] == 95, "인물 데이터의 성향")
+	_check(NpcAgent.describe("npc_healer").contains("좋아함: 선물"), "성향·취향 설명")
+	_check(NpcRoster.validate_npc_dict({"id": "x", "display_name": "x", "sect_id": "none", "role": "WANDERER", "traits": {"ambition": 150}, "likes": ["dance"]}).size() == 2, "인물 검증: 성향 범위·취향 종류")
+	_check(SectRegistry.validate_sect_dict({"id": "x", "sect_name": "x", "alignment": "RIGHTEOUS", "leader_id": "npc_master", "officers": [{"npc": "npc_master", "post": "king"}]}).size() == 1, "문파 검증: 직책")
+	var cheonma: Array = NpcAgent.leader_multipliers("npc_cheonma")
+	var wudang: Array = NpcAgent.leader_multipliers("npc_wudang_head")
+	_check(cheonma[SectAI.Action.ATTACK] > wudang[SectAI.Action.ATTACK] and wudang[SectAI.Action.FORTIFY] > cheonma[SectAI.Action.FORTIFY], "문주 성향이 세력 AI에: 야망 → 공격, 신중 → 내실")
+
+	# 막내 제자: 계절을 넘기면 NPC 문주가 살림을 맡고 교두·의원도 일한다
+	NpcAgent.active = true
+	_new_quiet_game(gm, "young_disciple")
+	_check(NpcAgent.get_officers(gm.player_sect).size() == 3 and NpcAgent.npc_runs_sect(gm), "우리 문파 직책 인물 3명, 막내 제자면 문주가 살림")
+	gm.player_sect.gold = 1500
+	gm.player_sect.food = 800
+	gm.player_character.internal_energy_current = 10
+	var exp_before: int = gm.player_sect.disciples.reduce(func(sum: int, d: DiscipleData) -> int: return sum + d.level * 1000 + d.experience, 0)
+	var state_before: Array = [gm.player_sect.disciple_count, gm.player_sect.reputation, gm.player_sect.gold, WorldMap.count(gm.map_state, gm.player_sect.id)]
+	gm.advance_turn()
+	gm.pending_event.clear()
+	var posts: Array = gm.last_npc_report.map(func(r: Dictionary) -> String: return r["post"])
+	_check(posts == ["문주", "교두", "의원"] and gm.last_npc_report.all(func(r: Dictionary) -> bool: return not r["action"].is_empty() and not r["detail"].is_empty()), "인물 동향: 문주·교두·의원이 한 일")
+	var exp_after: int = gm.player_sect.disciples.reduce(func(sum: int, d: DiscipleData) -> int: return sum + d.level * 1000 + d.experience, 0)
+	_check(exp_after > exp_before, "교두가 제자를 가르침")
+	_check(gm.last_npc_report[2]["action"] == "치료" and gm.player_character.internal_energy_current > 10, "의원이 내공을 돌봄")
+	var leader_action: String = gm.last_npc_report[0]["action"]
+	_check(leader_action in ["제자 모집", "시설 확장", "문파 연회", "땅 평정", "사절 파견", "재물 아끼기"], "문주의 결정: %s" % leader_action)
+	var state_after: Array = [gm.player_sect.disciple_count, gm.player_sect.reputation, gm.player_sect.gold, WorldMap.count(gm.map_state, gm.player_sect.id)]
+	_check(leader_action == "재물 아끼기" or state_after != state_before, "문주의 결정이 문파에 반영됨")
+	_check(gm.chronicle.any(func(e: Dictionary) -> bool: return e["kind"] == "인물" and Array(e["lines"]).size() == 3), "인물 동향이 연대기에 남음")
+
+	# 성향대로: 야망이 크면 땅을 넓히고, 신중하면 재물을 아끼거나 시설을 넓힌다
+	# (새 게임을 시작하면 인물 데이터를 다시 읽으므로 시작한 뒤에 성향을 바꾼다)
+	var counts: Dictionary = {}
+	for temper in ["bold", "careful"]:
+		counts[temper] = {}
+		seed(5)
+		for i in 20:
+			_new_quiet_game(gm, "young_disciple")
+			NpcRoster.get_npc("npc_master")["traits"] = {"ambition": 100, "caution": 0, "benevolence": 0, "greed": 50, "loyalty": 50} if temper == "bold" else {"ambition": 0, "caution": 100, "benevolence": 0, "greed": 50, "loyalty": 50}
+			gm.player_sect.gold = 1500
+			gm.player_sect.food = 800
+			var outcome: Dictionary = NpcAgent._lead(gm, "npc_master")
+			counts[temper][outcome["action"]] = counts[temper].get(outcome["action"], 0) + 1
+	_check(counts["bold"].get("땅 평정", 0) > counts["careful"].get("땅 평정", 0), "야망 큰 문주는 땅을 더 넓힘 %s / %s" % [counts["bold"], counts["careful"]])
+	_check(counts["careful"].get("시설 확장", 0) + counts["careful"].get("재물 아끼기", 0) > counts["bold"].get("시설 확장", 0) + counts["bold"].get("재물 아끼기", 0), "신중한 문주는 시설·저축")
+	# 금고가 비면 아낀다
+	_new_quiet_game(gm, "young_disciple")
+	gm.player_sect.gold = 50
+	_check(NpcAgent._lead(gm, "npc_master")["action"] == "재물 아끼기", "금고가 비면 재물을 아낌")
+
+	# 문주면 살림은 내 몫: 문주 NPC는 움직이지 않고 교두·의원만
+	_new_quiet_game(gm, "leader")
+	gm.advance_turn()
+	gm.pending_event.clear()
+	_check(gm.last_npc_report.map(func(r: Dictionary) -> String: return r["post"]) == ["교두", "의원"], "내가 문주면 교두·의원만 일함")
+	gm.save_game(3)
+	gm.last_npc_report.clear()
+	gm.load_game(3)
+	SaveManager.delete_save(3)
+	_check(gm.last_npc_report.size() == 2, "인물 동향 저장·불러오기")
+	_check(NpcAgent.format_season(gm.last_npc_report, []).contains("우리 문파 인물"), "강호 동향 글: 우리 문파 인물")
+	NpcAgent.active = false
+	_completed["_test_npc_agents"] = true

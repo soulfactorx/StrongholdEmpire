@@ -124,7 +124,7 @@ func _make_row(disciple: DiscipleData, turn: int) -> HBoxContainer:
 
 	var deploy_button := Button.new()
 	deploy_button.custom_minimum_size = Vector2(130, 48)
-	deploy_button.text = "출전 ✔" if disciple.deployed else "출전 지정"
+	deploy_button.text = "출전 중 ○" if disciple.deployed else "출전 지정"
 	deploy_button.pressed.connect(_on_deploy_pressed.bind(disciple.id))
 	row.add_child(deploy_button)
 

@@ -102,9 +102,13 @@ static func body_font() -> Font:
 	return _font(FONT_BODY_PATH)
 
 
-## 제목용 붓글씨 글꼴
+## 제목용 붓글씨 글꼴. 붓글씨 글꼴에 없는 문장부호(— · → ★ 「」 등)는 본문 글꼴로 그린다.
 static func brush_font() -> Font:
-	return _font(FONT_BRUSH_PATH)
+	var brush: Font = _font(FONT_BRUSH_PATH)
+	var body: Font = body_font()
+	if brush and body and not brush.fallbacks.has(body):
+		brush.fallbacks = [body]
+	return brush
 
 
 static func _font(path: String) -> Font:

@@ -1,7 +1,7 @@
 {
   "id": "assassin_bounty_hunters",
   "title": "현상금 사냥꾼",
-  "description": "객잔 문을 열고 들어선 사내들이 품에서 방문(榜文)을 꺼내 얼굴을 대조합니다.\n당신의 목에 걸린 현상금이 그들을 불러 모았습니다.",
+  "description": "객잔 문을 열고 들어선 사내들이 품에서 방문을 꺼내 얼굴을 대조합니다.\n당신의 목에 걸린 현상금이 그들을 불러 모았습니다.",
   "can_repeat": true,
   "weight": 5,
   "conditions": [

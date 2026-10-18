@@ -428,9 +428,9 @@ func _test_tutorial_scenario() -> void:
 	_check(ScenarioRules.time_limit_years() == 4 and gm.world_sects.size() == 2, "입문 수련: 4년, 세력 둘")
 	var gold: int = gm.player_sect.gold
 	gm.resolve_pending_event(0)
-	_check(gm.player_sect.gold == gold + 200, "① 수련 자금")
+	_check(gm.player_sect.gold == gold + 200, "1. 수련 자금")
 
-	# [기연 id, 고를 선택지]. 서고를 확장하지 않았으므로 ③은 안내형(hint)이 나온다.
+	# [기연 id, 고를 선택지]. 서고를 확장하지 않았으므로 3.은 안내형(hint)이 나온다.
 	var steps: Array = [
 		["tut_02_facility", 0], ["tut_03_roster_hint", 0], ["tut_04_event", 0], ["tut_05_combat", 0],
 		["tut_06_martial", 0], ["tut_07_bond", 0], ["tut_08_defense", 0], ["tut_09_diplomacy", 0],
@@ -453,12 +453,12 @@ func _test_tutorial_scenario() -> void:
 		if gm.pending_combat != null:
 			combats += 1
 			gm.finish_combat(CombatManager.Outcome.VICTORY)
-	_check(gm.player_sect.library_level >= 2, "③ 서고를 확장하지 않았으면 길잡이가 대신 확장")
-	_check(combats == 2, "⑤ 비무와 ⑧ 방어전 전투가 시작됨 (%d번)" % combats)
-	_check(gm.player_character.knows_martial_art("preset_earth_life_palm"), "⑥ 무공 전수받음")
-	_check(RelationshipManager.get_bond_with(gm.player_relationships, "npc_swallow") != null, "⑦ 연소화와 인연")
-	_check(heukpung.disciple_count < heukpung_disciples and heukpung.attitude < 0, "⑩ 흑풍채가 약해지고 적대")
-	_check(gm.current_ending_id == "tutorial_complete" and gm.is_game_over(), "⑫ 수료하면 입문 수료 엔딩으로 끝남")
+	_check(gm.player_sect.library_level >= 2, "3. 서고를 확장하지 않았으면 길잡이가 대신 확장")
+	_check(combats == 2, "5. 비무와 8. 방어전 전투가 시작됨 (%d번)" % combats)
+	_check(gm.player_character.knows_martial_art("preset_earth_life_palm"), "6. 무공 전수받음")
+	_check(RelationshipManager.get_bond_with(gm.player_relationships, "npc_swallow") != null, "7. 연소화와 인연")
+	_check(heukpung.disciple_count < heukpung_disciples and heukpung.attitude < 0, "10. 흑풍채가 약해지고 적대")
+	_check(gm.current_ending_id == "tutorial_complete" and gm.is_game_over(), "12. 수료하면 입문 수료 엔딩으로 끝남")
 
 	# 새 게임 화면: 입문 수련을 고르면 일반 길잡이 선택이 숨는다.
 	SceneRouter.goto(tree, SceneRouter.NEW_GAME)

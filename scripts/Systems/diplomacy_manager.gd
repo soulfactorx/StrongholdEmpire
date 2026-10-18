@@ -75,19 +75,19 @@ static func _describe(gm: Node, sect: SectData, action_id: String) -> String:
 		"alliance":
 			return "동맹 세력은 문파전에 전력 %d%%의 원군을 보냅니다. 동맹은 공격할 수 없습니다." % int(_Balance.ALLY_WAR_SUPPORT_RATIO * 100)
 		"break_alliance":
-			return "태도 −%d, 명성 −%d" % [_Balance.ALLIANCE_BREAK_ATTITUDE, _Balance.ALLIANCE_BREAK_REPUTATION]
+			return "태도 -%d, 명성 -%d" % [_Balance.ALLIANCE_BREAK_ATTITUDE, _Balance.ALLIANCE_BREAK_REPUTATION]
 		"marriage":
 			var partner: RelationshipData = get_marriage_partner(gm, sect)
 			return "%s와(과)의 혼인 · 금화 %d · 태도 +%d, 명성 +%d, 동맹" % [
 				partner.target_name, _Balance.MARRIAGE_GOLD, _Balance.MARRIAGE_ATTITUDE, _Balance.MARRIAGE_REPUTATION,
 			]
 		"challenge":
-			return "명성 +%d, 태도 −%d. 이 세력과의 문파전에서 이기면 명성 +%d, 지면 −%d" % [
+			return "명성 +%d, 태도 -%d. 이 세력과의 문파전에서 이기면 명성 +%d, 지면 -%d" % [
 				_Balance.CHALLENGE_REPUTATION, _Balance.CHALLENGE_ATTITUDE,
 				_Balance.CHALLENGE_WIN_REPUTATION, _Balance.CHALLENGE_LOSS_REPUTATION,
 			]
 		"tribute":
-			return "계절마다 금화 +%d. 바칠 때마다 태도 −%d, 태도 %d 이하면 끊습니다." % [
+			return "계절마다 금화 +%d. 바칠 때마다 태도 -%d, 태도 %d 이하면 끊습니다." % [
 				_Balance.TRIBUTE_GOLD, _Balance.TRIBUTE_ATTITUDE_PER_SEASON, _Balance.TRIBUTE_REVOLT_ATTITUDE,
 			]
 		"release_tribute":
@@ -142,7 +142,7 @@ static func perform(gm: Node, sect_id: String, action_id: String) -> Dictionary:
 			_change_attitude(sect, -_Balance.ALLIANCE_BREAK_ATTITUDE)
 			player_sect.reputation = maxi(0, player_sect.reputation - _Balance.ALLIANCE_BREAK_REPUTATION)
 			EventManager.set_flag(gm.story_flags, "allied_%s" % sect.id, false)
-			message = "%s와(과)의 동맹을 깼습니다. 태도 %d, 명성 −%d" % [sect.sect_name, sect.attitude, _Balance.ALLIANCE_BREAK_REPUTATION]
+			message = "%s와(과)의 동맹을 깼습니다. 태도 %d, 명성 -%d" % [sect.sect_name, sect.attitude, _Balance.ALLIANCE_BREAK_REPUTATION]
 		"marriage":
 			if not player_sect.spend_resources(_Balance.MARRIAGE_GOLD):
 				return _fail("금화가 부족합니다. (%d 필요)" % _Balance.MARRIAGE_GOLD)

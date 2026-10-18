@@ -958,6 +958,26 @@ func _test_combat_preview_and_history() -> void:
 	_unhandled_key(c, KEY_ESCAPE)
 	_check(not c.history_popup.visible, "Esc: 전투 기록 닫기")
 
+	# 적 공격 예고: 적이 아군을 치기 전에 멈춰 예상 피해를 보여 주고, [확인]을 누르면 공격이 이어진다.
+	GameSettings.enemy_preview = true
+	for foe in c._get_alive_enemies():
+		foe.grid_pos = Vector2i(99, 99)
+	enemy.grid_pos = player.grid_pos + Vector2i.RIGHT
+	var player_hp: int = player.hp
+	var round_before: int = c._turn_manager.round_number
+	c._on_end_turn_pressed()
+	_check(c.is_enemy_preview() and c.preview_panel.visible and player.hp == player_hp, "적 공격 예고: 치기 전에 멈춤")
+	text = c.preview_label.text
+	_check(text.contains("적 공격 예고") and text.contains(enemy.display_name) and text.contains(player.display_name) and text.contains("예상 피해"), "적 공격 예고: 누가 누구를, 예상 피해")
+	_check(not c.preview_panel.find_child("PreviewCancelButton", true, false).visible, "적 공격 예고는 취소 버튼 없음")
+	var guard: int = 0
+	while c.is_enemy_preview() and guard < 10:
+		guard += 1
+		_unhandled_key(c, KEY_ENTER)
+		await process_frame
+	_check(not c.is_enemy_preview() and player.hp < player_hp and c._turn_manager.round_number == round_before + 1, "확인하면 공격이 이어지고 다음 아군 턴")
+	GameSettings.enemy_preview = false
+
 	GameSettings.combat_preview = false
 	c.leave_combat()
 	_check(gm.last_combat_history.size() > 3, "전투가 끝나면 기록을 남김 (연대기용)")

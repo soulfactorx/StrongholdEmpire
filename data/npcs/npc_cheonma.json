@@ -31,5 +31,13 @@
     "hatred": [
       "감히 천마의 앞을 막다니. 그 대가를 치르게 될 것이다."
     ]
-  }
+  },
+  "traits": {
+    "ambition": 95,
+    "greed": 70
+  },
+  "likes": [
+    "spar"
+  ],
+  "favorite": "강자의 피"
 }

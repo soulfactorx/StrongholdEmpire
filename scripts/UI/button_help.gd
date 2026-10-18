@@ -60,7 +60,7 @@ static func _by_name() -> Dictionary:
 		"EndTurnButton": "아군 턴을 마칩니다. 적이 모두 움직인 뒤 다음 라운드의 아군 턴이 됩니다.",
 		"NextAllyButton": "행동력이 남은 다음 아군을 고릅니다. 아군 칸을 눌러도 고를 수 있습니다.",
 		"HistoryButton": "이번 전투에서 오간 이동·공격·피해·체력 변화를 라운드별로 봅니다.",
-		"PreviewConfirmButton": "미리 본 대로 공격·무공을 실행합니다.",
+		"PreviewConfirmButton": "미리 본 대로 공격·무공을 실행합니다. 적 공격 예고에서는 확인하고 적의 공격을 이어 갑니다.",
 		"PreviewCancelButton": "실행하지 않고 돌아갑니다. 행동력·내공은 그대로입니다.",
 		# 공용
 		"BackButton": "이전 화면으로 돌아갑니다.",

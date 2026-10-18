@@ -42,8 +42,10 @@ static func get_weights(
 	if sect.gold < _Balance.AI_FORTIFY_GOLD or sect.training_ground_level >= _Balance.AI_FORTIFY_MAX_LEVEL:
 		weights[Action.FORTIFY] = 0.0
 	var multipliers: Array = FactionStrategy.get_multipliers(sect)
+	# 문주의 성향: 야망이 크면 공격·확장, 신중하면 성장·내실, 인정이 많으면 외교 (NpcAgent)
+	var temper: Array = NpcAgent.leader_multipliers(sect.leader_id)
 	for i in weights.size():
-		weights[i] *= float(multipliers[i])
+		weights[i] *= float(multipliers[i]) * float(temper[i])
 	return weights
 
 
@@ -107,7 +109,7 @@ static func run_season(
 	order.shuffle()
 	for sect in order:
 		var report: Dictionary = {
-			"sect_id": sect.id, "sect_name": sect.sect_name,
+			"sect_id": sect.id, "sect_name": sect.sect_name, "leader": sect.leader_name,
 			"strategy": FactionStrategy.get_title(FactionStrategy.of(sect)), "action": "", "detail": "",
 		}
 		reports.append(report)
@@ -219,7 +221,9 @@ static func _border_regions(map_state: Dictionary, attacker_id: String, target_i
 static func format_reports(reports: Array) -> String:
 	var lines: PackedStringArray = []
 	for report in reports:
-		lines.append("· %s [%s 전략] %s\n    %s" % [
-			report.get("sect_name", "?"), report.get("strategy", "?"), report.get("action", ""), report.get("detail", ""),
+		var leader: String = str(report.get("leader", ""))
+		lines.append("· %s%s [%s 전략] %s\n    %s" % [
+			report.get("sect_name", "?"), "(문주 %s)" % leader if not leader.is_empty() else "",
+			report.get("strategy", "?"), report.get("action", ""), report.get("detail", ""),
 		])
 	return "\n".join(lines) if not lines.is_empty() else "아직 강호 세력이 움직이지 않았습니다."

@@ -36,5 +36,15 @@
       "좋다. 어디 얼마나 늘었는지 보자꾸나.",
       "사정 봐주지 않겠다. 전력으로 오너라."
     ]
-  }
+  },
+  "traits": {
+    "ambition": 35,
+    "caution": 75,
+    "benevolence": 80,
+    "loyalty": 90
+  },
+  "likes": [
+    "talk"
+  ],
+  "favorite": "햇차와 바둑"
 }

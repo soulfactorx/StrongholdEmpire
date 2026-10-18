@@ -86,6 +86,7 @@ const RUNTIME_SEQUENCE: Array = [
 	["combat", "_test_martial_art_screen_actions"],
 	["roles", "_test_bond_evolution"],
 	["roles", "_test_bond_flow"],
+	["roles", "_test_npc_agents"],
 	["world", "_test_diplomacy"],
 	["world", "_test_diplomacy_screen"],
 	["world", "_test_sect_ai"],
@@ -121,11 +122,14 @@ func _initialize() -> void:
 	GameSettings.combat_delay = 0.0
 	# 공격 미리보기는 끄고 바로 실행한다 (켠 상태는 test_combat의 _test_combat_preview_and_history에서 따로)
 	GameSettings.combat_preview = false
+	GameSettings.enemy_preview = false
 	# 경영 행동 미리보기도 끈다 (켠 상태는 test_ui의 _test_action_preview에서 따로)
 	GameSettings.action_preview = false
 	GameSettings.faction_report = false
 	# 세력 AI는 계절마다 강호 세력 수치를 바꾸므로, 그 영향을 시험하는 곳에서만 켠다.
 	SectAI.active = false
+	# 우리 문파 직책 인물(NpcAgent)도 문파 수치를 바꾸므로 시험하는 곳에서만 켠다.
+	NpcAgent.active = false
 	# 피해 흔들림·회심은 끄고 정확한 값으로 시험한다 (켠 상태는 test_combat의 _test_damage_randomness에서 따로)
 	CombatRules.randomness = false
 	for key in SUITES:
@@ -142,6 +146,7 @@ func _run_runtime_tests() -> void:
 	# GameManager가 준비되며 설정 파일을 읽으므로, 시험용 전투 설정을 다시 맞춘다.
 	GameSettings.combat_delay = 0.0
 	GameSettings.combat_preview = false
+	GameSettings.enemy_preview = false
 	GameSettings.action_preview = false
 	GameSettings.faction_report = false
 	# 각 검사가 끝까지 실행됐는지 확인한다. 스크립트 오류로 중단되면 완료 표시가 남지 않는다.

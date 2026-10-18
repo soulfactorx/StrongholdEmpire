@@ -28,5 +28,13 @@
     "spar": [
       "창궁무애검법을 견딜 수 있겠소?"
     ]
-  }
+  },
+  "traits": {
+    "ambition": 80,
+    "caution": 60
+  },
+  "likes": [
+    "talk"
+  ],
+  "favorite": "가문의 명예"
 }

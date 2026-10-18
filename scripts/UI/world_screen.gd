@@ -99,11 +99,12 @@ func _build_sect_list() -> void:
 	_add_entry(
 		sect_list,
 		"%s (%s) — 우리 문파" % [player_sect.sect_name, player_sect.get_alignment_name()],
-		"문주 %s | 제자 %d | 명성 %d | 전력 %d" % [
+		"문주 %s | 제자 %d | 명성 %d | 전력 %d\n직책: %s" % [
 			player_sect.leader_name,
 			player_sect.disciple_count,
 			player_sect.reputation,
 			SectWarManager.get_military_power(player_sect, GameManager.player_character),
+			_officer_text(player_sect),
 		],
 		ArtAssets.emblem(player_sect.id), EMBLEM_SIZE
 	)
@@ -123,7 +124,7 @@ func _build_sect_list() -> void:
 		_add_entry(
 			sect_list,
 			"%s (%s) — %s" % [sect.sect_name, sect.get_alignment_name(), status],
-			"문주 %s | 제자 %d | 명성 %d | 태도 %+d | 전력 %d | 땅 %d\n전략: %s — %s\n%s%s" % [
+			"문주 %s | 제자 %d | 명성 %d | 태도 %+d | 전력 %d | 땅 %d\n전략: %s — %s\n직책: %s\n%s%s" % [
 				sect.leader_name,
 				sect.disciple_count,
 				sect.reputation,
@@ -132,6 +133,7 @@ func _build_sect_list() -> void:
 				WorldMap.count(GameManager.map_state, sect.id),
 				FactionStrategy.get_title(FactionStrategy.of(sect)),
 				FactionStrategy.get_description(FactionStrategy.of(sect)),
+				_officer_text(sect),
 				SectRegistry.get_description(sect.id),
 				_last_report_line(sect.id),
 			],
@@ -144,6 +146,15 @@ func _build_sect_list() -> void:
 		button.pressed.connect(_on_diplomacy_pressed.bind(sect.id))
 		_UiTheme.style_button(button)
 		sect_list.add_child(button)
+
+
+## "남궁천(문주) · 남궁휘(후계자)" — 문주는 성향도 함께
+func _officer_text(sect: SectData) -> String:
+	var parts: PackedStringArray = []
+	for officer in NpcAgent.get_officers(sect):
+		parts.append("%s(%s)" % [NpcRoster.get_display_name(officer["npc"]), NpcAgent.POST_NAMES[officer["post"]]])
+	var traits: Dictionary = NpcAgent.get_traits(sect.leader_id)
+	return "%s — 문주 성향 야망 %d · 신중 %d · 인정 %d" % [" · ".join(parts), traits["ambition"], traits["caution"], traits["benevolence"]]
 
 
 ## 지난 계절 이 세력이 한 일 (세력 동향)
@@ -180,7 +191,7 @@ func _build_npc_list() -> void:
 		_add_entry(
 			npc_list,
 			"%s — %s" % [npc["display_name"], npc.get("title", "")],
-			"%s%s\n%s" % [sect_name, bond_text, npc.get("description", "")],
+			"%s%s\n%s\n성향: %s" % [sect_name, bond_text, npc.get("description", ""), NpcAgent.describe(npc["id"])],
 			ArtAssets.portrait(npc["id"]), PORTRAIT_SIZE
 		)
 

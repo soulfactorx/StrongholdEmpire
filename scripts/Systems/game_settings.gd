@@ -20,6 +20,8 @@ static var text_scale: float = 1.0
 static var combat_delay: float = 0.3
 ## 공격·무공 전에 예상 결과를 보여 주고 확인받는다
 static var combat_preview: bool = true
+## 적이 아군을 치기 전에 예고(예상 피해)를 보여 주고 확인받는다
+static var enemy_preview: bool = true
 ## 경영 행동(수련·영약·시설·유대 등) 전에 수치 변화를 보여 주고 확인받는다
 static var action_preview: bool = true
 ## 계절을 넘기면 강호 세력이 무엇을 했는지 보고 창을 띄운다
@@ -35,6 +37,7 @@ static func load_settings() -> void:
 		text_scale = float(config.get_value("display", "text_scale", 1.0))
 		combat_delay = float(config.get_value("combat", "delay", 0.3))
 		combat_preview = config.get_value("combat", "preview", true) == true
+		enemy_preview = config.get_value("combat", "enemy_preview", true) == true
 		action_preview = config.get_value("game", "action_preview", true) == true
 		faction_report = config.get_value("game", "faction_report", true) == true
 	if not TEXT_SCALES.any(func(entry: Array) -> bool: return is_equal_approx(entry[1], text_scale)):
@@ -51,6 +54,7 @@ static func save_settings() -> void:
 	config.set_value("display", "text_scale", text_scale)
 	config.set_value("combat", "delay", combat_delay)
 	config.set_value("combat", "preview", combat_preview)
+	config.set_value("combat", "enemy_preview", enemy_preview)
 	config.set_value("game", "action_preview", action_preview)
 	config.set_value("game", "faction_report", faction_report)
 	config.save(settings_path)
@@ -66,6 +70,9 @@ static func apply(tree: SceneTree = null) -> void:
 			tree.root.theme = Theme.new()
 			UiTheme.apply_root_theme(tree.root.theme)
 		tree.root.theme.default_font_size = UiTheme.font_size(UiTheme.BASE_FONT_SIZE)
+		# 화면 위 층(CanvasLayer)의 말풍선·확인창은 창 테마를 이어받지 못하므로 엔진 기본 글꼴도 한글 글꼴로 둔다.
+		if ArtAssets.body_font():
+			ThemeDB.fallback_font = ArtAssets.body_font()
 	# 헤드리스(테스트)에서는 창 모드를 바꾸지 않는다.
 	if DisplayServer.get_name() != "headless":
 		var mode: DisplayServer.WindowMode = (
@@ -89,6 +96,8 @@ static func set_and_save(key: String, value: Variant, tree: SceneTree = null) ->
 			combat_delay = float(value)
 		"combat_preview":
 			combat_preview = value == true
+		"enemy_preview":
+			enemy_preview = value == true
 		"action_preview":
 			action_preview = value == true
 		"faction_report":
