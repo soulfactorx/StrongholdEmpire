@@ -7,7 +7,6 @@
   "description": "흑풍채·하오문·당가를 하나로 묶은 사파의 패자. 웃으며 계산하고, 계산이 끝나면 벤다.",
   "level": 12,
   "named": true,
-  "portrait": "portraits/npc_tang_head.jpg",
   "stats": {
     "strength": 22,
     "agility": 19,

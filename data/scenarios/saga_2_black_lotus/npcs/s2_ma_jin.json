@@ -7,7 +7,6 @@
   "description": "혈월의 난세를 줄타기로 살아남은 늙은 채주. 독고천에게 산채를 넘기고 딸의 앞날만 걱정한다.",
   "level": 6,
   "named": true,
-  "portrait": "portraits/npc_heukpung_chief.jpg",
   "stats": {
     "strength": 16,
     "agility": 12,

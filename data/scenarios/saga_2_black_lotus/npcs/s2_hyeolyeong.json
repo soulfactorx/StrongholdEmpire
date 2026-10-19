@@ -7,7 +7,6 @@
   "description": "천마의 칼. 한때 칼을 거두었으나 아내를 잃고 신교로 돌아왔다. 늙은 천마 대신 교를 지킨다.",
   "level": 12,
   "named": true,
-  "portrait": "portraits/npc_cheonma_envoy.jpg",
   "stats": {
     "strength": 20,
     "agility": 24,

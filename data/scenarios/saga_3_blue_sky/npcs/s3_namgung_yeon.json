@@ -7,7 +7,6 @@
   "description": "남궁운의 딸. 할아버지 남궁휘에게 매화검법을 배웠다. 고모할머니 남궁설을 꼭 닮았다는 말을 듣는다.",
   "level": 4,
   "named": true,
-  "portrait": "portraits/npc_namgung_lady.jpg",
   "stats": {
     "strength": 15,
     "agility": 15,

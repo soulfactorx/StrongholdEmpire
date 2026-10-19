@@ -7,7 +7,6 @@
   "description": "중원을 정복한 늙은 천마. 청운검선에게 입은 상처가 스물다섯 해 만에 그의 목숨을 갉아먹고 있다.",
   "level": 14,
   "named": true,
-  "portrait": "portraits/npc_cheonma.jpg",
   "stats": {
     "strength": 18,
     "agility": 14,

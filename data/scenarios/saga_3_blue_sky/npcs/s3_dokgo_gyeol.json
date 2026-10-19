@@ -7,7 +7,6 @@
   "description": "흑련맹주 독고천의 아들. 피로 강호를 다스리지만, 그 피는 아버지의 눈길 한 번을 위한 것이다.",
   "level": 7,
   "named": true,
-  "portrait": "portraits/npc_heukpung_second.jpg",
   "stats": {
     "strength": 19,
     "agility": 17,

@@ -7,7 +7,6 @@
   "description": "천하를 쥔 지 스무 해. 늙은 맹주는 아들조차 믿지 않는다.",
   "level": 13,
   "named": true,
-  "portrait": "portraits/npc_tang_head.jpg",
   "stats": {
     "strength": 20,
     "agility": 16,
