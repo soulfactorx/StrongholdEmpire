@@ -249,6 +249,9 @@ static func _style_recursive(node: Node) -> void:
 		if node is OptionButton:
 			var option := node as OptionButton
 			option.custom_minimum_size.y = maxf(option.custom_minimum_size.y, 48)
+	elif node is ItemList:
+		# 목록은 끌어서 스크롤한다 (휴대폰에서 스크롤바를 잡지 않아도 되게)
+		DragScroll.attach(node as ItemList)
 	elif node is PanelContainer:
 		(node as PanelContainer).add_theme_stylebox_override("panel", create_panel_style())
 	elif node is Label:

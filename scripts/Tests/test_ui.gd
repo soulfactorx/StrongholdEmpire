@@ -927,3 +927,67 @@ func _test_role_guide() -> void:
 	await process_frame
 	_check(current_scene.character_role_label.text.contains("개봉") and current_scene.get_node("Background/Art").texture == ArtAssets.region_background("kaifeng"), "인물 정보에 지역, 배경은 그 지역 그림")
 	_completed["_test_role_guide"] = true
+
+
+func _test_list_drag_scroll() -> void:
+	SceneRouter.goto(tree, SceneRouter.NEW_GAME)
+	await process_frame
+	await process_frame
+	var screen: Node = current_scene
+	var list: ItemList = screen.scenario_list
+	var helper: DragScroll = list.get_node_or_null("DragScroll")
+	_check(helper != null and screen.role_list.has_node("DragScroll"), "목록 끌어 스크롤: 화면의 목록마다 붙음")
+	# 목록이 넘칠 만큼 낮게 만든다
+	list.custom_minimum_size.y = 60
+	list.size.y = 60
+	await process_frame
+	await process_frame
+	var bar: VScrollBar = list.get_v_scroll_bar()
+	var selected: int = list.get_selected_items()[0]
+	var press: InputEventMouseButton = _mouse(true)
+	press.position = Vector2(40, 50)
+	helper._on_gui_input(press)
+	var drag := InputEventMouseMotion.new()
+	drag.position = Vector2(40, 10)
+	drag.relative = Vector2(0, -40)
+	helper._on_gui_input(drag)
+	var release: InputEventMouseButton = _mouse(false)
+	release.position = Vector2(40, 10)
+	helper._on_gui_input(release)
+	_check(bar.value > 0 and list.get_selected_items()[0] == selected, "목록 끌어 스크롤: 끌면 스크롤되고 고르지 않음 (%.0f)" % bar.value)
+	# 끌지 않고 누르면 그 자리의 항목을 고른다
+	var target: int = list.get_item_at_position(Vector2(40, 30), true)
+	var got: Array = []
+	list.item_selected.connect(func(i: int) -> void: got.append(i))
+	press.position = Vector2(40, 30)
+	helper._on_gui_input(press)
+	release.position = Vector2(41, 31)
+	helper._on_gui_input(release)
+	_check(target >= 0 and target != selected and list.is_selected(target) and got == [target], "목록 끌어 스크롤: 누르면 항목 선택 신호")
+	# 실제 입력(창으로 들어오는 누름·끌기)으로도: 끄는 동안 목록이 항목을 고르지 않는다
+	bar.value = 0
+	var now: int = list.get_selected_items()[0]
+	var origin: Vector2 = list.get_global_rect().position + Vector2(40, 50)
+	# 창 좌표로 보낸다 (헤드리스 창은 작아서 화면 배율이 걸린다)
+	var to_window: Transform2D = root.get_final_transform()
+	var real_press: InputEventMouseButton = _mouse(true)
+	real_press.position = to_window * origin
+	real_press.global_position = real_press.position
+	root.push_input(real_press)
+	for step in 4:
+		var move := InputEventMouseMotion.new()
+		move.button_mask = MOUSE_BUTTON_MASK_LEFT
+		move.position = to_window * (origin - Vector2(0, 10 * (step + 1)))
+		move.global_position = move.position
+		move.relative = to_window.basis_xform(Vector2(0, -10))
+		root.push_input(move)
+	var real_release: InputEventMouseButton = _mouse(false)
+	real_release.position = to_window * (origin - Vector2(0, 40))
+	real_release.global_position = real_release.position
+	root.push_input(real_release)
+	await process_frame
+	_check(bar.value > 0 and list.get_selected_items()[0] == now, "목록 끌어 스크롤: 실제 입력으로 끌기 (%.0f)" % bar.value)
+	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
+	await process_frame
+	ScenarioManager.activate(ScenarioManager.DEFAULT_ID)
+	_completed["_test_list_drag_scroll"] = true
