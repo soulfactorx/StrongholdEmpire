@@ -419,5 +419,51 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "맹 안의 첩자",
+    "hint": "마교의 기습이 맹의 허를 찌른다. 의심이 맹을 가른다.",
+    "branches": [
+      {
+        "text": "남궁휘: 진무겸을 의심했다면 서문의 비밀을 짐작한다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_rival",
+            "value": true
+          },
+          {
+            "type": "flag",
+            "flag": "s1_hwi_suspects_mg",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "진무겸: 밀약의 서신을 태우면 4분의 1 확률로 들킨다 — 들키면 사부와의 유대가 50 이상이어야 살아남는다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_senior_brother",
+            "value": true
+          },
+          {
+            "type": "flag",
+            "flag": "s1_mu_pact",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "혈영: 남궁설과 이어지지 않았다면 남궁천의 목을 노릴 수 있다 — 절반은 정체가 드러나 끝난다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_cheonma_envoy",
+            "value": true
+          }
+        ]
+      }
+    ]
+  }
 }

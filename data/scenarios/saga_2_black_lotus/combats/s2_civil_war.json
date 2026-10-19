@@ -1,4 +1,20 @@
 {
+  "battlefield": "town",
+  "objective": {
+    "type": "defeat_target",
+    "target": "s2_jin_mugyeom"
+  },
+  "reinforcements": [
+    {
+      "round": 3,
+      "npc": "npc_cheonma_cultist",
+      "position": [
+        15,
+        5
+      ],
+      "name": "반역 교도 병"
+    }
+  ],
   "id": "s2_civil_war",
   "title": "신교 내전 — 총관의 반역",
   "player_position": [

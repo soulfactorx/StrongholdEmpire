@@ -1,4 +1,21 @@
 {
+  "weather": "night",
+  "battlefield": "mountain",
+  "objective": {
+    "type": "survive",
+    "rounds": 4
+  },
+  "reinforcements": [
+    {
+      "round": 2,
+      "npc": "npc_bandit",
+      "position": [
+        15,
+        5
+      ],
+      "name": "흑련 무사 병"
+    }
+  ],
   "id": "s2_lotus_raid",
   "title": "청운산의 두 번째 밤",
   "player_position": [
@@ -31,22 +48,6 @@
       "name": "흑련 자객"
     }
   ],
-  "terrain": {
-    "FOREST": [
-      [
-        7,
-        2
-      ],
-      [
-        7,
-        3
-      ],
-      [
-        7,
-        7
-      ]
-    ]
-  },
   "disciple_allies": [
     [
       2,

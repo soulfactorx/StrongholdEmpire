@@ -1004,3 +1004,152 @@ func _test_combat_preview_and_history() -> void:
 
 func _unhandled_key(node: Node, keycode: Key) -> void:
 	node._unhandled_key_input(_key(keycode))
+
+
+func _test_combat_variety() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_new_quiet_game(gm, "leader")
+	# 전장 생성: 유닛 자리는 비우고, 모양마다 지형이 다르며, 같은 씨앗이면 같은 전장
+	var keep: Array[Vector2i] = [Vector2i(2, 5), Vector2i(13, 5)]
+	var shapes: Dictionary = {}
+	for kind in Battlefield.KINDS:
+		var setup := CombatSetup.new()
+		Battlefield.generate(setup, kind, keep, 7)
+		var clear: bool = not setup.blocked_tiles.has(Vector2i(2, 5)) and not setup.blocked_tiles.has(Vector2i(13, 5))
+		_check(clear and setup.battlefield == kind and (not setup.terrain.is_empty() or not setup.blocked_tiles.is_empty()), "전장 생성: %s" % kind)
+		shapes[str(setup.terrain) + str(setup.blocked_tiles)] = true
+	_check(shapes.size() == Battlefield.KINDS.size(), "전장 생성: 모양마다 다름")
+	var a := CombatSetup.new()
+	var b := CombatSetup.new()
+	Battlefield.generate(a, "forest", keep, 11)
+	Battlefield.generate(b, "forest", keep, 11)
+	_check(a.terrain == b.terrain and a.blocked_tiles == b.blocked_tiles, "전장 생성: 같은 씨앗이면 같은 전장")
+	_check(Battlefield.kind_for_region("tianshan") == "snow" and Battlefield.kind_for_region("hangzhou") == "river", "지역에 맞는 전장")
+
+	# 날씨: 밤·안개는 사거리, 비는 화·수 무공, 눈은 수풀·고지 이동
+	var art := MartialArtData.new()
+	art.range = 3
+	art.damage = 20
+	_check(CombatRules.get_art_range(art, CombatRules.Terrain.PLAIN) == 3, "날씨: 맑으면 사거리 그대로")
+	CombatRules.weather = "night"
+	_check(CombatRules.get_art_range(art, CombatRules.Terrain.PLAIN) == 2, "날씨: 밤에는 원거리 사거리 -1")
+	CombatRules.weather = "fog"
+	art.range = 4
+	_check(CombatRules.get_art_range(art, CombatRules.Terrain.PLAIN) == CombatRules.FOG_MAX_RANGE, "날씨: 안개는 사거리 최대 2")
+	CombatRules.weather = "snow"
+	_check(CombatRules.move_cost(CombatRules.Terrain.FOREST) == _Balance.FOREST_MOVE_COST + 1 and CombatRules.move_cost(CombatRules.Terrain.PLAIN) == 1, "날씨: 눈은 수풀 이동 +1")
+	var attacker := CombatUnit.new(gm.player_character, true)
+	var defender := CombatUnit.new(NpcRoster.create_character("npc_bandit", gm.player_character), false)
+	art.element = MartialArtData.FiveElement.FIRE
+	CombatRules.weather = "clear"
+	var dry: int = CombatRules.preview_damage(attacker, defender, art, CombatRules.Terrain.PLAIN, CombatRules.Terrain.PLAIN)["base"]
+	CombatRules.weather = "rain"
+	var wet: Dictionary = CombatRules.preview_damage(attacker, defender, art, CombatRules.Terrain.PLAIN, CombatRules.Terrain.PLAIN)
+	_check(wet["base"] < dry and "빗속의 화기" in wet["notes"], "날씨: 비에는 화 무공이 약해짐 (%d → %d)" % [dry, wet["base"]])
+	CombatRules.weather = "clear"
+
+	# 데이터 전투의 목표·날씨·증원: 혈월의 밤은 밤에 4라운드를 버티는 싸움
+	ScenarioManager.activate("saga_1_blood_moon")
+	var night: CombatSetup = CombatLibrary.create("s1_blood_night_gate", gm.player_character)
+	_check(night.objective == "survive" and night.objective_rounds == 4 and night.weather == "night" and night.reinforcements.size() == 2 and night.battlefield == "town" and not night.blocked_tiles.is_empty(), "데이터 전투: 버티기·밤·증원·전장")
+	_check(Battlefield.describe(night).contains("4라운드 동안 버텨라") and Battlefield.describe(night).contains("밤"), "전투 목표 설명")
+	var guard: CombatSetup = CombatLibrary.create("s1_guard_the_master", gm.player_character)
+	_check(guard.objective == "protect" and guard.objective_target == "npc_master" and guard.objective_target_name == "청운검선", "데이터 전투: 호위 목표")
+	var bad: Dictionary = {"id": "x", "title": "x", "enemies": [{"npc": "npc_bandit", "position": [10, 5]}], "objective": {"type": "defeat_target", "target": "npc_master"}, "weather": "storm"}
+	var errors: PackedStringArray = CombatLibrary.validate_combat_dict(bad)
+	_check(errors.size() == 2, "전투 데이터 검증: 없는 우두머리·날씨 (%s)" % "; ".join(errors))
+	ScenarioManager.activate(ScenarioManager.DEFAULT_ID)
+	_new_quiet_game(gm, "leader")
+
+	# 코드 전투도 판마다 다르게 (varied): 지역 전장, 계절 날씨, 증원, 의뢰의 여러 모습
+	CombatManager.varied = true
+	CombatManager.region_id = "chengdu"
+	var bandits: CombatSetup = CombatManager.create_night_bandits(gm.player_character)
+	_check(bandits.weather == "night" and bandits.battlefield == "forest" and bandits.reinforcements.size() == 1 and bandits.region_id == "chengdu", "코드 전투: 야습은 밤·지역 전장·증원")
+	var objectives: Dictionary = {}
+	for i in 30:
+		objectives[CombatManager.create_bandit_hunt(gm.player_character).objective] = true
+	_check(objectives.size() >= 2, "코드 전투: 토벌 의뢰의 여러 목표 (%s)" % [objectives.keys()])
+	var hit: CombatSetup = CombatManager.create_assassination(gm.player_character)
+	_check(hit.objective == "defeat_target" and hit.weather == "night" and hit.battlefield == "town", "코드 전투: 표적 의뢰는 밤 거리에서 표적만")
+	CombatManager.varied = false
+
+	# 전투 화면에서 목표 판정: 우두머리·탈출·호위·버티기·증원
+	var boss_setup: CombatSetup = CombatManager.create_bandit_hunt(gm.player_character)
+	boss_setup.set_target_objective(boss_setup.enemies[0])
+	gm.start_combat(boss_setup)
+	await process_frame
+	await process_frame
+	var controller: Node = current_scene
+	var boss: CombatUnit = controller._find_unit(boss_setup.enemies[0].id)
+	boss.take_damage(99999)
+	controller._after_hit(boss)
+	_check(controller._combat_over and controller._get_alive_enemies().size() == 1, "목표: 우두머리만 쓰러뜨리면 승리")
+
+	var escape_setup: CombatSetup = CombatManager.create_bandit_hunt(gm.player_character)
+	escape_setup.objective = "escape"
+	escape_setup.exit_tiles.assign([Vector2i(0, 0)])
+	gm.start_combat(escape_setup)
+	await process_frame
+	await process_frame
+	controller = current_scene
+	_check(controller.terrain_label.text.contains("탈출하라"), "목표: 전투 화면에 목표 표시")
+	var hero: CombatUnit = controller._get_player()
+	hero.grid_pos = Vector2i(0, 0)
+	controller._check_escape(hero)
+	_check(controller._combat_over and gm.pending_combat == null, "목표: 탈출 칸에 닿으면 승리")
+
+	var protect_setup: CombatSetup = CombatManager.create_bandit_hunt(gm.player_character)
+	var merchant: CharacterData = NpcRoster.create_character("npc_merchant", gm.player_character)
+	protect_setup.add_ally(merchant, Vector2i(2, 4))
+	protect_setup.objective = "protect"
+	protect_setup.objective_target = merchant.id
+	gm.start_combat(protect_setup)
+	await process_frame
+	await process_frame
+	controller = current_scene
+	var ward: CombatUnit = controller._find_unit(merchant.id)
+	ward.take_damage(99999)
+	controller._after_hit(ward)
+	_check(controller._combat_over and gm.last_combat_history.size() > 0, "목표: 지킬 아군이 쓰러지면 패배")
+
+	var survive_setup: CombatSetup = CombatManager.create_bandit_hunt(gm.player_character)
+	survive_setup.objective = "survive"
+	survive_setup.objective_rounds = 1
+	survive_setup.add_reinforcement(1, NpcRoster.create_character("npc_bandit", gm.player_character), Vector2i(15, 5))
+	gm.start_combat(survive_setup)
+	await process_frame
+	await process_frame
+	controller = current_scene
+	var enemy_count: int = controller._get_alive_enemies().size()
+	hero = controller._get_player()
+	hero.hp = hero.max_hp * 50
+	await controller._end_player_phase()
+	_check(controller._units.size() > enemy_count + 1 and controller._combat_over, "목표: 버티기 승리, 증원이 나타남")
+	SceneRouter.goto(tree, SceneRouter.HUB)
+	await process_frame
+	_completed["_test_combat_variety"] = true
+
+
+func _test_auto_combat() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_new_quiet_game(gm, "leader")
+	gm.player_character.gain_experience(CharacterData.get_experience_for_level(5))
+	gm.start_combat(CombatManager.create_bandit_hunt(gm.player_character))
+	await process_frame
+	await process_frame
+	var controller: Node = current_scene
+	_check(controller.auto_button != null and controller.skip_button != null, "자동 전투·결과만 보기 버튼")
+	# 자동 전투: 아군 턴을 AI가 움직이고 턴을 넘긴다
+	controller.set_auto(true)
+	await process_frame
+	await process_frame
+	_check(controller._turn_manager.round_number >= 2 or controller._combat_over, "자동 전투: 아군 턴이 저절로 넘어감")
+	controller.set_auto(false)
+	# 결과만 보기: 끝까지 바로 치르고 결과를 반영한다
+	await controller.skip_to_result()
+	_check(controller._combat_over and gm.pending_combat == null and not controller._skipping, "결과만 보기: 전투가 끝나고 결과 반영")
+	_check(controller.history.size() > 3, "결과만 보기: 전투 기록이 남음")
+	SceneRouter.goto(tree, SceneRouter.HUB)
+	await process_frame
+	_completed["_test_auto_combat"] = true

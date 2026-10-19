@@ -1,4 +1,6 @@
 {
+  "weather": "rain",
+  "battlefield": "forest",
   "id": "s3_hunt_hwarin",
   "title": "배신자를 쫓다",
   "player_position": [
@@ -14,22 +16,6 @@
       ]
     }
   ],
-  "terrain": {
-    "FOREST": [
-      [
-        8,
-        3
-      ],
-      [
-        8,
-        4
-      ],
-      [
-        9,
-        6
-      ]
-    ]
-  },
   "relationship_target": "s3_ma_hwarin",
   "enemy_hp_scale": 0.55,
   "enemy_damage_scale": 0.55,

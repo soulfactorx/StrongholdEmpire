@@ -1,4 +1,10 @@
 {
+  "weather": "night",
+  "battlefield": "town",
+  "objective": {
+    "type": "protect",
+    "target": "npc_master"
+  },
   "id": "s1_guard_the_master",
   "title": "혈월의 밤 — 사부의 등 뒤",
   "player_position": [

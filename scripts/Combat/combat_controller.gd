@@ -17,6 +17,8 @@ const TERRAIN_COLORS: Dictionary = {
 ## 이동할 수 있는 칸·무공 사거리 칸에 덧칠하는 색
 const REACHABLE_TINT := Color(0.18, 0.42, 0.37, 0.35)
 const ART_RANGE_TINT := Color(0.7, 0.23, 0.17, 0.32)
+## 탈출 칸 (탈출 목표)
+const EXIT_TINT := Color(0.85, 0.66, 0.22, 0.5)
 ## 장기말 크기와 칸 안 여백
 const TOKEN_SIZE := 44.0
 
@@ -75,6 +77,14 @@ var history_popup: Control
 var history_label: Label
 var next_ally_button: Button
 var history_button: Button
+## 자동 전투: 아군도 AI가 움직인다. 결과만 보기: 끝까지 바로 계산한다.
+var auto_mode: bool = false
+var _skipping: bool = false
+var _auto_running: bool = false
+var auto_button: Button
+var skip_button: Button
+## 결과만 보기에서 넘기지 않을 라운드 수 (넘으면 후퇴로 친다)
+const SKIP_MAX_ROUNDS := 40
 
 
 func _ready() -> void:
@@ -90,7 +100,12 @@ func _ready() -> void:
 	_setup = GameManager.get_or_create_combat_setup()
 	_setup_combat()
 	title_label.text = _setup.title
-	terrain_label.text = (
+	# 날씨·시간은 전투 규칙에 걸고, 배경은 싸우는 곳(지역)의 그림으로
+	CombatRules.weather = _setup.weather
+	var region: String = _setup.region_id if not _setup.region_id.is_empty() else GameManager.player_region
+	if WorldMap.has_region(region):
+		ArtAssets.set_background(self, ArtAssets.region_background(region))
+	terrain_label.text = Battlefield.describe(_setup) + "\n" + (
 		"지형 — 수풀: 이동 %d, 받는 피해 %d%% | 물: 이동 %d, 주는 피해 %d%% | 고지: 이동 %d, 주는 피해 %d%%, 원거리 사거리 +%d"
 		% [
 			_Balance.FOREST_MOVE_COST, int(_Balance.FOREST_DEFENSE * 100),
@@ -118,8 +133,14 @@ func _ready() -> void:
 		_log("전투 시작! %s — %s이(가) 함께 싸웁니다. 아군 턴에는 아군 칸을 눌러 누구든 골라 움직입니다." % [
 			_setup.title, ", ".join(names),
 		])
-	_record("전투 시작: %s" % _setup.title)
+	_record("전투 시작: %s — %s" % [_setup.title, Battlefield.describe(_setup)])
+	_log(Battlefield.describe(_setup))
 	_start_player_phase(true)
+
+
+func _exit_tree() -> void:
+	# 다른 전투·계산에 날씨가 남지 않게 한다
+	CombatRules.weather = "clear"
 
 
 ## 전투 화면에 코드로 더하는 것: [다음 아군]·[전투 기록] 버튼, 공격 미리보기 창, 전투 기록 창
@@ -141,6 +162,23 @@ func _build_extra_hud() -> void:
 	history_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	history_button.pressed.connect(open_history)
 	unit_row.add_child(history_button)
+	auto_button = Button.new()
+	auto_button.name = "AutoButton"
+	auto_button.text = "자동 전투"
+	auto_button.toggle_mode = true
+	auto_button.custom_minimum_size = Vector2(0, 48)
+	auto_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	auto_button.toggled.connect(set_auto)
+	auto_button.set_meta("help", "아군도 알아서 싸웁니다. 다시 누르면 내가 조종합니다.")
+	unit_row.add_child(auto_button)
+	skip_button = Button.new()
+	skip_button.name = "SkipButton"
+	skip_button.text = "결과만 보기"
+	skip_button.custom_minimum_size = Vector2(0, 48)
+	skip_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	skip_button.pressed.connect(skip_to_result)
+	skip_button.set_meta("help", "자동 전투로 끝까지 바로 치르고 결과만 봅니다.")
+	unit_row.add_child(skip_button)
 	var turn_row: Node = $HUD/Panel/VBox/TurnRow
 	turn_row.get_parent().add_child(unit_row)
 	turn_row.get_parent().move_child(unit_row, turn_row.get_index() + 1)
@@ -378,6 +416,8 @@ func _draw_grid() -> void:
 			if blocked:
 				continue
 			var tint := Color.TRANSPARENT
+			if _setup.exit_tiles.has(coord):
+				tint = EXIT_TINT
 			if reachable.has(coord):
 				tint = REACHABLE_TINT
 			elif art_range >= 0 and CombatRules.distance(coord, controlled.grid_pos) <= art_range:
@@ -454,7 +494,8 @@ func _make_token(unit: CombatUnit, controlled: bool) -> Control:
 	holder.add_child(glyph)
 
 	var name_label := Label.new()
-	name_label.text = unit.display_name
+	# 우두머리·지킬 아군은 이름 앞에 별
+	name_label.text = ("★" if unit.character.id == _setup.objective_target and not _setup.objective_target.is_empty() else "") + unit.display_name
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.position = Vector2(-18, TOKEN_SIZE - 8)
 	name_label.size = Vector2(TOKEN_SIZE + 36, 14)
@@ -505,7 +546,10 @@ func _update_hud() -> void:
 	else:
 		turn_label.text = "아군 턴 — %s 조종 중 (아군 칸을 눌러 바꾸기)" % (controlled.display_name if controlled else "없음")
 	if next_ally_button:
-		next_ally_button.disabled = _combat_over or controlled == null or _selectable_friendlies().size() < 2
+		next_ally_button.disabled = _combat_over or controlled == null or _selectable_friendlies().size() < 2 or auto_mode
+	if auto_button:
+		auto_button.disabled = _combat_over
+		skip_button.disabled = _combat_over or _skipping
 
 	var friend_lines: PackedStringArray = []
 	for unit in _units:
@@ -671,7 +715,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## 고른 칸에 지금 행동 방식(이동·공격·무공)을 실행한다. 터치·마우스·커서가 함께 쓴다.
 func _act_on_tile(current: CombatUnit, target: Vector2i) -> void:
-	if is_previewing():
+	if is_previewing() or auto_mode:
 		return
 	var friend: CombatUnit = _get_friendly_at(target)
 	var healing: bool = _action_mode == ActionMode.MARTIAL_ART and _selected_art != null and _selected_art.heal_amount > 0
@@ -824,6 +868,7 @@ func _try_move(unit: CombatUnit, target: Vector2i) -> void:
 	unit.action_points -= reachable[target]
 	_refresh_all()
 	_log("이동 완료. (%s, 행동력 -%d)" % [CombatRules.TERRAIN_NAMES[_terrain_at(target)], reachable[target]])
+	_check_escape(unit)
 
 
 func _try_attack(unit: CombatUnit, target: Vector2i) -> void:
@@ -1032,28 +1077,90 @@ func _after_hit(unit: CombatUnit) -> void:
 	elif unit.is_ally and not unit.is_alive():
 		_log("%s이(가) 쓰러졌습니다!" % unit.display_name)
 		_record("%s 쓰러짐" % unit.display_name)
+		if _setup.objective == "protect" and unit.character.id == _setup.objective_target:
+			_log("지켜야 할 %s을(를) 잃었습니다…" % unit.display_name)
+			_end_combat(CombatManager.Outcome.DEFEAT)
 	else:
 		_check_victory()
 
 
 func _check_victory() -> void:
-	if not _combat_over and _get_alive_enemies().is_empty():
+	if _combat_over:
+		return
+	if _get_alive_enemies().is_empty():
+		_end_combat(CombatManager.Outcome.VICTORY)
+		return
+	# 우두머리가 쓰러지면 나머지는 달아난다
+	if _setup.objective == "defeat_target":
+		var boss: CombatUnit = _find_unit(_setup.objective_target)
+		if boss and not boss.is_alive():
+			_log("%s이(가) 쓰러지자 나머지 적들이 달아났습니다!" % boss.display_name)
+			_record("우두머리 %s 쓰러짐 — 승리" % boss.display_name)
+			_end_combat(CombatManager.Outcome.VICTORY)
+
+
+func _find_unit(character_id: String) -> CombatUnit:
+	for unit in _units:
+		if unit.character.id == character_id:
+			return unit
+	return null
+
+
+## 탈출 목표: 주인공이 탈출 칸에 닿으면 이긴다
+func _check_escape(unit: CombatUnit) -> void:
+	if not _combat_over and _setup.objective == "escape" and unit.is_player and _setup.exit_tiles.has(unit.grid_pos):
+		_log("포위를 뚫고 빠져나왔습니다!")
+		_record("%s 탈출 — 승리" % unit.display_name)
 		_end_combat(CombatManager.Outcome.VICTORY)
 
 
-func _end_combat(outcome: CombatManager.Outcome) -> void:
+## 적 증원: 그 라운드 적군 턴이 시작될 때 정한 자리(차 있으면 가까운 빈 칸)에 나타난다
+func _spawn_reinforcements() -> void:
+	for entry in _setup.reinforcements:
+		if int(entry["round"]) != _turn_manager.round_number or entry.get("spawned", false):
+			continue
+		entry["spawned"] = true
+		var tile: Vector2i = _free_tile_near(entry["position"])
+		if tile.x < 0:
+			continue
+		var unit := CombatUnit.new(entry["character"], false)
+		unit.grid_pos = tile
+		var strength: float = ScenarioRules.enemy_strength_scale()
+		unit.scale_stats(_setup.enemy_hp_scale * strength, _setup.enemy_damage_scale * strength)
+		unit.restore_action_points()
+		_units.append(unit)
+		_log("적의 증원! %s이(가) 나타났습니다." % unit.display_name)
+		_record("증원: %s (%d,%d)" % [unit.display_name, tile.x, tile.y])
+
+
+func _free_tile_near(near: Vector2i) -> Vector2i:
+	for radius in 4:
+		for dy in range(-radius, radius + 1):
+			for dx in range(-radius, radius + 1):
+				var tile: Vector2i = near + Vector2i(dx, dy)
+				if _is_valid_tile(tile):
+					return tile
+	return Vector2i(-1, -1)
+
+
+## 끝난 전투의 결과 (밸런스 시뮬레이터·테스트가 읽는다)
+var outcome: CombatManager.Outcome = CombatManager.Outcome.RETREAT
+
+
+func _end_combat(result_outcome: CombatManager.Outcome) -> void:
 	if _combat_over:
 		return
 	_combat_over = true
+	outcome = result_outcome
 	var level_before: int = GameManager.player_character.level
 	# 연대기에 전투의 마지막 몇 수를 남기도록 결과 처리 전에 넘긴다.
 	GameManager.last_combat_history = history
-	var result: Dictionary = GameManager.finish_combat(outcome, _count_fallen_allies(), _get_fallen_ally_ids())
+	var result: Dictionary = GameManager.finish_combat(result_outcome, _count_fallen_allies(), _get_fallen_ally_ids())
 	if GameManager.player_character.level > level_before:
 		AudioManager.play_level_up()
-	elif outcome == CombatManager.Outcome.VICTORY:
+	elif result_outcome == CombatManager.Outcome.VICTORY:
 		AudioManager.play_victory()
-	elif outcome == CombatManager.Outcome.DEFEAT:
+	elif result_outcome == CombatManager.Outcome.DEFEAT:
 		AudioManager.play_defeat()
 	back_button.text = "문파로 돌아가기"
 	_refresh_all()
@@ -1088,6 +1195,11 @@ func _apply_portrait_layout() -> void:
 ## 적이 노릴 대상: 가장 가까운 아군, 거리가 같으면 체력이 낮은 쪽
 ## 가장 가까운(같으면 체력이 낮은) 상대편 유닛. 적이면 아군 중에서, 아군이면 적 중에서 고른다.
 func _pick_enemy_target(enemy: CombatUnit) -> CombatUnit:
+	# 아군(자동 전투)은 우두머리 목표가 있으면 우두머리부터 노린다
+	if enemy.is_friendly() and _setup.objective == "defeat_target":
+		var boss: CombatUnit = _find_unit(_setup.objective_target)
+		if boss and boss.is_alive():
+			return boss
 	var best: CombatUnit = null
 	var candidates: Array[CombatUnit] = _get_alive_enemies() if enemy.is_friendly() else _get_alive_friendlies()
 	for unit in candidates:
@@ -1242,6 +1354,12 @@ func _start_player_phase(first: bool = false) -> void:
 		return
 	if not first:
 		_turn_manager.begin_player_phase()
+		# 버티기 목표: 정한 라운드를 모두 넘기면 이긴다
+		if _setup.objective == "survive" and _turn_manager.round_number > _setup.objective_rounds:
+			_log("%d라운드를 버텨 냈습니다!" % _setup.objective_rounds)
+			_record("%d라운드 버팀 — 승리" % _setup.objective_rounds)
+			_end_combat(CombatManager.Outcome.VICTORY)
+			return
 	_last_move = {}
 	_record("── 라운드 %d · 아군 턴 ──" % _turn_manager.round_number)
 	for unit in _turn_manager.get_friendlies():
@@ -1258,6 +1376,8 @@ func _start_player_phase(first: bool = false) -> void:
 	_selected_art = null
 	_refresh_all()
 	_log("아군 턴입니다. %s 조종 중 — 다른 아군은 그 칸을 눌러 고르세요." % _selected.display_name)
+	if auto_mode and not _skipping:
+		_auto_round()
 
 
 ## 이번 아군 턴에 고를 수 있는 아군 (살아 있고 기절하지 않음)
@@ -1322,7 +1442,7 @@ func _auto_advance_selection() -> void:
 
 ## [턴 종료]: 아군 턴을 마치고 적군 턴을 진행한 뒤, 다음 라운드의 아군 턴을 연다.
 func _on_end_turn_pressed() -> void:
-	if _combat_over or _enemy_acting or not _turn_manager.is_player_phase():
+	if _combat_over or _enemy_acting or not _turn_manager.is_player_phase() or auto_mode:
 		return
 	cancel_preview()
 	await _end_player_phase()
@@ -1340,6 +1460,7 @@ func _end_player_phase() -> void:
 ## 적군 턴: 적이 빠른 순서로 하나씩 움직인다. 전투 속도 옵션만큼 적 행동 사이에 간격을 둔다 (0이면 바로).
 func _run_enemy_phase() -> void:
 	_turn_manager.begin_enemy_phase()
+	_spawn_reinforcements()
 	_record("── 라운드 %d · 적군 턴 ──" % _turn_manager.round_number)
 	_enemy_acting = true
 	_refresh_all()
@@ -1550,6 +1671,98 @@ func _on_back_pressed() -> void:
 		confirm_popup = _ConfirmPopup.new()
 		add_child(confirm_popup)
 	confirm_popup.open("후퇴", "전투에서 물러납니다. 패배 손실의 절반을 받습니다.\n정말 후퇴할까요?", leave_combat, "후퇴", "계속 싸운다")
+
+
+# ─── 자동 전투 ───────────────────────────────────────
+
+## 자동 전투를 켜고 끈다. 켜면 지금 아군 턴부터 AI가 움직인다.
+func set_auto(on: bool) -> void:
+	auto_mode = on
+	if auto_button and auto_button.button_pressed != on:
+		auto_button.set_pressed_no_signal(on)
+	_refresh_all()
+	if on and not _skipping and _turn_manager.is_player_phase() and not _enemy_acting:
+		_auto_round()
+
+
+## 자동 전투의 한 아군 턴: 아군마다 움직인 뒤 턴을 넘긴다.
+func _auto_round() -> void:
+	if _auto_running or _combat_over:
+		return
+	_auto_running = true
+	await _auto_units()
+	_auto_running = false
+	if auto_mode and not _combat_over and is_inside_tree() and _turn_manager.is_player_phase() and not _enemy_acting:
+		cancel_preview()
+		await _end_player_phase()
+
+
+## 아군마다 차례로 AI로 움직인다. 전투 속도 설정만큼 사이를 둔다 (결과만 보기는 바로).
+func _auto_units() -> void:
+	for unit in _selectable_friendlies():
+		if _combat_over or not is_inside_tree():
+			return
+		if not unit.is_alive():
+			continue
+		_selected = unit
+		await _auto_unit_turn(unit)
+		_refresh_all()
+		if GameSettings.combat_delay > 0.0 and not _skipping and is_inside_tree():
+			await get_tree().create_timer(GameSettings.combat_delay).timeout
+
+
+## 아군 한 명의 자동 차례: 탈출 목표면 주인공은 탈출 칸으로, 아니면 적 AI와 같은 정공법
+func _auto_unit_turn(unit: CombatUnit) -> void:
+	if _setup.objective == "escape" and unit.is_player:
+		var is_exit := func(pos: Vector2i) -> bool: return _setup.exit_tiles.has(pos)
+		var path: Array[Vector2i] = CombatRules.find_path(unit.grid_pos, is_exit, _is_valid_tile, _terrain_at)
+		if not path.is_empty():
+			var walk: Dictionary = CombatRules.walk_path(path, unit.action_points, _terrain_at)
+			if walk["index"] >= 0:
+				unit.grid_pos = path[walk["index"]]
+				unit.action_points -= walk["cost"]
+				_record("%s 이동 → (%d,%d)" % [unit.display_name, unit.grid_pos.x, unit.grid_pos.y])
+				_check_escape(unit)
+				return
+	await _run_enemy_ai(unit)
+	var guard: int = 0
+	while not _combat_over and unit.is_alive() and guard < 12:
+		guard += 1
+		var target: CombatUnit = _pick_enemy_target(unit)
+		if target == null or not await _enemy_try_attack(unit, target):
+			break
+
+
+## 결과만 보기: 자동 전투로 끝까지 바로 치른다. 너무 길어지면 후퇴로 친다.
+func skip_to_result() -> void:
+	if _combat_over or _skipping:
+		return
+	cancel_preview()
+	_skipping = true
+	set_auto(true)
+	var saved_delay: float = GameSettings.combat_delay
+	var saved_enemy_preview: bool = GameSettings.enemy_preview
+	GameSettings.combat_delay = 0.0
+	GameSettings.enemy_preview = false
+	_log("결과만 봅니다…")
+	# 적군 턴이 도는 중이면 끝날 때까지 기다린다
+	while _enemy_acting and is_inside_tree():
+		await get_tree().process_frame
+	var guard: int = 0
+	while not _combat_over and is_inside_tree() and guard < SKIP_MAX_ROUNDS:
+		guard += 1
+		await _auto_units()
+		if _combat_over:
+			break
+		await _end_player_phase()
+	if not _combat_over and is_inside_tree():
+		_log("싸움이 길어져 물러났습니다.")
+		_end_combat(CombatManager.Outcome.RETREAT)
+	GameSettings.combat_delay = saved_delay
+	GameSettings.enemy_preview = saved_enemy_preview
+	_skipping = false
+	set_auto(false)
+	_refresh_all()
 
 
 ## 전투를 떠난다. 전투 중이면 후퇴로 처리한다.

@@ -182,5 +182,21 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "천산의 성녀",
+    "hint": "천마의 손녀 위설아가 신교를 연다.",
+    "branches": [
+      {
+        "text": "위설아: 화친의 서신을 보내면 무림맹과 손잡을 길이 열린다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s3_wi_seola",
+            "value": true
+          }
+        ]
+      }
+    ]
+  }
 }

@@ -104,5 +104,39 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "장의 끝 — 석운",
+    "hint": "흑련 5년 봄, 열린 결말 가운데 하나를 고른다.",
+    "branches": [
+      {
+        "text": "청운재건: 산을 지켰고 선·중립",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "s2_su_lost_mountain",
+            "value": false
+          },
+          {
+            "type": "alignment",
+            "in": [
+              "good",
+              "neutral"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "흑련의 사냥개: 악",
+        "if": [
+          {
+            "type": "alignment",
+            "in": [
+              "evil"
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }

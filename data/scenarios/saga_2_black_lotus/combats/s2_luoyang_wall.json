@@ -1,4 +1,20 @@
 {
+  "battlefield": "town",
+  "objective": {
+    "type": "survive",
+    "rounds": 4
+  },
+  "reinforcements": [
+    {
+      "round": 3,
+      "npc": "npc_bandit",
+      "position": [
+        15,
+        4
+      ],
+      "name": "흑련 무사 병"
+    }
+  ],
   "id": "s2_luoyang_wall",
   "title": "낙양 대전 — 무너지는 성벽",
   "player_position": [
@@ -31,22 +47,6 @@
       "name": "당가 독수"
     }
   ],
-  "terrain": {
-    "HIGH": [
-      [
-        5,
-        4
-      ],
-      [
-        5,
-        5
-      ],
-      [
-        5,
-        6
-      ]
-    ]
-  },
   "disciple_allies": [
     [
       2,

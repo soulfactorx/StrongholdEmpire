@@ -6,6 +6,7 @@ const _FacilityPopup = preload("res://scripts/UI/facility_popup.gd")
 const _ChoicePopup = preload("res://scripts/UI/choice_popup.gd")
 const _DisciplePopup = preload("res://scripts/UI/disciple_popup.gd")
 const _BondPopup = preload("res://scripts/UI/bond_popup.gd")
+const _TimelinePopup = preload("res://scripts/UI/timeline_popup.gd")
 const _ConfirmPopup = preload("res://scripts/UI/confirm_popup.gd")
 const _OptionsPopup = preload("res://scripts/UI/options_popup.gd")
 const _ChroniclePopup = preload("res://scripts/UI/chronicle_popup.gd")
@@ -213,7 +214,7 @@ const HUB_SHORTCUTS: Dictionary = {
 
 func _get_open_popups() -> Array[Control]:
 	var result: Array[Control] = []
-	for popup in [role_popup, facility_popup, choice_popup, disciple_popup, bond_popup, invasion_popup, save_popup, confirm_popup, options_popup, report_popup, chronicle_popup, faction_popup]:
+	for popup in [role_popup, facility_popup, choice_popup, disciple_popup, bond_popup, invasion_popup, save_popup, confirm_popup, options_popup, report_popup, chronicle_popup, faction_popup, timeline_popup]:
 		if popup and popup.visible:
 			result.append(popup)
 	# 행동 미리보기 확인창은 맨 위에 뜬다.
@@ -272,6 +273,8 @@ func _refresh_all() -> void:
 ## 강호 일지: 지금의 목표와 최근 소문 (역할 칸 맨 위). 비어 있으면 숨긴다.
 var journal_label: Label
 var bond_button: Button
+var timeline_button: Button
+var timeline_popup: Control
 
 
 func _build_journal() -> void:
@@ -284,12 +287,34 @@ func _build_journal() -> void:
 	box.move_child(journal_label, 0)
 	_UiTheme.set_font_size(journal_label, 16)
 	journal_label.add_theme_color_override("font_color", _UiTheme.COLORS["text_primary"])
+	# 강호 연표: 다가오는 큰 사건과 갈림길 조건
+	timeline_button = Button.new()
+	timeline_button.name = "TimelineButton"
+	timeline_button.text = "강호 연표 — 다가오는 사건과 갈림길"
+	timeline_button.custom_minimum_size = Vector2(0, 48)
+	timeline_button.set_meta("help", "이야기의 큰 사건이 몇 계절 뒤에 일어나는지, 사건마다 어떤 조건으로 갈림길이 나뉘는지 봅니다.")
+	timeline_button.pressed.connect(_on_timeline_pressed)
+	box.add_child(timeline_button)
+	box.move_child(timeline_button, 1)
+	_UiTheme.style_button(timeline_button)
+	timeline_popup = _TimelinePopup.new()
+	add_child(timeline_popup)
+
+
+func _on_timeline_pressed() -> void:
+	AudioManager.play_click()
+	timeline_popup.open()
 
 
 func _update_journal() -> void:
 	var lines: PackedStringArray = []
 	if not GameManager.journal_goal.is_empty():
 		lines.append("▶ 목표: " + GameManager.journal_goal)
+	var next_event: Dictionary = GameManager.get_next_timeline_event()
+	timeline_button.visible = not GameManager.get_timeline().is_empty()
+	if not next_event.is_empty():
+		var left: int = next_event["seasons_left"]
+		lines.append("▶ 다음 큰 사건: %s — %s" % [next_event["title"], "이번 계절" if left == 0 else ("%d계절 뒤" % left if left > 0 else "시기 모름")])
 	var rumors: Array[String] = GameManager.journal_rumors
 	for rumor in rumors.slice(maxi(0, rumors.size() - 2)):
 		lines.append("· 소문: " + rumor)

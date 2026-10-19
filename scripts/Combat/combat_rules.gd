@@ -28,16 +28,23 @@ const NEIGHBORS: Array[Vector2i] = [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN
 
 ## 피해 흔들림과 회심을 쓸지 여부. 정확한 피해 값을 시험하는 테스트에서는 끈다.
 static var randomness: bool = true
+## 지금 전투의 날씨·시간 (Battlefield.WEATHERS). 전투 화면이 열릴 때 정하고 닫힐 때 맑음으로 되돌린다.
+static var weather: String = "clear"
+const RAIN_FIRE := 0.7
+const RAIN_WATER := 1.2
+const FOG_MAX_RANGE := 2
 
 
 static func move_cost(terrain: Terrain) -> int:
+	# 눈: 수풀·고지가 더 힘들다
+	var snow: int = 1 if weather == "snow" else 0
 	match terrain:
 		Terrain.FOREST:
-			return _Balance.FOREST_MOVE_COST
+			return _Balance.FOREST_MOVE_COST + snow
 		Terrain.WATER:
 			return _Balance.WATER_MOVE_COST
 		Terrain.HIGH:
-			return _Balance.HIGH_MOVE_COST
+			return _Balance.HIGH_MOVE_COST + snow
 	return 1
 
 
@@ -140,7 +147,13 @@ static func get_art_range(art: MartialArtData, attacker_terrain: Terrain) -> int
 	if art == null:
 		return 1
 	var bonus: int = _Balance.HIGH_RANGE_BONUS if attacker_terrain == Terrain.HIGH and art.range > 1 else 0
-	return art.range + bonus
+	var result: int = art.range + bonus
+	# 밤에는 멀리 보이지 않고, 안개 속에서는 더 짧다
+	if weather == "night" and art.range > 1:
+		result -= 1
+	elif weather == "fog":
+		result = mini(result, FOG_MAX_RANGE)
+	return maxi(1, result)
 
 
 ## 공격 피해 계산. art가 null이면 기본 공격.
@@ -169,6 +182,13 @@ static func calculate_damage(
 		elif element_mod < 1.0:
 			notes.append("오행 상극 열세")
 		damage *= element_mod
+		if weather == "rain":
+			if art.element == MartialArtData.FiveElement.FIRE:
+				damage *= RAIN_FIRE
+				notes.append("빗속의 화기")
+			elif art.element == MartialArtData.FiveElement.WATER:
+				damage *= RAIN_WATER
+				notes.append("빗속의 수기")
 
 	damage *= attacker.damage_scale * relationship_bonus
 	if attacker.has_status("empowered"):

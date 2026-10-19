@@ -329,5 +329,46 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "달빛 아래의 두 사람",
+    "hint": "남궁설이 다친 마교의 사내를 숨겨 준다.",
+    "branches": [
+      {
+        "text": "남궁휘: 누이를 찾아가면 비밀을 듣는다 — 누이와 쌓은 추억(청운산 길·담장 위의 밤)이 대화를 바꾼다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_rival",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "남궁휘: 청운산 길을 누이와 함께 갔다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_rival",
+            "value": true
+          },
+          {
+            "type": "flag",
+            "flag": "s1_hwi_ran_off",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "혈영: 그녀의 손을 잡으면 사랑의 길(칼을 거둔 자객)이 열리고, 베면 돌이킬 수 없다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_cheonma_envoy",
+            "value": true
+          }
+        ]
+      }
+    ]
+  }
 }

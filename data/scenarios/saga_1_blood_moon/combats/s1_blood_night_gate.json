@@ -1,4 +1,30 @@
 {
+  "weather": "night",
+  "battlefield": "town",
+  "objective": {
+    "type": "survive",
+    "rounds": 4
+  },
+  "reinforcements": [
+    {
+      "round": 2,
+      "npc": "npc_cheonma_cultist",
+      "position": [
+        15,
+        2
+      ],
+      "name": "혈교도 정"
+    },
+    {
+      "round": 3,
+      "npc": "npc_cheonma_cultist",
+      "position": [
+        15,
+        8
+      ],
+      "name": "혈교도 무"
+    }
+  ],
   "id": "s1_blood_night_gate",
   "title": "혈월의 밤 — 무너지는 맹부",
   "player_position": [
@@ -31,22 +57,6 @@
       "name": "혈교도 병"
     }
   ],
-  "terrain": {
-    "HIGH": [
-      [
-        6,
-        4
-      ],
-      [
-        6,
-        5
-      ],
-      [
-        6,
-        6
-      ]
-    ]
-  },
   "disciple_allies": [
     [
       2,

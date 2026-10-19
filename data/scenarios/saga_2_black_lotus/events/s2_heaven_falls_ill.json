@@ -200,5 +200,21 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "쓰러진 천마",
+    "hint": "늙은 천마가 쓰러진다. 혈영과 진무겸 사이에 후계 다툼이 시작된다.",
+    "branches": [
+      {
+        "text": "혈영: 진무겸을 먼저 칠 계획을 세우면 도덕이 내려간다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s2_hyeolyeong",
+            "value": true
+          }
+        ]
+      }
+    ]
+  }
 }

@@ -274,5 +274,41 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "마교 천하",
+    "hint": "장강 북쪽이 천마의 손에 들어간다. 저항·순응·투항 가운데 하나를 고른다.",
+    "branches": [
+      {
+        "text": "저항: 서문을 열지 않은 사람만 고를 수 있다 (도덕 +8)",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_cheonma_envoy",
+            "value": false
+          }
+        ]
+      },
+      {
+        "text": "투항: 도덕 -20 — 악의 결말로 기운다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_cheonma_envoy",
+            "value": false
+          }
+        ]
+      },
+      {
+        "text": "혈영: 잔당 사냥을 지휘할지, 몰래 길을 비켜 줄지 고른다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_cheonma_envoy",
+            "value": true
+          }
+        ]
+      }
+    ]
+  }
 }

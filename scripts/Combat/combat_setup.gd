@@ -33,6 +33,24 @@ var defeat_flag: String = ""
 ## 세력 침공 방어전이면 침략한 세력 id
 var invader_id: String = ""
 
+## 전투 목표 (Battlefield.OBJECTIVES): defeat_all(모두 격파) · defeat_target(우두머리) · survive(버티기) ·
+## escape(주인공이 탈출 칸에 닿기) · protect(아군 하나를 지키며 격파)
+var objective: String = "defeat_all"
+## 우두머리·지킬 아군의 캐릭터 id와 이름
+var objective_target: String = ""
+var objective_target_name: String = ""
+## 버틸 라운드 수 (survive)
+var objective_rounds: int = 0
+## 탈출 칸 (escape)
+var exit_tiles: Array[Vector2i] = []
+## 날씨·시간 (Battlefield.WEATHERS)과 전장 모양 (Battlefield.KINDS, 배경 그림)
+var weather: String = "clear"
+var battlefield: String = ""
+## 전장 배경으로 쓸 지역 id (비면 기본 전투 배경)
+var region_id: String = ""
+## 적 증원: [{round, character, position}] — 그 라운드 적군 턴이 시작될 때 나타난다
+var reinforcements: Array[Dictionary] = []
+
 
 func set_terrain(tiles: Array[Vector2i], kind: CombatRules.Terrain) -> void:
 	for tile in tiles:
@@ -51,3 +69,25 @@ func add_ally(character: CharacterData, position: Vector2i) -> void:
 func add_enemy(character: CharacterData, position: Vector2i) -> void:
 	enemies.append(character)
 	enemy_positions.append(position)
+
+
+func add_reinforcement(round_number: int, character: CharacterData, position: Vector2i) -> void:
+	reinforcements.append({"round": round_number, "character": character, "position": position})
+
+
+## 우두머리 목표: 적 하나를 정한다
+func set_target_objective(character: CharacterData) -> void:
+	objective = "defeat_target"
+	objective_target = character.id
+	objective_target_name = character.display_name
+
+
+## 유닛이 서 있는 칸 (전장 생성에서 비워 둘 자리)
+func unit_tiles() -> Array[Vector2i]:
+	var result: Array[Vector2i] = [player_position]
+	result.append_array(enemy_positions)
+	result.append_array(ally_positions)
+	result.append_array(exit_tiles)
+	for entry in reinforcements:
+		result.append(entry["position"])
+	return result

@@ -300,5 +300,76 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "낙양 대전 — 2차 대전",
+    "hint": "흑련이 낙양을 에워싼다. 사파가 이긴다(정해진 역사).",
+    "branches": [
+      {
+        "text": "홀로 흑련 본진에 뛰어들면 낙양에서 스러진다 (배드 엔딩)",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s2_ma_hwarin",
+            "value": false
+          }
+        ]
+      },
+      {
+        "text": "성벽을 지키면 4라운드 버티기 전투",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s2_ma_hwarin",
+            "value": false
+          },
+          {
+            "type": "flag",
+            "flag": "playing_s2_hyeolyeong",
+            "value": false
+          }
+        ]
+      },
+      {
+        "text": "마화린: 남궁운과 이어졌다면 불길 속에서 그를 구할 수 있다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s2_ma_hwarin",
+            "value": true
+          },
+          {
+            "type": "flag",
+            "flag": "s2_hr_loves_un",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "마화린: 맹주의 빈틈을 노려 왔다면 지금 칠 수도 있다 — 그러나 맹주의 칼 (배드 엔딩)",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s2_ma_hwarin",
+            "value": true
+          },
+          {
+            "type": "flag",
+            "flag": "s2_hr_scheming",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "혈영: 교도를 이끌고 천산으로 물러나거나, 최후까지 싸운다 (절반은 내전의 제물)",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s2_hyeolyeong",
+            "value": true
+          }
+        ]
+      }
+    ]
+  }
 }

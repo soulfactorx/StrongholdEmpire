@@ -117,5 +117,41 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "장의 끝 — 혈영",
+    "hint": "흑련 5년 봄, 열린 결말 가운데 하나를 고른다.",
+    "branches": [
+      {
+        "text": "천산으로: 교를 팔지 않았다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "s2_y_sold_cult",
+            "value": false
+          }
+        ]
+      },
+      {
+        "text": "천마의 계승: 천마의 반지를 받았다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "s2_y_heir",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "흑련의 객경: 교를 흑련에 팔았다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "s2_y_sold_cult",
+            "value": true
+          }
+        ]
+      }
+    ]
+  }
 }

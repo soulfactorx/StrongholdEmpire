@@ -14,6 +14,8 @@ extends Resource
 @export var priority: bool = false
 ## 다른 기연의 선택지 next로만 일어나는 기연 (계절마다 뽑는 후보에 들지 않음)
 @export var follow_up: bool = false
+## 강호 연표에 보일 큰 사건: {title, hint, branches: [{text, if}]} (비면 연표에 없음)
+@export var timeline: Dictionary = {}
 ## 팝업에 초상화를 보일 인물 id (없으면 "")
 @export var npc: String = ""
 ## 관계 대상 기연이면 대상을 고르는 기준 (EventManager 상단 설명). 아니면 비어 있다.

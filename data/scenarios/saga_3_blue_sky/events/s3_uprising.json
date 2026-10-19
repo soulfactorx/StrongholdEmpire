@@ -209,5 +209,31 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "반흑련의 불씨",
+    "hint": "처형장이 습격당한다. 사람들은 그것을 '청천의 검'이라 부른다.",
+    "branches": [
+      {
+        "text": "청하: 처형장으로 가면 탈출 전투 — 지면 흑련의 감옥에 갇힌다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s3_cheongha",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "독고결: 마을을 불태우면 피의 계승자에, 주모자를 놓아주면 아버지를 넘는 길에 가까워진다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s3_dokgo_gyeol",
+            "value": true
+          }
+        ]
+      }
+    ]
+  }
 }

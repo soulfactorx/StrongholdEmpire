@@ -159,5 +159,54 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "장의 끝 — 진무겸",
+    "hint": "혈월 5년 봄, 열린 결말 가운데 하나를 고른다.",
+    "branches": [
+      {
+        "text": "마교의 총관: 서문을 열고 총관의 인장을 받았다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "s1_mu_steward",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "참회의 검: 혈월의 밤 사부의 등을 지켰고 선·중립",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "s1_mu_repent",
+            "value": true
+          },
+          {
+            "type": "alignment",
+            "in": [
+              "good",
+              "neutral"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "혈월을 넘어서: 선이고 서문을 열지 않았다",
+        "if": [
+          {
+            "type": "alignment",
+            "in": [
+              "good"
+            ]
+          },
+          {
+            "type": "flag",
+            "flag": "s1_mu_opened_gate",
+            "value": false
+          }
+        ]
+      }
+    ]
+  }
 }

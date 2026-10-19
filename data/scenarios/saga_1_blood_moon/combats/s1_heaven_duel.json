@@ -1,4 +1,8 @@
 {
+  "objective": {
+    "type": "defeat_target",
+    "target": "npc_cheonma"
+  },
   "id": "s1_heaven_duel",
   "title": "천마를 베다",
   "player_position": [

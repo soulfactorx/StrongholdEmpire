@@ -446,5 +446,86 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "혈월의 밤 — 1차 대전",
+    "hint": "마교가 낙양 맹부를 친다. 정도맹은 무너진다(정해진 역사). 이 밤의 선택이 살아남는 길을 정한다.",
+    "branches": [
+      {
+        "text": "홀로 천마의 본진에 돌격하면 혈월의 제물이 된다 (배드 엔딩)",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_cheonma_envoy",
+            "value": false
+          },
+          {
+            "type": "flag",
+            "flag": "playing_npc_senior_brother",
+            "value": false
+          }
+        ]
+      },
+      {
+        "text": "무너지는 서문을 막으면 밤의 버티기 전투 — 4라운드를 버티면 '맞서 싸운 자'가 된다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_cheonma_envoy",
+            "value": false
+          },
+          {
+            "type": "flag",
+            "flag": "playing_npc_senior_brother",
+            "value": false
+          }
+        ]
+      },
+      {
+        "text": "남궁휘: 진무겸을 의심했다면 서문이 열린 까닭을 안다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_rival",
+            "value": true
+          },
+          {
+            "type": "flag",
+            "flag": "s1_hwi_suspects_mg",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "진무겸: 밀약을 맺었다면 서문을 열지, 사부의 등을 지킬지 고른다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_senior_brother",
+            "value": true
+          },
+          {
+            "type": "flag",
+            "flag": "s1_mu_pact",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "혈영: 남궁설과 이어졌다면 불길 속에서 그녀를 구할 수 있다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_cheonma_envoy",
+            "value": true
+          },
+          {
+            "type": "flag",
+            "flag": "s1_hy_loves",
+            "value": true
+          }
+        ]
+      }
+    ]
+  }
 }

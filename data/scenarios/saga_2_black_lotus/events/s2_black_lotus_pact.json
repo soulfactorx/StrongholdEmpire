@@ -295,5 +295,51 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "흑련 대연맹",
+    "hint": "독고천이 하오문·당가를 끌어들여 대연맹을 선포한다. 모든 세력이 편을 정해야 한다.",
+    "branches": [
+      {
+        "text": "남궁휘: 손잡으면 가문은 안전하지만 도덕 -5, 거절하면 흑련이 남궁을 노린다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s2_namgung_hwi",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "석운: 사자를 돌려보내면 낙양 대전 뒤 흑련이 청운산에 쳐들어온다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s2_seokun",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "마화린: 맹세하는 척 맹주의 빈틈을 보면 맹주를 넘볼 길이 열린다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s2_ma_hwarin",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "혈영: 교를 흑련에 팔면 객경이 되고, 아니면 천산으로 물러날 준비를 한다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s2_hyeolyeong",
+            "value": true
+          }
+        ]
+      }
+    ]
+  }
 }

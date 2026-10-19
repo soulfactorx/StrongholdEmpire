@@ -410,6 +410,8 @@ func _sync_event_context() -> void:
 	EventManager.player_name = player_character.display_name if player_character else ""
 	EventManager.player_npc_id = player_npc_id
 	FeatureGate.sync(progressive_features, unlocked_features)
+	CombatManager.region_id = player_region
+	CombatManager.season = get_current_season()
 	EventManager.current_year = current_year
 	EventManager.current_turn = _get_turn_index()
 	EventManager.current_generation = generation
@@ -986,6 +988,27 @@ func _show_next_intro() -> void:
 	pending_event = FeatureGate.intro_popup(pending_intros.duplicate())
 	pending_intros.clear()
 	EventBus.event_triggered.emit(pending_event)
+
+
+## 강호 연표 (EventManager.get_timeline). 항목에 남은 계절(seasons_left)과 예상 날짜(date)를 붙인다.
+func get_timeline() -> Array[Dictionary]:
+	var now: int = _get_turn_index()
+	var entries: Array[Dictionary] = EventManager.get_timeline(
+		player_character, player_sect, player_relationships, get_current_season(), story_flags, triggered_event_ids, now
+	)
+	for entry in entries:
+		var turn: int = entry["turn"]
+		entry["seasons_left"] = turn - now if turn >= 0 else -1
+		entry["date"] = "%s %d년 %s" % [ScenarioManager.get_era_name(), turn / SEASONS.size(), SEASONS[turn % SEASONS.size()]] if turn >= 0 else ""
+	return entries
+
+
+## 다음 큰 사건 (없으면 {})
+func get_next_timeline_event() -> Dictionary:
+	for entry in get_timeline():
+		if not entry["done"]:
+			return entry
+	return {}
 
 
 func add_rumor(text: String) -> void:

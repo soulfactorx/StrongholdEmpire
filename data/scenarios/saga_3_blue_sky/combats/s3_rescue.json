@@ -1,11 +1,37 @@
 {
+  "battlefield": "town",
+  "objective": {
+    "type": "escape",
+    "tiles": [
+      [
+        0,
+        2
+      ],
+      [
+        0,
+        5
+      ],
+      [
+        0,
+        8
+      ]
+    ]
+  },
   "id": "s3_rescue",
-  "title": "처형장의 첫 검",
+  "title": "처형장의 첫 검 — 사람들을 데리고 빠져나가라",
   "player_position": [
-    3,
+    9,
     5
   ],
   "enemies": [
+    {
+      "npc": "npc_bandit",
+      "position": [
+        4,
+        4
+      ],
+      "name": "길목의 형리"
+    },
     {
       "npc": "npc_bandit",
       "position": [
@@ -31,18 +57,6 @@
       "name": "흑련 사냥개"
     }
   ],
-  "terrain": {
-    "HIGH": [
-      [
-        8,
-        4
-      ],
-      [
-        8,
-        5
-      ]
-    ]
-  },
   "enemy_hp_scale": 0.6,
   "enemy_damage_scale": 0.6,
   "rewards": {

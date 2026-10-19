@@ -1,4 +1,10 @@
 {
+  "weather": "night",
+  "battlefield": "town",
+  "objective": {
+    "type": "survive",
+    "rounds": 4
+  },
   "id": "s3_kaifeng_last",
   "title": "개봉 대전 — 마지막 성루",
   "player_position": [

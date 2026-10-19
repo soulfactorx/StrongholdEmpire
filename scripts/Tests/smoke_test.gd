@@ -79,9 +79,12 @@ const RUNTIME_SEQUENCE: Array = [
 	["roles", "_test_role_transitions_extended"],
 	["roles", "_test_role_actions_hub"],
 	["combat", "_test_combat_library"],
+	["combat", "_test_combat_variety"],
+	["combat", "_test_auto_combat"],
 	["events", "_test_story_arcs"],
 	["events", "_test_main_saga_system"],
 	["events", "_test_main_saga_paths"],
+	["events", "_test_saga_timeline"],
 	["roles", "_test_starting_sect"],
 	["roles", "_test_disciple_roster"],
 	["roles", "_test_disciple_roster_flow"],
@@ -141,6 +144,8 @@ func _initialize() -> void:
 	SectAI.active = false
 	# 우리 문파 직책 인물(NpcAgent)도 문파 수치를 바꾸므로 시험하는 곳에서만 켠다.
 	NpcAgent.active = false
+	# 코드 전투의 무작위 전장·날씨·목표는 끈다 (정해진 전장으로 시험, 켠 상태는 test_combat의 _test_combat_variety에서 따로)
+	CombatManager.varied = false
 	# 피해 흔들림·회심은 끄고 정확한 값으로 시험한다 (켠 상태는 test_combat의 _test_damage_randomness에서 따로)
 	CombatRules.randomness = false
 	for key in SUITES:

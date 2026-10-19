@@ -116,7 +116,8 @@ func _play_combat(gm: Node, combat_id: String, level: int) -> Dictionary:
 		if controller._combat_over:
 			break
 		controller._on_end_turn_pressed()
-	var victory: bool = controller._combat_over and player.is_alive() and controller._get_alive_enemies().is_empty()
+	# 목표(우두머리·탈출·버티기 등)로 이긴 판도 승리로 센다
+	var victory: bool = controller._combat_over and controller.outcome == CombatManager.Outcome.VICTORY
 	var result: Dictionary = {
 		"victory": victory,
 		"hp_ratio": float(player.hp) / player.max_hp,
@@ -131,14 +132,9 @@ func _play_combat(gm: Node, combat_id: String, level: int) -> Dictionary:
 
 ## 정공법 차례: 적 AI처럼 다가가 한 번 친 뒤, 행동력이 남는 동안 무공·기본 공격을 거듭한다.
 ## (플레이어는 행동력만 있으면 차례에 여러 번 공격할 수 있다.)
+## 전투 화면의 자동 전투와 같다 (우두머리 목표면 우두머리부터, 탈출 목표면 주인공은 탈출 칸으로).
 func _play_turn(controller: Node, unit: CombatUnit) -> void:
-	controller._run_enemy_ai(unit)
-	var guard: int = 0
-	while not controller._combat_over and unit.is_alive() and guard < 12:
-		guard += 1
-		var target: CombatUnit = controller._pick_enemy_target(unit)
-		if target == null or not controller._enemy_try_attack(unit, target):
-			break
+	controller._auto_unit_turn(unit)
 
 
 ## 주인공의 시작 위치를 한 칸 안에서 무작위로 옮겨 판마다 전개가 달라지게 한다.

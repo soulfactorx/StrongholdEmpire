@@ -274,5 +274,49 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "흑풍채의 줄타기",
+    "hint": "흑풍채주 마진이 정도맹과 마교 양쪽에 칼을 팔려 한다.",
+    "branches": [
+      {
+        "text": "마진의 칼을 사면 금화 40을 잃지만 흑풍채가 맹 편에 선다"
+      },
+      {
+        "text": "남궁휘: 홀로 산채에 쳐들어가면 절반 가까운 확률로 목숨을 잃는다 (배드 엔딩)",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_rival",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "연소화: 뒤이어 마진이 직접 찾아온다 — 금화를 받으면 피난민을 함정으로 이끌게 된다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_swallow",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "진무겸: 마교와 밀약했다면 마진과 뒷거래를 할 수 있다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_senior_brother",
+            "value": true
+          },
+          {
+            "type": "flag",
+            "flag": "s1_mu_pact",
+            "value": true
+          }
+        ]
+      }
+    ]
+  }
 }

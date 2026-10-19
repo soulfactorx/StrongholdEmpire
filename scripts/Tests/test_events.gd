@@ -850,3 +850,30 @@ func _test_main_saga_paths() -> void:
 	})
 	_check(gm().current_ending_id == "s3_heaven_returns", "3장 위설아: 천마의 재림")
 	_completed["_test_main_saga_paths"] = true
+
+
+func _test_saga_timeline() -> void:
+	_start_saga("saga_1_blood_moon", "npc_rival")
+	var entries: Array[Dictionary] = gm().get_timeline()
+	var ids: Array = entries.map(func(e: Dictionary) -> String: return e["id"])
+	_check(ids.has("s1_blood_night") and ids.has("s1_finale_hwi") and not ids.has("s1_finale_so"), "강호 연표: 지금 주인공의 사건만")
+	var blood: Dictionary = entries[ids.find("s1_blood_night")]
+	# 붉은 달(1년 봄) → 정도맹(+2) → 흑풍채(2년) → 두 사람(+2) → 첩자(3년) → 혈월의 밤(+2) = 3년 가을
+	_check(blood["date"] == "혈월 3년 가을" and blood["seasons_left"] == 10, "강호 연표: 혈월의 밤까지 남은 계절 (%s, %d)" % [blood["date"], blood["seasons_left"]])
+	_check(gm().get_next_timeline_event().get("id", "") == "s1_alliance" or entries[0]["done"], "강호 연표: 다음 큰 사건")
+	var crossroads: Dictionary = entries[ids.find("s1_crossroads")]
+	var good: Dictionary = crossroads["branches"][0]
+	_check(good["met"] and not crossroads["branches"][2]["met"], "강호 연표: 지금 조건을 채운 갈림길 표시 (선)")
+	var text: String = load("res://scripts/UI/timeline_popup.gd").describe(entries)
+	_check(text.contains("▶ 혈월의 밤 — 1차 대전 — 10계절 뒤") and text.contains("★ 선 (도덕 65 이상)"), "강호 연표 글")
+	_check(not text.contains("연소화:") and text.contains("· 남궁휘: 홀로 산채에"), "강호 연표: 다른 등장인물의 갈림길은 빼고, 내 갈림길은 조건 없이 보임")
+	# 붉은 달을 지나면 지난 사건으로, 남은 계절이 줄어든다
+	gm().resolve_pending_event(0)
+	gm().pending_event = {}
+	gm().advance_turn()
+	gm().pending_event = {}
+	entries = gm().get_timeline()
+	_check(entries[0]["done"] and entries[0]["id"] == "s1_red_moon", "강호 연표: 지난 사건은 위에")
+	blood = entries[entries.map(func(e: Dictionary) -> String: return e["id"]).find("s1_blood_night")]
+	_check(blood["seasons_left"] == 9, "강호 연표: 계절이 지나면 남은 계절이 준다 (%d)" % blood["seasons_left"])
+	_completed["_test_saga_timeline"] = true

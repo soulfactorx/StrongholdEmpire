@@ -184,5 +184,31 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "흑련의 꽃이 지다",
+    "hint": "흑련의 부맹주 마화린이 맹의 장부를 들고 남궁세가로 간다.",
+    "branches": [
+      {
+        "text": "마화린을 받아들이면 흑련의 약점(개봉 성문 아래 수로)을 안다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s3_dokgo_gyeol",
+            "value": false
+          }
+        ]
+      },
+      {
+        "text": "독고결: 쫓으면 전투, 놓아주면 도덕 +10",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s3_dokgo_gyeol",
+            "value": true
+          }
+        ]
+      }
+    ]
+  }
 }

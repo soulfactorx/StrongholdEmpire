@@ -330,5 +330,41 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "정도맹 결성",
+    "hint": "청운·남궁·무당이 낙양에 모여 맹을 세운다. 맹주 자리를 둘러싼 속내가 드러난다.",
+    "branches": [
+      {
+        "text": "남궁휘: 이 자리에서 진무겸과 마주친다 — 뒤이어 비무를 청하거나 술잔을 받을 수 있다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_rival",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "진무겸: 맹주 자리를 빼앗긴 분노를 삼키면 마교의 손길이 더 쉽게 닿는다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_senior_brother",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "혈영: 하인으로 숨어들어 맹의 얼굴들을 익힌다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_cheonma_envoy",
+            "value": true
+          }
+        ]
+      }
+    ]
+  }
 }

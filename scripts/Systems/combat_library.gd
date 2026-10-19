@@ -105,7 +105,39 @@ static func validate_combat_dict(data: Dictionary) -> PackedStringArray:
 	for key in ["enemy_hp_scale", "enemy_damage_scale"]:
 		if data.has(key) and not ((data[key] is float or data[key] is int) and data[key] > 0):
 			errors.append("%s는 0보다 큰 숫자여야 함" % key)
+	if data.has("weather") and not Battlefield.WEATHERS.has(str(data["weather"])):
+		errors.append("알 수 없는 날씨: %s" % data["weather"])
+	if data.has("battlefield") and not Battlefield.KINDS.has(str(data["battlefield"])):
+		errors.append("알 수 없는 전장: %s" % data["battlefield"])
+	_validate_units(data.get("reinforcements", []), "reinforcements", errors)
+	for entry in data.get("reinforcements", []):
+		if entry is Dictionary and int(entry.get("round", 0)) < 2:
+			errors.append("증원 round는 2 이상")
+	if data.has("objective"):
+		_validate_objective(data, errors)
 	return errors
+
+
+static func _validate_objective(data: Dictionary, errors: PackedStringArray) -> void:
+	var objective: Variant = data["objective"]
+	if not objective is Dictionary or not Battlefield.OBJECTIVES.has(str(objective.get("type", ""))):
+		errors.append("알 수 없는 전투 목표: %s" % objective)
+		return
+	match str(objective["type"]):
+		"defeat_target", "protect":
+			var group: Array = data.get("enemies", []) if objective["type"] == "defeat_target" else data.get("allies", [])
+			if not group.any(func(u: Variant) -> bool: return u is Dictionary and u.get("npc") == objective.get("target")):
+				errors.append("목표 인물이 %s에 없음: %s" % ["적" if objective["type"] == "defeat_target" else "아군", objective.get("target")])
+		"survive":
+			if int(objective.get("rounds", 0)) < 2:
+				errors.append("버티기 목표에 rounds(2 이상) 필요")
+		"escape":
+			var tiles: Variant = objective.get("tiles", [])
+			if not tiles is Array or (tiles as Array).is_empty():
+				errors.append("탈출 목표에 tiles 필요")
+			else:
+				for pos in tiles:
+					_validate_pos(pos, "objective tiles", errors)
 
 
 static func _validate_units(units: Variant, label: String, errors: PackedStringArray) -> void:
@@ -168,12 +200,40 @@ static func create(combat_id: String, player: CharacterData, sect: SectData = nu
 	var allies: Array = data.get("allies", [])
 	for i in allies.size():
 		setup.add_ally(_create_unit(allies[i], player, i, allies), _to_pos(allies[i]["position"]))
+	var reinforcements: Array = data.get("reinforcements", [])
+	for i in reinforcements.size():
+		setup.add_reinforcement(int(reinforcements[i]["round"]), _create_unit(reinforcements[i], player, i + enemies.size(), enemies + reinforcements), _to_pos(reinforcements[i]["position"]))
+	setup.weather = str(data.get("weather", "clear"))
+	_apply_objective(setup, data.get("objective", {}))
+	# 지형을 직접 그리지 않고 전장 모양만 정했으면 전장을 만든다
+	if data.has("battlefield") and not data.has("terrain") and not data.has("blocked"):
+		Battlefield.generate(setup, str(data["battlefield"]), setup.unit_tiles())
+	elif data.has("battlefield"):
+		setup.battlefield = str(data["battlefield"])
 	var disciple_positions: Array[Vector2i] = []
 	for pos in data.get("disciple_allies", []):
 		disciple_positions.append(_to_pos(pos))
 	if sect and not disciple_positions.is_empty():
 		CombatManager.add_disciple_allies(setup, sect, player, disciple_positions)
 	return setup
+
+
+static func _apply_objective(setup: CombatSetup, objective: Dictionary) -> void:
+	if objective.is_empty():
+		return
+	setup.objective = str(objective["type"])
+	match setup.objective:
+		"defeat_target", "protect":
+			var group: Array[CharacterData] = setup.enemies if setup.objective == "defeat_target" else setup.allies
+			for character in group:
+				if character.id == str(objective["target"]):
+					setup.objective_target = character.id
+					setup.objective_target_name = character.display_name
+		"survive":
+			setup.objective_rounds = int(objective["rounds"])
+		"escape":
+			for pos in objective["tiles"]:
+				setup.exit_tiles.append(_to_pos(pos))
 
 
 static func _create_unit(entry: Dictionary, player: CharacterData, index: int, group: Array) -> CharacterData:

@@ -1,4 +1,6 @@
 {
+  "weather": "rain",
+  "battlefield": "mountain",
   "id": "s2_master_avenged",
   "title": "사부의 원수",
   "player_position": [
@@ -17,18 +19,6 @@
       }
     }
   ],
-  "terrain": {
-    "HIGH": [
-      [
-        7,
-        4
-      ],
-      [
-        8,
-        5
-      ]
-    ]
-  },
   "relationship_target": "s2_jin_mugyeom",
   "enemy_hp_scale": 0.6,
   "enemy_damage_scale": 0.6,

@@ -77,6 +77,10 @@ extends RefCounted
 ##   효과 set_role role — 역할을 바꾼다 (CharacterData.Role 이름. 예: 아버지를 잃고 가주가 됨)
 ##   효과 goal text — 강호 일지의 목표를 바꾼다 / rumor text — 강호 일지에 소문을 더한다
 ##
+## ■ 강호 연표 (메인 시나리오)
+##   최상위 "timeline": { "title", "hint", "branches": [{ "text", "if": [조건] }] } — 강호 연표에 다가오는 큰 사건으로 보인다.
+##   언제 일어날지는 조건의 year·turns_since_flag(앞 사건 id)로 계산하고, 갈림길은 지금 조건을 채웠는지 표시한다.
+##
 ## ■ 가중치
 ##   최상위 "weight"(기본 1): 발생 후보 중에서 뽑힐 상대적 확률. 스토리 핵심 기연은 높게 준다.
 ##   최상위 "priority"(기본 false): true면 조건을 채운 계절에 기연 발생 확률과 관계없이 먼저 일어난다.
@@ -312,6 +316,91 @@ static func resolve_choice(
 	return result
 
 
+## 시간 조건(year·turns_since_flag·season)
+const TIME_CONDITIONS: PackedStringArray = ["year", "turns_since_flag", "season"]
+
+
+## 기연이 일어날 가장 이른 계절(턴 번호). 앞 사건이 아직이면 그 사건의 예상 시점으로 이어서 계산한다. 알 수 없으면 -1
+static func estimate_turn(event: EventData, story_flags: Dictionary, triggered_ids: Array[String], now: int, memo: Dictionary = {}) -> int:
+	if memo.has(event.id):
+		return memo[event.id]
+	memo[event.id] = -1
+	var turn: int = now
+	var seasons: Array = []
+	for c in event.conditions:
+		match str(c.get("type", "")):
+			"year":
+				# 턴 번호 = 연차 × 4 + 계절 (GameManager._get_turn_index)
+				if str(c.get("op", ">=")) in [">=", "==", ">"]:
+					turn = maxi(turn, (int(c["value"]) + (1 if c.get("op") == ">" else 0)) * 4)
+			"turns_since_flag":
+				var flag: String = str(c["flag"])
+				var base: int = -1
+				if story_flags.get(flag, false) and flag_turns.has(flag):
+					base = int(flag_turns[flag])
+				else:
+					var before: EventData = get_event(flag)
+					if before == null:
+						return -1
+					# 지금 떠 있는(일어났지만 아직 고르지 않은) 앞 사건은 이번 계절로 친다
+					base = now if triggered_ids.has(flag) else estimate_turn(before, story_flags, triggered_ids, now, memo)
+				if base < 0:
+					return -1
+				turn = maxi(turn, base + int(c.get("value", 0)))
+			"season":
+				seasons = c.get("in", [])
+	if not seasons.is_empty():
+		var guard: int = 0
+		while not SEASON_NAMES[turn % 4] in seasons and guard < 4:
+			turn += 1
+			guard += 1
+	memo[event.id] = turn
+	return turn
+
+
+## 강호 연표: 연표에 오른 큰 사건 가운데 지금 이야기에 해당하는 것.
+## [{id, title, hint, turn(-1이면 알 수 없음), done, branches: [{text, met}]}] — 일어난 것 먼저, 그다음 이른 순
+static func get_timeline(
+	character: CharacterData, sect: SectData, relationships: Array[RelationshipData],
+	season: String, story_flags: Dictionary, triggered_ids: Array[String], now: int
+) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	var memo: Dictionary = {}
+	for event in get_definitions():
+		if event.timeline.is_empty():
+			continue
+		var done: bool = triggered_ids.has(event.id)
+		# 시간 말고 다른 조건(등장인물·플래그 등)이 맞는 사건만
+		var other: Array = event.conditions.filter(func(c: Dictionary) -> bool: return not str(c.get("type", "")) in TIME_CONDITIONS)
+		if not done and not conditions_met(other, character, sect, relationships, season, story_flags):
+			continue
+		var branches: Array = []
+		for branch in event.timeline.get("branches", []):
+			var conds: Array = branch.get("if", [])
+			# 다른 등장인물의 갈림길(playing_ 플래그)은 빼고, 그 조건은 ★ 판정에 넣지 않는다
+			var who: Array = conds.filter(func(c: Dictionary) -> bool: return c.get("type") == "flag" and str(c.get("flag", "")).begins_with("playing_"))
+			if not conditions_met(who, character, sect, relationships, season, story_flags):
+				continue
+			var rest: Array = conds.filter(func(c: Dictionary) -> bool: return not who.has(c))
+			branches.append({
+				"text": EventData.fill_text(str(branch["text"]), ""),
+				"met": not rest.is_empty() and conditions_met(rest, character, sect, relationships, season, story_flags),
+				"conditional": not rest.is_empty(),
+			})
+		result.append({
+			"id": event.id, "title": str(event.timeline["title"]), "hint": EventData.fill_text(str(event.timeline.get("hint", "")), ""),
+			"turn": -1 if done else estimate_turn(event, story_flags, triggered_ids, now, memo), "done": done, "branches": branches,
+		})
+	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if a["done"] != b["done"]:
+			return a["done"]
+		var ta: int = a["turn"] if a["turn"] >= 0 else 9999
+		var tb: int = b["turn"] if b["turn"] >= 0 else 9999
+		return ta < tb
+	)
+	return result
+
+
 static func _pick_weighted(pool: Array[EventData]) -> EventData:
 	var total: float = 0.0
 	for event in pool:
@@ -426,6 +515,16 @@ static func validate_event_dict(data: Dictionary) -> PackedStringArray:
 	elif JSON.stringify(data).contains("$subject"):
 		errors.append("$subject를 쓰려면 subject가 필요함")
 	validate_conditions(data.get("conditions", []), errors)
+	if data.has("timeline"):
+		var timeline: Variant = data["timeline"]
+		if not timeline is Dictionary or str(timeline.get("title", "")).is_empty():
+			errors.append("timeline에 title 필요")
+		else:
+			for branch in timeline.get("branches", []):
+				if not branch is Dictionary or str(branch.get("text", "")).is_empty():
+					errors.append("timeline branch는 { text, if }")
+				elif branch.has("if"):
+					validate_conditions(branch["if"], errors)
 	var choices: Variant = data.get("choices")
 	if not choices is Array or (choices as Array).is_empty():
 		errors.append("choices가 비어 있음")
@@ -658,6 +757,7 @@ static func _to_event_data(data: Dictionary) -> EventData:
 	event.weight = float(data.get("weight", 1.0))
 	event.priority = data.get("priority", false) == true
 	event.follow_up = data.get("follow_up", false) == true
+	event.timeline = data.get("timeline", {})
 	event.npc = str(data.get("npc", _infer_npc(data)))
 	event.subject = data.get("subject", {})
 	for line in data.get("scene", []):
