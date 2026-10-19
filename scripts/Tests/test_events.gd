@@ -607,6 +607,7 @@ func _test_main_saga_system() -> void:
 		# 등장인물 데이터: 명부에 있고, 인연 대상도 명부에 있다. 이 시나리오의 기연과 엔딩만 읽는다.
 		for entry in ScenarioManager.get_playables(scenario):
 			_check(NpcRoster.has_npc(entry["npc"]), "%s 등장인물 명부: %s" % [scenario_id, entry["npc"]])
+			_check(ArtAssets.portrait(entry["npc"]) != null, "%s 등장인물 초상화: %s" % [scenario_id, entry["npc"]])
 			for target in entry.get("bonds", {}):
 				_check(NpcRoster.has_npc(target) and target != entry["npc"], "%s 등장인물 %s 인연 대상: %s" % [scenario_id, entry["npc"], target])
 		_check(EventManager.get_event("rival_duel") == null and EventManager.get_event("arc_cheonma_omen") == null, "%s: 정한 공용 기연 폴더만 읽음" % scenario_id)

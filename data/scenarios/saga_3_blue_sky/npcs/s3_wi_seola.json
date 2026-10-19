@@ -7,7 +7,6 @@
   "description": "천마 위무량의 손녀. 늙은 혈영의 손에 자랐다. 신교를 되살리려 하지만 피를 원하지 않는다.",
   "level": 6,
   "named": true,
-  "portrait": "portraits/npc_musician.jpg",
   "stats": {
     "strength": 13,
     "agility": 16,
