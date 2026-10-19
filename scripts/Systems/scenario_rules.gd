@@ -22,6 +22,8 @@ const DEFAULTS: Dictionary = {
 	"ai_aggression": 1.0,
 	## 승리 엔딩에 도달하면 시나리오를 끝낸다 (단기 시나리오용)
 	"end_on_victory": false,
+	## 문파 살림이 무너지면(해산·곳간·명성) 게임이 끝나는지. 이야기 중심 시나리오는 끈다
+	"sect_game_over": true,
 }
 
 ## 값 검증 범위: [최소, 최대]
@@ -144,3 +146,7 @@ static func ai_aggression() -> float:
 
 static func end_on_victory() -> bool:
 	return params["end_on_victory"]
+
+
+static func sect_game_over() -> bool:
+	return params["sect_game_over"]

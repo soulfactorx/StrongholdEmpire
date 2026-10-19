@@ -33,7 +33,30 @@
   "scene": [
     {
       "speaker": "npc_namgung_lady",
-      "text": "휘야, 아버지 검이 너한테 잘 어울려."
+      "text": "휘야, 아버지 검이 너한테 잘 어울려.",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s1_seol_dead",
+          "value": false
+        }
+      ]
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "그 사람한테서 서신이 왔어. 바다가 보이는 곳에 집을 구했대. …가도 될까?",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_trusts_seol",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s1_seol_dead",
+          "value": false
+        }
+      ]
     },
     {
       "speaker": "npc_namgung_enforcer",

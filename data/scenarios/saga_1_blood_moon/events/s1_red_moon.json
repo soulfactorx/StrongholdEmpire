@@ -159,8 +159,17 @@
           "type": "flag",
           "flag": "s1_defiant",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "아버지께 인정받아 정도맹 출정에 함께하기"
+        },
+        {
+          "type": "rumor",
+          "text": "천산 아래 마을들이 통째로 비었다고 한다. 북쪽에서 피난민이 내려오기 시작했다."
         }
       ],
+      "next": "s1_hwi_moon_talk",
       "conditions": [
         {
           "type": "flag",
@@ -182,8 +191,17 @@
           "type": "bond",
           "target": "npc_namgung_lord",
           "add": 8
+        },
+        {
+          "type": "goal",
+          "text": "아버지께 인정받아 정도맹 출정에 함께하기"
+        },
+        {
+          "type": "rumor",
+          "text": "천산 아래 마을들이 통째로 비었다고 한다. 북쪽에서 피난민이 내려오기 시작했다."
         }
       ],
+      "next": "s1_hwi_moon_talk",
       "conditions": [
         {
           "type": "flag",
@@ -210,6 +228,10 @@
           "type": "bond",
           "target": "npc_innkeeper",
           "add": 5
+        },
+        {
+          "type": "rumor",
+          "text": "천산 아래 마을들이 통째로 비었다고 한다. 북쪽에서 피난민이 내려오기 시작했다."
         }
       ],
       "conditions": [
@@ -238,6 +260,10 @@
           "type": "sect",
           "field": "gold",
           "add": 20
+        },
+        {
+          "type": "rumor",
+          "text": "천산 아래 마을들이 통째로 비었다고 한다. 북쪽에서 피난민이 내려오기 시작했다."
         }
       ],
       "conditions": [
@@ -261,6 +287,10 @@
           "type": "bond",
           "target": "npc_master",
           "add": 5
+        },
+        {
+          "type": "rumor",
+          "text": "천산 아래 마을들이 통째로 비었다고 한다. 북쪽에서 피난민이 내려오기 시작했다."
         }
       ],
       "conditions": [
@@ -289,6 +319,10 @@
           "type": "flag",
           "flag": "s1_mu_kept_letter",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "천산 아래 마을들이 통째로 비었다고 한다. 북쪽에서 피난민이 내려오기 시작했다."
         }
       ],
       "conditions": [
@@ -312,6 +346,10 @@
           "type": "bond",
           "target": "npc_cheonma",
           "add": 8
+        },
+        {
+          "type": "rumor",
+          "text": "천산 아래 마을들이 통째로 비었다고 한다. 북쪽에서 피난민이 내려오기 시작했다."
         }
       ],
       "conditions": [
@@ -335,6 +373,10 @@
           "type": "character",
           "field": "morality",
           "add": 3
+        },
+        {
+          "type": "rumor",
+          "text": "천산 아래 마을들이 통째로 비었다고 한다. 북쪽에서 피난민이 내려오기 시작했다."
         }
       ],
       "conditions": [
@@ -357,6 +399,10 @@
         {
           "type": "experience",
           "amount": 10
+        },
+        {
+          "type": "rumor",
+          "text": "천산 아래 마을들이 통째로 비었다고 한다. 북쪽에서 피난민이 내려오기 시작했다."
         }
       ]
     }

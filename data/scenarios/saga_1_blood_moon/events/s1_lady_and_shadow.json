@@ -67,7 +67,7 @@
   "choices": [
     {
       "label": "누이를 찾아가 사실을 묻는다",
-      "message": "누이는 대답 대신 울었습니다. 남궁설 유대 +5",
+      "message": "누이는 한참 말이 없었습니다.",
       "effects": [
         {
           "type": "flag",
@@ -83,8 +83,17 @@
           "type": "flag",
           "flag": "s1_hwi_knows",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "누이와 마교의 사내 사이의 일을 어떻게 할지 정하기"
+        },
+        {
+          "type": "rumor",
+          "text": "남궁세가 뒤뜰에 붉은 소매의 사내가 숨어 있었다는 이야기가 하인들 사이에 돈다."
         }
       ],
+      "next": "s1_hwi_sister_secret",
       "conditions": [
         {
           "type": "flag",
@@ -116,6 +125,10 @@
           "type": "flag",
           "flag": "s1_hwi_exposed_sister",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "남궁세가 뒤뜰에 붉은 소매의 사내가 숨어 있었다는 이야기가 하인들 사이에 돈다."
         }
       ],
       "conditions": [
@@ -138,6 +151,10 @@
         {
           "type": "combat",
           "combat": "s1_shadow_duel"
+        },
+        {
+          "type": "rumor",
+          "text": "남궁세가 뒤뜰에 붉은 소매의 사내가 숨어 있었다는 이야기가 하인들 사이에 돈다."
         }
       ],
       "conditions": [
@@ -172,6 +189,10 @@
           "type": "flag",
           "flag": "s1_hy_loves",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "남궁세가 뒤뜰에 붉은 소매의 사내가 숨어 있었다는 이야기가 하인들 사이에 돈다."
         }
       ],
       "conditions": [
@@ -201,6 +222,10 @@
           "target": "npc_namgung_lady",
           "bond_type": "ACQUAINTANCE",
           "strength": 30
+        },
+        {
+          "type": "rumor",
+          "text": "남궁세가 뒤뜰에 붉은 소매의 사내가 숨어 있었다는 이야기가 하인들 사이에 돈다."
         }
       ],
       "conditions": [
@@ -234,6 +259,10 @@
           "type": "flag",
           "flag": "s1_hy_killed_seol",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "남궁세가 뒤뜰에 붉은 소매의 사내가 숨어 있었다는 이야기가 하인들 사이에 돈다."
         }
       ],
       "conditions": [
@@ -267,6 +296,10 @@
           "type": "bond",
           "target": "npc_haomun_master",
           "add": 5
+        },
+        {
+          "type": "rumor",
+          "text": "남궁세가 뒤뜰에 붉은 소매의 사내가 숨어 있었다는 이야기가 하인들 사이에 돈다."
         }
       ],
       "conditions": [
@@ -289,6 +322,10 @@
         {
           "type": "experience",
           "amount": 10
+        },
+        {
+          "type": "rumor",
+          "text": "남궁세가 뒤뜰에 붉은 소매의 사내가 숨어 있었다는 이야기가 하인들 사이에 돈다."
         }
       ]
     }

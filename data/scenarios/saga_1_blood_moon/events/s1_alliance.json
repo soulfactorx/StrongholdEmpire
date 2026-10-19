@@ -90,6 +90,18 @@
           "type": "flag",
           "flag": "s1_sworn_alliance",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "rumor",
+          "text": "정도맹이 낙양에 맹부를 열었다. 서쪽 문은 청운검파가 지킨다고 한다."
         }
       ],
       "conditions": [
@@ -115,6 +127,22 @@
           "type": "bond",
           "target": "npc_namgung_lord",
           "add": 5
+        },
+        {
+          "type": "goal",
+          "text": "맹회에서 만난 청운의 대사형 진무겸을 넘어서기"
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "rumor",
+          "text": "정도맹이 낙양에 맹부를 열었다. 서쪽 문은 청운검파가 지킨다고 한다."
         }
       ],
       "conditions": [
@@ -138,6 +166,18 @@
           "type": "bond",
           "target": "npc_master",
           "add": 3
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "rumor",
+          "text": "정도맹이 낙양에 맹부를 열었다. 서쪽 문은 청운검파가 지킨다고 한다."
         }
       ],
       "conditions": [
@@ -166,6 +206,18 @@
           "type": "flag",
           "flag": "s1_mu_resent",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "rumor",
+          "text": "정도맹이 낙양에 맹부를 열었다. 서쪽 문은 청운검파가 지킨다고 한다."
         }
       ],
       "conditions": [
@@ -189,6 +241,18 @@
           "type": "flag",
           "flag": "s1_hy_infiltrated",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "rumor",
+          "text": "정도맹이 낙양에 맹부를 열었다. 서쪽 문은 청운검파가 지킨다고 한다."
         }
       ],
       "conditions": [
@@ -217,6 +281,18 @@
           "type": "flag",
           "flag": "s1_so_ignored",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "rumor",
+          "text": "정도맹이 낙양에 맹부를 열었다. 서쪽 문은 청운검파가 지킨다고 한다."
         }
       ],
       "conditions": [
@@ -239,6 +315,18 @@
         {
           "type": "experience",
           "amount": 10
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "rumor",
+          "text": "정도맹이 낙양에 맹부를 열었다. 서쪽 문은 청운검파가 지킨다고 한다."
         }
       ]
     }

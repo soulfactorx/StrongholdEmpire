@@ -63,6 +63,11 @@
           "type": "character",
           "field": "wisdom",
           "add": 2
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hwi_heard_mg",
+          "value": true
         }
       ]
     },

@@ -12,6 +12,8 @@ extends Resource
 @export var weight: float = 1.0
 ## 우선 기연: 조건을 채우면 기연 발생 확률과 관계없이 그 계절에 먼저 일어난다 (인연 단계 변화 등)
 @export var priority: bool = false
+## 다른 기연의 선택지 next로만 일어나는 기연 (계절마다 뽑는 후보에 들지 않음)
+@export var follow_up: bool = false
 ## 팝업에 초상화를 보일 인물 id (없으면 "")
 @export var npc: String = ""
 ## 관계 대상 기연이면 대상을 고르는 기준 (EventManager 상단 설명). 아니면 비어 있다.
@@ -33,13 +35,14 @@ func get_choice_labels() -> PackedStringArray:
 
 ## 팝업과 GameManager.pending_event가 쓰는 형식. 관계 대상 기연이면 subject_id 인물로 글({name}·{title})을 채운다.
 ## visible: 보일 선택지 번호 (선택지 조건). 비우면 모두. choice_map은 보이는 순번 → 원래 선택지 번호
-func to_popup_dict(subject_id: String = "", visible: Array = []) -> Dictionary:
+## scene_lines: 보일 대사 줄 번호 (줄의 if 조건). 비우면(기본) 조건을 따지지 않고 모두.
+func to_popup_dict(subject_id: String = "", visible: Array = [], scene_lines: Array = [-1]) -> Dictionary:
 	var shown: Array = visible if not visible.is_empty() else range(choices.size())
 	var labels: PackedStringArray = []
 	for index in shown:
 		labels.append(fill_text(str(choices[index].get("label", "")), subject_id))
 	var text: String = fill_text(description, subject_id)
-	var scene_text: String = get_scene_text(subject_id)
+	var scene_text: String = get_scene_text(subject_id, scene_lines)
 	if not scene_text.is_empty():
 		text += "\n\n" + scene_text
 	return {
@@ -60,9 +63,12 @@ const PARTICLES: Array = [["이(가)", "이", "가"], ["을(를)", "을", "를"]
 
 ## 장면 대사를 "이름: 대사" 줄로. 주인공이 연기하는 인물의 대사는 빼고(주인공은 "player" 줄로 말한다),
 ## "only"(인물 id 목록)가 있는 줄은 그 인물로 플레이할 때만 보인다.
-func get_scene_text(subject_id: String = "") -> String:
+func get_scene_text(subject_id: String = "", only_lines: Array = [-1]) -> String:
 	var lines: PackedStringArray = []
-	for line in scene:
+	for i in scene.size():
+		var line: Dictionary = scene[i]
+		if only_lines != [-1] and not only_lines.has(i):
+			continue
 		var speaker: String = str(line.get("speaker", ""))
 		if speaker == EventManager.player_npc_id and not speaker.is_empty():
 			continue

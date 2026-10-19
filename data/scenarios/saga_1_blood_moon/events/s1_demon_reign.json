@@ -35,9 +35,17 @@
     },
     {
       "speaker": "npc_namgung_lady",
-      "text": "휘야… 아버지 검이야. 네가 들어.",
+      "text": "휘야… 아니, 가주님. 이제 그렇게 불러야겠지?",
       "only": [
         "npc_rival"
+      ],
+      "if": [
+        {
+          "type": "role",
+          "in": [
+            "LEADER"
+          ]
+        }
       ]
     },
     {
@@ -95,6 +103,10 @@
           "type": "flag",
           "flag": "s1_resistance",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "장강 북쪽 성마다 '귀순'의 방이 붙었다. 마교 순찰대가 정파 잔당을 사냥한다."
         }
       ],
       "conditions": [
@@ -123,6 +135,10 @@
           "type": "flag",
           "flag": "s1_endured",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "장강 북쪽 성마다 '귀순'의 방이 붙었다. 마교 순찰대가 정파 잔당을 사냥한다."
         }
       ],
       "conditions": [
@@ -156,6 +172,10 @@
           "type": "bond",
           "target": "npc_cheonma",
           "add": 10
+        },
+        {
+          "type": "rumor",
+          "text": "장강 북쪽 성마다 '귀순'의 방이 붙었다. 마교 순찰대가 정파 잔당을 사냥한다."
         }
       ],
       "conditions": [
@@ -189,6 +209,10 @@
           "type": "flag",
           "flag": "s1_hy_hunter",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "장강 북쪽 성마다 '귀순'의 방이 붙었다. 마교 순찰대가 정파 잔당을 사냥한다."
         }
       ],
       "conditions": [
@@ -217,6 +241,10 @@
           "type": "flag",
           "flag": "s1_hy_mercy",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "장강 북쪽 성마다 '귀순'의 방이 붙었다. 마교 순찰대가 정파 잔당을 사냥한다."
         }
       ],
       "conditions": [
@@ -239,6 +267,10 @@
         {
           "type": "experience",
           "amount": 10
+        },
+        {
+          "type": "rumor",
+          "text": "장강 북쪽 성마다 '귀순'의 방이 붙었다. 마교 순찰대가 정파 잔당을 사냥한다."
         }
       ]
     }

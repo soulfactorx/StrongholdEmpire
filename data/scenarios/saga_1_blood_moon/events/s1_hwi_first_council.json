@@ -1,0 +1,102 @@
+{
+  "id": "s1_hwi_first_council",
+  "title": "가주의 첫 회의",
+  "description": "불탄 대청에 살아남은 남궁의 무사들이 모였습니다. 모두가 새 가주를 바라봅니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 10,
+  "npc": "npc_namgung_enforcer",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_rival",
+      "value": true
+    },
+    {
+      "type": "flag",
+      "flag": "s1_hwi_rebuild",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_hwi_father_falls",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_namgung_enforcer",
+      "text": "가주님, 남은 무사는 스물, 곳간은 반이 탔습니다. 피난민들이 담장 밖에 모여 있습니다."
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "휘야, 아버지는 늘 '세가는 사람이다'라고 하셨어.",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s1_seol_dead",
+          "value": false
+        }
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "…이제 이 사람들이 다 내 몫이구나."
+    },
+    {
+      "speaker": "",
+      "text": "(이제 [문파] 쪽에서 제자를 수련시키고, 시설을 고치고, 강호 세력과 외교를 할 수 있습니다.)"
+    }
+  ],
+  "choices": [
+    {
+      "label": "곳간을 열어 피난민부터 먹인다",
+      "message": "무사들이 수군거렸지만, 마을 사람들이 세가 담장을 함께 쌓기 시작했습니다. 도덕 +5, 명성 +5, 식량 -40",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_first_council",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 5
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 5
+        },
+        {
+          "type": "sect",
+          "field": "food",
+          "add": -40
+        }
+      ]
+    },
+    {
+      "label": "무사들을 먼저 추스른다",
+      "message": "남궁철이 고개를 끄덕였습니다. \"검이 서야 세가가 섭니다.\" 제자 +2",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_first_council",
+          "value": true
+        },
+        {
+          "type": "sect",
+          "field": "disciple_count",
+          "add": 2
+        }
+      ]
+    }
+  ]
+}

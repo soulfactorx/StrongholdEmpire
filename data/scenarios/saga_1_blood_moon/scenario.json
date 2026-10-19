@@ -23,11 +23,13 @@
       "attitude": -20
     }
   },
+  "progressive": true,
   "parameters": {
     "time_limit_years": 5,
     "legacy_enabled": false,
     "exp_scale": 1.5,
-    "end_on_victory": true
+    "end_on_victory": true,
+    "sect_game_over": false
   },
   "common_events": [
     "bonds",
@@ -63,7 +65,12 @@
       },
       "arts": [
         "manual_namgung_plum_sword"
-      ]
+      ],
+      "features": [
+        "role_action",
+        "bond"
+      ],
+      "goal": "붉은 달이 뜬 밤 — 천마의 서신에 남궁이 어떻게 답할지 지켜보기"
     },
     {
       "npc": "npc_swallow",

@@ -61,6 +61,20 @@
     },
     {
       "speaker": "player",
+      "text": "서문이… 안에서 열렸다고? 진무겸, 역시 당신이었나!",
+      "only": [
+        "npc_rival"
+      ],
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_suspects_mg",
+          "value": true
+        }
+      ]
+    },
+    {
+      "speaker": "player",
       "text": "아버지! 동쪽 진이 무너집니다!",
       "only": [
         "npc_rival"

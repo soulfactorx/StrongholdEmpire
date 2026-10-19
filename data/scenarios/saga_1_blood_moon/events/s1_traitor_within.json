@@ -63,6 +63,34 @@
       "only": [
         "npc_rival"
       ]
+    },
+    {
+      "speaker": "npc_senior_brother",
+      "text": "(남궁휘와 눈이 마주치자 고개를 돌린다) …자네와 마신 그날 술이 자꾸 생각나는군.",
+      "only": [
+        "npc_rival"
+      ],
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_heard_mg",
+          "value": true
+        }
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "(맹회의 결정이 새고 있다. 서문을 맡은 게… 누구였지?)",
+      "only": [
+        "npc_rival"
+      ],
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_suspects_mg",
+          "value": true
+        }
+      ]
     }
   ],
   "choices": [
@@ -84,6 +112,10 @@
           "type": "flag",
           "flag": "s1_accused_mugyeom",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "붉은 달이 다시 뜨는 가을, 마교가 낙양을 친다는 소문이 돈다."
         }
       ],
       "conditions": [
@@ -117,6 +149,10 @@
           "type": "sect",
           "field": "reputation",
           "add": 3
+        },
+        {
+          "type": "rumor",
+          "text": "붉은 달이 다시 뜨는 가을, 마교가 낙양을 친다는 소문이 돈다."
         }
       ],
       "conditions": [
@@ -145,6 +181,10 @@
           "type": "flag",
           "flag": "s1_mu_covered",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "붉은 달이 다시 뜨는 가을, 마교가 낙양을 친다는 소문이 돈다."
         }
       ],
       "conditions": [
@@ -191,6 +231,10 @@
           "type": "flag",
           "flag": "s1_mu_framed",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "붉은 달이 다시 뜨는 가을, 마교가 낙양을 친다는 소문이 돈다."
         }
       ],
       "conditions": [
@@ -234,6 +278,10 @@
           "type": "flag",
           "flag": "s1_mu_pact",
           "value": false
+        },
+        {
+          "type": "rumor",
+          "text": "붉은 달이 다시 뜨는 가을, 마교가 낙양을 친다는 소문이 돈다."
         }
       ],
       "conditions": [
@@ -262,6 +310,10 @@
           "type": "bond",
           "target": "npc_senior_brother",
           "add": 10
+        },
+        {
+          "type": "rumor",
+          "text": "붉은 달이 다시 뜨는 가을, 마교가 낙양을 친다는 소문이 돈다."
         }
       ],
       "conditions": [
@@ -285,6 +337,10 @@
           "type": "bond",
           "target": "npc_cheonma",
           "add": 5
+        },
+        {
+          "type": "rumor",
+          "text": "붉은 달이 다시 뜨는 가을, 마교가 낙양을 친다는 소문이 돈다."
         }
       ],
       "conditions": [
@@ -313,6 +369,10 @@
           "type": "bond",
           "target": "npc_cheonma",
           "add": 10
+        },
+        {
+          "type": "rumor",
+          "text": "붉은 달이 다시 뜨는 가을, 마교가 낙양을 친다는 소문이 돈다."
         }
       ],
       "conditions": [
@@ -352,6 +412,10 @@
         {
           "type": "experience",
           "amount": 10
+        },
+        {
+          "type": "rumor",
+          "text": "붉은 달이 다시 뜨는 가을, 마교가 낙양을 친다는 소문이 돈다."
         }
       ]
     }

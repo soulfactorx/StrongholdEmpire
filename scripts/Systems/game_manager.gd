@@ -31,6 +31,14 @@ var observed_arts: Dictionary = {}
 var purse: SectData = create_purse()
 ## 등장인물 선택 플레이: 주인공이 된 명부 인물 id (시나리오 playables). 일반 시작이면 ""
 var player_npc_id: String = ""
+## 기능 단계 개방 (FeatureGate): 단계 개방 중인지, 열린 기능, 아직 소개하지 않은 새 기능
+var progressive_features: bool = false
+var unlocked_features: Array[String] = []
+var pending_intros: Array[String] = []
+## 강호 일지: 지금의 목표와 들려오는 소문 (최근 것이 뒤). 기연 효과 goal·rumor로 바뀐다
+var journal_goal: String = ""
+var journal_rumors: Array[String] = []
+const JOURNAL_RUMOR_LIMIT := 6
 ## 지금 있는 지역 (강호 지도의 지역 id). 문파 일을 하는 역할은 본거지에 있고, 개인 재산을 쓰는 역할은 지도에서 옮겨 다닌다.
 var player_region: String = ""
 ## 가진 비급 (무공 id). 소속 문파 서고의 비급과 함께 무공 연구소에서 연구할 수 있다. 기연·사부에게서 얻는다.
@@ -268,6 +276,18 @@ func _initialize_new_game(
 		EventManager.set_flag(story_flags, "playing_" + player_npc_id)
 		for flag in playable.get("flags", []):
 			EventManager.set_flag(story_flags, str(flag))
+	# 기능 단계 개방: 단계 개방 시나리오의 등장인물은 정한 기능만 열고 시작한다 (나머지는 모두 열림)
+	progressive_features = ScenarioManager.current.get("progressive", false) == true and playable.has("features")
+	unlocked_features.clear()
+	pending_intros.clear()
+	if progressive_features:
+		for feature_id in playable["features"]:
+			unlocked_features.append(str(feature_id))
+		for feature_id in FeatureGate.ROLE_FEATURES.get(CharacterData.Role.keys()[player_character.role], []):
+			if not unlocked_features.has(feature_id):
+				unlocked_features.append(feature_id)
+	journal_goal = str(playable.get("goal", ""))
+	journal_rumors.clear()
 	role_history.clear()
 	_record_role(player_character.role)
 	role_state = RoleActions.create_state()
@@ -389,6 +409,7 @@ func _sync_event_context() -> void:
 	EventManager.owned_manuals = owned_manuals
 	EventManager.player_name = player_character.display_name if player_character else ""
 	EventManager.player_npc_id = player_npc_id
+	FeatureGate.sync(progressive_features, unlocked_features)
 	EventManager.current_year = current_year
 	EventManager.current_turn = _get_turn_index()
 	EventManager.current_generation = generation
@@ -704,6 +725,10 @@ func _process_yearly_events() -> String:
 
 ## announce: 새 전환이 있으면 알린다 (역할 전환 창을 열 때는 조용히 다시 계산만)
 func refresh_role_transitions(announce: bool = true) -> void:
+	# 역할 전환이 아직 열리지 않았으면 (기능 단계 개방) 알리지 않는다
+	if not FeatureGate.is_open("role_change"):
+		pending_role_transitions = []
+		return
 	pending_role_transitions = RoleManager.get_available_transitions(
 		player_character,
 		player_sect,
@@ -848,6 +873,11 @@ func _force_end(end_id: String) -> void:
 func resolve_pending_event(choice_index: int) -> void:
 	if pending_event.is_empty():
 		return
+	# 기능 소개 장면은 읽고 닫으면 끝이다. 다음 소개가 있으면 이어서 띄운다.
+	if pending_event.get("intro", false):
+		pending_event.clear()
+		_show_next_intro()
+		return
 
 	# 보이는 선택지 순번 → 원래 선택지 번호 (선택지 조건으로 일부만 보일 때)
 	var choice_map: Array = pending_event.get("choice_map", [])
@@ -906,10 +936,65 @@ func _change_role(role: CharacterData.Role) -> Dictionary:
 	_sync_event_context()
 	add_chronicle("역할", str(result.get("message", "")))
 	_record_role(player_character.role)
+	# 새 역할의 기능이 열린다 (기능 단계 개방)
+	for feature_id in FeatureGate.ROLE_FEATURES.get(CharacterData.Role.keys()[player_character.role], []):
+		unlock_feature(feature_id)
 	EventBus.character_updated.emit(player_character)
 	EventBus.resources_changed.emit(player_sect)
 	EventBus.role_changed.emit(player_character.role)
 	return result
+
+
+## 기능을 연다. 단계 개방 중이 아니거나 이미 열렸으면 false. 연 기능은 소개 장면을 기다린다.
+func unlock_feature(feature_id: String) -> bool:
+	if not progressive_features or unlocked_features.has(feature_id) or not FeatureGate.has_feature(feature_id):
+		return false
+	unlocked_features.append(feature_id)
+	pending_intros.append(feature_id)
+	add_chronicle("새 길", "「%s」이(가) 열렸습니다." % FeatureGate.get_title(feature_id))
+	return true
+
+
+## 기연 결과 중 이야기 진행에 관한 것: 기능 개방·역할 변화·강호 일지, 그리고 이어지는 장면(next)이나 기능 소개를 띄운다.
+func _apply_story_result(result: Dictionary) -> void:
+	for feature_id in result.get("unlock", []):
+		unlock_feature(feature_id)
+	if result.has("set_role"):
+		var role: CharacterData.Role = CharacterData.Role.get(result["set_role"])
+		if player_character.role != role:
+			_change_role(role)
+	if result.has("goal"):
+		journal_goal = str(result["goal"])
+	for rumor in result.get("rumors", []):
+		add_rumor(str(rumor))
+	if not str(result.get("next", "")).is_empty():
+		var next_event: EventData = EventManager.get_event(result["next"])
+		if next_event:
+			pending_event = EventManager.make_popup(
+				next_event, player_character, player_sect, player_relationships, get_current_season(), story_flags,
+				str(result.get("subject", ""))
+			)
+			EventBus.event_triggered.emit(pending_event)
+			return
+	_show_next_intro()
+
+
+## 기다리는 기능 소개가 있으면 띄운다 (다른 기연이 떠 있지 않을 때)
+func _show_next_intro() -> void:
+	if not pending_event.is_empty() or pending_intros.is_empty() or is_game_over():
+		return
+	pending_event = FeatureGate.intro_popup(pending_intros.duplicate())
+	pending_intros.clear()
+	EventBus.event_triggered.emit(pending_event)
+
+
+func add_rumor(text: String) -> void:
+	if text.is_empty():
+		return
+	journal_rumors.append(text)
+	if journal_rumors.size() > JOURNAL_RUMOR_LIMIT:
+		journal_rumors = journal_rumors.slice(journal_rumors.size() - JOURNAL_RUMOR_LIMIT)
+	add_chronicle("소문", text)
 
 
 ## 개인 재산을 쓰는 역할과 문파 금고를 쓰는 역할 사이를 오갈 때 재산을 옮긴다.
@@ -1802,6 +1887,11 @@ func _build_save_state() -> Dictionary:
 		"owned_manuals": owned_manuals,
 		"player_region": player_region,
 		"player_npc_id": player_npc_id,
+		"progressive_features": progressive_features,
+		"unlocked_features": unlocked_features.duplicate(),
+		"pending_intros": pending_intros.duplicate(),
+		"journal_goal": journal_goal,
+		"journal_rumors": journal_rumors.duplicate(),
 		"purse": {"gold": purse.gold, "food": purse.food},
 		"challenge_target": challenge_target,
 		"pending_invasion": pending_invasion,
@@ -1931,6 +2021,11 @@ func _apply_save_data(data: Dictionary) -> void:
 	else:
 		map_state = WorldMap.create_state(_all_sect_ids())
 	player_npc_id = str(data.get("player_npc_id", ""))
+	progressive_features = data.get("progressive_features", false) == true
+	unlocked_features.assign(Array(data.get("unlocked_features", [])).map(func(x: Variant) -> String: return str(x)))
+	pending_intros.assign(Array(data.get("pending_intros", [])).map(func(x: Variant) -> String: return str(x)))
+	journal_goal = str(data.get("journal_goal", ""))
+	journal_rumors.assign(Array(data.get("journal_rumors", [])).map(func(x: Variant) -> String: return str(x)))
 	player_region = str(data.get("player_region", ""))
 	if not WorldMap.has_region(player_region):
 		player_region = _default_region()
@@ -1954,6 +2049,7 @@ func has_save_file(slot: int = -1) -> bool:
 func _apply_event_result(result: Dictionary) -> void:
 	if result.has("end_game"):
 		_force_end(result["end_game"])
+	_apply_story_result(result)
 	EventBus.event_resolved.emit(result)
 	EventBus.action_message.emit(result.get("message", ""))
 	EventBus.resources_changed.emit(player_sect)

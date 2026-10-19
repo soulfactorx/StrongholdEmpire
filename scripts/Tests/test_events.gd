@@ -556,7 +556,12 @@ func _start_saga(scenario_id: String, npc_id: String) -> void:
 ## 등장인물로 계절을 넘기며 끝까지 플레이한다. plan: {기연 id: 선택지 글 앞부분}, 없는 기연은 보이는 마지막 선택지.
 ## outcomes: {기연 id: 전투 결과} (기본 승리). 일어난 기연 id 목록을 돌려준다.
 ## start_level을 주면 그 레벨로 시작한다 (수련으로 경지를 쌓은 셈).
+## 마지막 플레이에서 기연마다 본 것: {기연 id: {text, choices, features(그때 열린 기능), role}}
+var _saga_log: Dictionary = {}
+
+
 func _play_saga(scenario_id: String, npc_id: String, plan: Dictionary, outcomes: Dictionary = {}, start_level: int = 0) -> Array:
+	_saga_log.clear()
 	_start_saga(scenario_id, npc_id)
 	if start_level > 0:
 		gm().player_character.level = start_level
@@ -569,6 +574,14 @@ func _play_saga(scenario_id: String, npc_id: String, plan: Dictionary, outcomes:
 			continue
 		var event: Dictionary = gm().pending_event
 		seen.append(event["id"])
+		_saga_log[event["id"]] = {
+			"text": str(event.get("description", "")), "choices": Array(event.get("choices", [])),
+			"features": gm().unlocked_features.duplicate(), "role": gm().player_character.role,
+		}
+		# 기능 소개 장면은 읽고 닫는다
+		if event.get("intro", false):
+			gm().resolve_pending_event(0)
+			continue
 		# 계획에 없는 기연은 보이는 마지막 선택지 (대개 누구나 고를 수 있는 무난한 선택지)
 		var shown: int = (event["choices"] as Array).size() - 1
 		if plan.has(event["id"]):
@@ -593,6 +606,8 @@ func _play_saga(scenario_id: String, npc_id: String, plan: Dictionary, outcomes:
 		if result.has("end_game"):
 			gm()._force_end(result["end_game"])
 		gm()._check_end_states()
+		# 기능 개방·역할·일지, 이어지는 장면(next)
+		gm()._apply_story_result(result)
 		# 전투 결과로 이어지는 기연(승리·패배 뒤의 장면)은 다음 계절을 기다리지 않고 바로 확인한다.
 		if not gm().is_game_over():
 			gm()._try_trigger_event()
@@ -654,16 +669,45 @@ func _test_main_saga_system() -> void:
 func _test_main_saga_paths() -> void:
 	var D: CombatManager.Outcome = CombatManager.Outcome.DEFEAT
 	var sid: String = "saga_1_blood_moon"
-	# 남궁휘: 선의 길 → 남궁의 재건
+	# 남궁휘: 선의 길 → 남궁의 재건. 기능이 이야기를 따라 하나씩 열리고, 지난 선택을 기억한 대사가 나온다.
 	var seen: Array = _play_saga(sid, "npc_rival", {
-		"s1_red_moon": "서신을 찢는다", "s1_hwi_shadow_of_father": "명을 따르고", "s1_alliance": "맹회 말석",
-		"s1_hwi_rival": "웃으며", "s1_black_wind_offer": "사파와 손잡는", "s1_lady_and_shadow": "누이를 찾아가",
-		"s1_hwi_sister_secret": "누이의 마음을", "s1_traitor_within": "의심을 접고", "s1_blood_night": "무너지는 서문",
-		"s1_hwi_father_falls": "가문을", "s1_demon_reign": "저항한다", "s1_crossroads": "지켜야 할",
-		"s1_finale_hwi": "남궁세가를",
+		"s1_red_moon": "서신을 찢는다", "s1_hwi_moon_talk": "누이, 나는", "s1_hwi_shadow_of_father": "누이와 몰래",
+		"s1_hwi_runaway": "청운산까지", "s1_alliance": "맹회 말석", "s1_hwi_rival": "웃으며", "s1_hwi_toast": "맹주 자리가",
+		"s1_black_wind_offer": "사파와 손잡는", "s1_lady_and_shadow": "누이를 찾아가", "s1_hwi_sister_secret": "누이의 마음을",
+		"s1_traitor_within": "의심을 접고", "s1_blood_night": "무너지는 서문", "s1_hwi_father_falls": "가주의 자리에",
+		"s1_hwi_first_council": "곳간을", "s1_demon_reign": "저항한다", "s1_crossroads": "지켜야 할", "s1_finale_hwi": "남궁세가를",
 	})
 	_check(gm().current_ending_id == "s1_namgung_rebuilt" and gm().game_over_id == "scenario_complete", "1장 남궁휘: 남궁의 재건 (%s)" % [seen])
 	_check(seen.find("s1_blood_night") > seen.find("s1_traitor_within") and seen.find("s1_traitor_within") > seen.find("s1_lady_and_shadow"), "1장: 연표 순서")
+	# 이어지는 대화: 붉은 달 → 담장 위의 밤이 같은 계절에 바로 이어진다
+	_check(seen.find("s1_hwi_moon_talk") == seen.find("s1_red_moon") + 1 and seen.find("s1_hwi_runaway") == seen.find("s1_hwi_shadow_of_father") + 1, "대화 장면: next로 바로 이어짐")
+	# 기능 단계 개방: 처음엔 역할 행동·인연만, 청운산 길에서 비무·무공·지도가 열리고, 가주가 되면 문파 경영이 열린다
+	var opening: Array = _saga_log["s1_red_moon"]["features"]
+	_check(opening == ["role_action", "bond"], "기능 개방: 시작은 역할 행동·인연뿐 (%s)" % [opening])
+	var mid: Array = _saga_log["s1_alliance"]["features"]
+	_check(mid.has("spar") and mid.has("martial") and mid.has("travel") and not mid.has("sect"), "기능 개방: 아버지의 그늘 뒤 비무·무공·지도 (%s)" % [mid])
+	_check(seen.has("feature_intro"), "기능 개방: 열린 기능 소개 장면")
+	var council: Dictionary = _saga_log["s1_hwi_first_council"]
+	_check(council["role"] == CharacterData.Role.LEADER and council["features"].has("sect") and council["features"].has("diplomacy"), "역할 변화: 가주가 되면 문파 경영·외교가 열림")
+	# 기억하는 대사: 청운산에 함께 갔던 일을 누이와 집법당주가 기억한다
+	_check(_saga_log["s1_hwi_sister_secret"]["text"].contains("청운산 가던 길") and not _saga_log["s1_hwi_sister_secret"]["text"].contains("무섭다고 했었지"), "기억하는 대사: 고른 일만 기억")
+	_check(_saga_log["s1_hwi_father_falls"]["text"].contains("누이 손 잡고"), "기억하는 대사: 아버지의 유언")
+	_check(_saga_log["s1_blood_night"]["text"].contains("진무겸, 역시"), "기억하는 대사: 의심했던 진무겸")
+	# 강호 일지: 목표가 바뀌고 소문이 쌓인다
+	_check(gm().journal_goal.contains("남궁세가를 다시 세우고") and gm().journal_rumors.size() >= 3, "강호 일지: 목표·소문 (%s)" % gm().journal_goal)
+	# 이야기 모드는 문파 살림으로 끝나지 않는다
+	gm().player_sect.disciple_count = 0
+	_check(EndingManager.check_game_over(gm().player_sect).is_empty(), "이야기 모드: 문파 게임오버 없음")
+	# 다른 등장인물은 단계 개방 없이 모두 열림
+	_start_saga(sid, "npc_swallow")
+	_check(not gm().progressive_features and FeatureGate.is_open("sect_war"), "기능 개방: 시작 기능이 없는 등장인물은 모두 열림")
+	_start_saga(sid, "npc_rival")
+	_check(not FeatureGate.is_open("spar") and not RoleDashboard.is_button_visible(gm().player_character.role, "CombatButton"), "기능 개방: 잠긴 버튼은 숨김")
+	_check(gm().pending_role_transitions.is_empty(), "기능 개방: 역할 전환 전에는 전환 알림 없음")
+	var state: Dictionary = gm()._build_save_state()
+	gm().unlocked_features.append("spar")
+	gm()._apply_save_data(state)
+	_check(gm().progressive_features and not FeatureGate.is_open("spar") and gm().journal_goal.begins_with("붉은 달"), "기능 개방·일지 저장/불러오기")
 	# 남궁휘: 혈월의 밤 무모한 돌격 → 배드 엔딩
 	_play_saga(sid, "npc_rival", {"s1_blood_night": "홀로 천마의", "s1_black_wind_offer": "사파와 손잡는"})
 	_check(gm().current_ending_id == "s1_bad_sacrifice" and gm().game_over_id == "story_end", "1장 남궁휘: 혈월의 제물 (배드)")

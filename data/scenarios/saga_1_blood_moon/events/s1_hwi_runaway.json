@@ -1,0 +1,109 @@
+{
+  "id": "s1_hwi_runaway",
+  "title": "청운산 가는 길",
+  "description": "누이와 함께 몰래 세가를 빠져나왔습니다. 청운산으로 가는 길, 누이는 오랜만에 소녀처럼 웃었습니다.",
+  "can_repeat": false,
+  "priority": false,
+  "weight": 10,
+  "follow_up": true,
+  "npc": "npc_namgung_lady",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_rival",
+      "value": true
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "있잖아, 난 세가 밖으로 혼자 나가 본 적이 한 번도 없어. 남궁의 딸이라서."
+    },
+    {
+      "speaker": "player",
+      "text": "그럼 오늘은 남궁의 딸 말고 그냥 설이 해."
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "…그 말, 평생 기억할게."
+    }
+  ],
+  "choices": [
+    {
+      "label": "청운산까지 간다",
+      "message": "청운산 아래 주막에서 청운검파의 의녀 백소하를 만나 하룻밤을 묵었습니다. 돌아오자 아버지의 불호령이 기다리고 있었습니다. 남궁설 유대 +10, 남궁천 유대 -5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_runaway",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lady",
+          "add": 10
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lord",
+          "add": -5
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hwi_ran_off",
+          "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
+        },
+        {
+          "type": "unlock",
+          "feature": "spar"
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
+        },
+        {
+          "type": "goal",
+          "text": "정도맹 결성 자리에서 남궁의 이름을 알리기"
+        }
+      ]
+    },
+    {
+      "label": "누이를 달래 돌아간다",
+      "message": "\"…역시 넌 아버지 아들이야.\" 누이가 웃었지만 조금 쓸쓸해 보였습니다. 남궁천 유대 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_runaway",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lord",
+          "add": 5
+        },
+        {
+          "type": "unlock",
+          "feature": "spar"
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
+        },
+        {
+          "type": "goal",
+          "text": "정도맹 결성 자리에서 남궁의 이름을 알리기"
+        }
+      ]
+    }
+  ]
+}

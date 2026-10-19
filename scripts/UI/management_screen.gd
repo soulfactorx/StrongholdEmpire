@@ -111,6 +111,7 @@ func _ready() -> void:
 		return
 	for button in action_grid.get_children():
 		_action_buttons[button.name] = button
+	_build_journal()
 	if LayoutMode.is_portrait():
 		_build_portrait_layout()
 	_refresh_all()
@@ -268,6 +269,34 @@ func _refresh_all() -> void:
 	_update_role_actions()
 
 
+## 강호 일지: 지금의 목표와 최근 소문 (역할 칸 맨 위). 비어 있으면 숨긴다.
+var journal_label: Label
+var bond_button: Button
+
+
+func _build_journal() -> void:
+	bond_button = $Margin/RootHBox/RightPanel/RelationshipPanel/RelationshipVBox/BondButton
+	var box: Node = role_resource_label.get_parent()
+	journal_label = Label.new()
+	journal_label.name = "JournalLabel"
+	journal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(journal_label)
+	box.move_child(journal_label, 0)
+	_UiTheme.set_font_size(journal_label, 16)
+	journal_label.add_theme_color_override("font_color", _UiTheme.COLORS["text_primary"])
+
+
+func _update_journal() -> void:
+	var lines: PackedStringArray = []
+	if not GameManager.journal_goal.is_empty():
+		lines.append("▶ 목표: " + GameManager.journal_goal)
+	var rumors: Array[String] = GameManager.journal_rumors
+	for rumor in rumors.slice(maxi(0, rumors.size() - 2)):
+		lines.append("· 소문: " + rumor)
+	journal_label.text = "【강호 일지】\n" + "\n".join(lines) if not lines.is_empty() else ""
+	journal_label.visible = not lines.is_empty()
+
+
 ## 역할마다 할 일이 없는 버튼과 칸을 숨긴다 (RoleDashboard)
 func _apply_role_layout() -> void:
 	var role: CharacterData.Role = GameManager.player_character.role
@@ -275,7 +304,8 @@ func _apply_role_layout() -> void:
 		var button: Control = _action_buttons.get(button_name)
 		if button:
 			button.visible = RoleDashboard.is_button_visible(role, button_name)
-	facility_panel.visible = RoleDashboard.get_layout(role)["sect"]
+	facility_panel.visible = RoleDashboard.get_layout(role)["sect"] and FeatureGate.is_open("sect")
+	bond_button.visible = FeatureGate.is_open("bond")
 	_update_spar_button()
 
 
@@ -308,6 +338,8 @@ func _update_role_actions() -> void:
 	for child in role_action_box.get_children():
 		role_action_box.remove_child(child)
 		child.queue_free()
+	_update_journal()
+	role_action_box.visible = FeatureGate.is_open("role_action")
 	var can_act: bool = RoleActions.can_act(GameManager.role_state, GameManager._get_turn_index())
 	for action in RoleActions.get_actions(character.role):
 		var button := Button.new()
@@ -572,6 +604,9 @@ func _on_action_message(message: String) -> void:
 
 
 func _on_event_triggered(event_data: Dictionary) -> void:
+	# 기능이 새로 열렸으면 버튼을 다시 보인다
+	if event_data.get("intro", false):
+		_refresh_all()
 	AudioManager.play_event()
 	event_popup.show_event(event_data)
 

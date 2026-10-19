@@ -1,0 +1,87 @@
+{
+  "id": "s1_hwi_after_win",
+  "title": "이긴 자의 무게",
+  "description": "연회장 한가운데서 청운의 대사형을 꺾었습니다. 사람들의 환호 속에서, 진무겸만이 웃지 않았습니다.",
+  "can_repeat": false,
+  "priority": true,
+  "weight": 8,
+  "npc": "npc_senior_brother",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_rival",
+      "value": true
+    },
+    {
+      "type": "flag",
+      "flag": "s1_hwi_beat_mugyeom",
+      "value": true
+    },
+    {
+      "type": "turns_since_flag",
+      "flag": "s1_hwi_rival",
+      "op": ">=",
+      "value": 1
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_namgung_lord",
+      "text": "(나중에, 혼잣말처럼) …제법이구나."
+    },
+    {
+      "speaker": "npc_senior_brother",
+      "text": "(속으로) 이것도 남궁이 가져가는군. 맹주 자리도, 비무의 영광도."
+    }
+  ],
+  "choices": [
+    {
+      "label": "진무겸에게 예를 갖춰 인사한다",
+      "message": "\"…남궁의 매화가 벌써 피었군.\" 진무겸 유대 +5, 명성 +3",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_after_win",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_senior_brother",
+          "add": 5
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 3
+        }
+      ]
+    },
+    {
+      "label": "환호를 즐긴다",
+      "message": "아버지가 멀리서 고개를 끄덕였습니다. 남궁천 유대 +5, 진무겸 유대 -5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_after_win",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lord",
+          "add": 5
+        },
+        {
+          "type": "bond",
+          "target": "npc_senior_brother",
+          "add": -5
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "id": "s1_hwi_father_test",
+  "title": "검으로 증명하라",
+  "description": "아버지가 한참 당신을 내려다보다 말했습니다. \"좋다. 집법당주 남궁철과 겨뤄라. 세 합을 버티면 데려가겠다.\"",
+  "can_repeat": false,
+  "priority": false,
+  "weight": 10,
+  "follow_up": true,
+  "npc": "npc_namgung_lord",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_rival",
+      "value": true
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_namgung_enforcer",
+      "text": "소가주, 사정 두지 않겠습니다."
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "(연무장 가장자리에서) 휘야, 힘 빼! 넌 늘 어깨에 힘이 너무 들어가!"
+    },
+    {
+      "speaker": "npc_namgung_lord",
+      "text": "비무는 상대를 이기는 게 아니라 자신을 아는 것이다. 앞으로 인연 있는 무인과 자주 겨뤄 보아라."
+    }
+  ],
+  "choices": [
+    {
+      "label": "전력을 다해 겨룬다",
+      "message": "세 합째에 남궁철의 검이 당신의 목 앞에서 멈췄습니다. 그러나 아버지가 고개를 끄덕였습니다. \"버텼구나.\" 남궁천 유대 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_father_test",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lord",
+          "add": 10
+        },
+        {
+          "type": "experience",
+          "amount": 30
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hwi_proved",
+          "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "spar"
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
+        },
+        {
+          "type": "goal",
+          "text": "정도맹 결성 자리에서 남궁의 이름을 알리기"
+        }
+      ]
+    },
+    {
+      "label": "일부러 져서 아버지를 안심시킨다",
+      "message": "아버지가 혀를 찼습니다. \"져 주는 검은 검이 아니다. …그래도 마음은 알겠다.\" 남궁천 유대 +5, 지혜 +1",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_father_test",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lord",
+          "add": 5
+        },
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 1
+        },
+        {
+          "type": "unlock",
+          "feature": "spar"
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
+        },
+        {
+          "type": "goal",
+          "text": "정도맹 결성 자리에서 남궁의 이름을 알리기"
+        }
+      ]
+    }
+  ]
+}

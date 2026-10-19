@@ -75,6 +75,10 @@
           "type": "flag",
           "flag": "s1_guardian",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "천마가 혈월의 밤에 깊은 상처를 입었다는 말이 은밀히 돈다. 내년 봄이면 강호의 판이 정해질 것이다."
         }
       ],
       "conditions": [
@@ -99,6 +103,10 @@
           "type": "flag",
           "flag": "s1_neutral_path",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "천마가 혈월의 밤에 깊은 상처를 입었다는 말이 은밀히 돈다. 내년 봄이면 강호의 판이 정해질 것이다."
         }
       ],
       "conditions": [
@@ -128,6 +136,10 @@
           "type": "flag",
           "flag": "s1_ambition",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "천마가 혈월의 밤에 깊은 상처를 입었다는 말이 은밀히 돈다. 내년 봄이면 강호의 판이 정해질 것이다."
         }
       ],
       "conditions": [
@@ -151,6 +163,10 @@
         {
           "type": "experience",
           "amount": 15
+        },
+        {
+          "type": "rumor",
+          "text": "천마가 혈월의 밤에 깊은 상처를 입었다는 말이 은밀히 돈다. 내년 봄이면 강호의 판이 정해질 것이다."
         }
       ]
     }

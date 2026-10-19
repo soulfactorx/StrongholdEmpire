@@ -62,7 +62,8 @@
     "time_limit_years": 5,
     "legacy_enabled": false,
     "exp_scale": 1.5,
-    "end_on_victory": true
+    "end_on_victory": true,
+    "sect_game_over": false
   },
   "common_events": [
     "bonds/bond_g_",

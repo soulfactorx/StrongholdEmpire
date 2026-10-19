@@ -31,18 +31,58 @@
       "text": "소가주… 아니, 가주. 가주님의 마지막 말씀입니다. '휘야, 살아라.'"
     },
     {
+      "speaker": "npc_namgung_enforcer",
+      "text": "그리고… '누이 손 잡고 청운산 가던 녀석이, 이제 남궁을 짊어지겠구나' 하셨습니다.",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_ran_off",
+          "value": true
+        }
+      ]
+    },
+    {
+      "speaker": "npc_namgung_enforcer",
+      "text": "연회에서 진무겸을 꺾었다는 소식을 들으셨을 때, 가주님께서 처음으로 웃으셨지요.",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_beat_mugyeom",
+          "value": true
+        }
+      ]
+    },
+    {
+      "speaker": "npc_namgung_enforcer",
+      "text": "명단에 이름을 넣었다 뺐다 하시던 그 밤… 가주님은 소가주를 누구보다 믿으셨습니다.",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_proved",
+          "value": true
+        }
+      ]
+    },
+    {
       "speaker": "player",
       "text": "……살라고만 하시고, 어떻게 살라고는 안 하셨군."
     },
     {
       "speaker": "npc_namgung_lady",
-      "text": "휘야, 울어도 돼. 지금은 남궁의 가주 말고, 아버지 아들이어도 돼."
+      "text": "휘야, 울어도 돼. 지금은 남궁의 가주 말고, 아버지 아들이어도 돼.",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s1_seol_dead",
+          "value": false
+        }
+      ]
     }
   ],
   "choices": [
     {
-      "label": "가문을 다시 세우겠다고 맹세한다",
-      "message": "아버지의 검을 들어 하늘을 향했습니다. 도덕 +5, 남궁세가 재건을 다짐했습니다",
+      "label": "가주의 자리에 올라 가문을 다시 세운다",
+      "message": "아버지의 검을 들어 하늘을 향했습니다. 남궁세가의 가주가 되었습니다. 도덕 +5",
       "effects": [
         {
           "type": "flag",
@@ -64,8 +104,12 @@
           "target": "npc_namgung_lord"
         },
         {
-          "type": "learn_art",
-          "art": "manual_namgung_plum_sword"
+          "type": "set_role",
+          "role": "LEADER"
+        },
+        {
+          "type": "goal",
+          "text": "가주로서 무너진 남궁세가를 다시 세우고, 살아남은 이들을 지키기"
         }
       ]
     },
@@ -96,6 +140,10 @@
         {
           "type": "end_relationship",
           "target": "npc_namgung_lord"
+        },
+        {
+          "type": "goal",
+          "text": "천마 위무량에게 아버지의 원수를 갚기"
         }
       ]
     },
@@ -121,6 +169,10 @@
           "type": "flag",
           "flag": "s1_hwi_humble",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "누이를 도와 남궁의 남은 이들을 지키기"
         }
       ],
       "conditions": [
