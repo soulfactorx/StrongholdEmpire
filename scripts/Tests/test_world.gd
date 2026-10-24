@@ -685,9 +685,10 @@ func _test_invasion_flow() -> void:
 	await process_frame
 	var controller: Node = current_scene
 	_check(controller.scene_file_path == SceneRouter.COMBAT and gm.pending_combat.invader_id == "heukpung", "맞서 싸우면 방어전")
-	for unit in controller._get_alive_enemies():
-		unit.take_damage(99999)
-	controller._check_victory()
+	for unit in controller.engine.foes:
+		unit.take_damage(unit.hp - 1)
+	controller.engine.friend_index = controller.engine.friends.find(controller.engine.get_player())
+	await controller.skip_to_result()
 	_check(heukpung.disciple_count == before - _Balance.INVASION_REPEL_LOSS and gm.world_news[-1].contains("막아 냈습니다"), "침공을 막아 내면 침략 세력 제자 감소, 강호 소식")
 	SceneRouter.goto(tree, SceneRouter.WORLD)
 	await process_frame

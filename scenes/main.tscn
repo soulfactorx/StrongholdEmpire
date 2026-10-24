@@ -131,11 +131,6 @@ custom_minimum_size = Vector2(150, 32)
 layout_mode = 2
 text = "엔딩 / 레거시"
 
-[node name="DevGridButton" type="Button" parent="CenterContainer/VBox/DevPanel/DevVBox"]
-custom_minimum_size = Vector2(150, 32)
-layout_mode = 2
-text = "그리드 이동 데모"
-
 [connection signal="pressed" from="CenterContainer/VBox/ContinueButton" to="." method="_on_continue_pressed"]
 [connection signal="pressed" from="CenterContainer/VBox/NewGameButton" to="." method="_on_new_game_pressed"]
 [connection signal="pressed" from="CenterContainer/VBox/LoadButton" to="." method="_on_load_pressed"]
@@ -148,4 +143,3 @@ text = "그리드 이동 데모"
 [connection signal="pressed" from="CenterContainer/VBox/DevPanel/DevVBox/DevCombatButton" to="." method="_on_dev_combat_pressed"]
 [connection signal="pressed" from="CenterContainer/VBox/DevPanel/DevVBox/DevSectWarButton" to="." method="_on_dev_sect_war_pressed"]
 [connection signal="pressed" from="CenterContainer/VBox/DevPanel/DevVBox/DevEndingButton" to="." method="_on_dev_ending_pressed"]
-[connection signal="pressed" from="CenterContainer/VBox/DevPanel/DevVBox/DevGridButton" to="." method="_on_dev_grid_pressed"]

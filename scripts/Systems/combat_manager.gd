@@ -137,7 +137,7 @@ static func create_night_bandits(player: CharacterData, sect: SectData = null) -
 	setup.rewards = {"experience": 30, "gold": 30, "reputation": 3, "strength": 1}
 	setup.defeat_penalty = {"gold": 40, "reputation": 3, "injury_ratio": 0.3}
 	if varied:
-		# 야습: 밤, 우리 지역의 전장, 셋째 라운드에 도적이 더 온다
+		# 야습: 밤, 우리 지역의 전장, 도적이 하나 더 뒤를 받친다
 		setup.add_reinforcement(3, _create_bandit(player, positions.size()), Vector2i(15, 5))
 		_vary(setup, "", "night")
 	return setup
@@ -402,7 +402,7 @@ static func create_invasion(invader: SectData, player: CharacterData, sect: Sect
 	setup.defeat_penalty = {"gold": 80, "reputation": _Balance.INVASION_YIELD_REPUTATION, "injury_ratio": 0.3}
 	setup.victory_flag = "repelled_invasion"
 	if varied:
-		# 둘째 물결: 셋째 라운드에 졸개가 더 밀려온다
+		# 둘째 물결: 졸개가 더 밀려와 뒤에 선다
 		var wave: CharacterData = NpcRoster.create_character(soldier_id, player)
 		wave.id = "%s_wave" % soldier_id
 		wave.display_name = "%s 후속대" % wave.display_name

@@ -39,7 +39,7 @@ var objective: String = "defeat_all"
 ## 우두머리·지킬 아군의 캐릭터 id와 이름
 var objective_target: String = ""
 var objective_target_name: String = ""
-## 버틸 라운드 수 (survive)
+## 버틸 합 수 (survive)
 var objective_rounds: int = 0
 ## 탈출 칸 (escape)
 var exit_tiles: Array[Vector2i] = []
@@ -48,8 +48,10 @@ var weather: String = "clear"
 var battlefield: String = ""
 ## 전장 배경으로 쓸 지역 id (비면 기본 전투 배경)
 var region_id: String = ""
-## 적 증원: [{round, character, position}] — 그 라운드 적군 턴이 시작될 때 나타난다
+## 적 증원: [{round, character, position}] — 상대 줄 맨 뒤에 붙는다
 var reinforcements: Array[Dictionary] = []
+## 초식 배치 대결: 한 사람과 겨루는 최대 합 수 (0이면 기본 4). 넘기면 체력 비율이 낮은 쪽이 물러난다
+var max_bouts: int = 0
 
 
 func set_terrain(tiles: Array[Vector2i], kind: CombatRules.Terrain) -> void:

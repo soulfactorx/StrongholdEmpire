@@ -39,6 +39,8 @@ const INIT_SEQUENCE: Array = [
 	["world", "_test_sect_registry"],
 	["world", "_test_world_sect_events"],
 	["combat", "_test_combat_rules"],
+	["combat", "_test_duel_rules"],
+	["combat", "_test_duel_cards_and_ai"],
 	["combat", "_test_damage_randomness"],
 	["combat", "_test_martial_art_library"],
 	["combat", "_test_ally_setup"],
@@ -56,11 +58,8 @@ const RUNTIME_SEQUENCE: Array = [
 	["events", "_test_event_popup_choices"],
 	["core", "_test_game_over_flow"],
 	["world", "_test_world_state_and_war"],
-	["combat", "_test_combat_effects"],
-	["combat", "_test_ally_combat"],
-	["combat", "_test_basic_attack_limit"],
-	["combat", "_test_grid_cursor"],
-	["combat", "_test_combat_preview_and_history"],
+	["combat", "_test_duel_engine"],
+	["combat", "_test_duel_screen"],
 	["events", "_test_event_progress_tracking"],
 	["scenario", "_test_scenario_data"],
 	["scenario", "_test_scenario_parameters"],
@@ -80,7 +79,6 @@ const RUNTIME_SEQUENCE: Array = [
 	["roles", "_test_role_actions_hub"],
 	["combat", "_test_combat_library"],
 	["combat", "_test_combat_variety"],
-	["combat", "_test_auto_combat"],
 	["events", "_test_story_arcs"],
 	["events", "_test_main_saga_system"],
 	["events", "_test_main_saga_paths"],
@@ -132,11 +130,8 @@ func _initialize() -> void:
 	# 테스트의 저장(자동 저장 포함)은 실제 세이브와 다른 폴더에 한다.
 	SaveManager.save_dir = TEST_SAVE_DIR
 	GameSettings.settings_path = TEST_SAVE_DIR.path_join("settings.cfg")
-	# 적 차례 간격 없이 바로 진행 (간격은 test_ui의 _test_input_and_tips에서 따로 시험)
+	# 교전 줄 사이 간격 없이 바로 진행 (간격은 test_ui의 _test_input_and_tips에서 따로 시험)
 	GameSettings.combat_delay = 0.0
-	# 공격 미리보기는 끄고 바로 실행한다 (켠 상태는 test_combat의 _test_combat_preview_and_history에서 따로)
-	GameSettings.combat_preview = false
-	GameSettings.enemy_preview = false
 	# 경영 행동 미리보기도 끈다 (켠 상태는 test_ui의 _test_action_preview에서 따로)
 	GameSettings.action_preview = false
 	GameSettings.faction_report = false
@@ -161,8 +156,6 @@ func _initialize() -> void:
 func _run_runtime_tests() -> void:
 	# GameManager가 준비되며 설정 파일을 읽으므로, 시험용 전투 설정을 다시 맞춘다.
 	GameSettings.combat_delay = 0.0
-	GameSettings.combat_preview = false
-	GameSettings.enemy_preview = false
 	GameSettings.action_preview = false
 	GameSettings.faction_report = false
 	# 각 검사가 끝까지 실행됐는지 확인한다. 스크립트 오류로 중단되면 완료 표시가 남지 않는다.

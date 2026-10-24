@@ -26,13 +26,13 @@ const REGION_KINDS: Dictionary = {
 	"wuchang": "river", "changsha": "forest", "nanchang": "river", "kunming": "forest", "qingyun": "mountain",
 }
 
-## 날씨·시간: 이름과 전투에 주는 영향 (CombatRules가 적용)
+## 날씨·시간: 이름과 대결에 주는 영향 (DuelRules·DuelEngine이 적용)
 const WEATHERS: Dictionary = {
 	"clear": {"name": "맑음", "effect": ""},
-	"night": {"name": "밤", "effect": "원거리 무공 사거리 -1"},
-	"rain": {"name": "비", "effect": "화 무공 피해 -30%, 수 무공 피해 +20%"},
-	"fog": {"name": "안개", "effect": "무공 사거리 최대 2"},
-	"snow": {"name": "눈", "effect": "수풀·고지 이동 +1"},
+	"night": {"name": "밤", "effect": "회피가 한 단계 빨라짐"},
+	"rain": {"name": "비", "effect": "화 초식 피해 -30%, 수 초식 피해 +20%"},
+	"fog": {"name": "안개", "effect": "상대 배치가 덜 보임"},
+	"snow": {"name": "눈", "effect": "강공이 한 단계 느려짐"},
 }
 
 ## 전투 목표: 이름
@@ -150,18 +150,18 @@ static func _inside(pos: Vector2i) -> bool:
 	return pos.x >= 0 and pos.y >= 0 and pos.x < GRID_WIDTH and pos.y < GRID_HEIGHT
 
 
-## 전투 화면에 보일 목표 한 줄 (예: "목표: 3라운드 동안 버텨라 · 밤 — 원거리 무공 사거리 -1")
+## 전투 화면에 보일 목표 한 줄 (예: "목표: 3합 동안 버텨라 · 밤 — 회피가 한 단계 빨라짐")
 static func describe(setup: CombatSetup) -> String:
 	var goal: String = str(OBJECTIVES.get(setup.objective, OBJECTIVES["defeat_all"]))
 	match setup.objective:
 		"defeat_target":
 			goal = "%s을(를) 쓰러뜨려라" % setup.objective_target_name
 		"survive":
-			goal = "%d라운드 동안 버텨라" % setup.objective_rounds
+			goal = "%d합 동안 버텨라" % setup.objective_rounds
 		"escape":
-			goal = "금빛 칸으로 탈출하라 (주인공)"
+			goal = "공격을 %d번 흘려 빠져나가라 (주인공)" % DuelEngine.ESCAPE_EVADES
 		"protect":
-			goal = "%s을(를) 지키며 적을 물리쳐라" % setup.objective_target_name
+			goal = "%s이(가) 쓰러지지 않게 적을 물리쳐라" % setup.objective_target_name
 	var parts: PackedStringArray = ["목표: " + goal]
 	if setup.battlefield in KINDS:
 		parts.append(str(KINDS[setup.battlefield]))
@@ -169,5 +169,5 @@ static func describe(setup: CombatSetup) -> String:
 	if setup.weather != "clear":
 		parts.append("%s — %s" % [info["name"], info["effect"]])
 	if not setup.reinforcements.is_empty():
-		parts.append("적 증원 %d라운드" % int(setup.reinforcements[0]["round"]))
+		parts.append("적 증원 %d명이 뒤를 받침" % setup.reinforcements.size())
 	return " · ".join(parts)

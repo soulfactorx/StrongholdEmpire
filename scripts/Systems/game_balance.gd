@@ -431,19 +431,14 @@ const LEVEL_UP_INTERNAL_GAIN := 10
 
 # 전투
 const SPAR_EXP := 30
-const BASE_ATTACK_DAMAGE := 10
-const ENEMY_BASE_ATTACK_DAMAGE := 10
-## 기본 공격은 차례마다 이 횟수만 할 수 있다. 남은 행동력은 이동과 무공에 쓴다.
-const BASIC_ATTACKS_PER_TURN := 1
-## 무공 피해에 더하는 무력 비율
-const ART_STRENGTH_RATIO := 0.3
-## 피해 흔들림: 최종 피해에 1 ± 이 값 사이의 배율을 곱한다
-const DAMAGE_SPREAD := 0.15
 ## 회심(치명타): 확률 = 기본 + 신법 × 계수 (상한), 피해 배율
 const CRIT_BASE := 0.03
 const CRIT_PER_AGILITY := 0.004
 const CRIT_MAX := 0.25
 const CRIT_MULTIPLIER := 1.5
+const AMBUSH_MULTIPLIER := 1.5
+const ELEMENT_ADVANTAGE := 1.2
+const ELEMENT_DISADVANTAGE := 0.85
 
 # 전투 — 아군 제자
 ## 문파 방어 전투에 함께 나서는 제자 수 (보유 제자 수를 넘지 않음)
@@ -451,33 +446,43 @@ const DEFENSE_ALLY_COUNT := 2
 ## 무술장 레벨 1을 넘는 단계마다 제자의 무력·신법 증가
 const ALLY_TRAINING_STAT_BONUS := 1
 
-# 전투 — 지형
-const FOREST_MOVE_COST := 2
-const WATER_MOVE_COST := 3
-const HIGH_MOVE_COST := 2
-## 수풀에 선 대상이 받는 피해 배율
-const FOREST_DEFENSE := 0.75
-## 물에 선 공격자가 주는 피해 배율
-const WATER_ATTACK := 0.8
-## 고지에 선 공격자가 주는 피해 배율과 무공 사거리 보너스
-const HIGH_ATTACK := 1.25
-const HIGH_RANGE_BONUS := 1
-
-# 전투 — 무공 효과
-const AMBUSH_MULTIPLIER := 1.5
-const ELEMENT_ADVANTAGE := 1.2
-const ELEMENT_DISADVANTAGE := 0.85
-const EMPOWER_MULTIPLIER := 1.25
-const EMPOWER_TURNS := 2
-const STUN_TURNS := 1
-## 기절이 풀린 직후 다시 기절하지 않는 기간
-const STUN_IMMUNE_TURNS := 2
-const KNOCKBACK_WALL_BONUS := 0.2
-
-# 전투 — 내공 폭주: 시전 후 내공이 최대치의 이 비율 미만이면 확률적으로 반동
-const OVERLOAD_THRESHOLD := 0.25
-const OVERLOAD_CHANCE := 30
-const OVERLOAD_DAMAGE_PER_COST := 1.5
+# 전투 — 초식 배치 대결 (DuelRules·DuelEngine)
+## 초식 피해에 더하는 무력 비율
+const DUEL_STRENGTH_RATIO := 0.8
+## 기세 상한과 기세 한 점마다 피해 증가
+const DUEL_MAX_MOMENTUM := 5
+const DUEL_MOMENTUM_DAMAGE := 0.05
+## 상성 배율: 빈틈·운기 중 받는 피해, 막기가 속공·술을 받을 때, 회피가 빠른 공격에 스칠 때, 속공에 끊긴 강공·술
+const DUEL_GAP_TAKEN := 1.2
+const DUEL_FOCUS_TAKEN := 1.3
+const DUEL_GUARD_QUICK := 0.25
+const DUEL_GUARD_TRICK := 0.6
+const DUEL_EVADE_GRAZE := 0.5
+const DUEL_INTERRUPTED := 0.5
+## 숙련 단계마다 피해 증가
+const DUEL_TIER_DAMAGE := 0.1
+## 막기의 반격 피해 = 기본 + 무력 × 비율
+const DUEL_COUNTER_BASE := 6
+const DUEL_COUNTER_RATIO := 0.5
+## 운기조식의 내공 회복 (여기에 지혜의 절반을 더한다)
+const DUEL_FOCUS_ENERGY := 20
+## 한 대결(두 사람)의 합 수. 넘으면 체력 비율이 낮은 쪽이 물러난다
+const DUEL_MAX_BOUTS := 4
+## 탈출 목표: 주인공이 흘려야 하는 공격 수
+const DUEL_ESCAPE_EVADES := 3
+## 우두머리 목표: 호위 하나마다 우두머리 체력 증가
+const DUEL_GUARD_HP_BONUS := 0.15
+## 상대 AI·자동 배치가 지난 합의 유형을 읽어 맞받는 확률
+const DUEL_ENEMY_COUNTER_RATE := 0.45
+const DUEL_PLAYER_AUTO_COUNTER_RATE := 0.6
+## 호위 목표: 우리 쪽이 대결에서 질 때마다 상대가 뚫고 들어와 지킬 인물이 잃는 체력 비율
+const DUEL_WARD_HIT := 0.4
+## 동료는 합이 끝났을 때 체력이 이 비율 아래면 부상으로 물러난다
+const DUEL_ALLY_RETREAT_RATIO := 0.3
+## 합격 초식을 펼칠 만큼 깊은 인연, 합격의 위력(여기에 동료 무력을 더함)과 기세
+const DUEL_COMBO_BOND := 40
+const DUEL_COMBO_POWER := 18
+const DUEL_COMBO_MOMENTUM := 2
 
 # 레거시
 const RETIRE_AGE := 55

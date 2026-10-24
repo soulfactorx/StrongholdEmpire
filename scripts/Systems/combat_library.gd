@@ -132,9 +132,10 @@ static func _validate_objective(data: Dictionary, errors: PackedStringArray) -> 
 			if int(objective.get("rounds", 0)) < 2:
 				errors.append("버티기 목표에 rounds(2 이상) 필요")
 		"escape":
+			# tiles는 옛 격자 전투의 탈출 칸 (선택, 대결에서는 쓰지 않는다)
 			var tiles: Variant = objective.get("tiles", [])
-			if not tiles is Array or (tiles as Array).is_empty():
-				errors.append("탈출 목표에 tiles 필요")
+			if not tiles is Array:
+				errors.append("탈출 목표의 tiles는 배열이어야 함")
 			else:
 				for pos in tiles:
 					_validate_pos(pos, "objective tiles", errors)

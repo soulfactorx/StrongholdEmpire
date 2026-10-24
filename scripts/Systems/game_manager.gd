@@ -37,6 +37,9 @@ var unlocked_features: Array[String] = []
 var pending_intros: Array[String] = []
 ## 강호 일지: 지금의 목표와 들려오는 소문 (최근 것이 뒤). 기연 효과 goal·rumor로 바뀐다
 var journal_goal: String = ""
+## 초식 배치 대결: 상대의 버릇 기록 {인물 id: {bouts, first: {유형: 횟수}}}, 초식 숙련 {무공 id: 쓴 횟수}
+var duel_memory: Dictionary = {}
+var art_mastery: Dictionary = {}
 var journal_rumors: Array[String] = []
 const JOURNAL_RUMOR_LIMIT := 6
 ## 지금 있는 지역 (강호 지도의 지역 id). 문파 일을 하는 역할은 본거지에 있고, 개인 재산을 쓰는 역할은 지도에서 옮겨 다닌다.
@@ -295,6 +298,8 @@ func _initialize_new_game(
 	legacy_records.clear()
 	year_start = _take_year_snapshot()
 	observed_arts = {}
+	duel_memory = {}
+	art_mastery = {}
 	owned_manuals.clear()
 	analyzed_elements = []
 	challenge_target = ""
@@ -1001,6 +1006,18 @@ func get_timeline() -> Array[Dictionary]:
 		entry["seasons_left"] = turn - now if turn >= 0 else -1
 		entry["date"] = "%s %d년 %s" % [ScenarioManager.get_era_name(), turn / SEASONS.size(), SEASONS[turn % SEASONS.size()]] if turn >= 0 else ""
 	return entries
+
+
+## 저장된 버릇 기록: JSON을 거치며 유형 키가 문자열이 되므로 숫자로 되돌린다
+static func _load_duel_memory(data: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for npc_id in data:
+		var record: Dictionary = data[npc_id]
+		var first: Dictionary = {}
+		for type in record.get("first", {}):
+			first[int(type)] = int(record["first"][type])
+		result[str(npc_id)] = {"bouts": int(record.get("bouts", 0)), "first": first}
+	return result
 
 
 ## 다음 큰 사건 (없으면 {})
@@ -1914,6 +1931,8 @@ func _build_save_state() -> Dictionary:
 		"unlocked_features": unlocked_features.duplicate(),
 		"pending_intros": pending_intros.duplicate(),
 		"journal_goal": journal_goal,
+		"duel_memory": duel_memory.duplicate(true),
+		"art_mastery": art_mastery.duplicate(),
 		"journal_rumors": journal_rumors.duplicate(),
 		"purse": {"gold": purse.gold, "food": purse.food},
 		"challenge_target": challenge_target,
@@ -2048,6 +2067,8 @@ func _apply_save_data(data: Dictionary) -> void:
 	unlocked_features.assign(Array(data.get("unlocked_features", [])).map(func(x: Variant) -> String: return str(x)))
 	pending_intros.assign(Array(data.get("pending_intros", [])).map(func(x: Variant) -> String: return str(x)))
 	journal_goal = str(data.get("journal_goal", ""))
+	duel_memory = _load_duel_memory(data.get("duel_memory", {}))
+	art_mastery = data.get("art_mastery", {}).duplicate()
 	journal_rumors.assign(Array(data.get("journal_rumors", [])).map(func(x: Variant) -> String: return str(x)))
 	player_region = str(data.get("player_region", ""))
 	if not WorldMap.has_region(player_region):

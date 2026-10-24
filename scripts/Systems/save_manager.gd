@@ -162,6 +162,7 @@ static func serialize_martial_arts(arts: Array[MartialArtData]) -> Array:
 			"range": art.range,
 			"heal_amount": art.heal_amount,
 			"move_bonus": art.move_bonus,
+			"card_type": art.card_type,
 			"description": art.description,
 			"enhance_level": art.enhance_level,
 		})
@@ -319,6 +320,7 @@ static func deserialize_martial_arts(data: Array) -> Array[MartialArtData]:
 		art.range = int(entry.get("range", 1))
 		art.heal_amount = int(entry.get("heal_amount", 0))
 		art.move_bonus = int(entry.get("move_bonus", 0))
+		art.card_type = str(entry.get("card_type", ""))
 		art.description = entry.get("description", "")
 		art.enhance_level = int(entry.get("enhance_level", 0))
 		result.append(art)

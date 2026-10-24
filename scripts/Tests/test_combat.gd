@@ -90,31 +90,24 @@ func _test_combat_flow() -> void:
 	)
 	_check(not gm.start_sparring()["success"], "같은 계절 두 번째 비무 거부")
 
-	# 적을 모두 쓰러뜨리면 승리 처리
+	# 상대를 몰아붙이면 승리 처리 (합을 다 쓰면 체력 비율이 낮은 쪽이 물러난다)
 	var controller: Node = current_scene
 	var exp_before: int = gm.player_character.experience
-	for unit in controller._get_alive_enemies():
-		unit.take_damage(99999)
-	controller._check_victory()
-	_check(gm.pending_combat == null, "승리 후 예약 전투 해제")
+	var rival: CombatUnit = controller.engine.current_foe()
+	rival.take_damage(rival.hp - 1)
+	await controller.skip_to_result()
+	_check(controller.engine.outcome == CombatManager.Outcome.VICTORY and gm.pending_combat == null, "승리 후 예약 전투 해제")
 	_check(gm.player_character.experience == exp_before + _Balance.SPAR_EXP, "비무 승리 경험치 반영")
 
-	# 도적 전투: 적 3명, 배율 적용, 적 AI 공격, 후퇴
+	# 도적 전투: 적 3명이 차례로 나서는 연전, 배율 적용, 후퇴
 	gm.start_combat(CombatManager.create_night_bandits(gm.player_character))
 	await process_frame
 	await process_frame
 	controller = current_scene
-	var enemies: Array = controller._get_alive_enemies()
-	_check(enemies.size() == 3, "도적 전투: 적 3명 배치")
-	var full_hp: int = CombatUnit.new(enemies[0].character).max_hp
-	_check(enemies[0].max_hp == int(full_hp * gm.pending_combat.enemy_hp_scale), "도적 체력 배율 적용")
-
-	var player: CombatUnit = controller._get_player()
-	var attacker: CombatUnit = enemies[0]
-	player.grid_pos = attacker.grid_pos + Vector2i(-1, 0)
-	var hp_before: int = player.hp
-	controller._run_enemy_ai(attacker)
-	_check(player.hp < hp_before, "인접한 적이 플레이어를 공격")
+	var foes: Array = controller.engine.foes
+	_check(foes.size() == 3, "도적 전투: 적 3명이 연전으로 나섬")
+	var full_hp: int = CombatUnit.new(foes[0].character).max_hp
+	_check(foes[0].max_hp == int(full_hp * gm.pending_combat.enemy_hp_scale * ScenarioRules.enemy_strength_scale()), "도적 체력 배율 적용")
 
 	var gold_before: int = gm.player_sect.gold
 	controller.leave_combat()
@@ -142,103 +135,451 @@ func _make_unit(strength: int = 10, player: bool = true) -> CombatUnit:
 	return CombatUnit.new(character, player)
 
 
+## 대결 시험용 인물: 내공 100, 신법·지혜를 정할 수 있다
+func _duel_unit(name: String, agility: int = 10, player: bool = false) -> CombatUnit:
+	var character := CharacterData.new()
+	character.display_name = name
+	character.agility = agility
+	character.internal_energy_max = 100
+	character.restore_internal_energy()
+	return CombatUnit.new(character, player)
+
+
+func _card(type: DuelCard.Type, power: int = 20, cost: int = 0) -> DuelCard:
+	return DuelCard.make("t_%d_%d" % [type, power], DuelCard.TYPE_NAMES[type], type, power, cost)
+
+
+## 한 칸을 판정하고 {a 받은 피해, b 받은 피해, 결과}를 돌려준다 (매번 새 인물)
+func _clash(ca: DuelCard, cb: DuelCard, weather: String = "clear") -> Dictionary:
+	var a: CombatUnit = _duel_unit("갑")
+	var b: CombatUnit = _duel_unit("을")
+	var result: Dictionary = DuelRules.resolve_slot(0, a, ca, b, cb, weather)
+	return {"a": result["damage"]["a"], "b": result["damage"]["b"], "result": result, "unit_a": a, "unit_b": b}
+
+
+## 초식 배치 대결의 한 칸 판정: 상성·속도·내공·기세·기절·운기·날씨
+func _test_duel_rules() -> void:
+	var T := DuelCard.Type
+	var plain: int = int(20 + 10 * DuelRules.STRENGTH_RATIO)
+	# 빈틈과 상성
+	var gap: Dictionary = _clash(_card(T.STRIKE), null)
+	_check(gap["b"] == int(plain * DuelRules.GAP_TAKEN) and gap["a"] == 0, "빈 칸은 빈틈: 피해 %d배" % DuelRules.GAP_TAKEN)
+	var broken: Dictionary = _clash(_card(T.STRIKE), _card(T.GUARD))
+	_check(broken["b"] == plain and "막기를 깸" in "\n".join(broken["result"]["lines"]), "강공은 막기를 깸 (온전한 피해)")
+	var blocked: Dictionary = _clash(_card(T.QUICK), _card(T.GUARD))
+	_check(blocked["b"] == int(plain * DuelRules.GUARD_QUICK) and blocked["a"] > 0, "막기는 속공을 줄이고 받아침")
+	var cut: Dictionary = _clash(_card(T.STRIKE), _card(T.QUICK))
+	_check(cut["a"] == plain and cut["b"] == int(plain * DuelRules.INTERRUPTED), "속공이 강공을 끊음 (강공 피해 절반)")
+	var dodged: Dictionary = _clash(_card(T.STRIKE), _card(T.EVADE))
+	_check(dodged["b"] == 0 and dodged["result"]["evaded"]["b"] == 1, "회피는 느린 강공을 흘림")
+	var read: Dictionary = _clash(_card(T.TRICK), _card(T.EVADE))
+	_check(read["b"] == plain, "술은 회피를 읽음")
+	var half: Dictionary = _clash(_card(T.TRICK), _card(T.GUARD))
+	_check(half["b"] == int(plain * DuelRules.GUARD_TRICK), "술은 막기를 반쯤 뚫음")
+	var open: Dictionary = _clash(_card(T.QUICK), _card(T.FOCUS))
+	_check(open["b"] == int(plain * DuelRules.FOCUS_TAKEN), "운기 중에는 무방비")
+	var focused: CombatUnit = open["unit_b"]
+	_check(focused.momentum == 0 and focused.character.internal_energy_current == 100, "운기: 내공은 최대를 넘지 않고, 맞으면 기세는 그대로 0")
+
+	# 운기: 내공 회복과 기세, 회복 무공은 체력도
+	var a: CombatUnit = _duel_unit("갑")
+	var b: CombatUnit = _duel_unit("을")
+	a.character.internal_energy_current = 10
+	a.take_damage(30)
+	var heal_card: DuelCard = _card(T.FOCUS, 12)
+	heal_card.effects.append("heal")
+	DuelRules.resolve_slot(0, a, heal_card, b, _card(T.GUARD), "clear")
+	_check(a.character.internal_energy_current == 10 + DuelRules.FOCUS_ENERGY + a.character.wisdom / 2 and a.momentum == 1 and a.hp == a.max_hp - 18, "운기: 내공·기세·회복")
+
+	# 내공·기세가 모자라면 빈틈
+	a = _duel_unit("갑")
+	b = _duel_unit("을")
+	a.character.internal_energy_current = 5
+	var result: Dictionary = DuelRules.resolve_slot(0, a, _card(T.STRIKE, 30, 20), b, _card(T.QUICK), "clear")
+	_check(result["damage"]["b"] == 0 and a.character.internal_energy_current == 5 and "내공 부족" in "\n".join(result["lines"]), "내공이 모자라면 헛손질 (빈틈)")
+	var finisher: DuelCard = _card(T.STRIKE, 50)
+	finisher.momentum_cost = 2
+	a.momentum = 1
+	result = DuelRules.resolve_slot(0, a, finisher, b, _card(T.GUARD), "clear")
+	_check(result["damage"]["b"] == 0 and "기세 부족" in "\n".join(result["lines"]), "기세가 모자라면 절초를 못 펼침")
+	a.momentum = 3
+	result = DuelRules.resolve_slot(0, a, finisher, b, _card(T.GUARD), "clear")
+	_check(result["damage"]["b"] > 0 and a.momentum == 2, "절초: 기세를 쓰고 이기면 하나 오름 (3 - 2 + 1)")
+	_check(b.momentum == 0, "진 쪽 기세는 0 아래로 내려가지 않음")
+
+	# 속도: 빠른 쪽이 먼저 쳐서 쓰러뜨리면 상대 초식은 나오지 않는다
+	a = _duel_unit("갑", 30)
+	b = _duel_unit("을", 5)
+	b.hp = 5
+	var a_hp: int = a.hp
+	DuelRules.resolve_slot(0, a, _card(T.QUICK), b, _card(T.QUICK), "clear")
+	_check(not b.is_alive() and a.hp == a_hp, "빠른 쪽이 먼저 쓰러뜨리면 반격 없음")
+
+	# 기절: 다음 칸이 막히고, 저항이 생긴다
+	a = _duel_unit("갑")
+	b = _duel_unit("을")
+	var stun: DuelCard = _card(T.TRICK, 5)
+	stun.effects.append("stun")
+	DuelRules.resolve_slot(0, a, stun, b, _card(T.GUARD), "clear")
+	_check(b.has_status("stunned") and b.has_status("stun_immune"), "기절 초식: 대상 기절")
+	result = DuelRules.resolve_slot(1, a, _card(T.QUICK), b, _card(T.STRIKE), "clear")
+	_check(result["damage"]["a"] == 0 and not b.has_status("stunned"), "기절한 쪽은 그 칸을 펼치지 못함")
+	DuelRules.resolve_slot(2, a, stun, b, _card(T.GUARD), "clear")
+	_check(not b.has_status("stunned"), "막 풀려난 쪽은 기절 저항")
+
+	# 날씨: 밤에는 회피가 빨라지고, 비에는 화 초식이 약해진다
+	a = _duel_unit("갑", 25)
+	b = _duel_unit("을", 10)
+	_check(DuelRules._speed(b, _card(T.EVADE), "night") == DuelRules._speed(b, _card(T.EVADE), "clear") + 10, "날씨: 밤에는 회피 속도 +1")
+	_check(DuelRules._speed(a, _card(T.STRIKE), "snow") == DuelRules._speed(a, _card(T.STRIKE), "clear") - 10, "날씨: 눈 속에서는 강공 속도 -1")
+	var fire: DuelCard = _card(T.STRIKE)
+	fire.element = MartialArtData.FiveElement.FIRE
+	_check(_clash(fire, _card(T.GUARD), "rain")["b"] < _clash(fire, _card(T.GUARD))["b"], "날씨: 비에는 화 초식이 약해짐")
+
+	# 상성 안내와 맞받는 유형
+	_check(DuelRules.advantage(_card(T.STRIKE), _card(T.GUARD)) == 1 and DuelRules.advantage(_card(T.GUARD), _card(T.STRIKE)) == -1, "상성 안내: 강공 > 막기")
+	var cycle_ok: bool = true
+	for type in [T.STRIKE, T.QUICK, T.GUARD, T.EVADE, T.TRICK]:
+		cycle_ok = cycle_ok and DuelRules.advantage(_card(DuelRules.counter_of(type)), _card(type)) == 1
+	_check(cycle_ok, "맞받는 유형은 언제나 상성 우위")
+	_completed["_test_duel_rules"] = true
+
+
+## 초식 카드: 기본 동작, 무공 → 초식 바꾸기, 숙련, 칸 수. 배치 AI
+func _test_duel_cards_and_ai() -> void:
+	var T := DuelCard.Type
+	var basics: Array[DuelCard] = DuelCard.basic_cards()
+	_check(basics.size() == 5 and basics.all(func(c: DuelCard) -> bool: return c.art_id.is_empty()), "기본 동작 5가지")
+	var art := MartialArtData.new()
+	art.id = "t_heavy"
+	art.display_name = "붕산권"
+	art.damage = 34
+	art.internal_cost = 12
+	art.special_effects.append(MartialArtData.SpecialEffect.DESTRUCTION)
+	var card: DuelCard = DuelCard.from_art(art)
+	_check(card.type == T.STRIKE and card.effects.has("pierce") and card.momentum_cost == 2 and card.cost == 12, "파괴 무공은 강공 절초 (기세 2)")
+	art.card_type = "TRICK"
+	_check(DuelCard.from_art(art).type == T.TRICK, "무공 데이터의 card_type이 유형을 정함")
+	var palm := MartialArtData.new()
+	palm.id = "t_palm"
+	palm.heal_amount = 15
+	_check(DuelCard.from_art(palm).type == T.FOCUS and DuelCard.from_art(palm).effects.has("heal"), "회복 무공은 기 유형")
+	var hidden := MartialArtData.new()
+	hidden.category = MartialArtData.Category.HIDDEN
+	hidden.damage = 10
+	_check(DuelCard.from_art(hidden).type == T.TRICK, "암기는 술 유형")
+	var step := MartialArtData.new()
+	step.category = MartialArtData.Category.QINGGONG
+	_check(DuelCard.from_art(step).type == T.EVADE, "경공은 회피 유형")
+
+	var hero := CharacterData.new()
+	hero.learn_martial_art(art)
+	var cards: Array[DuelCard] = DuelCard.cards_for(hero, {"t_heavy": DuelCard.MASTERY_PER_TIER * 2 + 3})
+	_check(cards.size() == 6 and cards[5].tier == 2, "숙련: 쓴 횟수 %d번마다 한 단계" % DuelCard.MASTERY_PER_TIER)
+	_check(DuelCard.cards_for(hero, {"t_heavy": 999})[5].tier == 3, "숙련 상한 3단")
+	var unit := CombatUnit.new(hero, true)
+	_check(unit.slot_count() == 3, "Lv.1은 3칸")
+	hero.level = 10
+	_check(unit.slot_count() == 5, "Lv.10은 5칸")
+	hero.level = 30
+	_check(unit.slot_count() == 6, "칸은 최대 6")
+
+	# AI 배치: 칸 수만큼, 무공 초식은 한 번씩, 쓸 수 있는 것만
+	hero.level = 5
+	hero.internal_energy_max = 100
+	hero.restore_internal_energy()
+	unit.cards = DuelCard.cards_for(hero)
+	var rng := RandomNumberGenerator.new()
+	var valid: bool = true
+	for i in 40:
+		rng.seed = i
+		unit.momentum = i % 4
+		var plan: Array[DuelCard] = DuelAI.plan(unit, [], {"ambition": 60}, 0.5, rng)
+		var arts: int = plan.filter(func(c: DuelCard) -> bool: return c.art_id == "t_heavy").size()
+		valid = valid and plan.size() == 4 and arts <= 1
+	_check(valid, "AI 배치: 칸 수만큼 채우고 무공 초식은 한 번")
+	_check(not DuelAI.can_place(cards[5], [cards[5]]) and DuelAI.can_place(basics[0], [basics[0]]), "같은 무공 초식은 한 합에 한 번, 기본 동작은 여러 번")
+	# 기세가 차면 절초부터, 상대가 지난 합에 낸 유형을 읽으면 맞받는다
+	unit.momentum = 3
+	rng.seed = 1
+	_check(DuelAI.plan(unit, [], {}, 0.0, rng)[0].id == "t_heavy", "AI: 기세가 차면 절초부터")
+	unit.momentum = 0
+	rng.seed = 2
+	var countered: Array[DuelCard] = DuelAI.plan(unit, [T.STRIKE, T.QUICK, T.GUARD], {}, 1.0, rng)
+	_check(countered[0].type == T.QUICK and countered[1].type == T.GUARD and countered[2].type == T.STRIKE, "AI: 지난 합의 유형을 맞받음")
+	# 내공이 바닥이면 운기로 채운 만큼만 내공 드는 초식을 놓는다
+	hero.internal_energy_current = 0
+	var affordable: bool = true
+	for i in 20:
+		rng.seed = 100 + i
+		var energy: int = 0
+		for c in DuelAI.plan(unit, [], {}, 0.5, rng):
+			energy -= c.cost
+			affordable = affordable and energy >= 0
+			if c.type == T.FOCUS:
+				energy += DuelRules.FOCUS_ENERGY
+	_check(affordable, "AI: 내공이 모자라는 초식은 놓지 않음 (운기로 채운 뒤에만)")
+	_completed["_test_duel_cards_and_ai"] = true
+
+
+## 대결 엔진: 연전·순서·목표·정보·버릇·숙련
+func _test_duel_engine() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_new_quiet_game(gm, "young_disciple")
+	var hero: CharacterData = gm.player_character
+	# 연전: 아군이 먼저, 주인공이 대장. 쓰러진 제자는 손실로 센다
+	var setup: CombatSetup = CombatManager.create_night_bandits(hero, gm.player_sect)
+	var engine := DuelEngine.new(setup, hero)
+	_check(setup.allies.size() >= 1 and engine.friends.size() == setup.allies.size() + 1 and engine.friends[-1].is_player and engine.foes.size() == setup.enemies.size(), "연전: 제자가 앞, 주인공이 대장, 도적이 차례로 (제자 %d명)" % setup.allies.size())
+	engine.set_player_first(true)
+	_check(engine.current_friend().is_player, "첫 합 전에는 주인공을 선봉으로")
+	engine.set_player_first(false)
+	var disciple: CombatUnit = engine.current_friend()
+	disciple.take_damage(disciple.hp - 1)
+	engine.prepare_bout()
+	engine.enemy_plan.assign([_card(DuelCard.Type.QUICK, 50), _card(DuelCard.Type.QUICK, 50), _card(DuelCard.Type.QUICK, 50)])
+	engine.run_bout([null, null, null])
+	_check(not disciple.is_alive() and engine.current_friend() == engine.friends[1] and not engine.over, "앞 사람이 쓰러지면 다음 사람이 나섬")
+	_check(engine.fallen_ally_ids() == [disciple.character.id], "쓰러진 제자 기록")
+	_check(engine.current_friend().momentum == 0 and engine.bout_in_duel == 0, "새 대결은 기세·합 수가 처음부터")
+
+	# 합을 다 쓰면 체력 비율이 낮은 쪽이 물러난다
+	setup = CombatManager.create_sparring(hero)
+	setup.max_bouts = 1
+	engine = DuelEngine.new(setup, hero)
+	engine.current_foe().take_damage(10)
+	engine.prepare_bout()
+	engine.enemy_plan.assign([_card(DuelCard.Type.GUARD), _card(DuelCard.Type.GUARD), _card(DuelCard.Type.GUARD)])
+	var guards: Array = [DuelCard.basic_cards()[2], DuelCard.basic_cards()[2], DuelCard.basic_cards()[2]]
+	engine.run_bout(guards)
+	_check(engine.over and engine.outcome == CombatManager.Outcome.VICTORY and engine.retired.size() == 1, "합 제한: 체력 비율이 낮은 상대가 물러나 승리")
+
+	# 목표: 우두머리 (호위는 우두머리 체력으로)
+	setup = CombatManager.create_bandit_hunt(hero)
+	var boss_char: CharacterData = setup.enemies[0]
+	setup.set_target_objective(boss_char)
+	engine = DuelEngine.new(setup, hero)
+	var guard_count: int = setup.enemies.size() - 1
+	var plain_boss: int = int(CombatUnit.new(boss_char).max_hp * setup.enemy_hp_scale)
+	_check(engine.foes.size() == 1 and engine.guards.size() == guard_count and engine.current_foe().max_hp == int(plain_boss * (1.0 + DuelEngine.GUARD_HP_BONUS * guard_count)), "우두머리 목표: 우두머리와 바로 겨루고 호위 하나마다 체력 +15%")
+	engine.current_foe().take_damage(99999)
+	engine.prepare_bout()
+	engine.run_bout([null, null, null])
+	_check(engine.over and engine.outcome == CombatManager.Outcome.VICTORY, "우두머리 목표: 우두머리만 쓰러뜨리면 승리")
+
+	# 목표: 버티기
+	setup = CombatManager.create_bandit_hunt(hero)
+	setup.add_ally(NpcRoster.create_character("npc_disciple", hero), Vector2i(2, 4))
+	setup.objective = "survive"
+	setup.objective_rounds = 2
+	engine = DuelEngine.new(setup, hero)
+	_check(engine.current_friend().is_player, "버티기 목표: 주인공이 선봉")
+	engine.get_player().max_hp = 99999
+	engine.get_player().hp = 99999
+	for i in 2:
+		engine.prepare_bout()
+		engine.run_bout(guards)
+	_check(engine.over and engine.outcome == CombatManager.Outcome.VICTORY and engine.bout_total == 2, "버티기 목표: 합 수를 버티면 승리")
+
+	# 목표: 탈출 (주인공이 선봉으로, 공격을 세 번 흘리면)
+	setup = CombatManager.create_bandit_hunt(hero)
+	setup.add_ally(NpcRoster.create_character("npc_disciple", hero), Vector2i(2, 4))
+	setup.objective = "escape"
+	engine = DuelEngine.new(setup, hero)
+	_check(engine.current_friend().is_player, "탈출 목표: 주인공이 선봉")
+	hero.agility = 99
+	engine.prepare_bout()
+	engine.enemy_plan.assign([_card(DuelCard.Type.STRIKE), _card(DuelCard.Type.STRIKE), _card(DuelCard.Type.STRIKE)])
+	var evade: DuelCard = DuelCard.basic_cards()[3]
+	engine.run_bout([evade, evade, evade])
+	_check(engine.over and engine.outcome == CombatManager.Outcome.VICTORY and engine.evades == DuelEngine.ESCAPE_EVADES, "탈출 목표: 공격을 세 번 흘리면 빠져나감")
+
+	# 목표: 호위 (지킬 인물은 줄 밖, 우리 쪽이 대결에서 질 때마다 다치고 쓰러지면 패배)
+	setup = CombatManager.create_bandit_hunt(hero)
+	var merchant: CharacterData = NpcRoster.create_character("npc_merchant", hero)
+	setup.add_ally(merchant, Vector2i(2, 4))
+	setup.add_ally(NpcRoster.create_character("npc_disciple", hero), Vector2i(2, 6))
+	setup.objective = "protect"
+	setup.objective_target = merchant.id
+	engine = DuelEngine.new(setup, hero)
+	_check(engine.ward != null and engine.ward.character.id == merchant.id and engine.friends.size() == 2, "호위 목표: 지킬 인물은 줄에 서지 않음")
+	engine.current_friend().take_damage(engine.current_friend().hp - 1)
+	engine.prepare_bout()
+	engine.enemy_plan.assign([_card(DuelCard.Type.QUICK, 50)])
+	engine.run_bout([null])
+	_check(not engine.over and engine.ward.hp == engine.ward.max_hp - int(engine.ward.max_hp * DuelEngine.WARD_HIT), "호위 목표: 우리 쪽이 지면 지킬 인물이 다침")
+	engine.ward.hp = 1
+	engine.current_friend().take_damage(engine.current_friend().hp - 1)
+	engine.prepare_bout()
+	engine.enemy_plan.assign([_card(DuelCard.Type.QUICK, 50)])
+	engine.run_bout([null])
+	_check(engine.over and engine.outcome == CombatManager.Outcome.DEFEAT, "호위 목표: 지킬 인물이 쓰러지면 패배")
+
+	# 정보: 지혜에 따라 상대 배치가 보이고, 안개는 한 단계 덜
+	setup = CombatManager.create_sparring(hero)
+	engine = DuelEngine.new(setup, hero)
+	engine.prepare_bout()
+	var levels: Array = []
+	for wisdom in [10, 15, 20, 30]:
+		hero.wisdom = wisdom
+		levels.append(engine.reveal_level())
+	_check(levels == [0, 1, 2, 3], "정보: 지혜 10·15·20·30 → 보이는 정도 %s" % [levels])
+	var shown: PackedStringArray = engine.revealed_plan()
+	_check(shown.size() == engine.enemy_plan.size() and shown[0].contains(engine.enemy_plan[0].display_name), "정보: 지혜가 높으면 초식 이름까지")
+	hero.wisdom = 15
+	shown = engine.revealed_plan()
+	_check(shown[0] == engine.enemy_plan[0].get_type_name() and (shown.size() < 2 or shown[1] == "?"), "정보: 낮으면 첫 칸 유형만")
+	engine.weather = "fog"
+	_check(engine.reveal_level() == 0, "정보: 안개는 한 단계 덜 보임")
+
+	# 버릇: 겨뤄 본 상대가 첫 칸에 자주 낸 유형을 기억한다 (저장된다)
+	var memory: Dictionary = {}
+	var mastery: Dictionary = {}
+	var art := MartialArtData.new()
+	art.id = "t_sword"
+	art.display_name = "시험검"
+	art.damage = 12
+	hero.learn_martial_art(art)
+	engine = DuelEngine.new(CombatManager.create_sparring(hero), hero, memory, mastery)
+	_check(engine.habit_text().is_empty(), "버릇: 처음 겨루는 상대는 모름")
+	for i in 3:
+		engine.prepare_bout()
+		engine.enemy_plan.assign([_card(DuelCard.Type.STRIKE), _card(DuelCard.Type.GUARD), _card(DuelCard.Type.GUARD)])
+		var sword: DuelCard = engine.get_player().cards[5]
+		engine.run_bout([sword, guards[0], guards[0]])
+		if engine.over:
+			break
+	var rival_id: String = DuelEngine._npc_id(engine.current_foe() if engine.current_foe() else engine.foes[0])
+	_check(memory.has(rival_id) and int(memory[rival_id]["first"].get(DuelCard.Type.STRIKE, 0)) >= 1, "버릇: 상대의 첫 칸 유형 기록")
+	var again := DuelEngine.new(CombatManager.create_sparring(hero), hero, memory, mastery)
+	_check(again.habit_text().contains("강공"), "버릇: 다시 만나면 보임 (%s)" % again.habit_text())
+	_check(int(mastery.get("t_sword", 0)) >= 1, "숙련: 무공 초식을 쓰면 횟수가 쌓임")
+	gm.duel_memory = memory
+	gm.art_mastery = mastery
+	gm.save_game(3)
+	gm.duel_memory = {}
+	gm.art_mastery = {}
+	gm.load_game(3)
+	_check(gm.duel_memory.has(rival_id) and gm.duel_memory[rival_id]["first"].has(DuelCard.Type.STRIKE) and gm.art_mastery.has("t_sword"), "버릇·숙련 저장과 불러오기")
+	SaveManager.delete_save(3)
+
+	# 끝까지 자동으로: 언제나 끝난다
+	engine = DuelEngine.new(CombatManager.create_night_bandits(hero, gm.player_sect), hero)
+	engine.play_to_end()
+	_check(engine.over and engine.history.size() > 3, "자동으로 끝까지 치르면 결과와 기록이 남음")
+	_completed["_test_duel_engine"] = true
+
+
+## 대결 화면: 칸 고르기·초식 놓기·겨루기·자동 배치·자동 전투·결과만 보기·후퇴
+func _test_duel_screen() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_new_quiet_game(gm, "young_disciple")
+	gm.player_character.learn_martial_art(MartialArtLibrary.create_art("preset_soul_chase_sword"))
+	gm.start_combat(CombatManager.create_night_bandits(gm.player_character, gm.player_sect))
+	await process_frame
+	await process_frame
+	var c: Node = current_scene
+	_check(c.get_node("Background").mouse_filter == Control.MOUSE_FILTER_IGNORE, "전투 바탕은 터치를 가로채지 않음")
+	_check(c.slot_row.get_child_count() == c.engine.current_friend().slot_count(), "칸 수만큼 칸 버튼")
+	_check(c.hand_grid.get_child_count() == c.engine.current_friend().cards.size(), "손패: 쓸 수 있는 초식 모두")
+	var small: Array = c.find_children("*", "Button", true, false).filter(func(b: Button) -> bool: return b.visible and b.get_combined_minimum_size().y < 48)
+	_check(small.is_empty(), "대결 화면 버튼은 모두 48px 이상 (%d개 미달)" % small.size())
+
+	# 칸 고르고 놓기: 놓으면 다음 빈 칸으로
+	c.engine.set_player_first(true)
+	c._toggle_order()
+	_check(not c.engine.current_friend().is_player and c.order_button.text == "주인공을 선봉으로", "선봉·대장 바꾸기")
+	c._toggle_order()
+	_check(c.engine.current_friend().is_player, "주인공을 선봉으로")
+	var hero_cards: Array[DuelCard] = c.engine.current_friend().cards
+	var art_card: DuelCard = hero_cards[5]
+	c.select_slot(1)
+	c.place_card(art_card)
+	_check(c.plan[1] == art_card and c.selected_slot == 0, "고른 칸에 초식을 놓고 첫 빈 칸을 고름")
+	_check(c.hand_grid.get_node("Card_" + art_card.id).disabled, "이미 놓은 무공 초식은 손패에서 막힘")
+	c.place_card(art_card)
+	_check(c.plan[0] == null, "같은 무공 초식은 두 번 놓지 못함")
+	c.place_card(hero_cards[0])
+	c.place_card(hero_cards[0])
+	_check(c.plan[0] == hero_cards[0] and c.plan[2] == hero_cards[0], "기본 동작은 여러 칸에")
+	c.select_slot(2)
+	c.select_slot(2)
+	_check(c.plan[2] == null, "고른 칸을 다시 누르면 비움")
+	_unhandled_key(c, KEY_A)
+	_check(not c.plan.has(null), "A·자동 배치: 모든 칸을 채움")
+
+	# 겨루기: 한 합이 지나고 다음 배치를 기다린다
+	_unhandled_key(c, KEY_SPACE)
+	await process_frame
+	_check(c.engine.bout_total == 1 and c.log_label.text.contains("1합"), "겨루기: 한 합 진행과 기록")
+	_check(c.plan.size() == c.engine.current_friend().slot_count() and c.plan.all(func(x: Variant) -> bool: return x == null), "다음 합은 빈 칸에서 다시 배치")
+	_check(not c.order_button.visible, "첫 합 뒤에는 순서를 바꿀 수 없음")
+
+	# 자동 전투: 합이 저절로 넘어간다
+	c.set_auto(true)
+	await process_frame
+	await process_frame
+	_check(c.engine.bout_total >= 2 or c.engine.over, "자동 전투: 합이 저절로 진행")
+	c.set_auto(false)
+	# 결과만 보기: 끝까지 치르고 결과를 반영한다
+	await c.skip_to_result()
+	_check(c.engine.over and gm.pending_combat == null and c.result_label.visible, "결과만 보기: 전투가 끝나고 결과 반영")
+	_check(gm.last_combat_history.size() > 3, "전투가 끝나면 기록을 남김 (연대기용)")
+	_check(c.back_button.text == "돌아가기" and c.fight_button.disabled, "끝나면 돌아가기만")
+	c.leave_combat()
+	await process_frame
+	await process_frame
+	_check(current_scene.scene_file_path == SceneRouter.HUB, "돌아가기: 경영 화면으로")
+
+	# 승리 후 쓰러진 제자는 문파에서 빠진다
+	gm.start_combat(CombatManager.create_night_bandits(gm.player_character, gm.player_sect))
+	await process_frame
+	await process_frame
+	c = current_scene
+	var disciples_before: int = gm.player_sect.disciple_count
+	c.engine.friends[0].take_damage(99999)
+	for foe in c.engine.foes:
+		foe.take_damage(foe.hp - 1)
+	c.engine.friend_index = 1
+	await c.skip_to_result()
+	_check(c.engine.outcome == CombatManager.Outcome.VICTORY and gm.player_sect.disciple_count == disciples_before - 1, "승리 후 전사한 제자 1명 반영")
+	SceneRouter.goto(tree, SceneRouter.HUB)
+	await process_frame
+	_completed["_test_duel_screen"] = true
+
+
+func _unhandled_key(node: Node, keycode: Key) -> void:
+	node._unhandled_key_input(_key(keycode))
+
+
 func _test_combat_rules() -> void:
-	var T := CombatRules.Terrain
-	_check(
-		CombatRules.move_cost(T.PLAIN) == 1 and CombatRules.move_cost(T.FOREST) == _Balance.FOREST_MOVE_COST
-		and CombatRules.move_cost(T.WATER) == _Balance.WATER_MOVE_COST,
-		"지형별 이동 비용"
-	)
-
-	# 3×1 통로: (1,0)이 수풀이면 행동력 2로 (1,0)까지만, 3이면 (2,0)까지
-	var terrain := {Vector2i(1, 0): T.FOREST}
-	var passable := func(pos: Vector2i) -> bool: return pos.x >= 0 and pos.x < 3 and pos.y == 0
-	var terrain_of := func(pos: Vector2i) -> int: return terrain.get(pos, T.PLAIN)
-	var reach: Dictionary = CombatRules.reachable_tiles(Vector2i(0, 0), 2, passable, terrain_of)
-	_check(reach.has(Vector2i(1, 0)) and not reach.has(Vector2i(2, 0)), "수풀은 이동 비용 2")
-	reach = CombatRules.reachable_tiles(Vector2i(0, 0), 3, passable, terrain_of)
-	_check(reach.get(Vector2i(2, 0)) == 3 and not reach.has(Vector2i(0, 0)), "도달 가능 칸과 비용")
-
-	# 벽을 돌아가는 경로
-	var wall: Array[Vector2i] = [Vector2i(2, 0), Vector2i(2, 1), Vector2i(2, 2)]
-	var open := func(pos: Vector2i) -> bool:
-		return pos.x >= 0 and pos.x < 5 and pos.y >= 0 and pos.y < 5 and not wall.has(pos)
-	var plain := func(_pos: Vector2i) -> int: return T.PLAIN
-	var path: Array[Vector2i] = CombatRules.find_path(
-		Vector2i(0, 0), func(pos: Vector2i) -> bool: return pos == Vector2i(4, 0), open, plain
-	)
-	_check(path.size() == 10 and path[-1] == Vector2i(4, 0) and not path.any(func(p): return wall.has(p)), "벽을 돌아가는 최단 경로")
-	var walk: Dictionary = CombatRules.walk_path(path, 4, plain)
-	_check(walk["index"] == 3 and walk["cost"] == 4, "행동력만큼만 경로 이동")
-	_check(
-		CombatRules.find_path(Vector2i(0, 0), func(pos: Vector2i) -> bool: return pos == Vector2i(9, 9), open, plain).is_empty(),
-		"도달할 수 없으면 빈 경로"
-	)
-
 	var E := MartialArtData.FiveElement
 	_check(is_equal_approx(CombatRules.element_modifier(E.WOOD, E.EARTH), _Balance.ELEMENT_ADVANTAGE), "목극토: 우위")
 	_check(is_equal_approx(CombatRules.element_modifier(E.EARTH, E.WOOD), _Balance.ELEMENT_DISADVANTAGE), "토는 목에 열세")
 	_check(is_equal_approx(CombatRules.element_modifier(E.FIRE, E.NONE), 1.0), "무속성 상대는 보정 없음")
-
-	# 피해 계산
-	var attacker: CombatUnit = _make_unit(12)
-	var defender: CombatUnit = _make_unit(10, false)
-	var basic: int = CombatRules.calculate_damage(attacker, defender, null, T.PLAIN, T.PLAIN)["damage"]
-	_check(basic == _Balance.BASE_ATTACK_DAMAGE + 12, "기본 공격 피해 = 기준 + 무력")
-	_check(
-		CombatRules.calculate_damage(attacker, defender, null, T.HIGH, T.PLAIN)["damage"] == int(basic * _Balance.HIGH_ATTACK),
-		"고지 공격 보너스"
-	)
-	_check(
-		CombatRules.calculate_damage(attacker, defender, null, T.PLAIN, T.FOREST)["damage"] == int(basic * _Balance.FOREST_DEFENSE),
-		"수풀 엄폐"
-	)
-	attacker.add_status("empowered", 2)
-	_check(
-		CombatRules.calculate_damage(attacker, defender, null, T.PLAIN, T.PLAIN)["damage"] == int(basic * _Balance.EMPOWER_MULTIPLIER),
-		"기세 상태 피해 증가"
-	)
-	attacker.tick_statuses()
-	attacker.tick_statuses()
-	_check(not attacker.has_status("empowered"), "상태는 턴이 지나면 사라짐")
-
-	var ambush_art := MartialArtData.new()
-	ambush_art.damage = 20
-	ambush_art.special_effects.append(MartialArtData.SpecialEffect.AMBUSH)
-	var first: int = CombatRules.calculate_damage(attacker, defender, ambush_art, T.PLAIN, T.PLAIN)["damage"]
-	defender.take_damage(1)
-	var second: int = CombatRules.calculate_damage(attacker, defender, ambush_art, T.PLAIN, T.PLAIN)["damage"]
-	# 정수 변환 시점 차이로 1 이내 오차는 허용
-	_check(absf(first - second * _Balance.AMBUSH_MULTIPLIER) <= 1.0, "기습은 다치지 않은 대상에게만 1.5배")
-
-	var ranged := MartialArtData.new()
-	ranged.range = 2
-	var melee := MartialArtData.new()
-	_check(
-		CombatRules.get_art_range(ranged, T.HIGH) == 2 + _Balance.HIGH_RANGE_BONUS
-		and CombatRules.get_art_range(melee, T.HIGH) == 1,
-		"고지 사거리 보너스는 원거리 무공만"
-	)
-
-	# 내공 폭주: 내공이 넉넉하면 일어나지 않고, 바닥이면 확률적으로 일어난다
-	var caster := CharacterData.new()
-	caster.internal_energy_max = 100
-	caster.internal_energy_current = 100
-	var art := MartialArtData.new()
-	art.internal_cost = 20
-	var safe: bool = true
-	for sd in 50:
-		seed(sd)
-		safe = safe and CombatRules.roll_overload(caster, art) == 0
-	caster.internal_energy_current = 5
-	var overloads: int = 0
-	for sd in 100:
-		seed(sd)
-		if CombatRules.roll_overload(caster, art) == int(20 * _Balance.OVERLOAD_DAMAGE_PER_COST):
-			overloads += 1
-	randomize()
-	_check(safe, "내공이 넉넉하면 폭주 없음")
-	_check(overloads > 10 and overloads < 60, "내공 바닥일 때 폭주 확률 적용 (%d/100)" % overloads)
+	# 대결에서도 오행: 상대 칸의 초식 속성에 따라
+	var wood: DuelCard = _card(DuelCard.Type.STRIKE)
+	wood.element = E.WOOD
+	var earth: DuelCard = _card(DuelCard.Type.GUARD)
+	earth.element = E.EARTH
+	_check(_clash(wood, earth)["b"] > _clash(_card(DuelCard.Type.STRIKE), earth)["b"], "대결: 오행 상극이면 피해 증가")
+	# 기습: 다치지 않은 상대에게만
+	var ambush: DuelCard = _card(DuelCard.Type.QUICK)
+	ambush.effects.append("ambush")
+	var fresh: Dictionary = _clash(ambush, _card(DuelCard.Type.STRIKE))
+	var a: CombatUnit = _duel_unit("갑")
+	var b: CombatUnit = _duel_unit("을")
+	b.take_damage(1)
+	var hurt: Dictionary = DuelRules.resolve_slot(0, a, ambush, b, _card(DuelCard.Type.STRIKE), "clear")
+	_check(absf(fresh["b"] - hurt["damage"]["b"] * _Balance.AMBUSH_MULTIPLIER) <= 1.0, "기습은 다치지 않은 상대에게만 1.5배")
+	# 인연: 원한은 피해를 키우고, 가호는 받는 피해를 나눈다
+	a = _duel_unit("갑")
+	b = _duel_unit("을")
+	var base: int = DuelRules.resolve_slot(0, a, _card(DuelCard.Type.STRIKE), b, null, "clear")["damage"]["b"]
+	a = _duel_unit("갑")
+	b = _duel_unit("을")
+	b.bond_guard = 1.5
+	_check(DuelRules.resolve_slot(0, a, _card(DuelCard.Type.STRIKE), b, null, "clear")["damage"]["b"] == int(base / 1.5), "인연의 가호로 받는 피해 감소")
 	_completed["_test_combat_rules"] = true
 
 
@@ -269,116 +610,6 @@ func _test_martial_art_library() -> void:
 
 
 ## 전투 씬에서 무공 효과와 적 AI를 확인한다.
-func _test_combat_effects() -> void:
-	var gm: Node = root.get_node("GameManager")
-	gm.start_new_game("효과", "young_disciple")
-	var setup := CombatSetup.new()
-	setup.title = "시험장"
-	setup.player_position = Vector2i(2, 5)
-	setup.blocked_tiles = [Vector2i(6, 4), Vector2i(6, 5), Vector2i(6, 6)]
-	setup.set_terrain([Vector2i(3, 5)], CombatRules.Terrain.FOREST)
-	var dummy: CharacterData = NpcRoster.create_character("npc_bandit")
-	dummy.agility = 1  # 플레이어가 먼저 움직이도록
-	setup.add_enemy(dummy, Vector2i(10, 5))
-	gm.start_combat(setup)
-	await process_frame
-	await process_frame
-	var c: Node = current_scene
-	var player: CombatUnit = c._get_player()
-	var enemy: CombatUnit = c._get_alive_enemies()[0]
-	_check(c._turn_manager.is_player_phase() and c._get_controlled() == player, "아군 턴부터 시작하고 주인공을 조종")
-
-	# 다중 칸 이동: 수풀(2) + 평지(1) = 3
-	var ap_before: int = player.action_points
-	c._try_move(player, Vector2i(4, 5))
-	_check(player.grid_pos == Vector2i(4, 5) and player.action_points == ap_before - 3, "수풀을 지나 두 칸 이동 (행동력 -3)")
-
-	# 제어: 기절 → 적 차례 건너뜀
-	var control := MartialArtData.new()
-	control.display_name = "점혈수"
-	control.range = 9
-	control.damage = 1
-	control.internal_cost = 1
-	control.action_cost = 1
-	control.special_effects.append(MartialArtData.SpecialEffect.CONTROL)
-	player.character.internal_energy_current = player.character.internal_energy_max
-	c._perform_art(player, enemy, control)
-	_check(enemy.has_status("stunned"), "제어: 대상 기절")
-	var enemy_pos: Vector2i = enemy.grid_pos
-	c._on_end_turn_pressed()
-	_check(enemy.grid_pos == enemy_pos and not enemy.has_status("stunned"), "기절한 적은 차례를 건너뜀")
-	c._perform_art(player, enemy, control)
-	_check(not enemy.has_status("stunned"), "막 풀려난 적은 기절 저항")
-
-	# 파괴력: 밀어내기, 막히면 추가 피해
-	var smash := MartialArtData.new()
-	smash.display_name = "붕산권"
-	smash.range = 9
-	smash.damage = 5
-	smash.internal_cost = 1
-	smash.action_cost = 1
-	smash.special_effects.append(MartialArtData.SpecialEffect.DESTRUCTION)
-	player.grid_pos = Vector2i(9, 5)
-	enemy.grid_pos = Vector2i(10, 5)
-	player.action_points = 5
-	c._perform_art(player, enemy, smash)
-	_check(enemy.grid_pos == Vector2i(11, 5), "파괴력: 한 칸 밀려남")
-	player.grid_pos = Vector2i(14, 5)
-	enemy.grid_pos = Vector2i(15, 5)
-	var hp_before: int = enemy.hp
-	c._perform_art(player, enemy, smash)
-	var expected: int = int(CombatRules.calculate_damage(player, enemy, smash, 0, 0)["damage"] * (1 + _Balance.KNOCKBACK_WALL_BONUS))
-	_check(enemy.grid_pos == Vector2i(15, 5) and hp_before - enemy.hp == expected, "파괴력: 가장자리에 막히면 추가 피해")
-
-	# 강화 + 회복
-	var palm: MartialArtData = MartialArtLibrary.create_art("preset_earth_life_palm")
-	player.take_damage(30)
-	var hurt_hp: int = player.hp
-	player.action_points = 5
-	c._perform_art(player, null, palm)
-	_check(player.hp > hurt_hp and player.has_status("empowered"), "대지생명장: 회복과 기세")
-
-	# 적 AI: 벽 뒤에서 길을 찾아 다가온다
-	player.grid_pos = Vector2i(4, 5)
-	enemy.grid_pos = Vector2i(8, 5)
-	enemy.statuses.clear()
-	enemy.action_points = enemy.max_action_points
-	# 벽을 돌아가느라 잠시 멀어질 수 있으므로 몇 차례 안에 붙는지 본다.
-	var never_on_wall: bool = true
-	for i in 6:
-		enemy.action_points = enemy.max_action_points
-		c._run_enemy_ai(enemy)
-		never_on_wall = never_on_wall and not setup.blocked_tiles.has(enemy.grid_pos)
-		if CombatRules.distance(enemy.grid_pos, player.grid_pos) == 1:
-			break
-	_check(
-		CombatRules.distance(enemy.grid_pos, player.grid_pos) == 1 and never_on_wall,
-		"적이 벽을 돌아 플레이어에게 접근"
-	)
-	c.leave_combat()
-	await process_frame
-	await process_frame
-
-	# 레벨 3 라이벌은 무공을 쓴다
-	gm.start_new_game("무공", "young_disciple")
-	gm.player_character.gain_experience(CharacterData.get_experience_for_level(3))
-	gm.start_combat(CombatManager.create_sparring(gm.player_character))
-	await process_frame
-	await process_frame
-	c = current_scene
-	player = c._get_player()
-	var rival: CombatUnit = c._get_alive_enemies()[0]
-	rival.grid_pos = player.grid_pos + Vector2i(1, 0)
-	rival.action_points = rival.max_action_points
-	var ie_before: int = rival.character.internal_energy_current
-	c._run_enemy_ai(rival)
-	_check(rival.character.internal_energy_current < ie_before, "라이벌 AI가 무공 사용")
-	_check(c.art_list.get_child_count() == player.get_martial_arts().size(), "무공 버튼이 습득 무공 수만큼")
-	c.leave_combat()
-	await process_frame
-	_completed["_test_combat_effects"] = true
-
-
 func _test_ally_setup() -> void:
 	var player := CharacterData.new()
 	var sect := SectData.new()
@@ -413,75 +644,6 @@ func _test_ally_setup() -> void:
 		"승리해도 쓰러진 제자 수만큼 문파 제자 감소"
 	)
 	_completed["_test_ally_setup"] = true
-
-
-func _test_ally_combat() -> void:
-	var gm: Node = root.get_node("GameManager")
-	gm.start_new_game("동료", "young_disciple")
-	gm.player_character.learn_martial_art(MartialArtLibrary.create_art("preset_earth_life_palm"))
-	var setup: CombatSetup = CombatManager.create_night_bandits(gm.player_character, gm.player_sect)
-	gm.start_combat(setup)
-	await process_frame
-	await process_frame
-	var c: Node = current_scene
-	var friends: Array = c._get_alive_friendlies()
-	_check(friends.size() == 3, "주인공과 제자 2명 배치")
-	_check(c._turn_manager.get_enemy_order().size() == c._get_alive_enemies().size(), "적은 적군 턴에 모두 움직임")
-
-	# 아군 턴에는 아군 칸을 눌러 누구든 고른다
-	var ally: CombatUnit = null
-	for unit in friends:
-		if unit.is_ally:
-			ally = unit
-			break
-	c._act_on_tile(c._get_controlled(), ally.grid_pos)
-	_check(c._get_controlled() == ally, "아군 칸을 누르면 그 아군을 조종")
-	c.select_next_ally()
-	_check(c._get_controlled() != ally and c._get_controlled().is_friendly(), "다음 아군으로 바꾸기")
-	c.select_unit(ally)
-	if ally:
-		_check(c._art_buttons_owner == ally and c.art_list.get_child_count() == ally.get_martial_arts().size(), "무공 버튼이 조종 중인 유닛 기준")
-		var ap_before: int = ally.action_points
-		var target_tile: Vector2i = c._get_reachable(ally).keys()[0]
-		c._try_move(ally, target_tile)
-		_check(ally.grid_pos == target_tile and ally.action_points < ap_before, "아군 이동")
-
-	# 적은 가장 가까운 아군을 노린다
-	var player: CombatUnit = c._get_player()
-	var bandit: CombatUnit = c._get_alive_enemies()[0]
-	var disciple: CombatUnit = null
-	for unit in c._get_alive_friendlies():
-		if unit.is_ally:
-			disciple = unit
-	player.grid_pos = Vector2i(0, 0)
-	disciple.grid_pos = Vector2i(10, 4)
-	bandit.grid_pos = Vector2i(10, 5)
-	bandit.action_points = bandit.max_action_points
-	var disciple_hp: int = disciple.hp
-	var player_hp: int = player.hp
-	c._run_enemy_ai(bandit)
-	_check(disciple.hp < disciple_hp and player.hp == player_hp, "적은 가장 가까운 아군을 공격")
-
-	# 회복 무공으로 아군 치료
-	player.grid_pos = disciple.grid_pos + Vector2i(0, -1)
-	player.action_points = player.max_action_points
-	player.character.restore_internal_energy()
-	var hurt: int = disciple.hp
-	c._perform_art(player, disciple, player.get_martial_arts()[0])
-	_check(disciple.hp > hurt, "회복 무공으로 아군 치료")
-
-	# 제자가 쓰러져도 전투는 계속되고, 승리 후 문파 제자가 준다
-	disciple.take_damage(99999)
-	c._after_hit(disciple)
-	_check(not c._combat_over, "제자가 쓰러져도 전투 계속")
-	var disciples_before: int = gm.player_sect.disciple_count
-	for enemy in c._get_alive_enemies():
-		enemy.take_damage(99999)
-	c._check_victory()
-	_check(c._combat_over and gm.player_sect.disciple_count == disciples_before - 1, "승리 후 전사한 제자 1명 반영")
-	c.leave_combat()
-	await process_frame
-	_completed["_test_ally_combat"] = true
 
 
 func _test_combat_library() -> void:
@@ -647,7 +809,7 @@ func _test_martial_art_screen_actions() -> void:
 	await process_frame
 	var screen: Node = current_scene
 	_check(screen.preset_list.item_count == 2 and screen.preset_list.get_item_text(0).contains("청운검법") and screen.preset_list.get_item_text(0).contains("서고"), "무공 연구소: 비급 목록은 소속 문파 서고의 비급")
-	_check(screen.known_arts_label.text.contains("[유혼쾌영검]") and screen.known_arts_label.text.contains("피해") and screen.known_arts_label.text.contains("사거리"), "보유 무공 목록: 늘 보이고 전투 수치까지")
+	_check(screen.known_arts_label.text.contains("[유혼쾌영검]") and screen.known_arts_label.text.contains("피해") and screen.known_arts_label.text.contains("초식"), "보유 무공 목록: 늘 보이고 전투 수치까지")
 	screen._on_enhance_pressed()
 	_check(screen.choice_popup.visible and screen.choice_popup.get_option_count() == 1, "강화: 습득 무공 고르기")
 	screen.choice_popup._on_option_pressed("preset_soul_chase_sword")
@@ -728,282 +890,34 @@ func _test_martial_art_screen_actions() -> void:
 	_completed["_test_martial_art_screen_actions"] = true
 
 
-## 피해 흔들림과 회심: 켜면 피해가 정해진 폭 안에서 흔들리고, 신법에 따라 회심이 난다.
+## 회심: 켜면 신법에 따라 회심이 나고, 끄면 피해가 일정하다.
 func _test_damage_randomness() -> void:
-	var T := CombatRules.Terrain
-	var attacker_char := CharacterData.new()
-	attacker_char.strength = 12
-	attacker_char.agility = 15
-	var attacker := CombatUnit.new(attacker_char, true)
-	var defender := CombatUnit.new(CharacterData.new())
-	var base: int = CombatRules.calculate_damage(attacker, defender, null, T.PLAIN, T.PLAIN)["damage"]
+	var T := DuelCard.Type
+	var attacker: CombatUnit = _duel_unit("갑", 15)
+	var defender: CombatUnit = _duel_unit("을")
+	var card: DuelCard = _card(T.STRIKE)
+	var base: int = DuelRules._hit(attacker, card, defender, null, "clear")["damage"]
 	CombatRules.randomness = true
 	seed(12345)
-	var lowest: int = 9999
-	var highest: int = 0
 	var crits: int = 0
-	var spread_ok: bool = true
+	var exact: bool = true
 	var rolls: int = 1000
 	for i in rolls:
-		var result: Dictionary = CombatRules.calculate_damage(attacker, defender, null, T.PLAIN, T.PLAIN)
-		var damage: int = result["damage"]
-		if "회심" in result["notes"]:
+		var result: Dictionary = DuelRules._hit(attacker, card, defender, null, "clear")
+		if "회심" in result["note"]:
 			crits += 1
-			damage = int(damage / _Balance.CRIT_MULTIPLIER)
+			exact = exact and absi(result["damage"] - int(base * _Balance.CRIT_MULTIPLIER)) <= 1
 		else:
-			lowest = mini(lowest, damage)
-			highest = maxi(highest, damage)
-		if damage < floori(base * (1.0 - _Balance.DAMAGE_SPREAD)) - 1 or damage > ceili(base * (1.0 + _Balance.DAMAGE_SPREAD)) + 1:
-			spread_ok = false
+			exact = exact and result["damage"] == base
 	CombatRules.randomness = false
-	_check(spread_ok, "피해 흔들림은 ±%d%% 안" % roundi(_Balance.DAMAGE_SPREAD * 100))
-	_check(lowest < base and highest > base, "피해가 실제로 흔들림 (%d~%d, 기준 %d)" % [lowest, highest, base])
+	randomize()
+	_check(exact, "회심이 아니면 피해가 일정하고, 회심은 %.1f배" % _Balance.CRIT_MULTIPLIER)
 	var expected: float = CombatRules.crit_chance(attacker)
 	_check(absf(float(crits) / rolls - expected) < 0.03, "회심 확률이 신법에 맞음 (%.1f%%, 기대 %.1f%%)" % [100.0 * crits / rolls, expected * 100])
-	attacker_char.agility = 100
+	attacker.character.agility = 100
 	_check(is_equal_approx(CombatRules.crit_chance(attacker), _Balance.CRIT_MAX), "회심 확률 상한")
-	_check(CombatRules.calculate_damage(attacker, defender, null, T.PLAIN, T.PLAIN)["damage"] == base, "끄면 피해가 일정")
+	_check(DuelRules._hit(attacker, card, defender, null, "clear")["damage"] == base, "끄면 피해가 일정")
 	_completed["_test_damage_randomness"] = true
-
-
-## 기본 공격은 차례에 한 번. 적 AI도 같은 규칙으로, 남은 행동력을 무공에 쓰고 내공 폭주는 피한다.
-func _test_basic_attack_limit() -> void:
-	var gm: Node = root.get_node("GameManager")
-	_new_quiet_game(gm, "young_disciple")
-	gm.pending_combat = CombatManager.create_sparring(gm.player_character)
-	SceneRouter.goto(tree, SceneRouter.COMBAT)
-	await process_frame
-	await process_frame
-	var c: Node = current_scene
-	var player: CombatUnit = c._get_player()
-	var enemy: CombatUnit = c._get_alive_enemies()[0]
-	enemy.max_hp = 9999
-	enemy.hp = 9999
-	enemy.grid_pos = player.grid_pos + Vector2i(1, 0)
-	player.restore_action_points()
-	var ap: int = player.action_points
-	c._try_attack(player, enemy.grid_pos)
-	var hp_after_first: int = enemy.hp
-	_check(hp_after_first < 9999 and player.action_points == ap - 1, "첫 기본 공격")
-	c._try_attack(player, enemy.grid_pos)
-	_check(enemy.hp == hp_after_first and player.action_points == ap - 1, "같은 차례의 두 번째 기본 공격은 막힘")
-	c._update_hud()
-	_check(c.get_node("HUD/Panel/VBox/ModeRow/ModeAttackButton").disabled, "기본 공격을 다 쓰면 공격 버튼 비활성")
-	player.restore_action_points()
-	_check(player.can_basic_attack(), "다음 차례에 기본 공격 회복")
-
-	# 적 AI: 무공을 거듭 쓰고 기본 공격은 한 번
-	var art: MartialArtData = MartialArtLibrary.create_art("preset_soul_chase_sword")
-	enemy.character.learn_martial_art(art)
-	enemy.character.internal_energy_max = 200
-	enemy.character.restore_internal_energy()
-	enemy.restore_action_points()
-	enemy.action_points = 5
-	player.max_hp = 9999
-	player.hp = 9999
-	var energy_before: int = enemy.character.internal_energy_current
-	c._run_enemy_ai(enemy)
-	var casts: int = (energy_before - enemy.character.internal_energy_current) / art.internal_cost
-	_check(casts == 2 and enemy.basic_attacks_left == 0 and enemy.action_points == 0, "적 AI: 무공 두 번 + 기본 공격 한 번으로 행동력을 다 씀 (무공 %d번)" % casts)
-	# 시전 뒤 내공이 폭주 기준 아래로 떨어지면 무공을 쓰지 않는다
-	enemy.restore_action_points()
-	enemy.character.internal_energy_current = int(enemy.character.internal_energy_max * _Balance.OVERLOAD_THRESHOLD) + art.internal_cost - 1
-	_check(c._enemy_usable_art(enemy) == null, "적 AI: 내공 폭주가 날 무공은 쓰지 않음")
-	enemy.character.internal_energy_current += 1
-	_check(c._enemy_usable_art(enemy) == art, "적 AI: 폭주 기준을 지키면 무공 사용")
-
-	gm.pending_combat = null
-	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
-	await process_frame
-	_completed["_test_basic_attack_limit"] = true
-
-
-## 격자 커서: 방향키·게임패드로 칸을 고르고 실행한다.
-func _test_grid_cursor() -> void:
-	var gm: Node = root.get_node("GameManager")
-	_new_quiet_game(gm, "young_disciple")
-	gm.pending_combat = CombatManager.create_sparring(gm.player_character)
-	SceneRouter.goto(tree, SceneRouter.COMBAT)
-	await process_frame
-	await process_frame
-	var c: Node = current_scene
-	var player: CombatUnit = c._get_player()
-	var enemy: CombatUnit = c._get_alive_enemies()[0]
-	_check(not c.cursor_visible, "커서는 처음에 숨어 있음")
-	c.move_cursor(Vector2i.RIGHT)
-	_check(c.cursor_visible and c.cursor == player.grid_pos, "처음 방향 입력: 조종 중인 유닛 자리에 커서")
-	c.move_cursor(Vector2i.RIGHT)
-	_check(c.cursor == player.grid_pos + Vector2i.RIGHT, "방향 입력으로 한 칸 이동")
-	_check(c.get_node("CursorLayer").get_child_count() > 0, "커서 테두리 표시")
-
-	# 이동: 커서 칸으로
-	var target: Vector2i = c.cursor
-	_check(c._get_reachable(player).has(target), "(준비) 커서 칸은 이동 가능")
-	c._on_mode_move_pressed()
-	c.confirm_cursor()
-	_check(player.grid_pos == target, "Enter·A: 커서 칸으로 이동")
-
-	# 가장자리에서는 멈춘다
-	c.cursor = Vector2i(c.GRID_WIDTH - 1, 0)
-	c.move_cursor(Vector2i.RIGHT)
-	c.move_cursor(Vector2i.UP)
-	_check(c.cursor == Vector2i(c.GRID_WIDTH - 1, 0), "격자 밖으로 나가지 않음")
-
-	# 게임패드 십자키와 스틱 (스틱은 기울인 순간 한 칸)
-	c.cursor = Vector2i(5, 5)
-	var dpad := InputEventJoypadButton.new()
-	dpad.button_index = JOY_BUTTON_DPAD_LEFT
-	dpad.pressed = true
-	_check(c._handle_gamepad(dpad) and c.cursor == Vector2i(4, 5), "십자키로 커서 이동")
-	var stick := InputEventJoypadMotion.new()
-	stick.axis = JOY_AXIS_LEFT_Y
-	stick.axis_value = 1.0
-	c._handle_gamepad(stick)
-	c._handle_gamepad(stick)
-	_check(c.cursor == Vector2i(4, 6), "스틱은 기울인 채로 있으면 한 칸만")
-	stick.axis_value = 0.0
-	c._handle_gamepad(stick)
-	stick.axis_value = 1.0
-	c._handle_gamepad(stick)
-	_check(c.cursor == Vector2i(4, 7), "스틱을 놓았다 다시 기울이면 다음 칸")
-
-	# 무공 고르기 (LB·RB): 무공 → … → 기본 공격 순환
-	var art: MartialArtData = MartialArtLibrary.create_art("preset_soul_chase_sword")
-	gm.player_character.learn_martial_art(art)
-	c.cycle_art(1)
-	_check(c._action_mode == c.ActionMode.MARTIAL_ART and c._selected_art == art, "RB: 첫 무공 고르기")
-	c.cycle_art(1)
-	_check(c._action_mode == c.ActionMode.ATTACK, "RB: 마지막 무공 다음은 기본 공격")
-	c.cycle_art(-1)
-	_check(c._selected_art == art and c._action_mode == c.ActionMode.MARTIAL_ART, "LB: 거꾸로 고르기")
-
-	# 공격: 커서를 적에게 두고 실행
-	enemy.grid_pos = player.grid_pos + Vector2i.RIGHT
-	enemy.max_hp = 9999
-	enemy.hp = 9999
-	player.restore_action_points()
-	var attack := InputEventJoypadButton.new()
-	attack.button_index = JOY_BUTTON_X
-	attack.pressed = true
-	c._handle_gamepad(attack)
-	c.cursor = enemy.grid_pos
-	var confirm := InputEventJoypadButton.new()
-	confirm.button_index = JOY_BUTTON_A
-	confirm.pressed = true
-	c._handle_gamepad(confirm)
-	_check(enemy.hp < 9999, "X로 공격 모드, A로 커서의 적 공격")
-	_check(c._describe_tile(enemy.grid_pos).contains(enemy.display_name), "커서 칸 설명에 유닛 이름")
-
-	# 터치·클릭: 바탕이 입력을 가로채지 않고, 커서가 아니라 이벤트 위치로 칸을 고른다 (Android에서 이동이 안 되던 버그)
-	_check(c.get_node("Background").mouse_filter == Control.MOUSE_FILTER_IGNORE, "전투 바탕은 터치를 가로채지 않음")
-	player.restore_action_points()
-	c._on_mode_move_pressed()
-	var tap_target: Vector2i = player.grid_pos + Vector2i.DOWN
-	_check(c._get_reachable(player).has(tap_target), "(준비) 터치할 칸은 이동 가능")
-	var tap := InputEventMouseButton.new()
-	tap.button_index = MOUSE_BUTTON_LEFT
-	tap.pressed = true
-	tap.position = Vector2(tap_target) * c.GRID_SIZE + Vector2(c.GRID_SIZE / 2.0, c.GRID_SIZE / 2.0)
-	c._unhandled_input(tap)
-	_check(player.grid_pos == tap_target and not c.cursor_visible, "터치한 칸으로 이동하고 커서는 숨김")
-
-	gm.pending_combat = null
-	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
-	await process_frame
-	_completed["_test_grid_cursor"] = true
-
-
-## 공격 미리보기·전투 기록·아군 자유 선택
-func _test_combat_preview_and_history() -> void:
-	var gm: Node = root.get_node("GameManager")
-	_new_quiet_game(gm, "young_disciple")
-	gm.player_character.learn_martial_art(MartialArtLibrary.create_art("preset_soul_chase_sword"))
-	gm.start_combat(CombatManager.create_night_bandits(gm.player_character, gm.player_sect))
-	await process_frame
-	await process_frame
-	GameSettings.combat_preview = true
-	var c: Node = current_scene
-	var player: CombatUnit = c._get_player()
-	var enemy: CombatUnit = c._get_alive_enemies()[0]
-	enemy.grid_pos = player.grid_pos + Vector2i.RIGHT
-	var hp: int = enemy.hp
-
-	# 기본 공격 미리보기: 실행 전에는 피해가 없고, 취소하면 그대로
-	c._on_mode_attack_pressed()
-	c._act_on_tile(player, enemy.grid_pos)
-	_check(c.is_previewing() and c.preview_panel.visible and enemy.hp == hp, "공격 전 미리보기 (아직 피해 없음)")
-	var text: String = c.preview_label.text
-	_check(text.contains("예상 피해") and text.contains("체력") and text.contains("행동력"), "미리보기: 예상 피해·체력 변화·내 소모")
-	_check(text.contains("다음 적 턴"), "미리보기: 살아남은 대상의 예상 반격")
-	c.cancel_preview()
-	_check(not c.is_previewing() and enemy.hp == hp and player.basic_attacks_left == 1, "미리보기 취소: 아무 일도 없음")
-	c._act_on_tile(player, enemy.grid_pos)
-	c.confirm_preview()
-	_check(enemy.hp < hp and player.basic_attacks_left == 0, "미리보기 실행: 공격")
-	_check(c.history[c.history.size() - 1].contains("기본 공격") and c.history[c.history.size() - 1].contains("→"), "전투 기록: 공격·피해·체력 변화")
-
-	# 무공 미리보기: 내공 소모가 보인다
-	var art: MartialArtData = player.get_martial_arts()[0]
-	c._on_art_pressed(art)
-	c._act_on_tile(player, enemy.grid_pos)
-	_check(c.is_previewing() and c.preview_label.text.contains("내공"), "무공 미리보기: 내공 소모")
-	_unhandled_key(c, KEY_ESCAPE)
-	_check(not c.is_previewing(), "Esc: 미리보기 취소")
-
-	# 아군 자유 선택: 아군 칸을 누르면 그 아군, Tab은 다음 아군
-	var ally: CombatUnit = null
-	for unit in c._get_alive_friendlies():
-		if unit.is_ally:
-			ally = unit
-			break
-	c._on_mode_move_pressed()
-	c._act_on_tile(player, ally.grid_pos)
-	_check(c._get_controlled() == ally, "아군 턴에 아군을 골라 조종")
-	_unhandled_key(c, KEY_TAB)
-	_check(c._get_controlled() != ally, "Tab: 다음 아군")
-
-	# 턴 종료 → 적군 턴 → 다음 라운드 아군 턴
-	c._on_end_turn_pressed()
-	_check(c._turn_manager.is_player_phase() and c._turn_manager.round_number == 2, "턴 종료하면 적군 턴 뒤 2라운드 아군 턴")
-	var joined: String = "\n".join(c.history)
-	_check(joined.contains("적군 턴") and joined.contains("라운드 2 · 아군 턴"), "전투 기록: 턴 구분")
-	_unhandled_key(c, KEY_H)
-	_check(c.history_popup.visible and c.history_label.text.contains("전투 시작"), "H: 전투 기록 창")
-	_unhandled_key(c, KEY_ESCAPE)
-	_check(not c.history_popup.visible, "Esc: 전투 기록 닫기")
-
-	# 적 공격 예고: 적이 아군을 치기 전에 멈춰 예상 피해를 보여 주고, [확인]을 누르면 공격이 이어진다.
-	GameSettings.enemy_preview = true
-	for foe in c._get_alive_enemies():
-		foe.grid_pos = Vector2i(99, 99)
-	enemy.grid_pos = player.grid_pos + Vector2i.RIGHT
-	var player_hp: int = player.hp
-	var round_before: int = c._turn_manager.round_number
-	c._on_end_turn_pressed()
-	_check(c.is_enemy_preview() and c.preview_panel.visible and player.hp == player_hp, "적 공격 예고: 치기 전에 멈춤")
-	text = c.preview_label.text
-	_check(text.contains("적 공격 예고") and text.contains(enemy.display_name) and text.contains(player.display_name) and text.contains("예상 피해"), "적 공격 예고: 누가 누구를, 예상 피해")
-	_check(not c.preview_panel.find_child("PreviewCancelButton", true, false).visible, "적 공격 예고는 취소 버튼 없음")
-	var guard: int = 0
-	while c.is_enemy_preview() and guard < 10:
-		guard += 1
-		_unhandled_key(c, KEY_ENTER)
-		await process_frame
-	_check(not c.is_enemy_preview() and player.hp < player_hp and c._turn_manager.round_number == round_before + 1, "확인하면 공격이 이어지고 다음 아군 턴")
-	GameSettings.enemy_preview = false
-
-	GameSettings.combat_preview = false
-	c.leave_combat()
-	_check(gm.last_combat_history.size() > 3, "전투가 끝나면 기록을 남김 (연대기용)")
-	await process_frame
-	await process_frame
-	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
-	await process_frame
-	_completed["_test_combat_preview_and_history"] = true
-
-
-func _unhandled_key(node: Node, keycode: Key) -> void:
-	node._unhandled_key_input(_key(keycode))
 
 
 func _test_combat_variety() -> void:
@@ -1026,33 +940,11 @@ func _test_combat_variety() -> void:
 	_check(a.terrain == b.terrain and a.blocked_tiles == b.blocked_tiles, "전장 생성: 같은 씨앗이면 같은 전장")
 	_check(Battlefield.kind_for_region("tianshan") == "snow" and Battlefield.kind_for_region("hangzhou") == "river", "지역에 맞는 전장")
 
-	# 날씨: 밤·안개는 사거리, 비는 화·수 무공, 눈은 수풀·고지 이동
-	var art := MartialArtData.new()
-	art.range = 3
-	art.damage = 20
-	_check(CombatRules.get_art_range(art, CombatRules.Terrain.PLAIN) == 3, "날씨: 맑으면 사거리 그대로")
-	CombatRules.weather = "night"
-	_check(CombatRules.get_art_range(art, CombatRules.Terrain.PLAIN) == 2, "날씨: 밤에는 원거리 사거리 -1")
-	CombatRules.weather = "fog"
-	art.range = 4
-	_check(CombatRules.get_art_range(art, CombatRules.Terrain.PLAIN) == CombatRules.FOG_MAX_RANGE, "날씨: 안개는 사거리 최대 2")
-	CombatRules.weather = "snow"
-	_check(CombatRules.move_cost(CombatRules.Terrain.FOREST) == _Balance.FOREST_MOVE_COST + 1 and CombatRules.move_cost(CombatRules.Terrain.PLAIN) == 1, "날씨: 눈은 수풀 이동 +1")
-	var attacker := CombatUnit.new(gm.player_character, true)
-	var defender := CombatUnit.new(NpcRoster.create_character("npc_bandit", gm.player_character), false)
-	art.element = MartialArtData.FiveElement.FIRE
-	CombatRules.weather = "clear"
-	var dry: int = CombatRules.preview_damage(attacker, defender, art, CombatRules.Terrain.PLAIN, CombatRules.Terrain.PLAIN)["base"]
-	CombatRules.weather = "rain"
-	var wet: Dictionary = CombatRules.preview_damage(attacker, defender, art, CombatRules.Terrain.PLAIN, CombatRules.Terrain.PLAIN)
-	_check(wet["base"] < dry and "빗속의 화기" in wet["notes"], "날씨: 비에는 화 무공이 약해짐 (%d → %d)" % [dry, wet["base"]])
-	CombatRules.weather = "clear"
-
 	# 데이터 전투의 목표·날씨·증원: 혈월의 밤은 밤에 4라운드를 버티는 싸움
 	ScenarioManager.activate("saga_1_blood_moon")
 	var night: CombatSetup = CombatLibrary.create("s1_blood_night_gate", gm.player_character)
 	_check(night.objective == "survive" and night.objective_rounds == 4 and night.weather == "night" and night.reinforcements.size() == 2 and night.battlefield == "town" and not night.blocked_tiles.is_empty(), "데이터 전투: 버티기·밤·증원·전장")
-	_check(Battlefield.describe(night).contains("4라운드 동안 버텨라") and Battlefield.describe(night).contains("밤"), "전투 목표 설명")
+	_check(Battlefield.describe(night).contains("4합 동안 버텨라") and Battlefield.describe(night).contains("밤"), "전투 목표 설명")
 	var guard: CombatSetup = CombatLibrary.create("s1_guard_the_master", gm.player_character)
 	_check(guard.objective == "protect" and guard.objective_target == "npc_master" and guard.objective_target_name == "청운검선", "데이터 전투: 호위 목표")
 	var bad: Dictionary = {"id": "x", "title": "x", "enemies": [{"npc": "npc_bandit", "position": [10, 5]}], "objective": {"type": "defeat_target", "target": "npc_master"}, "weather": "storm"}
@@ -1073,83 +965,4 @@ func _test_combat_variety() -> void:
 	var hit: CombatSetup = CombatManager.create_assassination(gm.player_character)
 	_check(hit.objective == "defeat_target" and hit.weather == "night" and hit.battlefield == "town", "코드 전투: 표적 의뢰는 밤 거리에서 표적만")
 	CombatManager.varied = false
-
-	# 전투 화면에서 목표 판정: 우두머리·탈출·호위·버티기·증원
-	var boss_setup: CombatSetup = CombatManager.create_bandit_hunt(gm.player_character)
-	boss_setup.set_target_objective(boss_setup.enemies[0])
-	gm.start_combat(boss_setup)
-	await process_frame
-	await process_frame
-	var controller: Node = current_scene
-	var boss: CombatUnit = controller._find_unit(boss_setup.enemies[0].id)
-	boss.take_damage(99999)
-	controller._after_hit(boss)
-	_check(controller._combat_over and controller._get_alive_enemies().size() == 1, "목표: 우두머리만 쓰러뜨리면 승리")
-
-	var escape_setup: CombatSetup = CombatManager.create_bandit_hunt(gm.player_character)
-	escape_setup.objective = "escape"
-	escape_setup.exit_tiles.assign([Vector2i(0, 0)])
-	gm.start_combat(escape_setup)
-	await process_frame
-	await process_frame
-	controller = current_scene
-	_check(controller.terrain_label.text.contains("탈출하라"), "목표: 전투 화면에 목표 표시")
-	var hero: CombatUnit = controller._get_player()
-	hero.grid_pos = Vector2i(0, 0)
-	controller._check_escape(hero)
-	_check(controller._combat_over and gm.pending_combat == null, "목표: 탈출 칸에 닿으면 승리")
-
-	var protect_setup: CombatSetup = CombatManager.create_bandit_hunt(gm.player_character)
-	var merchant: CharacterData = NpcRoster.create_character("npc_merchant", gm.player_character)
-	protect_setup.add_ally(merchant, Vector2i(2, 4))
-	protect_setup.objective = "protect"
-	protect_setup.objective_target = merchant.id
-	gm.start_combat(protect_setup)
-	await process_frame
-	await process_frame
-	controller = current_scene
-	var ward: CombatUnit = controller._find_unit(merchant.id)
-	ward.take_damage(99999)
-	controller._after_hit(ward)
-	_check(controller._combat_over and gm.last_combat_history.size() > 0, "목표: 지킬 아군이 쓰러지면 패배")
-
-	var survive_setup: CombatSetup = CombatManager.create_bandit_hunt(gm.player_character)
-	survive_setup.objective = "survive"
-	survive_setup.objective_rounds = 1
-	survive_setup.add_reinforcement(1, NpcRoster.create_character("npc_bandit", gm.player_character), Vector2i(15, 5))
-	gm.start_combat(survive_setup)
-	await process_frame
-	await process_frame
-	controller = current_scene
-	var enemy_count: int = controller._get_alive_enemies().size()
-	hero = controller._get_player()
-	hero.hp = hero.max_hp * 50
-	await controller._end_player_phase()
-	_check(controller._units.size() > enemy_count + 1 and controller._combat_over, "목표: 버티기 승리, 증원이 나타남")
-	SceneRouter.goto(tree, SceneRouter.HUB)
-	await process_frame
 	_completed["_test_combat_variety"] = true
-
-
-func _test_auto_combat() -> void:
-	var gm: Node = root.get_node("GameManager")
-	_new_quiet_game(gm, "leader")
-	gm.player_character.gain_experience(CharacterData.get_experience_for_level(5))
-	gm.start_combat(CombatManager.create_bandit_hunt(gm.player_character))
-	await process_frame
-	await process_frame
-	var controller: Node = current_scene
-	_check(controller.auto_button != null and controller.skip_button != null, "자동 전투·결과만 보기 버튼")
-	# 자동 전투: 아군 턴을 AI가 움직이고 턴을 넘긴다
-	controller.set_auto(true)
-	await process_frame
-	await process_frame
-	_check(controller._turn_manager.round_number >= 2 or controller._combat_over, "자동 전투: 아군 턴이 저절로 넘어감")
-	controller.set_auto(false)
-	# 결과만 보기: 끝까지 바로 치르고 결과를 반영한다
-	await controller.skip_to_result()
-	_check(controller._combat_over and gm.pending_combat == null and not controller._skipping, "결과만 보기: 전투가 끝나고 결과 반영")
-	_check(controller.history.size() > 3, "결과만 보기: 전투 기록이 남음")
-	SceneRouter.goto(tree, SceneRouter.HUB)
-	await process_frame
-	_completed["_test_auto_combat"] = true
