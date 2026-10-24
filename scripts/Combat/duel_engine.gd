@@ -213,6 +213,15 @@ func revealed_plan() -> PackedStringArray:
 	return result
 
 
+## 보이는 상대 유형 (칸마다 int, 안 보이면 -1): 사전 점검용
+func visible_enemy_types() -> Array:
+	var level: int = reveal_level()
+	var result: Array = []
+	for i in enemy_plan.size():
+		result.append(int(enemy_plan[i].type) if level >= 2 or (level == 1 and i == 0) else -1)
+	return result
+
+
 ## 상대의 버릇 (전에 겨뤄 본 인물만): "첫 칸에 강공을 자주 냄 (3합 중 2번)"
 func habit_text(unit: CombatUnit = null) -> String:
 	if unit == null:

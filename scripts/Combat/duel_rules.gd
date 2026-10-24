@@ -230,3 +230,44 @@ static func counter_of(type: DuelCard.Type) -> DuelCard.Type:
 		DuelCard.Type.TRICK:
 			return DuelCard.Type.QUICK
 	return DuelCard.Type.STRIKE
+
+
+## 배치 사전 점검 (초보자의 실수 막기): 칸마다 확실히 빈틈이 되거나 불리한 곳을 알려 준다.
+## unit의 지금 내공·기세에서 앞 칸부터 차례로 소모를 따진다 (운기는 내공·기세를 채운다고 본다. 이겨서 오르는 기세는 셈하지 않는다).
+## enemy_types: 보이는 상대 유형 (칸마다 int, 모르면 -1).
+## 반환: [{slot, serious(확실한 빈틈), text}]
+static func plan_warnings(unit: CombatUnit, plan: Array, enemy_types: Array = []) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	var energy: int = unit.character.internal_energy_current
+	var momentum: int = unit.momentum
+	for i in plan.size():
+		var card: DuelCard = plan[i]
+		if card == null:
+			result.append({"slot": i, "serious": true, "text": "%d칸이 비어 빈틈이 됩니다 (받는 피해 %d%%)" % [i + 1, roundi(GAP_TAKEN * 100)]})
+			continue
+		if card.cost > energy:
+			result.append({"slot": i, "serious": true, "text": "%d칸 「%s」: 내공이 모자라 빈틈이 됩니다 (내공 %d 필요, 이때 %d). 앞 칸에 운기조식을 두세요" % [i + 1, card.display_name, card.cost, energy]})
+		elif card.momentum_cost > momentum:
+			result.append({"slot": i, "serious": false, "text": "%d칸 「%s」: 기세 %d가 필요한데 확실한 기세는 %d입니다. 앞 칸에서 이기지 못하면 빈틈이 됩니다" % [i + 1, card.display_name, card.momentum_cost, momentum]})
+		else:
+			energy -= card.cost
+			momentum -= card.momentum_cost
+		if card.type == DuelCard.Type.FOCUS:
+			energy = mini(unit.character.internal_energy_max, energy + FOCUS_ENERGY + unit.character.wisdom / 2)
+			momentum = mini(MAX_MOMENTUM, momentum + 1)
+		var seen: int = int(enemy_types[i]) if i < enemy_types.size() else -1
+		if seen >= 0:
+			var theirs: DuelCard.Type = seen
+			var mine: DuelCard.Type = card.type
+			if _beats(theirs, mine):
+				result.append({"slot": i, "serious": false, "text": "%d칸: 상대의 %s이(가) 내 %s을(를) 이깁니다. %s을(를) 두면 유리합니다" % [
+					i + 1, DuelCard.TYPE_NAMES[theirs], DuelCard.TYPE_NAMES[mine], DuelCard.TYPE_NAMES[counter_of(theirs)]]})
+	var focus: int = plan.filter(func(c: Variant) -> bool: return c != null and c.type == DuelCard.Type.FOCUS).size()
+	if focus >= 2 and focus * 2 >= plan.size():
+		result.append({"slot": -1, "serious": false, "text": "운기조식이 %d칸입니다. 그 칸들은 무방비라 피해를 %d%% 받습니다" % [focus, roundi(FOCUS_TAKEN * 100)]})
+	return result
+
+
+## 유형 a가 유형 b를 이기는지 (상성 안내용)
+static func _beats(a: DuelCard.Type, b: DuelCard.Type) -> bool:
+	return advantage(DuelCard.make("", "", a, 0), DuelCard.make("", "", b, 0)) == 1

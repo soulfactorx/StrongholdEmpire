@@ -43,6 +43,8 @@ var back_button: Button
 var log_label: Label
 var log_scroll: ScrollContainer
 var result_label: Label
+## 배치 사전 점검 (빈틈·상성 불리를 겨루기 전에 알려 준다)
+var warning_label: Label
 var confirm_popup: Control
 
 
@@ -120,6 +122,9 @@ func _build_ui() -> void:
 	slot_row = HBoxContainer.new()
 	slot_row.add_theme_constant_override("separation", 6)
 	board.add_child(slot_row)
+	warning_label = _label(board, 15)
+	warning_label.name = "WarningLabel"
+	warning_label.add_theme_color_override("font_color", Color("#9b2c1f"))
 	var hand_title := _label(board, 16)
 	hand_title.text = "손패 — 무공 초식은 한 합에 한 번, 기본 동작은 여러 번"
 	hand_grid = GridContainer.new()
@@ -134,7 +139,7 @@ func _build_ui() -> void:
 	actions.add_theme_constant_override("h_separation", 6)
 	actions.add_theme_constant_override("v_separation", 6)
 	root.add_child(actions)
-	fight_button = _button(actions, "겨루기 ▶", fight)
+	fight_button = _button(actions, "겨루기 ▶", _on_fight_pressed)
 	fight_button.name = "FightButton"
 	auto_fill_button = _button(actions, "자동 배치", auto_fill)
 	auto_fill_button.name = "AutoFillButton"
@@ -293,11 +298,18 @@ func _fill_slots() -> void:
 	for child in slot_row.get_children():
 		slot_row.remove_child(child)
 		child.queue_free()
+	var warnings: Array[Dictionary] = plan_warnings()
+	var lines: PackedStringArray = []
+	for warning in warnings:
+		lines.append("! " + warning["text"])
+	warning_label.text = "\n".join(lines)
+	warning_label.visible = not lines.is_empty() and not engine.over
 	for i in plan.size():
 		var card: DuelCard = plan[i]
+		var warned: bool = warnings.any(func(w: Dictionary) -> bool: return w["slot"] == i and card != null)
 		var button := Button.new()
 		button.name = "Slot%d" % i
-		button.text = "%d\n%s" % [i + 1, "%s\n%s" % [card.display_name, card.get_type_name()] if card else "비어 있음"]
+		button.text = "%d%s\n%s" % [i + 1, " !" if warned else "", "%s\n%s" % [card.display_name, card.get_type_name()] if card else "비어 있음"]
 		button.custom_minimum_size = Vector2(0, 72)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.toggle_mode = true
@@ -319,7 +331,7 @@ func _fill_hand() -> void:
 	for card in friend.cards:
 		var button := Button.new()
 		button.name = "Card_" + card.id
-		button.text = card.describe()
+		button.text = card.describe() + _hand_hint(card)
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		button.custom_minimum_size = Vector2(0, 60)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -384,7 +396,48 @@ func _toggle_order() -> void:
 	_refresh()
 
 
+## 지금 배치의 사전 점검 (DuelRules.plan_warnings)
+func plan_warnings() -> Array[Dictionary]:
+	var friend: CombatUnit = engine.current_friend()
+	if friend == null or engine.over:
+		return []
+	return DuelRules.plan_warnings(friend, plan, engine.visible_enemy_types())
+
+
+## 손패 초식을 고른 칸에 놓으면 내공·기세가 모자라는지 미리 알려 준다
+func _hand_hint(card: DuelCard) -> String:
+	if selected_slot < 0 or selected_slot >= plan.size() or engine.current_friend() == null:
+		return ""
+	var trial: Array = plan.duplicate()
+	trial[selected_slot] = card
+	for warning in DuelRules.plan_warnings(engine.current_friend(), trial.slice(0, selected_slot + 1)):
+		if warning["slot"] != selected_slot:
+			continue
+		if warning["text"].contains("내공이 모자라"):
+			return "\n(%d칸에선 내공 부족)" % (selected_slot + 1)
+		if warning["text"].contains("기세"):
+			return "\n(%d칸에선 기세가 모자랄 수 있음)" % (selected_slot + 1)
+	return ""
+
+
 # ── 교전 ──
+
+## [겨루기]: 확실한 빈틈이 있으면 한 번 묻는다
+func _on_fight_pressed() -> void:
+	if _busy or engine.over:
+		return
+	var serious: Array = plan_warnings().filter(func(w: Dictionary) -> bool: return w["serious"])
+	if serious.is_empty():
+		fight()
+		return
+	if confirm_popup == null:
+		confirm_popup = _ConfirmPopup.new()
+		add_child(confirm_popup)
+	var lines: PackedStringArray = []
+	for warning in serious:
+		lines.append("· " + warning["text"])
+	confirm_popup.open("빈틈이 있습니다", "\n".join(lines) + "\n\n그래도 겨룰까요?", fight, "그래도 겨룬다", "다시 배치")
+
 
 ## 지금 배치로 한 합을 겨룬다. 빈 칸은 빈틈이 된다.
 func fight() -> void:
@@ -481,7 +534,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		return
 	match event.keycode:
 		KEY_SPACE, KEY_ENTER:
-			fight()
+			_on_fight_pressed()
 		KEY_A:
 			auto_fill()
 		KEY_ESCAPE:

@@ -236,6 +236,21 @@ func _test_duel_rules() -> void:
 	fire.element = MartialArtData.FiveElement.FIRE
 	_check(_clash(fire, _card(T.GUARD), "rain")["b"] < _clash(fire, _card(T.GUARD))["b"], "날씨: 비에는 화 초식이 약해짐")
 
+	# 배치 사전 점검: 빈 칸, 내공 부족(앞 칸 운기로 채우면 괜찮음), 기세 부족, 보이는 상대에게 불리한 유형
+	a = _duel_unit("갑")
+	a.character.internal_energy_current = 10
+	var costly: DuelCard = _card(T.STRIKE, 30, 20)
+	var warnings: Array[Dictionary] = DuelRules.plan_warnings(a, [null, costly, costly])
+	_check(warnings.size() == 3 and warnings[0]["serious"] and warnings[1]["text"].contains("내공이 모자라") and warnings[1]["serious"], "사전 점검: 빈 칸과 내공 부족은 확실한 빈틈")
+	warnings = DuelRules.plan_warnings(a, [_card(T.FOCUS, 0), costly, _card(T.GUARD)])
+	_check(warnings.is_empty(), "사전 점검: 앞 칸의 운기로 내공을 채우면 괜찮음")
+	warnings = DuelRules.plan_warnings(a, [finisher, _card(T.GUARD), _card(T.GUARD)])
+	_check(warnings.size() == 1 and not warnings[0]["serious"] and warnings[0]["text"].contains("기세"), "사전 점검: 기세 부족은 주의 (앞 칸에서 이기면 펼침)")
+	warnings = DuelRules.plan_warnings(a, [_card(T.EVADE), _card(T.GUARD), _card(T.QUICK)], [T.TRICK, -1, T.GUARD])
+	_check(warnings.size() == 2 and warnings[0]["text"].contains("술") and warnings[1]["slot"] == 2, "사전 점검: 보이는 상대 유형에 지는 칸")
+	warnings = DuelRules.plan_warnings(a, [_card(T.FOCUS, 0), _card(T.FOCUS, 0), _card(T.GUARD)])
+	_check(warnings.any(func(w: Dictionary) -> bool: return w["slot"] == -1 and w["text"].contains("무방비")), "사전 점검: 운기가 많으면 무방비 경고")
+
 	# 상성 안내와 맞받는 유형
 	_check(DuelRules.advantage(_card(T.STRIKE), _card(T.GUARD)) == 1 and DuelRules.advantage(_card(T.GUARD), _card(T.STRIKE)) == -1, "상성 안내: 강공 > 막기")
 	var cycle_ok: bool = true
@@ -505,8 +520,22 @@ func _test_duel_screen() -> void:
 	c.select_slot(2)
 	c.select_slot(2)
 	_check(c.plan[2] == null, "고른 칸을 다시 누르면 비움")
+	# 사전 점검: 빈 칸이 있으면 알려 주고, 겨루기 전에 한 번 묻는다
+	_check(c.warning_label.visible and c.warning_label.text.contains("3칸이 비어"), "사전 점검: 빈 칸 경고")
+	_unhandled_key(c, KEY_SPACE)
+	_check(c.confirm_popup != null and c.confirm_popup.visible and c.engine.bout_total == 0, "빈틈이 있으면 겨루기 전에 확인")
+	c.confirm_popup._answer(false)
+	_check(c.engine.bout_total == 0, "다시 배치: 겨루지 않음")
+	var broke: CombatUnit = c.engine.current_friend()
+	var energy: int = broke.character.internal_energy_current
+	broke.character.internal_energy_current = 0
+	c.select_slot(2)
+	c._refresh()
+	_check(c.hand_grid.get_node("Card_basic_chop").text.contains("내공 부족"), "손패: 이 칸에선 내공이 모자라는 초식 표시")
+	broke.character.internal_energy_current = energy
 	_unhandled_key(c, KEY_A)
 	_check(not c.plan.has(null), "A·자동 배치: 모든 칸을 채움")
+	_check(c.plan_warnings().all(func(w: Dictionary) -> bool: return not w["serious"]), "자동 배치에는 확실한 빈틈이 없음")
 
 	# 겨루기: 한 합이 지나고 다음 배치를 기다린다
 	_unhandled_key(c, KEY_SPACE)
