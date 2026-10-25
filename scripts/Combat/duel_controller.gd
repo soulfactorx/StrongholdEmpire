@@ -38,6 +38,10 @@ var friend_portrait: TextureRect
 var foe_portrait: TextureRect
 ## 1대1 칸(두 사람)과 여럿 칸(사람 목록)
 var versus_row: HBoxContainer
+## 합 무대 (합마다 칸별 움직임 연출, 설정 [전투 연출]로 끔)
+var stage: DuelStage
+var stage_panel: Control
+var _main_scroll: ScrollContainer
 var squad_box: VBoxContainer
 var intent_label: Label
 ## 사건 대사 (이번 합에 일어난 일)
@@ -90,6 +94,7 @@ func _build_ui() -> void:
 	var scroll := ScrollContainer.new()
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	margin.add_child(scroll)
+	_main_scroll = scroll
 	var root := VBoxContainer.new()
 	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	root.add_theme_constant_override("separation", 8)
@@ -108,6 +113,15 @@ func _build_ui() -> void:
 	goal_label = _label(head, 14)
 	goal_label.text = Battlefield.describe(engine.setup) + "\n상성: 강공 > 막기 > 속공 > 강공 · 회피는 강공·속공을 흘리고 술에 약함 · 기(운기)는 무방비"
 	lineup_label = _label(head, 14)
+
+	# 합 무대
+	var stage_box := _panel(root)
+	stage_panel = stage_box.get_parent()
+	stage = DuelStage.new()
+	stage.name = "DuelStage"
+	stage.custom_minimum_size.y = 215
+	stage_box.add_child(stage)
+	stage_panel.visible = GameSettings.combat_effects
 
 	# 지금 겨루는 사람들
 	var versus := _panel(root)
@@ -371,6 +385,12 @@ func _refresh() -> void:
 	lineup_label.text = "우리 줄: %s\n상대 줄: %s" % [_lineup(engine.friends, engine.active_friends()), _lineup(engine.foes, engine.active_foes())]
 	versus_row.visible = engine.is_single()
 	squad_box.visible = not engine.is_single()
+	stage_panel.visible = GameSettings.combat_effects
+	if stage_panel.visible and not stage.playing:
+		stage.set_units(engine.active_friends(), engine.active_foes(), _portrait_of)
+	# 무대가 초상화를 보여 주므로 아래 줄의 작은 초상화는 접는다
+	friend_portrait.visible = not stage_panel.visible
+	foe_portrait.visible = not stage_panel.visible
 	if me and foe:
 		if engine.is_single():
 			friend_label.text = _unit_text(me)
@@ -704,12 +724,14 @@ func fight() -> void:
 	_refresh()
 	var used_art: bool = plan.any(func(c: Variant) -> bool: return c != null and not c.art_id.is_empty())
 	var lines: PackedStringArray = engine.run_bout(plan)
-	if not _skipping:
+	if _show_stage():
+		await _play_stage()
+	elif not _skipping:
 		if used_art:
 			AudioManager.play_art()
 		else:
 			AudioManager.play_hit()
-	if GameSettings.combat_delay > 0.0 and not _skipping:
+	if GameSettings.combat_delay > 0.0 and not _skipping and not _show_stage():
 		# 한 줄씩 보여 준다 (기록은 이미 엔진에 있다)
 		for i in lines.size():
 			if not is_inside_tree():
@@ -717,6 +739,21 @@ func fight() -> void:
 			await get_tree().create_timer(minf(GameSettings.combat_delay, 0.25)).timeout
 	_busy = false
 	_new_bout()
+
+
+func _show_stage() -> bool:
+	return GameSettings.combat_effects and not _skipping and stage_panel.visible and not engine.slot_events.is_empty() and is_inside_tree()
+
+
+## 이번 합을 무대에서 칸마다 보여 준다. 무대가 화면 밖이면 잠시 무대로 올렸다가 끝나면 제자리로
+func _play_stage() -> void:
+	var before: int = _main_scroll.scroll_vertical
+	_main_scroll.ensure_control_visible(stage_panel)
+	# 빠르게 0.55배, 보통 1배, 느리게 1.5배
+	var speed: float = 0.55 + GameSettings.combat_delay * 1.6
+	await stage.play(engine.slot_events.duplicate(), speed)
+	if is_inside_tree():
+		_main_scroll.scroll_vertical = before
 
 
 ## 사건의 선택 (설득·결단): 고를 때까지 다음 합으로 가지 않는다. 자동 전투면 스스로 고른다
@@ -766,6 +803,7 @@ func skip_to_result() -> void:
 	if engine.over or _skipping:
 		return
 	_skipping = true
+	stage.hurry = true
 	while _busy and is_inside_tree():
 		await get_tree().process_frame
 	if choice_popup:

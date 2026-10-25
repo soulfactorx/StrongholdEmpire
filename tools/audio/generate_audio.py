@@ -6,7 +6,7 @@
 - 음계: 5음 음계. 잔향은 합성 임펄스 응답과의 FFT 합성곱
 - 배경음악은 끝의 잔향을 앞으로 접어 넣어 이음매 없이 반복된다
 
-실행: python3 tools/audio/generate_audio.py   (numpy와 libvorbis가 든 ffmpeg 필요)
+실행: python3 tools/audio/generate_audio.py [이름 ...]   (numpy와 libvorbis가 든 ffmpeg 필요. 이름을 주면 그 소리만)
 같은 이름의 파일로 덮어쓰면 코드 수정 없이 바뀐다.
 """
 
@@ -396,16 +396,28 @@ def build_sfx(rng) -> dict[str, np.ndarray]:
 			for i, n in enumerate([55, 62, 67, 71, 74])] + [m.add(chime(d(86), rng), 0.7, 0.5, 0.3)], rng, 0.25),
 		"defeat": sfx(2.6, lambda m: [m.add(gong(rng, 73.0, 3.0), 0, 0.9),
 			m.add(pluck(d(45), 2.0, rng, 0.4, 1.4), 0.1, 0.6)], rng, 0.25),
+		# 합 무대 연출 (뒤에 덧붙여 앞의 소리는 그대로 나온다)
+		"block": sfx(0.35, lambda m: [m.add(woodblock(rng, 620), 0, 0.9),
+			m.add(pluck(d(88), 0.3, rng, 1.6, 0.12), 0, 0.45)], rng, 0.06),
+		"evade": sfx(0.3, lambda m: m.add(swish(rng, 0.22, False), 0, 1.0), rng, 0.05),
+		"fall": sfx(1.0, lambda m: [m.add(drum(rng, 1.2, 0.7), 0, 1.0),
+			m.add(pluck(d(43), 0.9, rng, 0.3, 0.6), 0.05, 0.5)], rng, 0.15),
+		"focus": sfx(1.0, lambda m: [m.add(chime(d(84), rng, 1.0), 0, 0.5),
+			m.add(chime(d(91), rng, 1.0), 0.08, 0.35, 0.2)], rng, 0.2),
 	}
 
 
-def main() -> None:
+def main(only: list[str] | None = None) -> None:
+	"""only: 이 이름의 소리만 다시 쓴다 (예: block evade). 없으면 모두"""
 	seed = 20261017
 	for i, (name, fn) in enumerate(MUSIC.items()):
-		save(fn(np.random.default_rng(seed + i)), f"music/{name}.ogg")
+		if not only or name in only:
+			save(fn(np.random.default_rng(seed + i)), f"music/{name}.ogg")
 	for name, audio in build_sfx(np.random.default_rng(seed + 100)).items():
-		save(audio, f"sfx/{name}.ogg")
+		if not only or name in only:
+			save(audio, f"sfx/{name}.ogg")
 
 
 if __name__ == "__main__":
-	main()
+	import sys
+	main(sys.argv[1:] or None)

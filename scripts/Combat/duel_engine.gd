@@ -49,6 +49,8 @@ var evades: int = 0
 var over: bool = false
 var outcome: CombatManager.Outcome = CombatManager.Outcome.RETREAT
 var history: PackedStringArray = []
+## 이번 합의 칸마다 일어난 일 (화면 연출용): [{slot, cards: {유닛: 초식}, hits: [타격], hp_before, hp_after: {유닛: 체력}, focus: [유닛]}]
+var slot_events: Array[Dictionary] = []
 ## 이번 합의 맞선 상대 배치 (prepare_bout에서 정함). 여럿이 나서면 나머지는 plans에
 var enemy_plan: Array[DuelCard] = []
 ## 이번 합의 다른 사람들 배치 {unit: Array[DuelCard]}와 대상 {unit: CombatUnit}
@@ -539,6 +541,7 @@ func run_bout(player_plan: Array) -> PackedStringArray:
 	if enemy_plan.is_empty():
 		prepare_bout()
 	event_lines.clear()
+	slot_events.clear()
 	var me: CombatUnit = controlled()
 	var foe: CombatUnit = current_foe()
 	bout_total += 1
@@ -598,8 +601,22 @@ func _run_fight(player_plan: Array, me: CombatUnit, lines: PackedStringArray) ->
 		var friend_count: int = actions.filter(func(a: Dictionary) -> bool: return a["side"] == 0).size()
 		if friend_count == 0 or friend_count == actions.size():
 			break
+		var hp_before: Dictionary = {}
+		for action in actions:
+			hp_before[action["unit"]] = action["unit"].hp
 		var result: Dictionary = DuelRules.resolve_multi(i, actions, ctx)
 		lines.append_array(result["lines"])
+		var hp_after: Dictionary = {}
+		var focused: Array = []
+		for action in actions:
+			hp_after[action["unit"]] = action["unit"].hp
+			var played: DuelCard = result["cards"].get(action["unit"])
+			if played and played.type == DuelCard.Type.FOCUS:
+				focused.append(action["unit"])
+		slot_events.append({
+			"slot": i, "cards": result["cards"], "hits": result["applied"],
+			"hp_before": hp_before, "hp_after": hp_after, "focus": focused,
+		})
 		var my_card: DuelCard = player_plan[i] if i < player_plan.size() else null
 		my_types.append(int(my_card.type) if my_card else -1)
 		var foe_card: DuelCard = enemy_plan[i] if i < enemy_plan.size() else null

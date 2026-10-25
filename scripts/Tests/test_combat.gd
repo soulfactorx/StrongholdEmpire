@@ -1517,3 +1517,53 @@ func _test_combat_variety() -> void:
 	var tourney: CombatSetup = CombatLibrary.create("martial_tournament", gm.player_character)
 	_check(tourney.enemies.size() == 4 and tourney.placement_flags.has("3") and EventManager.get_event("martial_tournament") != null, "무림대회: 네 판과 성적 플래그, 기연")
 	_completed["_test_combat_variety"] = true
+
+
+## 합 무대 연출: 칸마다 초식 이름·달려들기·피해 숫자를 보여 주고, 끝나면 체력 막대가 실제 체력과 같다
+func _test_duel_stage() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_new_quiet_game(gm, "young_disciple")
+	gm.player_character.learn_martial_art(MartialArtLibrary.create_art("preset_soul_chase_sword"))
+	GameSettings.combat_effects = true
+	gm.start_combat(CombatManager.create_night_bandits(gm.player_character, gm.player_sect))
+	await process_frame
+	await process_frame
+	var c: Node = current_scene
+	var stage: DuelStage = c.stage
+	_check(c.stage_panel.visible and stage.has_token(c.engine.controlled()) and stage.has_token(c.engine.current_foe()), "합 무대: 겨루는 두 사람의 말")
+	_check(not c.friend_portrait.visible, "무대가 있으면 작은 초상화는 접음")
+	c.auto_fill()
+	var floats_seen: bool = false
+	var playing_seen: bool = false
+	c.fight()
+	for i in 600:
+		await process_frame
+		if stage.playing:
+			playing_seen = true
+			# 피해 숫자·초식 이름 같은 떠오르는 글자
+			if stage._world.get_children().any(func(n: Node) -> bool: return n is Label):
+				floats_seen = true
+		if not c._busy:
+			break
+	_check(playing_seen and not c._busy, "합 무대: 합이 끝날 때까지 연출 (%d칸)" % c.engine.slot_events.size())
+	_check(not c.engine.slot_events.is_empty() and c.engine.slot_events[0].has("hp_before") and c.engine.slot_events[0]["cards"].size() >= 2, "합 기록: 칸마다 초식·체력")
+	_check(floats_seen, "합 무대: 떠오르는 글자 (피해·초식 이름)")
+	var me: CombatUnit = c.engine.controlled()
+	if me and stage.has_token(me):
+		_check(int(stage._tokens[me]["bar"].value) == me.hp or c.engine.over, "합 무대: 끝나면 체력 막대가 실제 체력 (%d / %d)" % [stage._tokens[me]["bar"].value, me.hp])
+	# 결과만 보기는 남은 연출을 기다리지 않는다
+	if not c.engine.over:
+		c.auto_fill()
+		c.fight()
+		await process_frame
+		var started: int = Time.get_ticks_msec()
+		await c.skip_to_result()
+		_check(c.engine.over and Time.get_ticks_msec() - started < 3000, "결과만 보기: 연출을 서둘러 끝냄")
+	# 설정에서 끄면 무대가 없다
+	GameSettings.combat_effects = false
+	c._refresh()
+	_check(not c.stage_panel.visible and c.friend_portrait.visible, "전투 연출을 끄면 무대 없음")
+	gm.start_new_game("정리", "young_disciple")
+	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
+	await process_frame
+	_completed["_test_duel_stage"] = true

@@ -14,6 +14,7 @@ var speed_option: OptionButton
 var action_preview_check: CheckButton
 var faction_report_check: CheckButton
 var action_scenes_check: CheckButton
+var combat_effects_check: CheckButton
 var layout_option: OptionButton
 
 
@@ -132,7 +133,13 @@ func _ready() -> void:
 	action_scenes_check.custom_minimum_size = Vector2(0, 48)
 	action_scenes_check.toggled.connect(func(on: bool) -> void: GameSettings.set_and_save("action_scenes", on, get_tree()))
 	box.add_child(action_scenes_check)
-	for check in [fullscreen_check, action_preview_check, faction_report_check, action_scenes_check]:
+	combat_effects_check = CheckButton.new()
+	combat_effects_check.name = "CombatEffectsCheck"
+	combat_effects_check.text = "전투 연출 (합마다 달려들기·피해 숫자·흔들림)"
+	combat_effects_check.custom_minimum_size = Vector2(0, 48)
+	combat_effects_check.toggled.connect(func(on: bool) -> void: GameSettings.set_and_save("combat_effects", on, get_tree()))
+	box.add_child(combat_effects_check)
+	for check in [fullscreen_check, action_preview_check, faction_report_check, action_scenes_check, combat_effects_check]:
 		check.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var note := Label.new()
 	note.text = "글자 크기는 다음에 여는 화면부터 적용됩니다."
@@ -155,6 +162,7 @@ func open() -> void:
 	action_preview_check.set_pressed_no_signal(GameSettings.action_preview)
 	faction_report_check.set_pressed_no_signal(GameSettings.faction_report)
 	action_scenes_check.set_pressed_no_signal(GameSettings.action_scenes)
+	combat_effects_check.set_pressed_no_signal(GameSettings.combat_effects)
 	layout_option.select(GameSettings.layout_mode)
 	for i in GameSettings.TEXT_SCALES.size():
 		if is_equal_approx(GameSettings.TEXT_SCALES[i][1], GameSettings.text_scale):

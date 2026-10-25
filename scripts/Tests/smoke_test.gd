@@ -60,6 +60,7 @@ const RUNTIME_SEQUENCE: Array = [
 	["world", "_test_world_state_and_war"],
 	["combat", "_test_duel_engine"],
 	["combat", "_test_duel_screen"],
+	["combat", "_test_duel_stage"],
 	["combat", "_test_duel_formats"],
 	["combat", "_test_duel_variety_rules"],
 	["combat", "_test_duel_screen_formats"],
@@ -140,6 +141,8 @@ func _initialize() -> void:
 	GameSettings.action_preview = false
 	GameSettings.faction_report = false
 	GameSettings.action_scenes = false
+	# 전투 무대 연출도 끈다 (켠 상태는 test_combat의 _test_duel_stage에서 따로)
+	GameSettings.combat_effects = false
 	# 세력 AI는 계절마다 강호 세력 수치를 바꾸므로, 그 영향을 시험하는 곳에서만 켠다.
 	SectAI.active = false
 	# 우리 문파 직책 인물(NpcAgent)도 문파 수치를 바꾸므로 시험하는 곳에서만 켠다.
@@ -164,6 +167,7 @@ func _run_runtime_tests() -> void:
 	GameSettings.action_preview = false
 	GameSettings.faction_report = false
 	GameSettings.action_scenes = false
+	GameSettings.combat_effects = false
 	# 각 검사가 끝까지 실행됐는지 확인한다. 스크립트 오류로 중단되면 완료 표시가 남지 않는다.
 	# 환경 변수 SMOKE_ONLY="검사1,검사2"를 주면 그 런타임 검사만 돌린다 (개발 중 빠른 확인용).
 	var only: PackedStringArray = OS.get_environment("SMOKE_ONLY").split(",", false)

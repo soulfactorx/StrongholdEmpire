@@ -152,6 +152,7 @@ static func resolve_multi(slot: int, actions: Array, ctx: Dictionary) -> Diction
 		if ctx.get("capture") == target and (hit["counter"] or card.effects.has("stun")) and target.get_hp_ratio() <= _Balance.CAPTURE_RATIO:
 			outcome["captured"] = true
 			lines.append("   %s이(가) %s을(를) 제압해 사로잡았다!" % [source.display_name, target.display_name])
+			hit["captured"] = true
 			applied.append(hit)
 			continue
 		var amount: int = hit["damage"]
@@ -172,6 +173,11 @@ static func resolve_multi(slot: int, actions: Array, ctx: Dictionary) -> Diction
 			lines.append("   %s이(가) 막아서며 %d를 대신 받음" % [coverer.display_name, share])
 		target.take_damage(amount)
 		taken[target] += amount
+		# 연출용: 실제로 들어간 피해와 쓰러졌는지, 대신 받은 동료
+		hit["dealt"] = amount
+		hit["fell"] = not target.is_alive()
+		if coverer and not hit["counter"]:
+			hit["coverer"] = coverer
 		applied.append(hit)
 		lines.append("   %s → %s %d%s" % [source.display_name, target.display_name, amount, " (%s)" % note if not note.is_empty() else ""])
 		if card.effects.has("stun") and not target.has_status("stun_immune") and target.is_alive():

@@ -809,7 +809,7 @@ func _test_audio() -> void:
 	for track in tracks:
 		var stream: AudioStream = load(audio.MUSIC_DIR + track + ".ogg")
 		_check(stream is AudioStreamOggVorbis and stream.get_length() > 20.0, "배경음악 %s" % track)
-	for sfx in ["click", "success", "failure", "event", "hit", "art", "level_up", "battle_start", "victory", "defeat"]:
+	for sfx in ["click", "success", "failure", "event", "hit", "art", "level_up", "battle_start", "victory", "defeat", "block", "evade", "fall", "focus"]:
 		_check(load(audio.SFX_DIR + sfx + ".ogg") is AudioStreamOggVorbis, "효과음 %s" % sfx)
 	_check(AudioServer.get_bus_index(GameSettings.MUSIC_BUS) > 0 and AudioServer.get_bus_index(GameSettings.SFX_BUS) > 0, "배경음악·효과음 버스")
 	_check(audio._sfx_players[0].bus == GameSettings.SFX_BUS and audio._music_players[0].bus == GameSettings.MUSIC_BUS, "재생기가 각자의 버스로")
@@ -828,6 +828,8 @@ func _test_audio() -> void:
 	await process_frame
 	var combat: Node = current_scene
 	_check(audio.current_music == "combat", "전투 화면: 전투 곡")
+	# 무대 연출을 끈 경우의 소리 (연출을 켜면 칸마다 타격·막기·회피 소리가 따로 난다)
+	GameSettings.combat_effects = false
 	combat.plan.assign([DuelCard.basic_cards()[0], DuelCard.basic_cards()[0], DuelCard.basic_cards()[0]])
 	combat.fight()
 	_check(audio.last_sfx == "hit", "기본 동작으로 겨루기: 타격 소리")
