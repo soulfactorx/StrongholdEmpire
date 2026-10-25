@@ -202,7 +202,8 @@ static func resolve_round(
 	round_index: int,
 	player_previous: int = -1,
 	enemy_previous: int = -1,
-	luck: float = _Balance.WAR_LUCK
+	luck: float = _Balance.WAR_LUCK,
+	rng: RandomNumberGenerator = null
 ) -> Dictionary:
 	var player_mult: float = matchup_multiplier(player_command, enemy_command)
 	player_mult *= formation_multiplier(player_formation, player_command)
@@ -213,8 +214,8 @@ static func resolve_round(
 	enemy_mult *= formation_multiplier(enemy_formation, enemy_command)
 	enemy_mult *= _repeat_multiplier(enemy_command, enemy_previous)
 	if luck > 0.0:
-		player_mult *= randf_range(1.0 - luck, 1.0 + luck)
-		enemy_mult *= randf_range(1.0 - luck, 1.0 + luck)
+		player_mult *= rng.randf_range(1.0 - luck, 1.0 + luck) if rng else randf_range(1.0 - luck, 1.0 + luck)
+		enemy_mult *= rng.randf_range(1.0 - luck, 1.0 + luck) if rng else randf_range(1.0 - luck, 1.0 + luck)
 
 	var player_score: int = int(player_power * player_mult)
 	var enemy_score: int = int(enemy_power * enemy_mult)
@@ -240,6 +241,74 @@ static func resolve_round(
 			result_text,
 		],
 	}
+
+
+## 한 라운드의 상성 한마디: 아군 명령이 적 명령에 유리한지 (적 명령을 모르면 "")
+static func matchup_text(own: Command, enemy: int) -> String:
+	if own == Command.RETREAT:
+		return "후퇴 — 전력이 줄지만 지면 손실이 줄어듦"
+	if enemy < 0:
+		return ""
+	var mult: float = matchup_multiplier(own, enemy)
+	if enemy == Command.RETREAT:
+		return "적이 물러남"
+	if mult > 1.0:
+		return "유리 — %s이(가) %s을(를) 이김" % [COMMAND_NAMES[own], COMMAND_NAMES[enemy]]
+	if mult < 1.0:
+		return "불리 — %s이(가) %s에 짐" % [COMMAND_NAMES[own], COMMAND_NAMES[enemy]]
+	return "맞섬 — 같은 명령"
+
+
+## 예상 승률: 정찰로 안 적 명령은 그대로, 모르는 라운드는 적의 전술 성향대로 뽑아 여러 번 돌려 본다.
+## commands가 다 차지 않았으면 빈 라운드는 아군도 무난한 수(가장 흔한 적 명령을 이기는 수)로 본다.
+## 같은 조건이면 늘 같은 값이 나오도록 난수 씨앗을 고정한다.
+static func estimate_win_chance(
+	player_power: int, enemy_power: int, commands: Array, formation: Formation, general: Dictionary,
+	plan: Dictionary, tactics: Dictionary, runs: int = 300
+) -> float:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	var revealed: Array = plan.get("revealed", [])
+	var known: Array = plan.get("enemy_commands", [])
+	var favorite: int = Command.DEFEND
+	for command in tactics:
+		if tactics[command] > tactics.get(favorite, 0.0):
+			favorite = command
+	var fallback: int = maxi(0, _counter_of(favorite))
+	var wins: int = 0
+	for run in runs:
+		var won: int = 0
+		var lost: int = 0
+		var previous: int = -1
+		var enemy_previous: int = -1
+		for i in _Balance.WAR_ROUNDS:
+			var ours: int = int(commands[i]) if i < commands.size() else fallback
+			var theirs: int = int(known[i]) if i < revealed.size() and revealed[i] else _pick_weighted_rng(tactics, rng)
+			var result: Dictionary = resolve_round(
+				player_power, ours, formation, general, enemy_power, theirs, plan.get("enemy_formation", Formation.NONE),
+				i, previous, enemy_previous, _Balance.WAR_LUCK, rng
+			)
+			previous = ours
+			enemy_previous = theirs
+			if result["outcome"] > 0:
+				won += 1
+			elif result["outcome"] < 0:
+				lost += 1
+		if won > lost:
+			wins += 1
+	return float(wins) / float(runs)
+
+
+static func _pick_weighted_rng(weights: Dictionary, rng: RandomNumberGenerator) -> int:
+	var total: float = 0.0
+	for key in weights:
+		total += weights[key]
+	var roll: float = rng.randf() * total
+	for key in weights:
+		roll -= weights[key]
+		if roll < 0.0:
+			return key
+	return weights.keys()[-1]
 
 
 static func _repeat_multiplier(command: Command, previous: int) -> float:

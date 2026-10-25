@@ -1525,7 +1525,7 @@ func scout_war(target_id: String) -> Dictionary:
 	return {
 		"success": true,
 		"round": round_index,
-		"message": "정찰 성공 (금화 -%d): 적은 %d라운드에 [%s]을(를) 준비하고 있습니다." % [
+		"message": "정찰 성공 (금화 -%d): 적은 %d합에 [%s]을(를) 준비하고 있습니다." % [
 			cost, round_index + 1, SectWarManager.COMMAND_NAMES[command],
 		],
 	}

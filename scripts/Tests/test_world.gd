@@ -376,15 +376,33 @@ func _test_war_flow() -> void:
 	await process_frame
 	await process_frame
 	var screen: Node = current_scene
-	_check(screen.target_option.item_count == 3 and screen.formation_option.item_count == 4, "문파전 화면: 대상·진형 선택지")
-	_check(screen.plan_label.text.contains("적 ?"), "정찰 전에는 적 명령을 모름")
+	_check(screen.target_buttons.size() == 3 and screen.formation_buttons.size() == 4, "문파전 화면: 대상·진형 선택지")
+	# 누가 누구와 싸우는지: 우리 문파(지휘하는 나)와 고른 상대가 맞대결 판에 함께 보인다
+	var target: SectData = screen._get_target()
+	_check(screen.ours_label.text.begins_with(gm.player_sect.sect_name + " (우리 문파)") and screen.ours_label.text.contains("지휘: 화면"), "맞대결 판: 우리 문파와 지휘하는 나")
+	_check(screen.theirs_label.text.begins_with(target.sect_name + " (상대)") and screen.title_label.text.contains("VS " + target.sect_name), "맞대결 판: 상대 문파")
+	screen._on_target_pressed(1)
+	_check(screen._get_target() == screen._targets[1] and screen.theirs_label.text.begins_with(screen._targets[1].sect_name), "상대를 누르면 바뀜")
+	screen._on_target_pressed(0)
+	_check(screen.chance_label.text.begins_with("예상 승률") and screen.stakes_label.text.contains("이기면"), "예상 승률과 걸린 것")
+	_check(screen.round_rows[0]["enemy"].text.contains("?"), "정찰 전에는 적 명령을 모름")
 	screen._on_scout_pressed()
-	_check(not screen.plan_label.text.begins_with("1라운드: 아군 —  /  적 ?"), "정찰 후 1라운드 적 명령 표시")
-	for command in [C.FLANK, C.FLANK, C.CHARGE]:
-		screen._add_command(command)
-	_check(not screen.execute_button.disabled, "명령 3개를 고르면 전투 개시 가능")
+	_check(not screen.round_rows[0]["enemy"].text.contains("?"), "정찰 후 1합 적 명령 표시")
+	screen._on_formation_pressed(SectWarManager.Formation.CIRCLE)
+	_check(screen.get_selected_formation() == SectWarManager.Formation.CIRCLE and screen.formation_hint.text.contains("방원진"), "진형 고르기")
+	# 합마다 명령: 고르면 상성이 보이고, 다시 누르면 지운다. 연속 명령은 표시
+	screen._on_round_command(0, C.FLANK)
+	_check(screen.round_rows[0]["hint"].text != "아직 고르지 않음", "1합 명령의 상성 표시 (%s)" % screen.round_rows[0]["hint"].text)
+	screen._on_round_command(1, C.FLANK)
+	_check(screen.round_rows[1]["buttons"][2].text.contains("연속"), "같은 명령을 잇달아 쓰면 표시")
+	screen._on_round_command(1, C.FLANK)
+	_check(screen.get_commands().size() == 1, "다시 누르면 그 합의 명령을 지움")
+	screen._add_command(C.FLANK)
+	screen._add_command(C.CHARGE)
+	_check(not screen.execute_button.disabled and screen.execute_button.text.contains(target.sect_name), "명령 3개를 고르면 전투 개시 가능")
 	screen._on_execute_pressed()
 	_check(screen.log_label.text.contains("라운드 3") and not gm.can_wage_war(), "전투 결과 표시와 계절당 1회 제한")
+	_check(screen.result_overlay.visible and screen.result_headline.text in ["승리", "패배"] and screen.result_body.text.contains("3합"), "결과 판: 승패와 합마다 결과")
 	gm.start_new_game("정리", "young_disciple")
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
 	await process_frame
