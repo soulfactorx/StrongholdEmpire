@@ -935,7 +935,24 @@ func _build_portrait_layout() -> void:
 		_tab_buttons[entry[0]] = tab
 	old_root.visible = false
 	_UiTheme.apply_to_control(root)
+	for page in pages.values():
+		_wrap_labels(page)
 	show_page("todo")
+
+
+## 세로 쪽 안의 글줄은 모두 화면 폭에서 줄바꿈한다. 줄바꿈 없는 글줄은 글자 크기를 키우거나
+## 글이 길어지면(역할·능력치 줄) 최소 폭을 넓혀 쪽을 화면 밖으로 밀어낸다.
+## 가로로 늘어선 칸(HBox) 안의 글줄은 남는 폭을 받아야 한 글자씩 꺾이지 않는다.
+func _wrap_labels(page: Control) -> void:
+	for label: Label in page.find_children("*", "Label", true, false):
+		if label.autowrap_mode != TextServer.AUTOWRAP_OFF:
+			continue
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		var node: Control = label
+		while node != page and node.get_parent() is Control:
+			if node.get_parent() is HBoxContainer:
+				node.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			node = node.get_parent()
 
 
 func _page_box(page: String) -> VBoxContainer:
@@ -993,6 +1010,7 @@ func _update_portrait() -> void:
 	var title := Label.new()
 	title.text = "이번 계절 할 일 — %s" % GameManager.get_date_text()
 	_UiTheme.style_label_title(title, 22)
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	todo_box.add_child(title)
 	var steps: Array[Dictionary] = RoleDashboard.get_season_steps(GameManager)
 	for step in steps:

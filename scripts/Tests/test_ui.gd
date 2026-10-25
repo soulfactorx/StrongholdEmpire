@@ -507,6 +507,19 @@ func _test_portrait_layout() -> void:
 	await process_frame
 	_check(gm.player_character.internal_energy_max > energy and not hub.todo_box.has_node("Step_elixir"), "할 일 버튼으로 바로 실행, 한 일은 목록에서 빠짐")
 	_check(hub.status_label.text.contains("금화") and hub.status_label.text.contains("제자"), "맨 위 자원 한 줄")
+	# 인물 쪽: 긴 능력치 줄·큰 글자에도 화면 폭을 넘지 않는다 (줄바꿈)
+	hub.show_page("hero")
+	hub.character_stats_label.text = "내공 1440/1440 | 전투력 333 | 도력 72 선(협객) | Lv.13 (경험 13600/14300) | 아주 긴 줄 시험"
+	hub.character_role_label.text = "막내 제자 · 지역: 합비 · 우리 본거지 · 소속 남궁세가 · 아주 긴 역할 줄 시험"
+	await process_frame
+	await process_frame
+	# 시험 창은 가로 크기라 실제 폭 대신 최소 폭이 휴대폰 폭(여백 빼고) 안인지 본다
+	var needed: float = hub.pages["hero"].get_child(0).get_combined_minimum_size().x
+	_check(needed <= LayoutMode.PORTRAIT_SIZE.x - 20, "세로 인물 쪽: 긴 글줄도 휴대폰 폭 안 (최소 폭 %d)" % needed)
+	var unwrapped: Array = hub.pages.values().map(func(page: Control) -> Array:
+		return page.find_children("*", "Label", true, false).filter(func(l: Label) -> bool: return l.autowrap_mode == TextServer.AUTOWRAP_OFF)
+	).reduce(func(acc: Array, x: Array) -> Array: return acc + x, [])
+	_check(unwrapped.is_empty(), "세로 쪽의 글줄은 모두 줄바꿈 (%s)" % [unwrapped.map(func(l: Label) -> String: return l.name)])
 	hub.show_page("sect")
 	_check(hub.pages["sect"].visible and not hub.pages["todo"].visible and hub._action_buttons["TrainButton"].is_visible_in_tree(), "탭: 문파 쪽에 문파 운영 버튼")
 	root.get_node("EventBus").action_message.emit("토스트 시험")
