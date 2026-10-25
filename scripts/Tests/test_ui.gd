@@ -839,7 +839,11 @@ func _test_audio() -> void:
 	combat.plan.assign([DuelCard.basic_cards()[0], DuelCard.basic_cards()[0], DuelCard.basic_cards()[0]])
 	combat.fight()
 	_check(audio.last_sfx == "hit", "기본 동작으로 겨루기: 타격 소리")
+	# 상대 체력 1만으로는 남은 합에서 주인공이 먼저 쓰러질 수 있다(회심·기습). 주인공을 버티게 해 승리를 확실히 한다
 	combat.engine.current_foe().hp = 1
+	var hero: CombatUnit = combat.engine.controlled()
+	hero.max_hp = 9999
+	hero.hp = 9999
 	await combat.skip_to_result()
 	_check(audio.last_sfx in ["victory", "level_up"], "승리: 승전 소리")
 	gm.pending_combat = null
