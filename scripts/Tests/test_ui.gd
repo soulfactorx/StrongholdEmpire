@@ -1036,6 +1036,39 @@ func _test_list_drag_scroll() -> void:
 	if visible_button:
 		await _drag(to_window, visible_button.get_global_rect().get_center(), Vector2.ZERO)
 		_check(visible_button.text.begins_with("▶"), "스크롤 칸 끌기: 그대로 누르면 버튼이 눌림")
+	# 팝업 안의 스크롤 칸(인연 돌보기): 뒤의 경영 화면이 아니라 팝업 목록이 움직인다.
+	# 휴대폰처럼 마우스 올림 없이 바로 누르고 끈다 (Viewport의 올려 둔 컨트롤은 엉뚱한 곳에 머문 채)
+	var gm_node: Node = root.get_node("GameManager")
+	for npc_id in ["npc_swallow", "npc_healer", "npc_iron_blade", "npc_innkeeper", "npc_scholar", "npc_musician", "npc_merchant", "npc_old_drunk"]:
+		if RelationshipManager.get_bond_with(gm_node.player_relationships, npc_id) == null:
+			gm_node.player_relationships.append(RelationshipManager.make_relationship(npc_id, "ACQUAINTANCE", 20))
+	SceneRouter.goto(tree, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	var hub: Node = current_scene
+	hub.event_popup.visible = false
+	hub.bond_popup.open()
+	await process_frame
+	await process_frame
+	var bond_scroll: ScrollContainer = hub.bond_popup._rows.get_parent()
+	bond_scroll.custom_minimum_size.y = 200
+	await process_frame
+	await process_frame
+	bond_scroll.scroll_vertical = 0
+	var interactions: int = RelationshipManager.get_interactions_left(gm_node.story_flags, gm_node._get_turn_index())
+	var row_button: Button = null
+	for candidate in hub.bond_popup._rows.find_children("*", "Button", true, false):
+		if row_button == null and bond_scroll.get_global_rect().grow(-4).encloses(candidate.get_global_rect()):
+			row_button = candidate
+	var bond_start: Vector2 = row_button.get_global_rect().get_center() if row_button else bond_scroll.get_global_rect().get_center()
+	await _drag(to_window, bond_scroll.get_global_rect().get_center() if row_button == null else bond_start, Vector2(0, -100))
+	_check(bond_scroll.scroll_vertical > 0, "인연 돌보기 팝업: 버튼 위에서 끌어도 목록이 스크롤 (%d)" % bond_scroll.scroll_vertical)
+	_check(RelationshipManager.get_interactions_left(gm_node.story_flags, gm_node._get_turn_index()) == interactions, "인연 돌보기 팝업: 끄는 동안 버튼은 안 눌림")
+	# 팝업이 덮고 있으면 뒤의 경영 화면 스크롤 칸은 그 자리를 자기 몫으로 보지 않는다
+	for behind in hub.find_children("TouchScroll", "", true, false):
+		if behind.get_parent() != bond_scroll and behind.get_parent().is_visible_in_tree() and behind.get_parent().get_global_rect().has_point(bond_start):
+			_check(not behind.owns_point(bond_start), "팝업 뒤의 스크롤 칸은 움직이지 않음 (%s)" % behind.get_parent().name)
+	hub.bond_popup.visible = false
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
 	await process_frame
 	ScenarioManager.activate(ScenarioManager.DEFAULT_ID)
