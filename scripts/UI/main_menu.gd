@@ -41,7 +41,12 @@ func _ready() -> void:
 func _build_status_text() -> String:
 	var mod_count: int = GameManager.mod_martial_arts.size()
 	var save_text: String = "저장됨" if GameManager.has_save_file() else "저장 없음"
-	return "모드 무공 %d개 읽음 | %s" % [mod_count, save_text]
+	return "모드 무공 %d개 읽음 | %s | v%s" % [mod_count, save_text, get_version()]
+
+
+## 게임 버전 (project.godot의 config/version. 릴리스는 태그에서 정한다)
+static func get_version() -> String:
+	return str(ProjectSettings.get_setting("application/config/version", "0.0.0"))
 
 
 func _on_continue_pressed() -> void:
