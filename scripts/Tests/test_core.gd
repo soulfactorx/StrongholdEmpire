@@ -5,6 +5,18 @@ extends "res://scripts/Tests/test_base.gd"
 
 
 func _test_scenes_load() -> void:
+	# 앱 아이콘: 프로젝트 아이콘과 내보내기 프리셋이 가리키는 아이콘 파일이 모두 있다
+	var icon: String = str(ProjectSettings.get_setting("application/config/icon", ""))
+	_check(icon.begins_with("res://assets/icon/") and ResourceLoader.exists(icon), "앱 아이콘: %s" % icon)
+	var presets := ConfigFile.new()
+	_check(presets.load("res://export_presets.cfg") == OK, "내보내기 프리셋 읽기")
+	var icon_keys: Array = []
+	for section in presets.get_sections():
+		for key in presets.get_section_keys(section):
+			if key.contains("icon") and presets.get_value(section, key) is String and str(presets.get_value(section, key)).begins_with("res://"):
+				icon_keys.append(key)
+				_check(FileAccess.file_exists(presets.get_value(section, key)), "내보내기 아이콘 파일: %s" % key)
+	_check(icon_keys.size() >= 8, "안드로이드·웹·윈도우 아이콘 지정 (%d개)" % icon_keys.size())
 	for path in MAIN_SCENES:
 		var scene: PackedScene = load(path)
 		_check(scene != null and scene.can_instantiate(), "씬 로드: %s" % path)
