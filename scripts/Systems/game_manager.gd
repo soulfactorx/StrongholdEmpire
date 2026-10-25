@@ -1388,7 +1388,8 @@ func get_player_regions() -> Array[String]:
 	return WorldMap.regions_of(map_state, player_sect.id)
 
 
-## 지도 화면에서 고른 땅에 할 수 있는 일: {kind: "pacify"|"attack"|"none", reason, cost?, owner?}
+## 지도 화면에서 고른 땅에 할 수 있는 일: {kind: "pacify"|"annex"|"attack"|"none", reason, cost?, owner?}
+## 굴복한 세력의 땅은 본거지까지 문파전 없이 편입한다 (평정과 같은 비용, 같은 계절 제한).
 func get_region_action(region_id: String) -> Dictionary:
 	if not WorldMap.has_region(region_id):
 		return {"kind": "none", "reason": "없는 땅입니다."}
@@ -1413,14 +1414,19 @@ func get_region_action(region_id: String) -> Dictionary:
 		return {"kind": "pacify", "reason": reason, "cost": cost, "power": power, "defense": defense}
 	var sect: SectData = get_world_sect(owner)
 	var reason: String = ""
+	if sect and sect.subjugated:
+		var annex_cost: Dictionary = WorldMap.pacify_cost(region_id)
+		if not can_do_seasonal("last_pacify_turn"):
+			reason = "이번 계절에는 이미 땅을 평정·편입했습니다."
+		elif player_sect.gold < annex_cost["gold"] or player_sect.food < annex_cost["food"]:
+			reason = "자원이 모자랍니다. (금화 %d, 식량 %d 필요)" % [annex_cost["gold"], annex_cost["food"]]
+		return {"kind": "annex", "reason": reason, "cost": annex_cost, "owner": owner}
 	if sect == null:
 		reason = "알 수 없는 세력의 땅입니다."
 	elif not WorldMap.can_be_taken(map_state, region_id):
 		reason = "%s의 본거지는 빼앗을 수 없습니다. 문파전으로 굴복시키세요." % sect.sect_name
 	elif sect.allied:
 		reason = "동맹 세력의 땅입니다. 먼저 동맹을 깨야 합니다."
-	elif sect.subjugated:
-		reason = "굴복한 세력입니다."
 	elif not can_wage_war():
 		reason = "이번 계절에는 이미 문파전을 치렀습니다."
 	return {"kind": "attack", "reason": reason, "owner": owner}
@@ -1442,6 +1448,31 @@ func pacify_region(region_id: String) -> Dictionary:
 	]
 	add_chronicle("영토", message)
 	add_world_news("%s이(가) %s을(를) 차지했습니다." % [player_sect.sect_name, region["name"]])
+	EventBus.resources_changed.emit(player_sect)
+	_check_end_states()
+	return {"success": true, "message": message}
+
+
+## 굴복한 세력의 땅 편입: 문파전 없이 금화·식량을 들여 차지한다. 본거지도 편입할 수 있다.
+func annex_region(region_id: String) -> Dictionary:
+	var action: Dictionary = get_region_action(region_id)
+	if action["kind"] != "annex":
+		return {"success": false, "message": action.get("reason", "편입할 수 없는 땅입니다.")}
+	if not action["reason"].is_empty():
+		return {"success": false, "message": action["reason"]}
+	var sect: SectData = get_world_sect(action["owner"])
+	player_sect.spend_resources(action["cost"]["gold"], action["cost"]["food"])
+	_mark_seasonal("last_pacify_turn")
+	var was_home: bool = WorldMap.get_home(map_state, sect.id) == region_id
+	WorldMap.transfer(map_state, region_id, player_sect.id, [player_sect, sect])
+	if was_home:
+		map_state["homes"].erase(sect.id)
+	var region: Dictionary = WorldMap.get_region(region_id)
+	var message: String = "굴복한 %s의 %s%s을(를) 편입했습니다. 계절마다 금화 +%d, 식량 +%d (금화 -%d, 식량 -%d)" % [
+		sect.sect_name, "본거지 " if was_home else "", region["name"], region["gold"], region["food"], action["cost"]["gold"], action["cost"]["food"],
+	]
+	add_chronicle("영토", message)
+	add_world_news("%s이(가) 굴복한 %s의 %s을(를) 거두었습니다." % [player_sect.sect_name, sect.sect_name, region["name"]])
 	EventBus.resources_changed.emit(player_sect)
 	_check_end_states()
 	return {"success": true, "message": message}

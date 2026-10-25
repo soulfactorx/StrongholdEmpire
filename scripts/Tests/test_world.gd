@@ -844,6 +844,19 @@ func _test_map_screens() -> void:
 	await process_frame
 	_check(current_scene.scene_file_path == SceneRouter.SECT_WAR and current_scene._get_target().id == "heukpung", "공략: 문파전 화면에서 그 땅의 주인을 고름")
 	gm.pending_region_target = ""
+	# 굴복한 세력의 땅은 본거지까지 문파전 없이 편입한다 (문파전 대상에서는 빠져 있으므로)
+	var namgung: SectData = gm.get_world_sect("namgung")
+	var hefei: String = WorldMap.get_home(gm.map_state, "namgung")
+	namgung.subjugated = true
+	gm.player_sect.gold = 5000
+	gm.player_sect.food = 5000
+	gm.story_flags.erase("last_pacify_turn")
+	var annex: Dictionary = gm.get_region_action(hefei)
+	_check(not gm.get_war_targets().has(namgung) and annex["kind"] == "annex" and annex["reason"].is_empty(), "굴복한 세력의 본거지: 편입 (%s)" % [annex])
+	var annexed: Dictionary = gm.annex_region(hefei)
+	_check(annexed["success"] and WorldMap.get_owner(gm.map_state, hefei) == gm.player_sect.id and WorldMap.get_home(gm.map_state, "namgung").is_empty(), "편입: 본거지를 거둠 (%s)" % annexed["message"])
+	_check(not gm.annex_region(hefei)["success"], "편입한 땅은 다시 편입하지 않음")
+	namgung.subjugated = false
 
 	# 경영 화면: 계절을 넘기면 세력 동향 창 (설정)
 	SceneRouter.goto(tree, SceneRouter.HUB)
