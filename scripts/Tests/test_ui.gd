@@ -809,6 +809,12 @@ func _test_audio() -> void:
 	for track in tracks:
 		var stream: AudioStream = load(audio.MUSIC_DIR + track + ".ogg")
 		_check(stream is AudioStreamOggVorbis and stream.get_length() > 20.0, "배경음악 %s" % track)
+	# 웹은 시작할 때의 버스 구성만 쓰므로 음악·효과음 버스는 기본 버스 레이아웃에 있어야 한다
+	var layout_path: String = str(ProjectSettings.get_setting("audio/buses/default_bus_layout", "res://default_bus_layout.tres"))
+	var layout: Resource = load(layout_path) if ResourceLoader.exists(layout_path) else null
+	_check(layout is AudioBusLayout, "기본 버스 레이아웃 파일: %s" % layout_path)
+	var layout_text: String = FileAccess.get_file_as_string(layout_path)
+	_check(layout_text.contains('"%s"' % GameSettings.MUSIC_BUS) and layout_text.contains('"%s"' % GameSettings.SFX_BUS), "버스 레이아웃에 음악·효과음 버스 (웹에서 소리가 나려면)")
 	for sfx in ["click", "success", "failure", "event", "hit", "art", "level_up", "battle_start", "victory", "defeat", "block", "evade", "fall", "focus"]:
 		_check(load(audio.SFX_DIR + sfx + ".ogg") is AudioStreamOggVorbis, "효과음 %s" % sfx)
 	_check(AudioServer.get_bus_index(GameSettings.MUSIC_BUS) > 0 and AudioServer.get_bus_index(GameSettings.SFX_BUS) > 0, "배경음악·효과음 버스")
