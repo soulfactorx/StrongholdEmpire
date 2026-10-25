@@ -57,6 +57,13 @@ var result_label: Label
 var warning_label: Label
 var confirm_popup: Control
 var choice_popup: Control
+## 전투가 끝나면 화면 한가운데에 뜨는 결과 판 (승리·패배·후퇴를 크게)
+var result_overlay: Control
+var result_panel: PanelContainer
+var result_title: Label
+var result_subtitle: Label
+var result_detail: Label
+var result_leave_button: Button
 
 
 func _ready() -> void:
@@ -185,6 +192,112 @@ func _build_ui() -> void:
 	log_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_UiTheme.set_font_size(log_label, 14)
 	log_scroll.add_child(log_label)
+	_build_result_overlay()
+
+
+## 결과 판: 어두운 막 위에 큰 글씨의 결과, 평가·특기 한 줄, 보상·손실, [돌아가기]·[기록 보기]
+func _build_result_overlay() -> void:
+	result_overlay = Control.new()
+	result_overlay.name = "ResultOverlay"
+	result_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	result_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	result_overlay.visible = false
+	add_child(result_overlay)
+	var dimmer := ColorRect.new()
+	dimmer.color = Color(0, 0, 0, 0.55)
+	dimmer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	result_overlay.add_child(dimmer)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	result_overlay.add_child(center)
+	result_panel = PanelContainer.new()
+	LayoutMode.fit_width(result_panel, 560)
+	center.add_child(result_panel)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 12)
+	result_panel.add_child(box)
+	result_title = Label.new()
+	result_title.name = "ResultTitle"
+	result_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_UiTheme.style_label_title(result_title, 64)
+	result_title.add_theme_constant_override("outline_size", 6)
+	box.add_child(result_title)
+	result_subtitle = _label(box, 20)
+	result_subtitle.name = "ResultSubtitle"
+	result_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	result_detail = _label(box, 16)
+	result_detail.name = "ResultDetail"
+	result_detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	box.add_child(row)
+	result_leave_button = _button(row, "돌아가기", leave_combat)
+	result_leave_button.name = "ResultLeaveButton"
+	result_leave_button.custom_minimum_size = Vector2(0, 60)
+	var review := _button(row, "기록 보기", func() -> void: result_overlay.visible = false)
+	review.name = "ResultReviewButton"
+	review.custom_minimum_size = Vector2(0, 60)
+	_UiTheme.apply_to_control(result_overlay)
+
+
+## 결과 판의 큰 글씨·색·한 줄 설명
+func result_headline() -> Dictionary:
+	var summary: Dictionary = engine.summary()
+	var hero: CombatUnit = engine.get_player()
+	var rating: String = str(summary.get("rating", ""))
+	var lines: PackedStringArray = []
+	match engine.outcome:
+		CombatManager.Outcome.VICTORY:
+			var title: String = {"완승": "완승!", "신승": "신승!"}.get(rating, "승리!")
+			if engine.captured:
+				lines.append("%s을(를) 사로잡았다" % engine.setup.objective_target_name)
+			elif engine.setup.format == "tournament":
+				title = "우승!"
+				lines.append("비무대회의 모든 상대를 꺾었다")
+			elif engine.setup.format == "standoff" and engine.setup.standoff_then.is_empty():
+				lines.append("칼을 뽑지 않고 기세로 제압했다")
+			elif engine.setup.objective == "escape":
+				lines.append("추격을 뿌리치고 빠져나왔다")
+			lines.append("남은 체력 %d%%" % roundi(hero.get_hp_ratio() * 100))
+			return {"title": title, "color": Color("#c9952b"), "outline": Color("#3a2408"), "subtitle": " · ".join(lines)}
+		CombatManager.Outcome.DEFEAT:
+			if engine.setup.format == "tournament" and engine.tournament_round > 0:
+				lines.append("비무대회 %d회전까지 올랐다" % (engine.tournament_round + 1))
+			elif engine.ward and not engine.ward.is_alive():
+				lines.append("%s을(를) 지키지 못했다" % engine.ward.display_name)
+			elif engine.setup.objective == "capture" and engine.ctx.get("capture") and not engine.ctx["capture"].is_alive():
+				lines.append("사로잡지 못하고 목숨을 거두고 말았다")
+			else:
+				lines.append("다음을 기약하자")
+			return {"title": "패배", "color": Color("#c23b2c"), "outline": Color("#2a0806"), "subtitle": " · ".join(lines)}
+	return {"title": "후퇴", "color": Color("#8a8f94"), "outline": Color("#1e2226"), "subtitle": "물러나 손실을 절반으로 줄였다"}
+
+
+## 결과 판을 띄운다 (커지며 나타나고, 큰 글씨가 한 번 고동친다)
+func _show_result(message: String) -> void:
+	var headline: Dictionary = result_headline()
+	result_title.text = headline["title"]
+	result_title.add_theme_color_override("font_color", headline["color"])
+	result_title.add_theme_color_override("font_outline_color", headline["outline"])
+	result_subtitle.text = headline["subtitle"]
+	result_detail.text = message
+	result_overlay.visible = true
+	result_overlay.move_to_front()
+	result_leave_button.grab_focus()
+	await get_tree().process_frame
+	if not is_inside_tree():
+		return
+	result_panel.pivot_offset = result_panel.size / 2.0
+	result_panel.scale = Vector2(0.6, 0.6)
+	result_panel.modulate.a = 0.0
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(result_panel, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(result_panel, "modulate:a", 1.0, 0.25)
+	result_title.pivot_offset = result_title.size / 2.0
+	var pulse := create_tween()
+	pulse.tween_interval(0.35)
+	pulse.tween_property(result_title, "scale", Vector2(1.15, 1.15), 0.15)
+	pulse.tween_property(result_title, "scale", Vector2.ONE, 0.2)
 
 
 func _panel(parent: Control) -> VBoxContainer:
@@ -681,6 +794,7 @@ func _finish_combat() -> void:
 	result_label.visible = true
 	engine.history.append(str(result.get("message", "")))
 	_refresh()
+	_show_result(str(result.get("message", "")))
 
 
 # ── 나가기 ──

@@ -926,6 +926,10 @@ func _test_duel_screen_formats() -> void:
 	_check(c.engine.pending_choice.is_empty() and not c.fight_button.disabled and c.engine.history[-1].contains("버틴다"), "결단을 고르면 다음 합")
 	await c.skip_to_result()
 	_check(c.result_label.text.contains("평가") and c.result_label.text.contains("도전"), "결과: 평가와 도전")
+	c.engine.outcome = CombatManager.Outcome.DEFEAT
+	_check(c.result_headline()["title"] == "패배", "결과 판: 패배")
+	c.engine.outcome = CombatManager.Outcome.RETREAT
+	_check(c.result_headline()["title"] == "후퇴", "결과 판: 후퇴")
 	SceneRouter.goto(tree, SceneRouter.HUB)
 	await process_frame
 
@@ -1013,6 +1017,13 @@ func _test_duel_screen() -> void:
 	_check(c.engine.over and gm.pending_combat == null and c.result_label.visible, "결과만 보기: 전투가 끝나고 결과 반영")
 	_check(gm.last_combat_history.size() > 3, "전투가 끝나면 기록을 남김 (연대기용)")
 	_check(c.back_button.text == "돌아가기" and c.fight_button.disabled, "끝나면 돌아가기만")
+	# 결과 판: 큰 글씨로 승패, 평가·한 줄, 보상, 기록 보기로 닫기
+	var headline: Dictionary = c.result_headline()
+	_check(c.result_overlay.visible and c.result_title.text == headline["title"] and c.result_detail.text == c.result_label.text, "결과 판: 큰 글씨의 결과와 보상")
+	_check(c.result_title.text in ["완승!", "승리!", "신승!", "패배", "후퇴"] and not c.result_subtitle.text.is_empty(), "결과 판: 승리·패배·후퇴와 한 줄 설명 (%s)" % c.result_title.text)
+	_check(c.result_overlay.find_children("*", "Button", true, false).all(func(b: Button) -> bool: return b.get_combined_minimum_size().y >= 48), "결과 판 버튼 48px 이상")
+	c.result_overlay.find_child("ResultReviewButton", true, false).pressed.emit()
+	_check(not c.result_overlay.visible, "기록 보기: 결과 판을 닫고 전투 기록을 봄")
 	c.leave_combat()
 	await process_frame
 	await process_frame
