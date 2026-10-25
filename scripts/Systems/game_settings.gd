@@ -18,7 +18,7 @@ static var music_volume: float = 0.6
 static var fullscreen: bool = false
 static var text_scale: float = 1.0
 static var combat_delay: float = 0.3
-## 경영 행동(수련·영약·시설·유대 등) 전에 수치 변화를 보여 주고 확인받는다
+## 경영 행동(수련·영약·전각·유대 등) 전에 수치 변화를 보여 주고 확인받는다
 static var action_preview: bool = true
 ## 계절을 넘기면 강호 세력이 무엇을 했는지 보고 창을 띄운다
 static var faction_report: bool = true

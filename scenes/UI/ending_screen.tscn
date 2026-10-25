@@ -40,7 +40,7 @@ theme_override_constants/separation = 16
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
-text = "엔딩"
+text = "결말"
 horizontal_alignment = 1
 
 [node name="EndingDescLabel" type="Label" parent="Center/Panel/VBox"]
@@ -59,14 +59,14 @@ horizontal_scroll_mode = 0
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-text = "레거시"
+text = "후대"
 autowrap_mode = 3
 
 [node name="SuccessionButton" type="Button" parent="Center/Panel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(0, 48)
-text = "세대 전승 (레거시)"
+text = "세대 전승 (후대)"
 
 [node name="BackButton" type="Button" parent="Center/Panel/VBox"]
 unique_name_in_owner = true

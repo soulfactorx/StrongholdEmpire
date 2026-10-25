@@ -1,11 +1,11 @@
 class_name NpcAgent
 extends RefCounted
 
-## 인물 AI: 문파의 직책 인물(문주·교두·의원 등)이 계절마다 성향·능력치·처지에 맞는 일을 한다.
+## 인물 AI: 문파의 직책 인물(문주·교두·의원 등)이 계절마다 성향·자질·처지에 맞는 일을 한다.
 ## - 플레이어 문파: 플레이어가 문주가 아니면(총관·막내 제자) NPC 문주가 문파 살림을 맡는다
-##   (제자 모집·시설 확장·연회·땅 평정·사절·재물 아끼기 중 성향과 형편에 맞는 것). 교두는 제자를 가르치고, 의원은 문파 사람을 돌본다.
+##   (제자 모집·전각 확장·연회·땅 평정·사절·재물 아끼기 중 성향과 형편에 맞는 것). 교두는 제자를 가르치고, 의원은 문파 사람을 돌본다.
 ## - 강호 세력: 문주의 성향을 세력 AI 가중치에 곱한다 (SectAI.get_weights).
-## 인물의 성향(trait)과 취향(likes)은 인물 JSON의 "traits"·"likes"로 정하고, 없으면 능력치에서 끌어낸다.
+## 인물의 성향(trait)과 취향(likes)은 인물 JSON의 "traits"·"likes"로 정하고, 없으면 자질에서 끌어낸다.
 ## gm은 GameManager 노드다.
 
 const _Balance = preload("res://scripts/Systems/game_balance.gd")
@@ -46,7 +46,7 @@ static func get_traits(npc_id: String) -> Dictionary:
 	return traits
 
 
-## 좋아하는 상호작용 (talk·gift·spar). 없으면 능력치·성향에서: 매력 → 담소, 탐욕 → 선물, 무력 → 비무
+## 좋아하는 상호작용 (talk·gift·spar). 없으면 자질·성향에서: 매력 → 담소, 탐욕 → 선물, 무력 → 비무
 static func get_likes(npc_id: String) -> Array:
 	var npc: Dictionary = NpcRoster.get_npc(npc_id)
 	if npc.has("likes"):
@@ -112,7 +112,7 @@ static func get_officers(sect: SectData) -> Array[Dictionary]:
 	return result
 
 
-## 플레이어 문파의 살림을 NPC 문주가 맡는지 (플레이어가 문주가 아니고, 문파 일에 몸담는 역할일 때)
+## 플레이어 문파의 살림을 NPC 문주가 맡는지 (플레이어가 문주가 아니고, 문파 일에 몸담는 신분일 때)
 static func npc_runs_sect(gm: Node) -> bool:
 	var role: CharacterData.Role = gm.player_character.role
 	return role != CharacterData.Role.LEADER and RoleDashboard.get_layout(role)["sect"]
@@ -150,7 +150,7 @@ static func run_season(gm: Node) -> Array[Dictionary]:
 	return reports
 
 
-## 손대지 않고 남겨 둘 금화: 세 계절치 유지비 + 100. 신중할수록 더 남긴다.
+## 손대지 않고 남겨 둘 은자: 세 계절치 씀씀이 + 100. 신중할수록 더 남긴다.
 static func _reserve(sect: SectData, traits: Dictionary) -> int:
 	return int((sect.get_gold_upkeep() * 3 + 100) * (0.8 + traits["caution"] / 250.0))
 
@@ -166,7 +166,7 @@ static func _lead(gm: Node, npc_id: String) -> Dictionary:
 	if sect.disciple_count < sect.max_disciples and spare >= _Balance.TRAIN_GOLD and sect.food >= _Balance.TRAIN_FOOD * 3:
 		var room: float = float(sect.max_disciples - sect.disciple_count) / sect.max_disciples
 		options.append({"id": "recruit", "score": 20.0 + room * 40.0 + t["ambition"] * 0.15})
-	# 시설 확장: 신중할수록, 재물이 넉넉할수록
+	# 전각 확장: 신중할수록, 재물이 넉넉할수록
 	var facility: String = _preferred_facility(sect, t, spare)
 	if not facility.is_empty():
 		options.append({"id": "facility", "facility": facility, "score": 15.0 + t["caution"] * 0.35 + (15.0 if spare > 400 else 0.0)})
@@ -199,17 +199,17 @@ static func _do_lead(gm: Node, option: Dictionary) -> Dictionary:
 		"recruit":
 			sect.spend_resources(_Balance.TRAIN_GOLD, _Balance.TRAIN_FOOD)
 			sect.disciple_count += 1
-			return {"action": "제자 모집", "detail": "새 제자를 들였습니다. 제자 %d / %d (금화 -%d, 식량 -%d)" % [
+			return {"action": "제자 모집", "detail": "새 제자를 들였습니다. 제자 %d / %d (은자 -%d, 식량 -%d)" % [
 				sect.disciple_count, sect.max_disciples, _Balance.TRAIN_GOLD, _Balance.TRAIN_FOOD,
 			]}
 		"facility":
 			var result: Dictionary = SectManager.upgrade_facility(sect, option["facility"])
-			return {"action": "시설 확장", "detail": result["message"]}
+			return {"action": "전각 확장", "detail": result["message"]}
 		"feast":
 			sect.spend_resources(_Balance.FEAST_GOLD, _Balance.FEAST_FOOD)
 			sect.reputation += _Balance.FEAST_REPUTATION
 			EventManager.set_flag(gm.story_flags, "last_feast_turn", gm._get_turn_index())
-			return {"action": "문파 연회", "detail": "강호 인사를 불러 연회를 열었습니다. 명성 +%d (금화 -%d, 식량 -%d)" % [
+			return {"action": "문파 연회", "detail": "강호 인사를 불러 연회를 열었습니다. 명성 +%d (은자 -%d, 식량 -%d)" % [
 				_Balance.FEAST_REPUTATION, _Balance.FEAST_GOLD, _Balance.FEAST_FOOD,
 			]}
 		"pacify":
@@ -220,19 +220,19 @@ static func _do_lead(gm: Node, option: Dictionary) -> Dictionary:
 			WorldMap.transfer(gm.map_state, region_id, sect.id, [sect])
 			var name: String = WorldMap.get_region(region_id)["name"]
 			gm.add_world_news("%s이(가) %s을(를) 차지했습니다." % [sect.sect_name, name])
-			return {"action": "땅 평정", "detail": "%s을(를) 평정했습니다. (금화 -%d, 식량 -%d)" % [name, cost["gold"], cost["food"]]}
+			return {"action": "땅 평정", "detail": "%s을(를) 평정했습니다. (은자 -%d, 식량 -%d)" % [name, cost["gold"], cost["food"]]}
 		"envoy":
 			var target: SectData = option["sect"]
 			sect.spend_resources(_Balance.DIPLOMAT_ENVOY_GOLD)
 			target.attitude = mini(100, target.attitude + _Balance.DIPLOMAT_ENVOY_ATTITUDE)
 			target.last_diplomacy_turn = gm._get_turn_index()
-			return {"action": "사절 파견", "detail": "%s에 사절을 보냈습니다. 태도 %d (금화 -%d)" % [
+			return {"action": "사절 파견", "detail": "%s에 사절을 보냈습니다. 태도 %d (은자 -%d)" % [
 				target.sect_name, target.attitude, _Balance.DIPLOMAT_ENVOY_GOLD,
 			]}
-	return {"action": "재물 아끼기", "detail": "금고를 지키며 다음 계절을 대비했습니다. (금화 %d)" % sect.gold}
+	return {"action": "재물 아끼기", "detail": "금고를 지키며 다음 계절을 대비했습니다. (은자 %d)" % sect.gold}
 
 
-## 성향에 맞는 시설 (지혜·신중 → 서고, 탐욕 → 금고, 야망 → 무술장, 인정 → 약방). 금화가 모자라면 ""
+## 성향에 맞는 전각 (지혜·신중 → 서고, 탐욕 → 금고, 야망 → 연무장, 인정 → 약방). 은자가 모자라면 ""
 static func _preferred_facility(sect: SectData, t: Dictionary, spare: int) -> String:
 	var weights: Dictionary = {
 		"library": t["caution"], "treasury": t["greed"], "training_ground": t["ambition"],
@@ -274,7 +274,7 @@ static func _most_hostile(gm: Node) -> SectData:
 	return result
 
 
-## 교두: 경지가 가장 낮은 제자 하나를 가르친다 (금화 없이, 교두 무력에 따라 경험치)
+## 교두: 경지가 가장 낮은 제자 하나를 가르친다 (은자 없이, 교두 무력에 따라 수련)
 static func _instruct(gm: Node, npc_id: String) -> Dictionary:
 	var sect: SectData = gm.player_sect
 	var pupil: DiscipleData = null
@@ -288,8 +288,8 @@ static func _instruct(gm: Node, npc_id: String) -> Dictionary:
 	var strength: int = int(NpcRoster.get_npc(npc_id).get("stats", {}).get("strength", 10))
 	var amount: int = _Balance.DISCIPLE_TRAIN_EXP / 2 + strength / 2
 	var gained: int = pupil.gain_experience(amount)
-	return {"action": "제자 지도", "detail": "%s에게 검을 가르쳤습니다. 경험치 +%d%s" % [
-		pupil.display_name, amount, " — 경지가 올라 Lv.%d" % pupil.level if gained > 0 else "",
+	return {"action": "제자 지도", "detail": "%s에게 검을 가르쳤습니다. 수련 +%d%s" % [
+		pupil.display_name, amount, " — 경지가 올라 경지 %d" % pupil.level if gained > 0 else "",
 	]}
 
 

@@ -13,7 +13,7 @@
   "choices": [
     {
       "label": "자상하게 가르친다",
-      "message": "{name}이(가) 쑥쑥 자랍니다. 유대 +6, 경험치 +10",
+      "message": "{name}이(가) 쑥쑥 자랍니다. 유대 +6, 수련 +10",
       "effects": [
         {
           "type": "bond",

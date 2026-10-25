@@ -1,6 +1,6 @@
 extends Control
 
-## 인연 팝업: 관계가 있는 인물마다 대화·선물·비무를 하고, 깊은 연인에게는 청혼한다. 화면 구성은 코드로 만든다.
+## 인연 창: 관계가 있는 인물마다 대화·선물·비무를 하고, 깊은 연인에게는 청혼한다. 화면 구성은 코드로 만든다.
 ## 버튼은 모두 48px 이상이고, 목록은 끌어서 스크롤한다.
 
 const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
@@ -85,7 +85,7 @@ func get_row_count() -> int:
 
 func refresh() -> void:
 	var left: int = RelationshipManager.get_interactions_left(GameManager.story_flags, GameManager._get_turn_index())
-	_summary.text = "이번 계절 남은 상호작용 %d/%d · 대화: 유대 +%d(매력에 따라 더) · 선물: 금화 %d로 유대 +%d · 비무: 이기면 유대 +%d\n원한이 있는 상대와 대화·선물하면 원한이 누그러집니다. 유대 %d 이상인 사부·혈맹·연인·배우자·제자·벗은 방어전에 함께 싸웁니다.\n연인과 유대 %d 이상이면 청혼(금화 %d)할 수 있고, 배우자는 여럿 둘 수 있습니다. 인연은 기연으로 계속 늘어납니다.%s" % [
+	_summary.text = "이번 계절 남은 상호작용 %d/%d · 대화: 유대 +%d(매력에 따라 더) · 선물: 은자 %d로 유대 +%d · 비무: 이기면 유대 +%d\n원한이 있는 상대와 대화·선물하면 원한이 누그러집니다. 유대 %d 이상인 사부·혈맹·연인·배우자·제자·벗은 방어전에 함께 싸웁니다.\n연인과 유대 %d 이상이면 청혼(은자 %d)할 수 있고, 배우자는 여럿 둘 수 있습니다. 인연은 기연으로 계속 늘어납니다.%s" % [
 		left, _Balance.INTERACTIONS_PER_SEASON, _Balance.TALK_BOND, _Balance.GIFT_GOLD, _Balance.GIFT_BOND,
 		_Balance.SPAR_BOND_WIN, _Balance.BOND_ALLY_MIN, _Balance.MARRIAGE_MIN_BOND, _Balance.WEDDING_GOLD,
 		"\n아직 맺은 인연이 없습니다. 강호를 다니며 기연으로 사람을 만나 보세요." if GameManager.player_relationships.is_empty() else "",
@@ -142,7 +142,7 @@ func _make_row(rel: RelationshipData, can_act: bool) -> Container:
 		var propose := Button.new()
 		propose.name = "Propose"
 		propose.custom_minimum_size = Vector2(130, 48)
-		propose.text = "청혼 (금화 %d)" % _Balance.WEDDING_GOLD
+		propose.text = "청혼 (은자 %d)" % _Balance.WEDDING_GOLD
 		var block: String = RelationshipManager.get_propose_block(rel)
 		propose.disabled = not can_act or not block.is_empty()
 		propose.set_meta("help", block if not block.is_empty() else "%s에게 청혼해 배우자로 맞습니다." % rel.target_name)

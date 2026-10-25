@@ -80,7 +80,7 @@
       "choices": [
         {
           "label": "후하게 사례한다",
-          "message": "금화 -10, 유대 +2",
+          "message": "은자 -10, 유대 +2",
           "effects": [
             {
               "type": "sect",

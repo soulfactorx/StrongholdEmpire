@@ -4,9 +4,9 @@ const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
 const _Balance = preload("res://scripts/Systems/game_balance.gd")
 const _ChoicePopup = preload("res://scripts/UI/choice_popup.gd")
 
-## 연구할 수 있는 비급 목록 (GameManager.get_research_manuals: 문파 서고 + 가진 비급)
+## 참오할 수 있는 비급 목록 (GameManager.get_research_manuals: 문파 서고 + 가진 비급)
 var _preset_arts: Array[MartialArtData] = []
-## 강화·비전·분석의 대상을 고르는 팝업과, 지금 고르는 행동
+## 강화·비전·분석의 대상을 고르는 창과, 지금 고르는 행동
 var choice_popup: Control
 var _pending_action: String = ""
 ## 특수 효과 "없음"의 항목 id. (OptionButton은 id -1을 "자동 번호"로 보므로 효과 번호와 겹치지 않는 값을 쓴다)
@@ -28,7 +28,7 @@ const NO_EFFECT := 1000
 
 func _ready() -> void:
 	_UiTheme.apply_to_control(self)
-	# 세로(휴대폰): 창조 칸 위, 연구·보유 무공 칸 아래로 쌓고 끌어서 본다.
+	# 세로(휴대폰): 창안 칸 위, 참오·보유 무공 칸 아래로 쌓고 끌어서 본다.
 	LayoutMode.stack_scroll($Margin/RootHBox)
 	choice_popup = _ChoicePopup.new()
 	add_child(choice_popup)
@@ -212,14 +212,14 @@ func _enum_label(key: String) -> String:
 			return key
 
 
-## 연구할 수 있는 비급: 소속 문파 서고의 비급과 가진 비급 (강호의 모든 비급이 아니다)
+## 참오할 수 있는 비급: 소속 문파 서고의 비급과 가진 비급 (강호의 모든 비급이 아니다)
 func _load_presets() -> void:
 	preset_list.clear()
 	_preset_arts.clear()
 	for entry in GameManager.get_research_manuals():
 		var art: MartialArtData = entry["art"]
 		_preset_arts.append(art)
-		preset_list.add_item("%s — %s · 연구점 %d (%s)%s" % [
+		preset_list.add_item("%s — %s · 깨달음 %d (%s)%s" % [
 			art.display_name, art.get_category_name(), art.research_cost, entry["source"],
 			" · 익힘" if GameManager.player_character.knows_martial_art(art.id) else "",
 		])
@@ -236,7 +236,7 @@ func _refresh_display() -> void:
 	var analyzed: PackedStringArray = []
 	for element in GameManager.analyzed_elements:
 		analyzed.append(_element_name(element))
-	secret_label.text = "문파 비전: %s\n분석한 상대 속성: %s (상극 속성 무공 창조 성공률 +%d%%)" % [
+	secret_label.text = "문파 비전: %s\n분석한 상대 속성: %s (상극 속성 무공 창안 성공률 +%d%%)" % [
 		"[%s] 강화 %d단계 — 후계자가 물려받습니다" % [secret.display_name, secret.enhance_level] if secret else "없음",
 		", ".join(analyzed) if not analyzed.is_empty() else "없음",
 		_Balance.COUNTER_SUCCESS_BONUS,
@@ -274,7 +274,7 @@ func _update_success_preview() -> void:
 		complexity
 	) + counter)
 	var cost: int = _Balance.BASE_RESEARCH_COST + complexity * _Balance.RESEARCH_COST_PER_COMPLEXITY
-	success_rate_label.text = "예상 성공률: %d%%%s | 연구비: %d점 | 복잡도: %d" % [
+	success_rate_label.text = "예상 성공률: %d%%%s | 참오비: %d점 | 복잡도: %d" % [
 		rate, " (상극 +%d)" % counter if counter > 0 else "", cost, complexity,
 	]
 
@@ -319,7 +319,7 @@ func _on_create_pressed() -> void:
 func _on_research_preset_pressed() -> void:
 	var selected: PackedInt32Array = preset_list.get_selected_items()
 	if selected.is_empty():
-		log_label.text = "연구할 비급을 선택하세요."
+		log_label.text = "참오할 비급을 선택하세요."
 		return
 
 	# 원본(비급 목록)을 지키기 위해 복제본을 익힌다. 강화는 복제본에만 적용된다.
@@ -347,14 +347,14 @@ func _on_enhance_pressed() -> void:
 		options.append({
 			"id": art.id,
 			"title": "%s (강화 %d/%d)" % [art.display_name, art.enhance_level, _Balance.ENHANCE_MAX_LEVEL],
-			"description": "최고 단계" if maxed else "연구점 %d · %s +%d, 내공 소모 -%d" % [
+			"description": "최고 단계" if maxed else "깨달음 %d · %s +%d, 내공 소모 -%d" % [
 				MartialArtManager.get_enhance_cost(art),
 				"회복" if art.heal_amount > 0 else "피해",
 				_Balance.ENHANCE_HEAL if art.heal_amount > 0 else _Balance.ENHANCE_DAMAGE,
 				_Balance.ENHANCE_INTERNAL_COST_REDUCTION,
 			],
 		})
-	_open_choice("enhance", "무공 강화", "문파의 연구점을 들여 습득한 무공을 갈고닦습니다. 반드시 성공합니다.", options)
+	_open_choice("enhance", "무공 강화", "문파의 깨달음을 들여 습득한 무공을 갈고닦습니다. 반드시 성공합니다.", options)
 
 
 func _on_secret_pressed() -> void:
@@ -374,13 +374,13 @@ func _on_analyze_pressed() -> void:
 		options.append({
 			"id": art_id,
 			"title": "%s (%s · %s 속성)" % [observed["name"], observed["owner"], _element_name(element)],
-			"description": "분석 완료" if done else "연구점 %d · %s 속성 무공 창조 성공률 +%d%%" % [
+			"description": "분석 완료" if done else "깨달음 %d · %s 속성 무공 창안 성공률 +%d%%" % [
 				_Balance.ANALYZE_RESEARCH,
 				_element_name(MartialArtManager.get_counter_element(element)),
 				_Balance.COUNTER_SUCCESS_BONUS,
 			],
 		})
-	_open_choice("analyze", "상대 무공 분석", "전투에서 본 상대의 무공을 연구해 그 속성을 이기는 무공을 만들기 쉽게 합니다.", options)
+	_open_choice("analyze", "상대 무공 분석", "전투에서 본 상대의 무공을 참오해 그 속성을 이기는 무공을 만들기 쉽게 합니다.", options)
 
 
 func _open_choice(action: String, title: String, description: String, options: Array[Dictionary], empty_text: String = "") -> void:

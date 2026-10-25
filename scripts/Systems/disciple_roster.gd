@@ -5,11 +5,11 @@ extends RefCounted
 
 const _Balance = preload("res://scripts/Systems/game_balance.gd")
 
-## 배치할 수 있는 시설과 효과 설명
+## 배치할 수 있는 전각과 효과 설명
 const ASSIGNMENTS: Dictionary = {
-	"library": {"name": "서고", "effect": "지혜 %d마다 계절 연구점 +1" % _Balance.DISCIPLE_LIBRARY_WISDOM_PER_POINT},
-	"training_ground": {"name": "무술장", "effect": "계절마다 수련 경험치 +%d" % _Balance.DISCIPLE_TRAINING_GROUND_EXP},
-	"treasury": {"name": "금고", "effect": "지혜 %d마다 계절 금화 +1" % _Balance.DISCIPLE_TREASURY_WISDOM_PER_GOLD},
+	"library": {"name": "서고", "effect": "지혜 %d마다 계절 깨달음 +1" % _Balance.DISCIPLE_LIBRARY_WISDOM_PER_POINT},
+	"training_ground": {"name": "연무장", "effect": "계절마다 수련 +%d" % _Balance.DISCIPLE_TRAINING_GROUND_EXP},
+	"treasury": {"name": "금고", "effect": "지혜 %d마다 계절 은자 +1" % _Balance.DISCIPLE_TREASURY_WISDOM_PER_GOLD},
 }
 
 const SURNAMES: PackedStringArray = [
@@ -21,7 +21,7 @@ const GIVEN_NAMES: PackedStringArray = [
 ]
 
 
-## 명단을 켜고 지금 제자 수만큼 제자를 만든다. (새 게임, 구버전 세이브, 다른 세력으로 옮겨 갈 때)
+## 명단을 켜고 지금 제자 수만큼 제자를 만든다. (새 게임, 구버전 저장본, 다른 세력으로 옮겨 갈 때)
 static func enable(sect: SectData) -> void:
 	sect.use_roster = true
 	sync(sect)
@@ -92,7 +92,7 @@ static func get_assigned(sect: SectData, facility: String) -> Array[DiscipleData
 	return result
 
 
-## 제자를 시설에 배치한다. facility가 ""이면 배치를 푼다.
+## 제자를 전각에 배치한다. facility가 ""이면 배치를 푼다.
 static func assign(sect: SectData, disciple_id: String, facility: String) -> Dictionary:
 	var disciple: DiscipleData = get_disciple(sect, disciple_id)
 	if disciple == null:
@@ -106,7 +106,7 @@ static func assign(sect: SectData, disciple_id: String, facility: String) -> Dic
 	if disciple.assignment == facility:
 		return {"success": false, "message": "%s은(는) 이미 %s 담당입니다." % [disciple.display_name, name]}
 	if get_assigned(sect, facility).size() >= get_slots(sect, facility):
-		return {"success": false, "message": "%s 담당 자리가 없습니다. (%d자리, 시설을 확장하면 늘어납니다)" % [
+		return {"success": false, "message": "%s 담당 자리가 없습니다. (%d자리, 전각을 확장하면 늘어납니다)" % [
 			name, get_slots(sect, facility),
 		]}
 	disciple.assignment = facility
@@ -115,7 +115,7 @@ static func assign(sect: SectData, disciple_id: String, facility: String) -> Dic
 	]}
 
 
-## 다음 배치로 돌린다: 없음 → 서고 → 무술장 → 금고 → 없음. 자리가 없는 곳은 건너뛴다.
+## 다음 배치로 돌린다: 없음 → 서고 → 연무장 → 금고 → 없음. 자리가 없는 곳은 건너뛴다.
 static func cycle_assignment(sect: SectData, disciple_id: String) -> Dictionary:
 	var disciple: DiscipleData = get_disciple(sect, disciple_id)
 	if disciple == null:
@@ -131,7 +131,7 @@ static func cycle_assignment(sect: SectData, disciple_id: String) -> Dictionary:
 	return {"success": false, "message": "배치할 자리가 없습니다."}
 
 
-## 배치로 얻는 계절 수입 보너스 {gold, research}. 예상 수지에도 쓴다.
+## 배치로 얻는 계절 수입 가산 {gold, research}. 예상 수지에도 쓴다.
 static func get_income_bonus(sect: SectData) -> Dictionary:
 	if not sect.use_roster:
 		return {"gold": 0, "research": 0}
@@ -148,7 +148,7 @@ static func get_income_bonus(sect: SectData) -> Dictionary:
 	}
 
 
-## 계절 처리: 무술장 담당 제자의 수련. 보고 문구를 돌려준다.
+## 계절 처리: 연무장 담당 제자의 수련. 보고 문구를 돌려준다.
 static func on_season(sect: SectData) -> String:
 	if not sect.use_roster:
 		return ""
@@ -159,7 +159,7 @@ static func on_season(sect: SectData) -> String:
 		trained += 1
 	if trained == 0:
 		return ""
-	var text: String = "무술장 수련 제자 %d명" % trained
+	var text: String = "연무장 수련 제자 %d명" % trained
 	if level_ups > 0:
 		text += " (경지 상승 %d)" % level_ups
 	return text
@@ -167,7 +167,7 @@ static func on_season(sect: SectData) -> String:
 
 # ── 수련·출전 ──
 
-## 개별 수련: 금화를 내고 경험치를 얻는다. 제자마다 계절에 한 번.
+## 개별 수련: 은자를 내고 수련을 얻는다. 제자마다 계절에 한 번.
 static func train(sect: SectData, disciple_id: String, turn: int) -> Dictionary:
 	var disciple: DiscipleData = get_disciple(sect, disciple_id)
 	if disciple == null:
@@ -177,21 +177,21 @@ static func train(sect: SectData, disciple_id: String, turn: int) -> Dictionary:
 	if disciple.level >= _Balance.DISCIPLE_MAX_LEVEL:
 		return {"success": false, "message": "%s은(는) 더 오를 경지가 없습니다." % disciple.display_name}
 	if not sect.spend_resources(_Balance.DISCIPLE_TRAIN_GOLD):
-		return {"success": false, "message": "금화가 부족합니다. (%d 필요)" % _Balance.DISCIPLE_TRAIN_GOLD}
+		return {"success": false, "message": "은자가 부족합니다. (%d 필요)" % _Balance.DISCIPLE_TRAIN_GOLD}
 	disciple.last_train_turn = turn
 	var gained: int = disciple.gain_experience(_Balance.DISCIPLE_TRAIN_EXP)
-	var message: String = "%s 수련: 경험치 +%d (금화 -%d)" % [disciple.display_name, _Balance.DISCIPLE_TRAIN_EXP, _Balance.DISCIPLE_TRAIN_GOLD]
+	var message: String = "%s 수련: 수련 +%d (은자 -%d)" % [disciple.display_name, _Balance.DISCIPLE_TRAIN_EXP, _Balance.DISCIPLE_TRAIN_GOLD]
 	if gained > 0:
-		message += " — 경지가 올라 Lv.%d!" % disciple.level
+		message += " — 경지가 올라 경지 %d!" % disciple.level
 	return {"success": true, "message": message}
 
 
 ## 일괄 수련 방식: id → 이름, 설명
 const BATCH_MODES: Dictionary = {
-	"best": {"title": "최적 수련 (추천)", "desc": "다음 계절 유지비만큼 금화를 남기고, 출전 지정 제자 → 이번 수련으로 경지가 오르는 제자 → 강한 제자 순으로 수련합니다."},
-	"all": {"title": "모두 수련", "desc": "수련할 수 있는 제자를 모두 수련합니다. 금화가 모자라면 강한 제자부터 합니다."},
+	"best": {"title": "최적 수련 (추천)", "desc": "다음 계절 씀씀이만큼 은자를 남기고, 출전 지정 제자 → 이번 수련으로 경지가 오르는 제자 → 강한 제자 순으로 수련합니다."},
+	"all": {"title": "모두 수련", "desc": "수련할 수 있는 제자를 모두 수련합니다. 은자가 모자라면 강한 제자부터 합니다."},
 	"deployed": {"title": "출전 지정 제자만", "desc": "방어전에 함께 싸울 출전 지정 제자만 수련합니다."},
-	"lowest": {"title": "낮은 경지부터 고르게", "desc": "경지가 낮은 제자부터 수련해 문파 전체를 고르게 키웁니다. 다음 계절 유지비만큼 금화를 남깁니다."},
+	"lowest": {"title": "낮은 경지부터 고르게", "desc": "경지가 낮은 제자부터 수련해 문파 전체를 고르게 키웁니다. 다음 계절 씀씀이만큼 은자를 남깁니다."},
 }
 
 
@@ -201,7 +201,7 @@ static func get_trainable(sect: SectData, turn: int) -> Array[DiscipleData]:
 		return d.last_train_turn != turn and d.level < _Balance.DISCIPLE_MAX_LEVEL)
 
 
-## 일괄 수련 계획: 수련 순서대로 제자 목록 (쓸 수 있는 금화 안에서)
+## 일괄 수련 계획: 수련 순서대로 제자 목록 (쓸 수 있는 은자 안에서)
 static func plan_batch_train(sect: SectData, turn: int, mode: String) -> Array[DiscipleData]:
 	var pool: Array[DiscipleData] = get_trainable(sect, turn)
 	if mode == "deployed":
@@ -225,7 +225,7 @@ static func plan_batch_train(sect: SectData, turn: int, mode: String) -> Array[D
 	return pool.slice(0, count)
 
 
-## 일괄 수련이 남겨 둘 금화 (최적·고르게: 다음 계절 금화 유지비)
+## 일괄 수련이 남겨 둘 은자 (최적·고르게: 다음 계절 은자 씀씀이)
 static func get_batch_reserve(sect: SectData, mode: String) -> int:
 	return sect.get_gold_upkeep() if mode in ["best", "lowest"] else 0
 
@@ -242,15 +242,15 @@ static func batch_train(sect: SectData, turn: int, mode: String) -> Dictionary:
 			return {"success": false, "message": "이번 계절에 수련할 수 있는 제자가 없습니다."}
 		if mode == "deployed" and not sect.disciples.any(func(d: DiscipleData) -> bool: return d.deployed):
 			return {"success": false, "message": "출전 지정한 제자가 없습니다."}
-		return {"success": false, "message": "금화가 부족합니다. (수련 한 번에 %d, 남길 금화 %d)" % [_Balance.DISCIPLE_TRAIN_GOLD, get_batch_reserve(sect, mode)]}
+		return {"success": false, "message": "은자가 부족합니다. (수련 한 번에 %d, 남길 은자 %d)" % [_Balance.DISCIPLE_TRAIN_GOLD, get_batch_reserve(sect, mode)]}
 	var names: PackedStringArray = []
 	var level_ups: int = 0
 	for disciple in plan:
 		var before: int = disciple.level
 		if train(sect, disciple.id, turn).get("success", false):
-			names.append(disciple.display_name + (" Lv.%d 상승" % disciple.level if disciple.level > before else ""))
+			names.append(disciple.display_name + (" 경지 %d 상승" % disciple.level if disciple.level > before else ""))
 			level_ups += disciple.level - before
-	var message: String = "일괄 수련 %d명: 경험치 각 +%d (금화 -%d)" % [names.size(), _Balance.DISCIPLE_TRAIN_EXP, names.size() * _Balance.DISCIPLE_TRAIN_GOLD]
+	var message: String = "일괄 수련 %d명: 수련 각 +%d (은자 -%d)" % [names.size(), _Balance.DISCIPLE_TRAIN_EXP, names.size() * _Balance.DISCIPLE_TRAIN_GOLD]
 	if level_ups > 0:
 		message += " — 경지 상승 %d" % level_ups
 	message += "\n" + ", ".join(names)
@@ -283,7 +283,7 @@ static func choose_combat_disciples(sect: SectData, count: int) -> Array[Discipl
 	return ordered.slice(0, mini(count, ordered.size()))
 
 
-## 전투용 캐릭터. id는 제자 id와 같아서 전사·경험치를 명단에 되돌릴 수 있다.
+## 전투용 캐릭터. id는 제자 id와 같아서 전사·수련을 명단에 되돌릴 수 있다.
 static func to_character(disciple: DiscipleData, stat_bonus: int = 0) -> CharacterData:
 	var character := CharacterData.new()
 	character.id = disciple.id
@@ -303,12 +303,12 @@ static func to_character(disciple: DiscipleData, stat_bonus: int = 0) -> Charact
 
 # ── 전수 ──
 
-## 전수받을 제자에게 필요한 레벨
+## 전수받을 제자에게 필요한 경지
 static func get_transmit_level(art: MartialArtData) -> int:
 	return ceili(float(art.complexity) / _Balance.TRANSMIT_COMPLEXITY_PER_LEVEL)
 
 
-## 전수 비용(연구점). 문파 비전은 싸다.
+## 전수 비용(깨달음). 문파 비전은 싸다.
 static func get_transmit_cost(sect: SectData, art: MartialArtData) -> int:
 	var cost: int = _Balance.TRANSMIT_RESEARCH_BASE + art.complexity * _Balance.TRANSMIT_RESEARCH_PER_COMPLEXITY
 	if sect.secret_art and sect.secret_art.id == art.id:
@@ -325,13 +325,13 @@ static func transmit(sect: SectData, disciple_id: String, art: MartialArtData) -
 		return {"success": false, "message": "%s은(는) 이미 [%s]을(를) 익혔습니다." % [disciple.display_name, art.display_name]}
 	var need: int = get_transmit_level(art)
 	if disciple.level < need:
-		return {"success": false, "message": "[%s]은(는) Lv.%d 이상 제자에게만 전수할 수 있습니다." % [art.display_name, need]}
+		return {"success": false, "message": "[%s]은(는) 경지 %d 이상 제자에게만 전수할 수 있습니다." % [art.display_name, need]}
 	var cost: int = get_transmit_cost(sect, art)
 	if sect.research_points < cost:
-		return {"success": false, "message": "연구점이 부족합니다. (%d 필요)" % cost}
+		return {"success": false, "message": "깨달음이 부족합니다. (%d 필요)" % cost}
 	sect.research_points -= cost
 	disciple.martial_art = art.duplicate(true)
-	return {"success": true, "message": "%s에게 [%s]을(를) 전수했습니다. 방어전에서 이 무공을 씁니다. (연구점 -%d)" % [
+	return {"success": true, "message": "%s에게 [%s]을(를) 전수했습니다. 방어전에서 이 무공을 씁니다. (깨달음 -%d)" % [
 		disciple.display_name, art.display_name, cost,
 	]}
 
@@ -352,7 +352,7 @@ static func apply_battle(sect: SectData, ally_ids: Array, fallen_ids: Array) -> 
 	return fallen_names
 
 
-## 문파전 전력 보너스: 제자 레벨 1을 넘는 단계의 합
+## 문파전 전력 가산: 제자 경지 1을 넘는 단계의 합
 static func get_war_power_bonus(sect: SectData) -> int:
 	if not sect.use_roster:
 		return 0

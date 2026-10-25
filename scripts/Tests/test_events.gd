@@ -30,7 +30,7 @@ func _test_event_validation() -> void:
 		"알 수 없는 조건": {"conditions": [{"type": "weather"}]},
 		"알 수 없는 캐릭터 필드": {"conditions": [{"type": "character", "field": "luck", "op": ">=", "value": 1}]},
 		"잘못된 연산자": {"conditions": [{"type": "sect", "field": "gold", "op": "=>", "value": 1}]},
-		"알 수 없는 역할": {"conditions": [{"type": "role", "in": ["NINJA"]}]},
+		"알 수 없는 신분": {"conditions": [{"type": "role", "in": ["NINJA"]}]},
 		"알 수 없는 효과": {"choices": [{"label": "a", "effects": [{"type": "teleport"}]}]},
 		"알 수 없는 전투": {"choices": [{"label": "a", "effects": [{"type": "combat", "combat": "dragon"}]}]},
 		"chance 없는 분기": {"choices": [{"label": "a", "effects": [], "branches": [{"effects": []}]}]},
@@ -108,7 +108,7 @@ func _test_event_mod_folder() -> void:
 		"id": "mod_three_choices", "title": "갈림길", "description": "세 갈래 길",
 		"conditions": [],
 		"choices": [
-			{"label": "왼쪽", "message": "금화 +5", "effects": [{"type": "sect", "field": "gold", "add": 5}]},
+			{"label": "왼쪽", "message": "은자 +5", "effects": [{"type": "sect", "field": "gold", "add": 5}]},
 			{"label": "가운데", "message": "", "effects": []},
 			{"label": "오른쪽", "message": "", "effects": [{"type": "flag", "flag": "went_right"}]},
 		],
@@ -146,7 +146,7 @@ func _test_event_popup_choices() -> void:
 	var buttons: Array = popup.get_node("%ChoiceBox").get_children().filter(
 		func(n: Node) -> bool: return n is Button and not n.is_queued_for_deletion()
 	)
-	_check(buttons.size() == 3 and popup.visible, "기연 팝업: 선택지 3개 버튼 생성")
+	_check(buttons.size() == 3 and popup.visible, "기연 창: 선택지 3개 버튼 생성")
 	_completed["_test_event_popup_choices"] = true
 
 
@@ -170,10 +170,10 @@ func _test_event_grammar_validation() -> void:
 		"year 연산자": {"conditions": [{"type": "year", "op": "~", "value": 3}]},
 		"turns_since_flag 플래그 누락": {"conditions": [{"type": "turns_since_flag", "op": ">=", "value": 1}]},
 		"잘못된 관계 유형": {"conditions": [{"type": "relationship_type", "target": "npc_rival", "bond_type": "LOVER"}]},
-		"잘못된 역할 기록": {"conditions": [{"type": "role_history", "role": "EMPEROR"}]},
+		"잘못된 신분 기록": {"conditions": [{"type": "role_history", "role": "EMPEROR"}]},
 		"명부에 없는 인물과 관계": {"choices": [{"label": "a", "effects": [{"type": "add_relationship", "target": "npc_nobody", "bond_type": "ROMANCE"}]}]},
 		"없는 무공 습득": {"choices": [{"label": "a", "effects": [{"type": "learn_art", "art": "no_art"}]}]},
-		"없는 엔딩": {"choices": [{"label": "a", "effects": [{"type": "end_game", "ending": "no_ending"}]}]},
+		"없는 결말": {"choices": [{"label": "a", "effects": [{"type": "end_game", "ending": "no_ending"}]}]},
 		"음수 가중치": {"weight": -1},
 	}
 	for label in bad_cases:
@@ -209,8 +209,8 @@ func _test_event_grammar_conditions() -> void:
 	_check(not _condition_holds({"type": "relationship_type", "target": "npc_cheonma", "bond_type": "HATRED"}, st), "relationship_type: 관계 없으면 거짓")
 
 	EventManager.role_history = ["YOUNG_DISCIPLE", "SPY"] as Array[String]
-	_check(_condition_holds({"type": "role_history", "role": "SPY"}, st), "role_history: 거쳐 온 역할")
-	_check(not _condition_holds({"type": "role_history", "role": "LEADER"}, st), "role_history: 거치지 않은 역할")
+	_check(_condition_holds({"type": "role_history", "role": "SPY"}, st), "role_history: 거쳐 온 신분")
+	_check(not _condition_holds({"type": "role_history", "role": "LEADER"}, st), "role_history: 거치지 않은 신분")
 	_check(_condition_holds({"type": "role_history", "role": "LEADER", "value": false}, st), "role_history: 거친 적 없음 조건")
 
 	# 가중치: 1 대 9로 뽑히는지
@@ -259,7 +259,7 @@ func _test_event_grammar_effects() -> void:
 	_check(st["character"].knows_martial_art("preset_earth_life_palm"), "learn_art: 무공 습득")
 
 	apply.call({"type": "end_game", "ending": "unify_righteous"})
-	_check(result.get("end_game") == "unify_righteous", "end_game: 결과에 엔딩 지정")
+	_check(result.get("end_game") == "unify_righteous", "end_game: 결과에 결말 지정")
 
 	# 신규 기연 데이터
 	var sworn: EventData = EventManager.get_event("rival_sworn_brothers")
@@ -268,15 +268,15 @@ func _test_event_grammar_effects() -> void:
 	_completed["_test_event_grammar_effects"] = true
 
 
-## GameManager가 역할 기록·플래그 시점을 남기고, 저장·불러오기와 end_game을 처리하는지 확인한다.
+## GameManager가 신분 기록·플래그 시점을 남기고, 저장·불러오기와 end_game을 처리하는지 확인한다.
 func _test_event_progress_tracking() -> void:
 	var gm: Node = root.get_node("GameManager")
 	gm.start_new_game("기록", "young_disciple")
-	_check(gm.role_history == ["YOUNG_DISCIPLE"], "새 게임: 시작 역할 기록")
+	_check(gm.role_history == ["YOUNG_DISCIPLE"], "새 게임: 시작 신분 기록")
 	gm.apply_role_transition(CharacterData.Role.SPY)
 	gm.apply_role_transition(CharacterData.Role.MANAGER)
-	_check(gm.role_history == ["YOUNG_DISCIPLE", "SPY", "MANAGER"], "역할 전환 기록")
-	_check(EventManager.role_history == gm.role_history, "기연 판정에 역할 기록 공유")
+	_check(gm.role_history == ["YOUNG_DISCIPLE", "SPY", "MANAGER"], "신분 전환 기록")
+	_check(EventManager.role_history == gm.role_history, "기연 판정에 신분 기록 공유")
 
 	for i in 3:
 		gm.advance_turn()
@@ -309,12 +309,12 @@ func _test_event_progress_tracking() -> void:
 	_check(
 		gm.flag_turns.get("test_flag") == expected_turn and gm.role_history.has("SPY")
 		and EventManager.flag_turns == gm.flag_turns,
-		"플래그 시점·역할 기록 저장/복원"
+		"플래그 시점·신분 기록 저장/복원"
 	)
 	state.erase("role_history")
 	state.erase("flag_turns")
 	gm._apply_save_data(state)
-	_check(gm.role_history.size() == 1 and gm.flag_turns.is_empty(), "구버전 세이브: 현재 역할만 기록")
+	_check(gm.role_history.size() == 1 and gm.flag_turns.is_empty(), "구버전 저장본: 현재 신분만 기록")
 
 	# 의형제 기연: 결투 승리 4계절 뒤, 라이벌 유대 40 이상
 	gm.start_new_game("의형제", "young_disciple")
@@ -411,8 +411,8 @@ func _test_story_arcs() -> void:
 		_check(beats.size() >= 4 and beats.size() <= 8, "아크 %s: 기연 %d개 (4~8)" % [arc, beats.size()])
 	# 자유 시나리오의 아크도 대화 장면·이어지는 대화·일지를 쓴다
 	_new_quiet_game(gm, "young_disciple")
-	_check(gm.journal_goal == "스승께 인정받아 청운의 검을 잇기", "시나리오 목표: 역할별 첫 목표 (%s)" % gm.journal_goal)
-	gm.start_new_game("역할", "leader", "gangho_100", {"event_rate": 0.0})
+	_check(gm.journal_goal == "스승께 인정받아 청운의 검을 잇기", "시나리오 목표: 신분별 첫 목표 (%s)" % gm.journal_goal)
+	gm.start_new_game("신분", "leader", "gangho_100", {"event_rate": 0.0})
 	_check(gm.journal_goal.contains("천마신교"), "시나리오 목표: default")
 	_new_quiet_game(gm, "young_disciple")
 	_check(not gm.get_timeline().any(func(t: Dictionary) -> bool: return t["id"].begins_with("arc_cheonma")), "아크: 밀서를 거절하기 전에는 천마 사건이 연표에 없음")
@@ -424,7 +424,7 @@ func _test_story_arcs() -> void:
 	_check(gm.get_timeline().any(func(t: Dictionary) -> bool: return t["id"] == "arc_cheonma_omen"), "아크: 밀서를 거절하면 연표에 검은 깃발")
 	var manual_endings: Array = ["mercy_blade", "usurper", "marriage_alliance", "hidden_valley", "fallen_blossom", "web_of_shadows", "demon_slayer", "fallen_sect"]
 	for ending_id in manual_endings:
-		_check(EndingManager.has_ending(ending_id), "아크 엔딩 존재: %s" % ending_id)
+		_check(EndingManager.has_ending(ending_id), "아크 결말 존재: %s" % ending_id)
 
 	# ── 복수와 용서: 패배 후 재도전 → 용서 → 자비의 검 ──
 	_new_quiet_game(gm, "young_disciple")
@@ -435,7 +435,7 @@ func _test_story_arcs() -> void:
 		var blade: RelationshipData = RelationshipManager.get_bond_with(gm.player_relationships, "npc_shadow_blade")
 		_check(blade != null and blade.bond_type == RelationshipData.BondType.BLOOD_OATH, "복수: 용서하면 원한이 혈맹으로")
 		_run_arc(gm, [["arc_revenge_mercy", 0]], "복수와 용서")
-		_check(gm.current_ending_id == "mercy_blade", "복수: 자비의 검 엔딩")
+		_check(gm.current_ending_id == "mercy_blade", "복수: 자비의 검 결말")
 	# 남궁휘와 함께 귀영을 꺾고 배후의 마진까지
 	_new_quiet_game(gm, "young_disciple")
 	var heukpung: SectData = gm.get_world_sect("heukpung")
@@ -445,7 +445,7 @@ func _test_story_arcs() -> void:
 		["arc_revenge_judgment", 2], ["arc_revenge_mastermind", 0, V], ["arc_revenge_chief_aftermath", 0],
 	], "복수: 배후 처단"):
 		_check(gm.story_flags.get("arc_revenge_closed", false) and heukpung.disciple_count < heukpung_disciples, "복수: 마진 처단 후 흑풍채 약화")
-		_check(gm.current_ending_id.is_empty(), "복수: 배후 처단 길은 엔딩 없이 계속")
+		_check(gm.current_ending_id.is_empty(), "복수: 배후 처단 길은 결말 없이 계속")
 
 	# ── 승계와 배신: 반란 진압 → 후계 지명 ──
 	_new_quiet_game(gm, "young_disciple")
@@ -455,7 +455,7 @@ func _test_story_arcs() -> void:
 	], "승계와 배신"):
 		gm.refresh_role_transitions()
 		var roles: Array = gm.pending_role_transitions.map(func(o: Dictionary) -> int: return o["role"])
-		_check(gm.story_flags.get("arc_succession_heir", false) and roles.has(CharacterData.Role.MANAGER), "승계: 후계자는 중간관리자 승진 가능")
+		_check(gm.story_flags.get("arc_succession_heir", false) and roles.has(CharacterData.Role.MANAGER), "승계: 후계자는 총관 승진 가능")
 	# 진무겸에 가담해 스승을 친다 → 찬탈자
 	_new_quiet_game(gm, "young_disciple")
 	var morality: int = gm.player_character.morality
@@ -463,7 +463,7 @@ func _test_story_arcs() -> void:
 		["arc_succession_illness", 0], ["arc_succession_conspiracy", 1], ["arc_succession_traitor_night", 0, V],
 		["arc_succession_usurper", 0],
 	], "승계: 찬탈"):
-		_check(gm.current_ending_id == "usurper" and gm.player_character.morality <= morality - 25, "승계: 찬탈자의 옥좌 엔딩")
+		_check(gm.current_ending_id == "usurper" and gm.player_character.morality <= morality - 25, "승계: 찬탈자의 옥좌 결말")
 	# 내분에서 지면 산문을 되찾는 기연이 반복된다
 	_new_quiet_game(gm, "young_disciple")
 	_run_arc(gm, [
@@ -479,50 +479,50 @@ func _test_story_arcs() -> void:
 		["arc_love_meeting", 0], ["arc_love_letters", 0], ["arc_love_opposition", 0], ["arc_love_trial", 0, V],
 		["arc_love_wedding", 0],
 	], "금단의 사랑"):
-		_check(gm.current_ending_id == "marriage_alliance" and namgung.attitude >= 20, "사랑: 두 가문의 맹약 엔딩")
+		_check(gm.current_ending_id == "marriage_alliance" and namgung.attitude >= 20, "사랑: 두 가문의 맹약 결말")
 	# 도주 → 추격전 패배 → 꺾인 매화
 	_new_quiet_game(gm, "young_disciple")
 	if _run_arc(gm, [
 		["arc_love_meeting", 0], ["arc_love_letters", 0], ["arc_love_opposition", 1], ["arc_love_pursuit", 0, D],
 		["arc_love_tragedy", 0],
 	], "사랑: 비극"):
-		_check(gm.current_ending_id == "fallen_blossom", "사랑: 꺾인 매화 엔딩")
-	# 도주 → 추격전 승리 → 은거곡 (생을 마치는 엔딩)
+		_check(gm.current_ending_id == "fallen_blossom", "사랑: 꺾인 매화 결말")
+	# 도주 → 추격전 승리 → 은거곡 (생을 마치는 결말)
 	_new_quiet_game(gm, "young_disciple")
 	if _run_arc(gm, [
 		["arc_love_meeting", 0], ["arc_love_letters", 0], ["arc_love_opposition", 1], ["arc_love_pursuit", 0, V],
 		["arc_love_valley", 0],
 	], "사랑: 은거"):
-		_check(gm.current_ending_id == "hidden_valley" and gm.story_flags.get("life_ended", false), "사랑: 은거곡 엔딩은 생을 마침")
+		_check(gm.current_ending_id == "hidden_valley" and gm.story_flags.get("life_ended", false), "사랑: 은거곡 결말은 생을 마침")
 
-	# ── 스파이 이중생활: 세 번의 위기 → 양쪽을 속인다 → 거미줄의 주인 ──
+	# ── 간자 이중생활: 세 번의 위기 → 양쪽을 속인다 → 거미줄의 주인 ──
 	_new_quiet_game(gm, "young_disciple")
 	gm.apply_role_transition(CharacterData.Role.SPY)
 	gm.do_role_action("intel", "namgung")
 	if _run_arc(gm, [
 		["arc_spy_contact", 0], ["arc_spy_crisis1", 0], ["arc_spy_crisis2", 0, V], ["arc_spy_crisis3", 1, V],
 		["arc_spy_choice", 2], ["arc_spy_web", 0],
-	], "스파이 이중생활"):
-		_check(gm.story_flags.get("arc_spy_rescued", false) and gm.story_flags.get("arc_spy_enforcer_slain", false), "스파이: 구출·결판 승리 기록")
-		_check(gm.current_ending_id == "web_of_shadows", "스파이: 거미줄의 주인 엔딩")
+	], "간자 이중생활"):
+		_check(gm.story_flags.get("arc_spy_rescued", false) and gm.story_flags.get("arc_spy_enforcer_slain", false), "간자: 구출·결판 승리 기록")
+		_check(gm.current_ending_id == "web_of_shadows", "간자: 거미줄의 주인 결말")
 	# 집법당주에게 지면 정체가 드러나 처형된다
 	_new_quiet_game(gm, "young_disciple")
 	gm.apply_role_transition(CharacterData.Role.SPY)
 	gm.do_role_action("intel", "namgung")
 	if _run_arc(gm, [
 		["arc_spy_contact", 1], ["arc_spy_crisis1", 1], ["arc_spy_crisis2", 1], ["arc_spy_crisis3", 1, D],
-	], "스파이: 발각"):
-		_check(gm.current_ending_id == "tragic_execution", "스파이: 결판에서 지면 비극적 처형")
+	], "간자: 발각"):
+		_check(gm.current_ending_id == "tragic_execution", "간자: 결판에서 지면 비극적 처형")
 	# 충성을 택하면 임무 완료로 복귀할 수 있다
 	_new_quiet_game(gm, "young_disciple")
 	gm.apply_role_transition(CharacterData.Role.SPY)
 	gm.do_role_action("intel", "namgung")
 	_run_arc(gm, [
 		["arc_spy_contact", 0], ["arc_spy_crisis1", 0], ["arc_spy_crisis2", 1], ["arc_spy_crisis3", 1, V], ["arc_spy_choice", 0],
-	], "스파이: 충성")
+	], "간자: 충성")
 	gm.refresh_role_transitions()
 	var spy_roles: Array = gm.pending_role_transitions.map(func(o: Dictionary) -> int: return o["role"])
-	_check(spy_roles.has(CharacterData.Role.MANAGER) and gm.current_ending_id.is_empty(), "스파이: 충성하면 복귀 경로")
+	_check(spy_roles.has(CharacterData.Role.MANAGER) and gm.current_ending_id.is_empty(), "간자: 충성하면 복귀 경로")
 
 	# ── 마교 대침공: 연합 → 혈영 격퇴 → 방어전 → 천마 격파 ──
 	_new_quiet_game(gm, "young_disciple")
@@ -531,14 +531,14 @@ func _test_story_arcs() -> void:
 		["arc_cheonma_omen", 0], ["arc_cheonma_council", 0], ["arc_cheonma_assassin", 0, V],
 		["arc_cheonma_siege_allied", 0, V], ["arc_cheonma_final", 0, V], ["arc_cheonma_triumph", 0],
 	], "마교 대침공"):
-		_check(gm.current_ending_id == "demon_slayer" and gm.current_year >= 5, "마교: 천마를 벤 영웅 엔딩")
+		_check(gm.current_ending_id == "demon_slayer" and gm.current_year >= 5, "마교: 천마를 벤 영웅 결말")
 	# 홀로 버티다 산문이 무너진다
 	_new_quiet_game(gm, "young_disciple")
 	EventManager.set_flag(gm.story_flags, "cheonma_letter_refused")
 	if _run_arc(gm, [
 		["arc_cheonma_omen", 1], ["arc_cheonma_assassin", 1], ["arc_cheonma_siege_alone", 0, D], ["arc_cheonma_fall", 0],
 	], "마교: 함락"):
-		_check(gm.current_ending_id == "fallen_sect", "마교: 무너진 산문 엔딩")
+		_check(gm.current_ending_id == "fallen_sect", "마교: 무너진 산문 결말")
 	# 밀약을 맺었거나 다른 시나리오면 시작하지 않는다
 	gm.start_new_game("다른 시나리오", "young_disciple", "gangho_100", {"event_rate": 0.0})
 	EventManager.set_flag(gm.story_flags, "cheonma_letter_refused")
@@ -559,7 +559,7 @@ func _test_story_arcs() -> void:
 const SAGA_IDS: Array = ["saga_1_blood_moon", "saga_2_black_lotus", "saga_3_blue_sky"]
 
 
-## 행동 대화 장면: 데이터가 다 읽히고, 어느 역할·결과에도 장면이 있고, 경영 화면에서 행동하면 대화 창이 뜬다
+## 행동 대화 장면: 데이터가 다 읽히고, 어느 신분·결과에도 장면이 있고, 경영 화면에서 행동하면 대화 창이 뜬다
 func _test_action_scenes() -> void:
 	var g: Node = gm()
 	ActionScenes.reload_data()
@@ -573,7 +573,7 @@ func _test_action_scenes() -> void:
 		total += JSON.parse_string(FileAccess.get_file_as_string(path))["scenes"].size()
 	var loaded: int = actions.reduce(func(sum: int, a: String) -> int: return sum + ActionScenes.get_scenes(a).size(), 0)
 	_check(loaded == total, "행동 장면: 모든 장면이 검사를 통과해 읽힘 (%d/%d)" % [loaded, total])
-	# 역할마다, 성공·실패 모두에 고를 장면이 있다 (서술 장면이 받쳐 준다)
+	# 신분마다, 성공·실패 모두에 고를 장면이 있다 (서술 장면이 받쳐 준다)
 	var roles: Dictionary = {
 		"leader": ["train", "elixir", "feast", "facility", "disciple_train", "transmit", "council", "envoy"],
 		"manager": ["department", "proposal"], "young_disciple": ["teaching", "outing"], "wanderer": ["job_escort", "job_search"],
@@ -587,7 +587,7 @@ func _test_action_scenes() -> void:
 				var scene: Dictionary = ActionScenes.build(g, action, {"success": success, "message": "결과"}, {"title": action, "disciple_name": "갑돌", "detail": "서고", "target_name": "흑풍채", "target_leader_id": "npc_heukpung_chief"})
 				if scene.is_empty() or scene["description"].contains("{") or not scene["description"].contains("【결과】"):
 					empty.append("%s/%s/%s" % [role, action, success])
-	_check(empty.is_empty(), "행동 장면: 역할·결과마다 장면이 있고 빈칸이 다 채워짐 (%s)" % [empty])
+	_check(empty.is_empty(), "행동 장면: 신분·결과마다 장면이 있고 빈칸이 다 채워짐 (%s)" % [empty])
 	# 서술 장면: "{speaker}:" 줄이 이름 없이 따옴표 대사로
 	_new_quiet_game(g, "young_disciple")
 	var narrated: Dictionary = ActionScenes._compose(g, {"id": "x", "lines": ["{speaker}: 반갑소.", "{speaker}이(가) 웃는다."]}, {"id": "", "name": ""}, {"message": ""}, {})
@@ -619,10 +619,10 @@ func _test_action_scenes() -> void:
 	_check(g.player_sect.reputation > reputation, "연회 결과는 그대로 반영")
 	hub.event_popup._on_choice_pressed(0)
 	_check(g.pending_action_scene.is_empty() and not hub.event_popup.visible, "선택하면 장면이 닫힘")
-	# 역할 행동: 문파 회의
+	# 신분 행동: 문파 회의
 	hub._on_role_action_pressed("council")
 	await process_frame
-	_check(hub.event_popup.visible and hub.event_popup.title_label.text.begins_with("문파 회의 소집"), "역할 행동: 문파 회의 장면")
+	_check(hub.event_popup.visible and hub.event_popup.title_label.text.begins_with("문파 회의 소집"), "신분 행동: 문파 회의 장면")
 	hub.event_popup._on_choice_pressed(0)
 	# 대화 장면이 떠 있으면 다음 장면은 기다리지 않고 알림으로
 	g.pending_action_scene = {"options": [{"label": "확인", "message": "", "effects": []}]}
@@ -664,7 +664,7 @@ func _start_saga(scenario_id: String, npc_id: String) -> void:
 
 ## 등장인물로 계절을 넘기며 끝까지 플레이한다. plan: {기연 id: 선택지 글 앞부분}, 없는 기연은 보이는 마지막 선택지.
 ## outcomes: {기연 id: 전투 결과} (기본 승리). 일어난 기연 id 목록을 돌려준다.
-## start_level을 주면 그 레벨로 시작한다 (수련으로 경지를 쌓은 셈).
+## start_level을 주면 그 경지로 시작한다 (수련으로 경지를 쌓은 셈).
 ## 마지막 플레이에서 기연마다 본 것: {기연 id: {text, choices, features(그때 열린 기능), role}}
 var _saga_log: Dictionary = {}
 
@@ -715,7 +715,7 @@ func _play_saga(scenario_id: String, npc_id: String, plan: Dictionary, outcomes:
 		if result.has("end_game"):
 			gm()._force_end(result["end_game"])
 		gm()._check_end_states()
-		# 기능 개방·역할·일지, 이어지는 장면(next)
+		# 기능 개방·신분·일지, 이어지는 장면(next)
 		gm()._apply_story_result(result)
 		# 전투 결과로 이어지는 기연(승리·패배 뒤의 장면)은 다음 계절을 기다리지 않고 바로 확인한다.
 		if not gm().is_game_over():
@@ -728,21 +728,21 @@ func _test_main_saga_system() -> void:
 		var scenario: Dictionary = ScenarioManager.get_scenario(scenario_id)
 		_check(not scenario.is_empty(), "메인 시나리오 정의: %s" % scenario_id)
 		ScenarioManager.activate(scenario_id)
-		# 등장인물 데이터: 명부에 있고, 인연 대상도 명부에 있다. 이 시나리오의 기연과 엔딩만 읽는다.
+		# 등장인물 데이터: 명부에 있고, 인연 대상도 명부에 있다. 이 시나리오의 기연과 결말만 읽는다.
 		for entry in ScenarioManager.get_playables(scenario):
 			_check(NpcRoster.has_npc(entry["npc"]), "%s 등장인물 명부: %s" % [scenario_id, entry["npc"]])
 			_check(ArtAssets.portrait(entry["npc"]) != null, "%s 등장인물 초상화: %s" % [scenario_id, entry["npc"]])
 			for target in entry.get("bonds", {}):
 				_check(NpcRoster.has_npc(target) and target != entry["npc"], "%s 등장인물 %s 인연 대상: %s" % [scenario_id, entry["npc"], target])
 		_check(EventManager.get_event("rival_duel") == null and EventManager.get_event("arc_cheonma_omen") == null, "%s: 정한 공용 기연 폴더만 읽음" % scenario_id)
-		_check(not EndingManager.has_ending("conquer_world"), "%s: 공용 엔딩을 읽지 않음" % scenario_id)
+		_check(not EndingManager.has_ending("conquer_world"), "%s: 공용 결말을 읽지 않음" % scenario_id)
 		for ending_id in scenario.get("victory_endings", []):
-			_check(EndingManager.has_ending(ending_id), "%s 엔딩: %s" % [scenario_id, ending_id])
+			_check(EndingManager.has_ending(ending_id), "%s 결말: %s" % [scenario_id, ending_id])
 
 	# 남궁휘로 시작: 인물의 이름·초상화·소속·인연·플래그, 자기 자신과는 관계가 없다.
 	_start_saga("saga_1_blood_moon", "npc_rival")
 	var hero: CharacterData = gm().player_character
-	_check(hero.display_name == "남궁휘" and hero.portrait_id == "npc_rival" and hero.level == 3, "등장인물: 이름·초상화·레벨")
+	_check(hero.display_name == "남궁휘" and hero.portrait_id == "npc_rival" and hero.level == 3, "등장인물: 이름·초상화·경지")
 	_check(hero.knows_martial_art("manual_namgung_plum_sword"), "등장인물: 시작 무공")
 	_check(gm().player_sect.id == "namgung" and gm().player_npc_id == "npc_rival", "등장인물: 소속 문파")
 	_check(gm().story_flags.get("playing_npc_rival", false) == true, "등장인물: playing_ 플래그")
@@ -790,14 +790,14 @@ func _test_main_saga_paths() -> void:
 	_check(seen.find("s1_blood_night") > seen.find("s1_traitor_within") and seen.find("s1_traitor_within") > seen.find("s1_lady_and_shadow"), "1장: 연표 순서")
 	# 이어지는 대화: 붉은 달 → 담장 위의 밤이 같은 계절에 바로 이어진다
 	_check(seen.find("s1_hwi_moon_talk") == seen.find("s1_red_moon") + 1 and seen.find("s1_hwi_runaway") == seen.find("s1_hwi_shadow_of_father") + 1, "대화 장면: next로 바로 이어짐")
-	# 기능 단계 개방: 처음엔 역할 행동·인연만, 청운산 길에서 비무·무공·지도가 열리고, 가주가 되면 문파 경영이 열린다
+	# 기능 단계 개방: 처음엔 신분 행동·인연만, 청운산 길에서 비무·무공·지도가 열리고, 가주가 되면 문파 경영이 열린다
 	var opening: Array = _saga_log["s1_red_moon"]["features"]
-	_check(opening == ["role_action", "bond"], "기능 개방: 시작은 역할 행동·인연뿐 (%s)" % [opening])
+	_check(opening == ["role_action", "bond"], "기능 개방: 시작은 신분 행동·인연뿐 (%s)" % [opening])
 	var mid: Array = _saga_log["s1_alliance"]["features"]
 	_check(mid.has("spar") and mid.has("martial") and mid.has("travel") and not mid.has("sect"), "기능 개방: 아버지의 그늘 뒤 비무·무공·지도 (%s)" % [mid])
 	_check(seen.has("feature_intro"), "기능 개방: 열린 기능 소개 장면")
 	var council: Dictionary = _saga_log["s1_hwi_first_council"]
-	_check(council["role"] == CharacterData.Role.LEADER and council["features"].has("sect") and council["features"].has("diplomacy"), "역할 변화: 가주가 되면 문파 경영·외교가 열림")
+	_check(council["role"] == CharacterData.Role.LEADER and council["features"].has("sect") and council["features"].has("diplomacy"), "신분 변화: 가주가 되면 문파 경영·외교가 열림")
 	# 기억하는 대사: 청운산에 함께 갔던 일을 누이와 집법당주가 기억한다
 	_check(_saga_log["s1_hwi_sister_secret"]["text"].contains("청운산 가던 길") and not _saga_log["s1_hwi_sister_secret"]["text"].contains("무섭다고 했었지"), "기억하는 대사: 고른 일만 기억")
 	_check(_saga_log["s1_hwi_father_falls"]["text"].contains("누이 손 잡고"), "기억하는 대사: 아버지의 유언")
@@ -813,21 +813,21 @@ func _test_main_saga_paths() -> void:
 		_check(saga.get("progressive", false) == true, "기능 개방: %s는 단계 개방" % saga_id)
 		for entry in ScenarioManager.get_playables(saga):
 			_check(entry.has("features") and not str(entry.get("goal", "")).is_empty(), "기능 개방: %s 시작 기능·목표" % entry["npc"])
-	# 낭인 연소화: 역할 기능(지도)은 처음부터, 문파 경영은 잠김
+	# 낭인 연소화: 신분 기능(지도)은 처음부터, 문파 경영은 잠김
 	_start_saga(sid, "npc_swallow")
 	_check(gm().progressive_features and FeatureGate.is_open("travel") and not FeatureGate.is_open("sect_war") and not FeatureGate.is_open("spar"), "기능 개방: 낭인은 지도만 먼저 열림")
 	_start_saga(sid, "npc_rival")
 	_check(not FeatureGate.is_open("spar") and not RoleDashboard.is_button_visible(gm().player_character.role, "CombatButton"), "기능 개방: 잠긴 버튼은 숨김")
-	_check(gm().pending_role_transitions.is_empty(), "기능 개방: 역할 전환 전에는 전환 알림 없음")
+	_check(gm().pending_role_transitions.is_empty(), "기능 개방: 신분 전환 전에는 전환 알림 없음")
 	var state: Dictionary = gm()._build_save_state()
 	gm().unlocked_features.append("spar")
 	gm()._apply_save_data(state)
 	_check(gm().progressive_features and not FeatureGate.is_open("spar") and gm().journal_goal.begins_with("붉은 달"), "기능 개방·일지 저장/불러오기")
-	# 남궁휘: 혈월의 밤 무모한 돌격 → 배드 엔딩
+	# 남궁휘: 혈월의 밤 무모한 돌격 → 배드 결말
 	_play_saga(sid, "npc_rival", {"s1_blood_night": "홀로 천마의", "s1_black_wind_offer": "사파와 손잡는"})
 	_check(gm().current_ending_id == "s1_bad_sacrifice" and gm().game_over_id == "story_end", "1장 남궁휘: 혈월의 제물 (배드)")
-	# 연소화: 마진의 금화를 받으면 흑풍의 덫
-	_play_saga(sid, "npc_swallow", {"s1_so_majin_deal": "금화를", "s1_so_trap_springs": "끝까지"})
+	# 연소화: 마진의 은자를 받으면 흑풍의 덫
+	_play_saga(sid, "npc_swallow", {"s1_so_majin_deal": "은자를", "s1_so_trap_springs": "끝까지"})
 	_check(gm().current_ending_id == "s1_bad_black_wind_trap", "1장 연소화: 흑풍의 덫 (배드)")
 	# 연소화: 피난민을 이끌어 강남으로
 	seen = _play_saga(sid, "npc_swallow", {
@@ -864,7 +864,7 @@ func _test_main_saga_paths() -> void:
 		"s1_hy_choice": "남궁설과 함께", "s1_finale_hy": "바닷가",
 	})
 	_check(gm().current_ending_id == "s1_sheathed_blade", "1장 혈영: 칼을 거둔 자객")
-	# 혈영: 상처 입은 천마를 꺾고 교주가 된다 (지존). 레벨이 모자라면 천마의 분노.
+	# 혈영: 상처 입은 천마를 꺾고 교주가 된다 (지존). 경지가 모자라면 천마의 분노.
 	var supreme_plan: Dictionary = {
 		"s1_red_moon": "교주의 명을", "s1_hy_blade": "무릎 꿇고", "s1_alliance": "맹회의 하인으로",
 		"s1_lady_and_shadow": "얼굴을 본 자는", "s1_traitor_within": "첩자 노릇", "s1_blood_night": "교주의 명대로",

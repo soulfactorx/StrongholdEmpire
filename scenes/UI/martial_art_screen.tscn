@@ -44,7 +44,7 @@ theme_override_constants/separation = 8
 [node name="Title" type="Label" parent="Margin/RootHBox/CreatePanel"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "무공 창조"
+text = "무공 창안"
 
 [node name="NameInput" type="LineEdit" parent="Margin/RootHBox/CreatePanel"]
 unique_name_in_owner = true
@@ -149,7 +149,7 @@ text = "예상 성공률"
 [node name="CreateButton" type="Button" parent="Margin/RootHBox/CreatePanel"]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
-text = "무공 창조 (연구)"
+text = "무공 창안"
 
 [node name="BlueprintRow" type="HBoxContainer" parent="Margin/RootHBox/CreatePanel"]
 layout_mode = 2
@@ -181,7 +181,7 @@ theme_override_constants/separation = 8
 [node name="PresetTitle" type="Label" parent="Margin/RootHBox/PresetPanel"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "비급 연구"
+text = "비급 참오"
 
 [node name="PresetList" type="ItemList" parent="Margin/RootHBox/PresetPanel"]
 unique_name_in_owner = true
@@ -191,7 +191,7 @@ layout_mode = 2
 [node name="ResearchPresetButton" type="Button" parent="Margin/RootHBox/PresetPanel"]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
-text = "선택 비급 연구"
+text = "선택 비급 참오"
 
 [node name="SecretTitle" type="Label" parent="Margin/RootHBox/PresetPanel"]
 layout_mode = 2
@@ -251,7 +251,7 @@ autowrap_mode = 3
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
-text = "무공을 창조하거나 비급을 연구하세요."
+text = "무공을 창안하거나 비급을 참오하세요."
 autowrap_mode = 3
 
 [node name="BackButton" type="Button" parent="Margin/RootHBox/PresetPanel"]

@@ -1,7 +1,7 @@
 class_name DialogueLines
 extends RefCounted
 
-## 인물과 주고받는 대사. 인연(대화·선물·비무), 외교, 역할 행동에서 오간 말을 만들어 기록에 남긴다.
+## 인물과 주고받는 대사. 인연(대화·선물·비무), 외교, 신분 행동에서 오간 말을 만들어 기록에 남긴다.
 ## 인물 JSON의 "dialogue"에 그 인물만의 대사가 있으면 먼저 쓰고, 없으면 관계 유형·깊이에 맞는 기본 대사를 쓴다.
 ## 대사 한 줄은 "말한 사람: 대사" 형식의 문자열이다.
 
@@ -74,7 +74,7 @@ const DIPLOMACY_LINES: Dictionary = {
 	"release_tribute": ["이제 공물은 바치지 않아도 됩니다.", ["관대한 처분에 감사하오. 이 은혜 잊지 않겠소."], ["...무슨 꿍꿍이요?"]],
 }
 
-## 역할 행동에서 오가는 말: [플레이어 대사, 상대 이름(빈칸이면 없음), 상대 답(성공), 상대 답(실패)]
+## 신분 행동에서 오가는 말: [플레이어 대사, 상대 이름(빈칸이면 없음), 상대 답(성공), 상대 답(실패)]
 const ROLE_ACTION_LINES: Dictionary = {
 	"council": ["모두 기탄없이 말해 보시오. 문파를 위해 무엇이 필요하오?", "원로", "문주께서 귀를 열어 주시니 다들 한결 마음이 놓였습니다.", ""],
 	"proposal": ["문주님, 문파 운영에 대해 한 말씀 올리겠습니다.", "문주", "좋은 생각이다. 그대로 시행하라.", "쓸데없는 소리. 물러가라."],
@@ -212,7 +212,7 @@ static func for_diplomacy(sect: SectData, action_id: String, success: bool) -> P
 	return lines
 
 
-## 역할 행동에서 오간 대사 (해당 없으면 빈 목록)
+## 신분 행동에서 오간 대사 (해당 없으면 빈 목록)
 static func for_role_action(action_id: String, player_name: String, success: bool, counterpart: String = "") -> PackedStringArray:
 	var lines: PackedStringArray = []
 	if not ROLE_ACTION_LINES.has(action_id):

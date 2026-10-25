@@ -1,11 +1,11 @@
 extends "res://scripts/Tests/test_base.gd"
 
-## 스모크 테스트 — 전투: 결과·규칙·무공 효과·아군·데이터 전투, 전수·비전·무공 연구소
+## 스모크 테스트 — 전투: 결과·규칙·무공 효과·아군·데이터 전투, 전수·비전·장경각
 ## 실행 순서는 smoke_test.gd의 INIT_SEQUENCE·RUNTIME_SEQUENCE가 정한다.
 
 
 func _test_combat_outcomes() -> void:
-	# 비무 승리: 경험치와 라이벌 유대
+	# 비무 승리: 수련과 라이벌 유대
 	var st: Dictionary = _make_combat_state()
 	var rival_bond: RelationshipData = RelationshipManager.get_bond_with(st["relationships"], "npc_rival")
 	var bond_before: int = rival_bond.bond_strength
@@ -14,7 +14,7 @@ func _test_combat_outcomes() -> void:
 	_check(
 		result["success"] and st["character"].experience == _Balance.SPAR_EXP
 		and rival_bond.bond_strength == bond_before + 5,
-		"비무 승리: 경험치와 라이벌 유대 상승"
+		"비무 승리: 수련과 라이벌 유대 상승"
 	)
 
 	# 결투 패배: 명성 감소, 부상, 유대 감소
@@ -43,14 +43,14 @@ func _test_combat_outcomes() -> void:
 	result = _apply(bandits, CombatManager.Outcome.RETREAT, st)
 	_check(
 		st["sect"].gold == gold_before - 20 and st["character"].internal_energy_current == 65,
-		"후퇴: 금화 손실 절반, 내공 65%"
+		"후퇴: 은자 손실 절반, 내공 65%"
 	)
 
-	# 금화가 모자라도 음수가 되지 않는다
+	# 은자가 모자라도 음수가 되지 않는다
 	st = _make_combat_state()
 	st["sect"].gold = 10
 	_apply(bandits, CombatManager.Outcome.DEFEAT, st)
-	_check(st["sect"].gold == 0, "패배 손실이 보유 금화를 넘지 않음")
+	_check(st["sect"].gold == 0, "패배 손실이 보유 은자를 넘지 않음")
 	_completed["_test_combat_outcomes"] = true
 
 
@@ -97,7 +97,7 @@ func _test_combat_flow() -> void:
 	rival.take_damage(rival.hp - 1)
 	await controller.skip_to_result()
 	_check(controller.engine.outcome == CombatManager.Outcome.VICTORY and gm.pending_combat == null, "승리 후 예약 전투 해제")
-	_check(gm.player_character.experience == exp_before + _Balance.SPAR_EXP, "비무 승리 경험치 반영")
+	_check(gm.player_character.experience == exp_before + _Balance.SPAR_EXP, "비무 승리 수련 반영")
 
 	# 도적 전투: 적 3명이 차례로 나서는 연전, 배율 적용, 후퇴
 	gm.start_combat(CombatManager.create_night_bandits(gm.player_character))
@@ -293,9 +293,9 @@ func _test_duel_cards_and_ai() -> void:
 	_check(cards.size() == 6 and cards[5].tier == 2, "숙련: 쓴 횟수 %d번마다 한 단계" % DuelCard.MASTERY_PER_TIER)
 	_check(DuelCard.cards_for(hero, {"t_heavy": 999})[5].tier == 3, "숙련 상한 3단")
 	var unit := CombatUnit.new(hero, true)
-	_check(unit.slot_count() == 3, "Lv.1은 3칸")
+	_check(unit.slot_count() == 3, "경지 1은 3칸")
 	hero.level = 10
-	_check(unit.slot_count() == 5, "Lv.10은 5칸")
+	_check(unit.slot_count() == 5, "경지 10은 5칸")
 	hero.level = 30
 	_check(unit.slot_count() == 6, "칸은 최대 6")
 
@@ -1100,10 +1100,10 @@ func _test_martial_art_library() -> void:
 
 	var player := CharacterData.new()
 	player.level = 2
-	_check(NpcRoster.create_character("npc_rival", player).martial_arts.is_empty(), "라이벌은 레벨 2에서는 무공 없음")
+	_check(NpcRoster.create_character("npc_rival", player).martial_arts.is_empty(), "라이벌은 경지 2에서는 무공 없음")
 	player.level = 3
 	var rival: CharacterData = NpcRoster.create_character("npc_rival", player)
-	_check(rival.knows_martial_art("preset_soul_chase_sword"), "라이벌은 레벨 3부터 유혼쾌영검 사용")
+	_check(rival.knows_martial_art("preset_soul_chase_sword"), "라이벌은 경지 3부터 유혼쾌영검 사용")
 	_check(
 		not NpcRoster.validate_npc_dict({
 			"id": "x", "display_name": "x", "sect_id": "s", "role": "LEADER",
@@ -1122,7 +1122,7 @@ func _test_ally_setup() -> void:
 	var setup: CombatSetup = CombatManager.create_night_bandits(player, sect)
 	_check(setup.allies.size() == _Balance.DEFENSE_ALLY_COUNT and setup.allies_are_disciples, "방어전에 제자 2명 합류")
 	var base: CharacterData = NpcRoster.create_character("npc_disciple", player)
-	_check(setup.allies[0].strength == base.strength + 2 * _Balance.ALLY_TRAINING_STAT_BONUS, "무술장 레벨만큼 제자 강화")
+	_check(setup.allies[0].strength == base.strength + 2 * _Balance.ALLY_TRAINING_STAT_BONUS, "연무장 경지만큼 제자 강화")
 	_check(setup.allies[0].display_name != setup.allies[1].display_name, "제자 이름 구분")
 
 	sect.disciple_count = 1
@@ -1155,7 +1155,7 @@ func _test_combat_library() -> void:
 	var gm: Node = root.get_node("GameManager")
 	_new_quiet_game(gm, "young_disciple")
 	var ids: Array = CombatLibrary.get_ids()
-	_check(ids.size() >= 12, "데이터 전투 %d개 로드" % ids.size())
+	_check(ids.size() >= 12, "데이터 전투 %d개 읽음" % ids.size())
 	_check(CombatManager.has_combat("arc_revenge_duel") and CombatManager.has_combat("night_bandits"), "코드 전투와 데이터 전투 모두 찾음")
 	for combat_id in ids:
 		var setup: CombatSetup = CombatManager.create_by_id(combat_id, gm.player_character, gm.player_sect)
@@ -1170,7 +1170,7 @@ func _test_combat_library() -> void:
 	_check(siege.enemies[0].id != siege.enemies[1].id, "같은 졸개 템플릿은 서로 다른 id")
 	var traitor: CombatSetup = CombatManager.create_by_id("arc_succession_coup_traitor", gm.player_character)
 	var master_full: CharacterData = NpcRoster.create_character("npc_master")
-	_check(traitor.enemies[0].strength == master_full.strength - 5 and traitor.enemies[0].display_name == "병든 청운검선", "데이터 전투: 능력치 보정과 이름")
+	_check(traitor.enemies[0].strength == master_full.strength - 5 and traitor.enemies[0].display_name == "병든 청운검선", "데이터 전투: 자질 보정과 이름")
 
 	# 패배 플래그
 	var duel: CombatSetup = CombatManager.create_by_id("arc_revenge_duel", gm.player_character)
@@ -1183,7 +1183,7 @@ func _test_combat_library() -> void:
 		"enemies": [{"npc": "no_such_npc", "position": [20, 3], "stats": {"luck": 1}}],
 		"terrain": {"LAVA": []}, "rewards": {"fame": 1},
 	})
-	for keyword in ["명부에 없는 인물", "전장 밖", "능력치", "지형", "보상"]:
+	for keyword in ["명부에 없는 인물", "전장 밖", "자질", "지형", "보상"]:
 		_check(Array(errors).any(func(e: String) -> bool: return e.contains(keyword)), "전투 검증 오류 검출: %s" % keyword)
 	_check(not CombatLibrary.validate_combat_dict({"id": "x", "title": "x", "enemies": []}).is_empty(), "적 없는 전투 거부")
 	_check(not CombatLibrary.validate_combat_dict({"id": "sparring", "title": "x", "enemies": [{"npc": "npc_bandit", "position": [1, 1]}]}).is_empty(), "코드 전투 id와 겹치면 거부")
@@ -1199,20 +1199,20 @@ func _test_transmission_and_secret() -> void:
 	_check(ids.has("preset_soul_chase_sword") and ids.has("mod_thunder_palm"), "비급 목록: 프리셋과 모드 무공")
 	_check(not MartialArtLibrary.is_mod(all_arts[0]) and MartialArtLibrary.is_mod(all_arts[-1]), "비급 목록: 프리셋이 먼저")
 
-	# 전수: 레벨 요구·연구점·한 무공
+	# 전수: 경지 요구·깨달음·한 무공
 	_new_quiet_game(gm, "leader")
 	var sect: SectData = gm.player_sect
 	var art: MartialArtData = MartialArtLibrary.create_art("preset_soul_chase_sword")
 	gm.player_character.learn_martial_art(art)
 	var disciple: DiscipleData = sect.disciples[0]
 	sect.research_points = 0
-	_check(DiscipleRoster.get_transmit_level(art) == 2, "전수 레벨 요구: 복잡도 3 → Lv.2")
-	_check(not DiscipleRoster.transmit(sect, disciple.id, art)["success"], "레벨이 모자라면 전수 불가")
+	_check(DiscipleRoster.get_transmit_level(art) == 2, "전수 경지 요구: 복잡도 3 → 경지 2")
+	_check(not DiscipleRoster.transmit(sect, disciple.id, art)["success"], "경지가 모자라면 전수 불가")
 	disciple.gain_experience(_Balance.DISCIPLE_EXP_PER_LEVEL)
-	_check(not DiscipleRoster.transmit(sect, disciple.id, art)["success"], "연구점이 모자라면 전수 불가")
+	_check(not DiscipleRoster.transmit(sect, disciple.id, art)["success"], "깨달음이 모자라면 전수 불가")
 	sect.research_points = 200
 	var cost: int = DiscipleRoster.get_transmit_cost(sect, art)
-	_check(DiscipleRoster.transmit(sect, disciple.id, art)["success"] and sect.research_points == 200 - cost, "전수: 연구점 소모")
+	_check(DiscipleRoster.transmit(sect, disciple.id, art)["success"] and sect.research_points == 200 - cost, "전수: 깨달음 소모")
 	_check(disciple.martial_art.id == art.id and disciple.martial_art != art, "제자는 무공 복제본을 익힘")
 	_check(not DiscipleRoster.transmit(sect, disciple.id, art)["success"], "같은 무공 재전수 거부")
 	DiscipleRoster.toggle_deploy(sect, disciple.id)
@@ -1252,15 +1252,15 @@ func _test_transmission_and_secret() -> void:
 	_check(gm.observed_arts.has("mod_thunder_palm") and gm.observed_arts["mod_thunder_palm"]["element"] == MartialArtData.FiveElement.FIRE, "전투에서 본 상대 무공 기록 (혈영의 뇌전장)")
 	sect.research_points = 0
 	var observed: Dictionary = gm.observed_arts["mod_thunder_palm"]
-	_check(not MartialArtManager.analyze(observed, sect, gm.analyzed_elements)["success"], "연구점이 모자라면 분석 불가")
+	_check(not MartialArtManager.analyze(observed, sect, gm.analyzed_elements)["success"], "깨달음이 모자라면 분석 불가")
 	sect.research_points = 100
 	_check(MartialArtManager.analyze(observed, sect, gm.analyzed_elements)["success"] and gm.analyzed_elements.has(MartialArtData.FiveElement.FIRE), "상대 무공 분석: 화 속성")
 	_check(not MartialArtManager.analyze(observed, sect, gm.analyzed_elements)["success"], "같은 속성 재분석 거부")
 	_check(MartialArtManager.get_counter_element(MartialArtData.FiveElement.FIRE) == MartialArtData.FiveElement.WATER, "화를 이기는 속성은 수")
-	_check(MartialArtManager.get_counter_bonus(MartialArtData.FiveElement.WATER, gm.analyzed_elements) == _Balance.COUNTER_SUCCESS_BONUS, "상극(수) 무공 창조 성공률 보너스")
-	_check(MartialArtManager.get_counter_bonus(MartialArtData.FiveElement.WOOD, gm.analyzed_elements) == 0, "상극이 아니면 보너스 없음")
+	_check(MartialArtManager.get_counter_bonus(MartialArtData.FiveElement.WATER, gm.analyzed_elements) == _Balance.COUNTER_SUCCESS_BONUS, "상극(수) 무공 창안 성공률 가산")
+	_check(MartialArtManager.get_counter_bonus(MartialArtData.FiveElement.WOOD, gm.analyzed_elements) == 0, "상극이 아니면 가산 없음")
 	_check(not MartialArtManager.analyze({"name": "무속성", "element": 0}, sect, gm.analyzed_elements)["success"], "속성 없는 무공은 분석 불가")
-	# 성공률 보너스가 실제 창조에 쓰인다: 성공률 10%짜리 복잡한 무공을 보너스로 25%로
+	# 성공률 가산이 실제 창안에 쓰인다: 성공률 10%짜리 복잡한 무공을 가산으로 25%로
 	sect.research_points = 10000
 	gm.player_character.wisdom = 0
 	sect.library_level = 0
@@ -1276,9 +1276,9 @@ func _test_transmission_and_secret() -> void:
 		blueprint["name"] = "역류수장%d" % i
 		if MartialArtManager.create_from_blueprint(blueprint, sect, gm.player_character, use)["success"]:
 			successes[i % 2] += 1
-	_check(successes[1] > successes[0] + 20, "분석 보너스로 창조 성공이 늘어남 (%d → %d / 300)" % [successes[0], successes[1]])
+	_check(successes[1] > successes[0] + 20, "분석 가산으로 창안 성공이 늘어남 (%d → %d / 300)" % [successes[0], successes[1]])
 
-	# 세이브 왕복
+	# 저장본 왕복
 	_new_quiet_game(gm, "leader")
 	sect = gm.player_sect
 	art = MartialArtLibrary.create_art("preset_soul_chase_sword")
@@ -1313,7 +1313,7 @@ func _test_martial_art_screen_actions() -> void:
 	await process_frame
 	await process_frame
 	var screen: Node = current_scene
-	_check(screen.preset_list.item_count == 2 and screen.preset_list.get_item_text(0).contains("청운검법") and screen.preset_list.get_item_text(0).contains("서고"), "무공 연구소: 비급 목록은 소속 문파 서고의 비급")
+	_check(screen.preset_list.item_count == 2 and screen.preset_list.get_item_text(0).contains("청운검법") and screen.preset_list.get_item_text(0).contains("서고"), "장경각: 비급 목록은 소속 문파 서고의 비급")
 	_check(screen.known_arts_label.text.contains("[유혼쾌영검]") and screen.known_arts_label.text.contains("피해") and screen.known_arts_label.text.contains("초식"), "보유 무공 목록: 늘 보이고 전투 수치까지")
 	screen._on_enhance_pressed()
 	_check(screen.choice_popup.visible and screen.choice_popup.get_option_count() == 1, "강화: 습득 무공 고르기")
@@ -1327,14 +1327,14 @@ func _test_martial_art_screen_actions() -> void:
 	_check(gm.analyzed_elements.has(2) and screen.secret_label.text.contains("화"), "화면에서 상대 무공 분석")
 	screen.element_option.select(screen.element_option.get_item_index(MartialArtData.FiveElement.WATER))
 	screen.element_option.item_selected.emit(screen.element_option.selected)
-	_check(screen.success_rate_label.text.contains("상극"), "상극 속성을 고르면 성공률 미리보기에 보너스 표시")
+	_check(screen.success_rate_label.text.contains("상극"), "상극 속성을 고르면 성공률 미리보기에 가산 표시")
 
 	# 고르던 설정은 화면을 나갔다 와도 이어지고, 이름을 붙여 저장·불러오기·지우기
 	screen.name_input.text = "수류검"
 	screen.name_input.text_changed.emit("수류검")
 	screen.effect1_option.select(screen.effect1_option.get_item_index(MartialArtData.SpecialEffect.SPEED))
 	screen.effect1_option.item_selected.emit(screen.effect1_option.selected)
-	_check(gm.art_draft["element"] == MartialArtData.FiveElement.WATER and gm.art_draft["name"] == "수류검", "무공 창조: 고르던 설정 기억")
+	_check(gm.art_draft["element"] == MartialArtData.FiveElement.WATER and gm.art_draft["name"] == "수류검", "무공 창안: 고르던 설정 기억")
 	_check(gm.art_draft["effects"] == [MartialArtData.SpecialEffect.SPEED], "특수 효과 \"없음\"은 효과로 치지 않음")
 	screen._on_save_blueprint_pressed()
 	_check(gm.art_blueprints.size() == 1 and gm.art_blueprints[0]["title"] == "수류검", "설정 저장 (이름으로)")
@@ -1355,7 +1355,7 @@ func _test_martial_art_screen_actions() -> void:
 	gm.art_blueprints.clear()
 	gm.art_draft = {}
 	gm.load_game(3)
-	_check(gm.art_blueprints.size() == 1 and gm.art_draft["element"] == MartialArtData.FiveElement.WATER and gm.art_blueprints[0]["effects"] == [MartialArtData.SpecialEffect.SPEED], "무공 창조 설정 저장·불러오기")
+	_check(gm.art_blueprints.size() == 1 and gm.art_draft["element"] == MartialArtData.FiveElement.WATER and gm.art_blueprints[0]["effects"] == [MartialArtData.SpecialEffect.SPEED], "무공 창안 설정 저장·불러오기")
 	SaveManager.delete_save(3)
 	screen._on_delete_blueprint_pressed()
 	screen.choice_popup._on_option_pressed("0")
@@ -1371,22 +1371,22 @@ func _test_martial_art_screen_actions() -> void:
 	var target: DiscipleData = gm.player_sect.disciples[0]
 	hub._on_disciple_pressed()
 	await process_frame
-	# 경지가 모자라면 고를 수 없게 까닭을 보이고, 실패 결과는 팝업 안에 바로 보인다
+	# 경지가 모자라면 고를 수 없게 까닭을 보이고, 실패 결과는 창 안에 바로 보인다
 	var need: int = DiscipleRoster.get_transmit_level(gm.player_character.martial_arts[0])
 	if target.level < need:
 		hub.disciple_popup._on_transmit_pressed(target.id)
-		_check(hub.disciple_popup.art_choice.visible and hub.disciple_popup.art_choice.get_option_count() == 1, "전수: 무공 고르기 팝업 (모자라도 까닭과 함께 보임)")
+		_check(hub.disciple_popup.art_choice.visible and hub.disciple_popup.art_choice.get_option_count() == 1, "전수: 무공 고르기 창 (모자라도 까닭과 함께 보임)")
 		hub.disciple_popup.art_choice.visible = false
 	hub.disciple_popup._apply(DiscipleRoster.transmit(gm.player_sect, target.id, null))
 	var notice: Label = hub.disciple_popup.notice_label
-	_check(notice.visible and notice.text.begins_with("할 수 없습니다") and notice.get_theme_color("font_color") == _UiTheme.COLORS["accent_red"], "전수 실패: 팝업 안에 붉은 알림")
+	_check(notice.visible and notice.text.begins_with("할 수 없습니다") and notice.get_theme_color("font_color") == _UiTheme.COLORS["accent_red"], "전수 실패: 창 안에 붉은 알림")
 	target.gain_experience(_Balance.DISCIPLE_EXP_PER_LEVEL * maxi(1, need))
 	hub.disciple_popup._on_transmit_pressed(target.id)
-	_check(hub.disciple_popup.art_choice.visible and hub.disciple_popup.art_choice.get_option_count() == 1, "전수: 무공 고르기 팝업")
+	_check(hub.disciple_popup.art_choice.visible and hub.disciple_popup.art_choice.get_option_count() == 1, "전수: 무공 고르기 창")
 	hub.disciple_popup.art_choice._on_option_pressed("preset_soul_chase_sword")
 	_check(target.martial_art != null and hub.log_label.text.contains("전수"), "제자 명단에서 무공 전수")
-	_check(hub.disciple_popup.notice_label.text.contains("전수했습니다"), "전수 성공도 팝업 안에 알림")
-	# 일괄 수련: 방식 고르기 팝업에 방식마다 인원·금화가 보이고, 고르면 수련한다
+	_check(hub.disciple_popup.notice_label.text.contains("전수했습니다"), "전수 성공도 창 안에 알림")
+	# 일괄 수련: 방식 고르기 창에 방식마다 인원·은자가 보이고, 고르면 수련한다
 	gm.player_sect.gold = 10000
 	hub.disciple_popup.refresh()
 	_check(not hub.disciple_popup.batch_button.disabled, "일괄 수련 버튼")

@@ -1,6 +1,6 @@
 extends Control
 
-## 제자 명단 팝업: 제자마다 능력치·배치·출전을 보여 주고, 배치·출전 지정·개별 수련을 한다.
+## 제자 명단 창: 제자마다 자질·배치·출전을 보여 주고, 배치·출전 지정·개별 수련을 한다.
 ## 화면 구성은 코드로 만든다. 버튼은 모두 48px 이상이고, 목록은 끌어서 스크롤한다.
 
 const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
@@ -14,11 +14,11 @@ var _summary: Label
 ## 방금 한 일(배치·출전·수련·전수)의 결과
 var notice_label: Label
 var _rows: VBoxContainer
-## 전수할 무공을 고르는 팝업
+## 전수할 무공을 고르는 창
 var art_choice: Control
 ## 전수받을 제자 id
 var _transmit_target: String = ""
-## 일괄 수련 버튼과 방식을 고르는 팝업
+## 일괄 수련 버튼과 방식을 고르는 창
 var batch_button: Button
 var batch_choice: Control
 
@@ -101,7 +101,7 @@ func refresh() -> void:
 			DiscipleRoster.get_assigned(sect, facility).size(),
 			DiscipleRoster.get_slots(sect, facility),
 		])
-	_summary.text = "제자 %d명 · 배치 %s · 출전 지정 %d/%d\n%s\n개별 수련: 금화 %d로 경험치 +%d (제자마다 계절에 한 번)" % [
+	_summary.text = "제자 %d명 · 배치 %s · 출전 지정 %d/%d\n%s\n개별 수련: 은자 %d로 수련 +%d (제자마다 계절에 한 번)" % [
 		sect.disciples.size(), ", ".join(slot_texts),
 		DiscipleRoster.get_deployed_count(sect), _Balance.DEFENSE_ALLY_COUNT,
 		" / ".join(DiscipleRoster.ASSIGNMENTS.values().map(func(a: Dictionary) -> String: return "%s: %s" % [a["name"], a["effect"]])),
@@ -128,7 +128,7 @@ func _make_row(disciple: DiscipleData, turn: int) -> Container:
 	var buttons: Container = parts[1]
 	var label := Label.new()
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	label.text = "%s  Lv.%d (%d/%d) · %s\n무력 %d · 신법 %d · 지혜 %d · 참전 %d회" % [
+	label.text = "%s  경지 %d (%d/%d) · %s\n무력 %d · 신법 %d · 지혜 %d · 참전 %d회" % [
 		disciple.display_name, disciple.level, disciple.experience, disciple.get_next_level_experience(),
 		"[%s]" % disciple.martial_art.display_name if disciple.martial_art else "무공 없음",
 		disciple.strength, disciple.agility, disciple.wisdom, disciple.battles,
@@ -154,7 +154,7 @@ func _make_row(disciple: DiscipleData, turn: int) -> Container:
 
 	var train_button := Button.new()
 	train_button.custom_minimum_size = Vector2(130, 48)
-	train_button.text = "수련 (금화 %d)" % _Balance.DISCIPLE_TRAIN_GOLD
+	train_button.text = "수련 (은자 %d)" % _Balance.DISCIPLE_TRAIN_GOLD
 	train_button.disabled = (
 		disciple.last_train_turn == turn
 		or disciple.level >= _Balance.DISCIPLE_MAX_LEVEL
@@ -204,15 +204,15 @@ func _on_transmit_pressed(disciple_id: String) -> void:
 		if disciple.martial_art and disciple.martial_art.id == art.id:
 			blocked = "이미 익힘"
 		elif disciple.level < need:
-			blocked = "제자 Lv.%d 필요 (지금 Lv.%d)" % [need, disciple.level]
+			blocked = "제자 경지 %d 필요 (지금 경지 %d)" % [need, disciple.level]
 		elif sect.research_points < cost:
-			blocked = "연구점 부족 (%d / %d)" % [sect.research_points, cost]
+			blocked = "깨달음 부족 (%d / %d)" % [sect.research_points, cost]
 		if not blocked.is_empty():
 			tags.append(blocked)
 		options.append({
 			"id": art.id,
 			"title": "%s%s" % [art.display_name, " (%s)" % ", ".join(tags) if not tags.is_empty() else ""],
-			"description": "연구점 %d · %s" % [cost, art.get_stats_text()],
+			"description": "깨달음 %d · %s" % [cost, art.get_stats_text()],
 			"disabled": not blocked.is_empty(),
 		})
 	_transmit_target = disciple_id
@@ -230,7 +230,7 @@ func _on_art_chosen(art_id: String) -> void:
 	ActionPreview.confirm(self, "무공 전수", transmit, func() -> void: _apply(transmit.call(), "transmit", name, chosen.display_name))
 
 
-## 일괄 수련: 방식마다 이번에 수련할 제자 수·금화·경지 상승을 미리 보여 주고 고르게 한다
+## 일괄 수련: 방식마다 이번에 수련할 제자 수·은자·경지 상승을 미리 보여 주고 고르게 한다
 func _on_batch_pressed() -> void:
 	var sect: SectData = GameManager.player_sect
 	var turn: int = GameManager._get_turn_index()
@@ -240,16 +240,16 @@ func _on_batch_pressed() -> void:
 		var plan: Array[DiscipleData] = DiscipleRoster.plan_batch_train(sect, turn, mode)
 		var ups: int = plan.filter(func(d: DiscipleData) -> bool: return DiscipleRoster._levels_up(d)).size()
 		var reserve: int = DiscipleRoster.get_batch_reserve(sect, mode)
-		var line: String = "%d명 · 금화 %d" % [plan.size(), plan.size() * _Balance.DISCIPLE_TRAIN_GOLD]
+		var line: String = "%d명 · 은자 %d" % [plan.size(), plan.size() * _Balance.DISCIPLE_TRAIN_GOLD]
 		if ups > 0:
 			line += " · 경지 상승 %d명" % ups
 		if reserve > 0:
-			line += " · 금화 %d 남김" % reserve
+			line += " · 은자 %d 남김" % reserve
 		options.append({
 			"id": mode, "title": "%s — %s" % [info["title"], line if not plan.is_empty() else "수련할 제자 없음"],
 			"description": info["desc"], "disabled": plan.is_empty(),
 		})
-	batch_choice.open("일괄 수련", "수련할 방식을 고르세요. 제자마다 계절에 한 번, 한 명에 금화 %d로 경험치 +%d입니다. (지금 금화 %d)" % [
+	batch_choice.open("일괄 수련", "수련할 방식을 고르세요. 제자마다 계절에 한 번, 한 명에 은자 %d로 수련 +%d입니다. (지금 은자 %d)" % [
 		_Balance.DISCIPLE_TRAIN_GOLD, _Balance.DISCIPLE_TRAIN_EXP, sect.gold], options)
 
 

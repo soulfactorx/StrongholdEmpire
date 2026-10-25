@@ -3,12 +3,12 @@ extends RefCounted
 
 const _Balance = preload("res://scripts/Systems/game_balance.gd")
 
-## 엔딩은 data/endings/*.json (시나리오 전용은 data/scenarios/<id>/endings/)에 데이터로 정의한다.
+## 결말은 data/endings/*.json (시나리오 전용은 data/scenarios/<id>/endings/)에 데이터로 정의한다.
 ##
 ## 필드: id, title, description
-##   priority  자동 판정 순서. 높은 것부터 확인한다 (auto 엔딩은 필수, 서로 달라야 함)
+##   priority  자동 판정 순서. 높은 것부터 확인한다 (auto 결말은 필수, 서로 달라야 함)
 ##   auto      true(기본)면 계절마다 conditions로 자동 판정. false면 기연의 end_game으로만 도달
-##   final     true면 이 엔딩으로 주인공의 생이 끝난다. 전승할 수 있으면 곧바로 후계자를 정하고,
+##   final     true면 이 결말로 주인공의 생이 끝난다. 전승할 수 있으면 곧바로 후계자를 정하고,
 ##             없으면 이야기가 끝난다 (story_end)
 ##   tone      victory / tragedy / neutral — 화면 표시용
 ##   conditions 기연과 같은 조건 문법 (docs/기연_데이터_형식.md)
@@ -40,13 +40,13 @@ const GAME_OVERS: Dictionary = {
 		"description": "정해진 시대가 저물었습니다. 강호는 당신이 남긴 자취를 기억할 것입니다.",
 		"prefix": "시대 종결",
 	},
-	## 생을 마치는 엔딩(final)에 도달했는데 전승할 수 없을 때
+	## 생을 마치는 결말(final)에 도달했는데 전승할 수 없을 때
 	"story_end": {
 		"title": "이야기의 끝",
 		"description": "주인공의 생이 다했고, 그 뒤를 이을 사람은 없습니다.",
 		"prefix": "결말",
 	},
-	## 승리 엔딩으로 시나리오를 마쳤을 때 (end_on_victory)
+	## 승리 결말로 시나리오를 마쳤을 때 (end_on_victory)
 	"scenario_complete": {
 		"title": "시나리오 완수",
 		"description": "이 시대에 주어진 사명을 이루었습니다.",
@@ -59,7 +59,7 @@ static func has_ending(ending_id: String) -> bool:
 	return _endings.has(ending_id)
 
 
-## 로드된 엔딩 목록 (자동 판정 엔딩은 우선순위 높은 순)
+## 로드된 결말 목록 (자동 판정 결말은 우선순위 높은 순)
 static func get_all_endings() -> Array[Dictionary]:
 	_ensure_loaded()
 	var result: Array[Dictionary] = []
@@ -85,9 +85,9 @@ static func validate_ending_dict(data: Dictionary) -> PackedStringArray:
 		errors.append("auto는 true/false여야 함")
 	elif auto:
 		if not (data.get("priority") is float or data.get("priority") is int):
-			errors.append("자동 판정 엔딩에는 priority(숫자)가 필요함")
+			errors.append("자동 판정 결말에는 priority(숫자)가 필요함")
 		if data.get("conditions", []).is_empty():
-			errors.append("자동 판정 엔딩에는 조건이 하나 이상 필요함")
+			errors.append("자동 판정 결말에는 조건이 하나 이상 필요함")
 	if data.has("final") and not data["final"] is bool:
 		errors.append("final은 true/false여야 함")
 	if data.has("tone") and not data["tone"] in TONES:
@@ -98,8 +98,8 @@ static func validate_ending_dict(data: Dictionary) -> PackedStringArray:
 	return errors
 
 
-## 엔딩 폴더를 다시 읽는다. extra_dirs(시나리오 전용 엔딩)가 있으면 이어서 읽는다.
-## 잘못된 파일, 중복 id, 다른 자동 엔딩과 겹치는 priority는 경고 후 건너뛴다.
+## 결말 폴더를 다시 읽는다. extra_dirs(시나리오 전용 결말)가 있으면 이어서 읽는다.
+## 잘못된 파일, 중복 id, 다른 자동 결말과 겹치는 priority는 경고 후 건너뛴다.
 static func reload_data(dir_path: String = ENDING_DIR, extra_dirs: Array = []) -> void:
 	_endings.clear()
 	_loaded = true
@@ -116,7 +116,7 @@ static func reload_data(dir_path: String = ENDING_DIR, extra_dirs: Array = []) -
 		if auto and errors.is_empty() and priorities.has(int(data["priority"])):
 			errors.append("priority %d가 %s와 겹침" % [int(data["priority"]), priorities[int(data["priority"])]])
 		if not errors.is_empty():
-			push_warning("엔딩 정의 오류 (%s): %s" % [data["_path"], "; ".join(errors)])
+			push_warning("결말 정의 오류 (%s): %s" % [data["_path"], "; ".join(errors)])
 			continue
 		if auto:
 			priorities[int(data["priority"])] = data["id"]
@@ -143,14 +143,14 @@ static func evaluate(
 			subjugated += 1
 	var parts: Array = [
 		["문파 명성", sect.reputation],
-		["주인공 경지 (Lv.%d)" % character.level, character.level * _Balance.SCORE_PER_LEVEL],
-		["창조·습득 무공 %d개" % character.martial_arts.size(), character.martial_arts.size() * _Balance.SCORE_PER_ART],
+		["주인공 경지 (%d)" % character.level, character.level * _Balance.SCORE_PER_LEVEL],
+		["창안·습득 무공 %d개" % character.martial_arts.size(), character.martial_arts.size() * _Balance.SCORE_PER_ART],
 		["굴복시킨 세력 %d곳" % subjugated, subjugated * _Balance.SCORE_PER_SUBJUGATION],
 		["제자 %d명" % sect.disciple_count, sect.disciple_count * _Balance.SCORE_PER_DISCIPLE],
 		["%d세대에 걸친 이야기" % generation, (generation - 1) * _Balance.SCORE_PER_GENERATION],
 	]
 	if not ending_id.is_empty():
-		parts.append(["엔딩 「%s」" % get_ending(ending_id)["title"], _Balance.SCORE_ENDING])
+		parts.append(["결말 「%s」" % get_ending(ending_id)["title"], _Balance.SCORE_ENDING])
 	if victory:
 		parts.append(["시나리오 승리", _Balance.SCORE_VICTORY])
 
@@ -188,7 +188,7 @@ static func get_game_over(game_over_id: String) -> Dictionary:
 	return info
 
 
-## 자동 판정 엔딩 중 조건을 만족하는 가장 높은 우선순위 엔딩 id (없으면 "")
+## 자동 판정 결말 중 조건을 만족하는 가장 높은 우선순위 결말 id (없으면 "")
 static func check_endings(
 	character: CharacterData,
 	sect: SectData,
@@ -199,7 +199,7 @@ static func check_endings(
 	for ending in get_all_endings():
 		if not ending.get("auto", true):
 			continue
-		# 엔딩의 문파 조건은 개인 재산이 아니라 문파 자체를 본다 (금권 강호 = 문파 금고)
+		# 결말의 문파 조건은 개인 재산이 아니라 문파 자체를 본다 (금권 강호 = 문파 금고)
 		var wallet: SectData = EventManager.wallet
 		EventManager.wallet = null
 		var met: bool = EventManager.conditions_met(ending["conditions"], character, sect, relationships, season, story_flags)

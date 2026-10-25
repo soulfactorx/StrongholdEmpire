@@ -80,7 +80,7 @@ layout_mode = 2
 [node name="LogLabel" type="Label" parent="Margin/VBox/LogPanel"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "문주·중간관리자는 [외교]로 세력과 교섭할 수 있습니다."
+text = "문주·총관은 [외교]로 세력과 교섭할 수 있습니다."
 autowrap_mode = 3
 
 [node name="BackButton" type="Button" parent="Margin/VBox"]

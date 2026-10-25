@@ -520,7 +520,7 @@ func _fill_squad() -> void:
 			row.add_child(order)
 
 
-## 초상화: 주인공은 주인공 초상화, 인물은 그 인물, 그림이 없는 제자 등은 역할 초상화
+## 초상화: 주인공은 주인공 초상화, 인물은 그 인물, 그림이 없는 제자 등은 신분 초상화
 func _portrait_of(unit: CombatUnit) -> Texture2D:
 	if unit.is_player:
 		return ArtAssets.player_portrait(unit.character)

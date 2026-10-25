@@ -18,7 +18,7 @@ const STRATEGIES: Dictionary = {
 	},
 	"economy": {
 		"title": "내실 부강",
-		"description": "제자를 기르고 무술장을 넓히며 금고를 채웁니다. 좀처럼 먼저 싸우지 않습니다.",
+		"description": "제자를 기르고 연무장을 넓히며 금고를 채웁니다. 좀처럼 먼저 싸우지 않습니다.",
 		"multipliers": [2.0, 0.4, 0.3, 1.0, 0.8, 2.5],
 	},
 	"diplomacy": {

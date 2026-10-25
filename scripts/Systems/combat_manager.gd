@@ -174,7 +174,7 @@ static func create_bandit_hunt(player: CharacterData, gold_reward: int = _Balanc
 	return setup
 
 
-## 암살자의 표적 의뢰: 호위 둘을 거느린 표적. 플레이어는 수풀 속에서 잠입을 시작한다.
+## 자객의 표적 의뢰: 호위 둘을 거느린 표적. 플레이어는 수풀 속에서 잠입을 시작한다.
 static func create_assassination(player: CharacterData) -> CombatSetup:
 	var setup := CombatSetup.new()
 	setup.id = "assassination"
@@ -214,7 +214,7 @@ static func create_assassination(player: CharacterData) -> CombatSetup:
 	return setup
 
 
-## 현상금이 높은 암살자를 쫓는 추격대.
+## 현상금이 높은 자객을 쫓는 추격대.
 static func create_bounty_hunters(player: CharacterData) -> CombatSetup:
 	var setup := CombatSetup.new()
 	setup.id = "bounty_hunters"
@@ -261,7 +261,7 @@ static func apply_outcome(
 	fallen_ids: Array = [],
 	wallet: SectData = null
 ) -> Dictionary:
-	# 금화를 받고 잃는 곳: 문파 방어전은 문파 금고, 그 밖의 싸움은 내 재산(개인 재산을 쓰는 역할이면 주머니)
+	# 은자를 받고 잃는 곳: 문파 방어전은 문파 금고, 그 밖의 싸움은 내 재산(개인 재산을 쓰는 신분이면 주머니)
 	var purse_sect: SectData = sect if wallet == null or setup.allies_are_disciples else wallet
 	var parts: PackedStringArray = []
 	var lost: int = 0
@@ -286,10 +286,10 @@ static func apply_outcome(
 		var exp_gain: int = r.get("experience", 0)
 		if exp_gain > 0:
 			character.gain_experience(exp_gain)
-			parts.append("경험치 +%d" % exp_gain)
+			parts.append("수련 +%d" % exp_gain)
 		if r.get("gold", 0) > 0:
 			purse_sect.gold += r["gold"]
-			parts.append("금화 +%d" % r["gold"])
+			parts.append("은자 +%d" % r["gold"])
 		if r.get("reputation", 0) > 0:
 			sect.reputation += r["reputation"]
 			parts.append("명성 +%d" % r["reputation"])
@@ -315,7 +315,7 @@ static func apply_outcome(
 	var gold_loss: int = mini(purse_sect.gold, int(p.get("gold", 0) * scale))
 	if gold_loss > 0:
 		purse_sect.gold -= gold_loss
-		parts.append("금화 -%d" % gold_loss)
+		parts.append("은자 -%d" % gold_loss)
 	var rep_loss: int = mini(sect.reputation, int(p.get("reputation", 0) * scale))
 	if rep_loss > 0:
 		sect.reputation -= rep_loss
@@ -365,7 +365,7 @@ static func _central_wall() -> Array[Vector2i]:
 	]
 
 
-## 문파 제자를 아군으로 붙인다. 무술장이 좋을수록 강하다.
+## 문파 제자를 아군으로 붙인다. 연무장이 좋을수록 강하다.
 static func add_disciple_allies(
 	setup: CombatSetup,
 	sect: SectData,
@@ -538,7 +538,7 @@ static func find_free_tile(setup: CombatSetup, near: Vector2i) -> Vector2i:
 	return Vector2i(-1, -1)
 
 
-## 남궁휘는 플레이어 레벨에 맞춰 함께 성장하는 라이벌이다. (명부의 scaling)
+## 남궁휘는 플레이어 경지에 맞춰 함께 성장하는 라이벌이다. (명부의 scaling)
 static func _create_rival(player: CharacterData) -> CharacterData:
 	return NpcRoster.create_character(RIVAL_ID, player)
 

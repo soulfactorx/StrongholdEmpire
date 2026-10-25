@@ -81,12 +81,12 @@ static func portrait(npc_id: String) -> Texture2D:
 	return texture(str(npc.get("portrait", "portraits/%s.jpg" % npc_id)))
 
 
-## 주인공 역할 초상화 (portraits/role_<역할>.jpg)
+## 주인공 신분 초상화 (portraits/role_<신분>.jpg)
 static func role_portrait(role: CharacterData.Role) -> Texture2D:
 	return texture("portraits/role_%s.jpg" % CharacterData.Role.keys()[role].to_lower())
 
 
-## 주인공 초상화: 등장인물로 플레이하면 그 인물(portrait_id)의 초상화, 아니면 역할 초상화
+## 주인공 초상화: 등장인물로 플레이하면 그 인물(portrait_id)의 초상화, 아니면 신분 초상화
 static func player_portrait(character: CharacterData) -> Texture2D:
 	if not character.portrait_id.is_empty() and NpcRoster.has_npc(character.portrait_id):
 		var found: Texture2D = portrait(character.portrait_id)

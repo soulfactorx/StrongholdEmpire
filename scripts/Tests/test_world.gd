@@ -16,19 +16,19 @@ func _test_npc_roster() -> void:
 			bad_sect_refs.append(npc["id"])
 	_check(bad_sect_refs.is_empty(), "모든 NPC의 소속 문파가 존재 %s" % bad_sect_refs)
 
-	# 라이벌은 플레이어 레벨에 맞춰 성장한다 (기존 하드코딩 값과 동일)
+	# 라이벌은 플레이어 경지에 맞춰 성장한다 (기존 하드코딩 값과 동일)
 	var player := CharacterData.new()
 	var rival: CharacterData = NpcRoster.create_character("npc_rival", player)
-	_check(rival.level == 2 and rival.strength == 14 and rival.internal_energy_max == 100, "라이벌 기본 능력치")
+	_check(rival.level == 2 and rival.strength == 14 and rival.internal_energy_max == 100, "라이벌 기본 자질")
 	player.level = 5
 	rival = NpcRoster.create_character("npc_rival", player)
 	_check(
 		rival.level == 5 and rival.strength == 17 and rival.agility == 16
 		and rival.internal_energy_max == 130 and rival.internal_energy_current == 130,
-		"라이벌 레벨 5 성장"
+		"라이벌 경지 5 성장"
 	)
 	var bandit: CharacterData = NpcRoster.create_character("npc_bandit", player)
-	_check(bandit.level == 4 and bandit.strength == 11 and bandit.wisdom == 5, "도적은 플레이어보다 1레벨 낮게")
+	_check(bandit.level == 4 and bandit.strength == 11 and bandit.wisdom == 5, "도적은 플레이어보다 1경지 낮게")
 	var master: CharacterData = NpcRoster.create_character("npc_master")
 	_check(master.display_name == "청운검선" and master.role == CharacterData.Role.LEADER, "스승 데이터 로드")
 
@@ -46,12 +46,12 @@ func _test_npc_roster() -> void:
 	var tang: Array[RelationshipData] = RelationshipManager.create_default_relationships("tang")
 	_check(RelationshipManager.get_bond_with(tang, "npc_tang_head").bond_type == RelationshipData.BondType.MASTER_DISCIPLE, "사천당가: 가주가 사부")
 
-	_check(not NpcRoster.validate_npc_dict({"id": "x", "display_name": "x", "sect_id": "s", "role": "KING"}).is_empty(), "잘못된 NPC 역할 검출")
+	_check(not NpcRoster.validate_npc_dict({"id": "x", "display_name": "x", "sect_id": "s", "role": "KING"}).is_empty(), "잘못된 NPC 신분 검출")
 	_check(
 		not NpcRoster.validate_npc_dict({
 			"id": "x", "display_name": "x", "sect_id": "s", "role": "LEADER", "stats": {"luck": 3},
 		}).is_empty(),
-		"잘못된 NPC 능력치 검출"
+		"잘못된 NPC 자질 검출"
 	)
 	_completed["_test_npc_roster"] = true
 
@@ -103,7 +103,7 @@ func _test_world_sect_events() -> void:
 	var gold_before: int = st["sect"].gold
 	var attitude_before: int = heukpung.attitude
 	EventManager.resolve_choice("heukpung_toll", 0, st["character"], st["sect"], st["relationships"], st["flags"])
-	_check(st["sect"].gold == gold_before - 50 and heukpung.attitude == attitude_before + 15, "통행세 납부: 금화 -50, 태도 +15")
+	_check(st["sect"].gold == gold_before - 50 and heukpung.attitude == attitude_before + 15, "통행세 납부: 은자 -50, 태도 +15")
 
 	heukpung.attitude = 95
 	EventManager.resolve_choice("heukpung_toll", 0, st["character"], st["sect"], st["relationships"], st["flags"])
@@ -136,7 +136,7 @@ func _test_world_state_and_war() -> void:
 	var result: Dictionary = gm.resolve_sect_war("heukpung", commands)
 	_check(result["victory"] and result["subjugated"] and heukpung.subjugated, "흑풍채 굴복")
 	_check(gm.story_flags.get("subjugated_heukpung", false), "굴복 스토리 플래그 설정")
-	_check(gm.player_sect.reputation > rep_before + _Balance.SUBJUGATE_REPUTATION_BONUS, "굴복 보너스 명성")
+	_check(gm.player_sect.reputation > rep_before + _Balance.SUBJUGATE_REPUTATION_BONUS, "굴복 가산 명성")
 	_check(gm.get_war_targets().size() == 2, "굴복한 세력은 공격 대상에서 제외")
 	_check(not gm.resolve_sect_war("namgung", commands)["success"], "문파전은 계절당 한 번")
 
@@ -168,7 +168,7 @@ func _test_world_state_and_war() -> void:
 	_check(gm.player_sect.id == "qingyun", "플레이어 문파 id 저장/복원")
 	state.erase("world_sects")
 	gm._apply_save_data(state)
-	_check(gm.world_sects.size() == 3 and not gm.get_world_sect("heukpung").subjugated, "구버전 세이브는 강호 세력 초기값 사용")
+	_check(gm.world_sects.size() == 3 and not gm.get_world_sect("heukpung").subjugated, "구버전 저장본은 강호 세력 초기값 사용")
 	_completed["_test_world_state_and_war"] = true
 
 
@@ -232,7 +232,7 @@ func _test_war_rules() -> void:
 	_check(SectWarManager.reveal_next(plan) == 0 and SectWarManager.reveal_next(plan) == 1, "정찰은 앞 라운드부터 공개")
 	_check(SectWarManager.get_scout_cost(plan, character) == _Balance.WAR_SCOUT_COST + 2 * _Balance.WAR_SCOUT_COST_STEP, "정찰할수록 비싸짐")
 	character.role = CharacterData.Role.SPY
-	_check(SectWarManager.get_scout_cost(plan, character) == (_Balance.WAR_SCOUT_COST + 2 * _Balance.WAR_SCOUT_COST_STEP) / 2, "스파이는 정찰 비용 절반")
+	_check(SectWarManager.get_scout_cost(plan, character) == (_Balance.WAR_SCOUT_COST + 2 * _Balance.WAR_SCOUT_COST_STEP) / 2, "간자는 정찰 비용 절반")
 	SectWarManager.reveal_next(plan)
 	_check(SectWarManager.reveal_next(plan) == -1, "모두 공개되면 더 정찰할 것 없음")
 
@@ -338,9 +338,9 @@ func _test_war_flow() -> void:
 	_check(gm.prepare_war("heukpung") == plan, "같은 계절·같은 상대면 계획 유지")
 	var gold_before: int = gm.player_sect.gold
 	var scout: Dictionary = gm.scout_war("heukpung")
-	_check(scout["success"] and gm.player_sect.gold == gold_before - _Balance.WAR_SCOUT_COST and plan["revealed"][0], "정찰: 금화 소모, 1라운드 공개")
+	_check(scout["success"] and gm.player_sect.gold == gold_before - _Balance.WAR_SCOUT_COST and plan["revealed"][0], "정찰: 은자 소모, 1라운드 공개")
 	gm.player_sect.gold = 0
-	_check(not gm.scout_war("heukpung")["success"], "금화가 없으면 정찰 불가")
+	_check(not gm.scout_war("heukpung")["success"], "은자가 없으면 정찰 불가")
 	gm.player_sect.gold = 500
 
 	var expected_first: int = plan["enemy_commands"][0]
@@ -412,7 +412,7 @@ func _test_war_flow() -> void:
 func _test_diplomacy() -> void:
 	var gm: Node = root.get_node("GameManager")
 
-	# 문주·중간관리자만 외교
+	# 문주·총관만 외교
 	_new_quiet_game(gm, "young_disciple")
 	_check(not gm.do_diplomacy("namgung", "envoy")["success"], "막내 제자는 외교 불가")
 
@@ -421,10 +421,10 @@ func _test_diplomacy() -> void:
 	var heukpung: SectData = gm.get_world_sect("heukpung")
 	namgung.attitude = 0
 
-	# 사절: 금화 소모, 태도 상승, 세력마다 계절에 한 번
+	# 사절: 은자 소모, 태도 상승, 세력마다 계절에 한 번
 	var gold: int = gm.player_sect.gold
 	_check(gm.do_diplomacy("namgung", "envoy")["success"] and namgung.attitude == _Balance.DIPLOMAT_ENVOY_ATTITUDE, "사절: 태도 +%d" % _Balance.DIPLOMAT_ENVOY_ATTITUDE)
-	_check(gm.player_sect.gold == gold - _Balance.DIPLOMAT_ENVOY_GOLD, "사절: 금화 소모")
+	_check(gm.player_sect.gold == gold - _Balance.DIPLOMAT_ENVOY_GOLD, "사절: 은자 소모")
 	_check(not gm.do_diplomacy("namgung", "envoy")["success"], "같은 세력과는 계절에 한 번")
 	_check(gm.do_diplomacy("heukpung", "envoy")["success"], "다른 세력과는 같은 계절에도 가능")
 
@@ -476,7 +476,7 @@ func _test_diplomacy() -> void:
 	var forecast: int = gm.estimate_next_season()["gold"]
 	gold = gm.player_sect.gold
 	gm.advance_turn()
-	_check(gm.player_sect.gold - gold == forecast and gm.last_turn_report.contains("공물"), "공물: 계절 금화 수입 (예상 수지 반영)")
+	_check(gm.player_sect.gold - gold == forecast and gm.last_turn_report.contains("공물"), "공물: 계절 은자 수입 (예상 수지 반영)")
 	_check(heukpung.attitude == -40 - _Balance.TRIBUTE_ATTITUDE_PER_SEASON, "공물을 바칠 때마다 원망이 쌓임")
 	heukpung.attitude = _Balance.TRIBUTE_REVOLT_ATTITUDE
 	gm.advance_turn()
@@ -526,7 +526,7 @@ func _test_diplomacy_screen() -> void:
 	var buttons: Array = screen.sect_list.get_children().filter(func(c: Node) -> bool: return c is Button)
 	_check(buttons.size() == gm.world_sects.size() and buttons.all(func(b: Button) -> bool: return b.custom_minimum_size.y >= 48), "강호 정세: 세력마다 외교 버튼(48px)")
 	screen._on_diplomacy_pressed("namgung")
-	_check(screen.choice_popup.visible and screen.choice_popup.get_option_count() >= 3, "외교 선택지 팝업")
+	_check(screen.choice_popup.visible and screen.choice_popup.get_option_count() >= 3, "외교 선택지 창")
 	screen.choice_popup._on_option_pressed("alliance")
 	await process_frame
 	_check(gm.get_world_sect("namgung").allied and screen.log_label.text.contains("동맹"), "화면에서 동맹 체결")
@@ -534,14 +534,14 @@ func _test_diplomacy_screen() -> void:
 	for label in screen.sect_list.find_children("*", "Label", true, false):
 		titles += label.text
 	_check(titles.contains("동맹"), "세력 목록에 동맹 표시")
-	# 외교를 할 수 없는 역할은 버튼 없이 까닭을 보인다 (눌러도 반응이 없는 것처럼 보이지 않게)
+	# 외교를 할 수 없는 신분은 버튼 없이 까닭을 보인다 (눌러도 반응이 없는 것처럼 보이지 않게)
 	_new_quiet_game(gm, "young_disciple")
 	SceneRouter.goto(tree, SceneRouter.WORLD)
 	await process_frame
 	await process_frame
 	screen = current_scene
 	buttons = screen.sect_list.get_children().filter(func(c: Node) -> bool: return c is Button)
-	_check(buttons.is_empty() and screen.log_label.text.contains("막내 제자"), "외교할 수 없는 역할: 버튼 대신 까닭")
+	_check(buttons.is_empty() and screen.log_label.text.contains("막내 제자"), "외교할 수 없는 신분: 버튼 대신 까닭")
 	gm.start_new_game("정리", "young_disciple")
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
 	await process_frame
@@ -641,7 +641,7 @@ func _test_sect_ai() -> void:
 	var invader: SectData = gm.get_world_sect("heukpung")
 	gm.pending_invasion = "heukpung"
 	var gold: int = gm.player_sect.gold
-	_check(gm.resolve_invasion("bribe")["success"] and gm.player_sect.gold == gold - _Balance.INVASION_BRIBE_GOLD and gm.pending_invasion == "", "침공: 금화로 물림")
+	_check(gm.resolve_invasion("bribe")["success"] and gm.player_sect.gold == gold - _Balance.INVASION_BRIBE_GOLD and gm.pending_invasion == "", "침공: 은자로 물림")
 	gm.pending_invasion = "heukpung"
 	var disciples: int = gm.player_sect.disciple_count
 	var rep: int = gm.player_sect.reputation
@@ -695,7 +695,7 @@ func _test_invasion_flow() -> void:
 	await process_frame
 	await process_frame
 	var hub: Node = current_scene
-	_check(hub.invasion_popup.visible and hub.invasion_popup.get_option_count() == 3, "경영 화면: 침공 대응 팝업")
+	_check(hub.invasion_popup.visible and hub.invasion_popup.get_option_count() == 3, "경영 화면: 침공 대응 창")
 	var heukpung: SectData = gm.get_world_sect("heukpung")
 	var before: int = heukpung.disciple_count
 	hub.invasion_popup._on_option_pressed("fight")
@@ -794,9 +794,9 @@ func _test_world_map_and_factions() -> void:
 	economy.gold = _Balance.AI_FORTIFY_GOLD
 	economy.training_ground_level = 1
 	var weights: Array[float] = SectAI.get_weights(economy, gm.world_sects, 10, 3, 1.0, gm.map_state)
-	_check(weights[SectAI.Action.FORTIFY] > weights[SectAI.Action.ATTACK], "내실 전략: 무술장 확장을 공격보다 자주")
+	_check(weights[SectAI.Action.FORTIFY] > weights[SectAI.Action.ATTACK], "내실 전략: 연무장 확장을 공격보다 자주")
 	economy.gold = 0
-	_check(SectAI.get_weights(economy, gm.world_sects, 10, 3, 1.0, gm.map_state)[SectAI.Action.FORTIFY] == 0.0, "금화가 모자라면 내실 없음")
+	_check(SectAI.get_weights(economy, gm.world_sects, 10, 3, 1.0, gm.map_state)[SectAI.Action.FORTIFY] == 0.0, "은자가 모자라면 내실 없음")
 
 	# 계절 진행: 세력 동향을 남기고, 저장·불러오기 뒤에도 지도·전략·동향이 남는다
 	SectAI.active = true

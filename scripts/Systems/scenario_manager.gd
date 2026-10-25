@@ -5,26 +5,26 @@ extends RefCounted
 ##
 ## scenario.json 필드
 ##   id, title, description, era_name(연호 표시, 예: "천하대란"), order(목록 순서)
-##   start_roles   선택 가능한 시작 역할 id 목록 (StartingRoles). 생략하면 전부
+##   start_roles   선택 가능한 시작 신분 id 목록 (StartingRoles). 생략하면 전부
 ##   player_sect   플레이어 문파 id. 생략하면 is_player_sect인 문파
 ##   sects         등장하는 강호 세력 id 목록. 생략하면 플레이어 문파를 뺀 전부
 ##   sect_overrides { 문파 id: { 수치 필드: 값 } } — 플레이어 문파도 가능
 ##   parameters    ScenarioRules 파라미터 덮어쓰기
-##   victory_endings 이 시나리오에서 승리로 치는 엔딩 id 목록 (공용 엔딩 또는 endings/ 폴더의 전용 엔딩)
-##   playables     고를 수 있는 등장인물 목록. 있으면 시작 역할 대신 인물을 골라 그 인물로 플레이한다 (PLAYABLE_KEYS)
+##   victory_endings 이 시나리오에서 승리로 치는 결말 id 목록 (공용 결말 또는 endings/ 폴더의 전용 결말)
+##   playables     고를 수 있는 등장인물 목록. 있으면 시작 신분 대신 인물을 골라 그 인물로 플레이한다 (PLAYABLE_KEYS)
 ##   common_events 공용 기연(data/events/) 가운데 읽을 하위 폴더 또는 파일 경로 앞부분 목록
 ##                 (예: ["bonds", "manuals"], ["bonds/bond_g_"]). 생략하면 전부
 ##   hidden_npcs   이 시나리오에 나오지 않는 공용 인물 id (다른 시대의 인물). 인연·기연 대상과 직책에서 빠진다
 ##   sect_overrides에는 수치 말고 sect_name(이름), leader_id(문주 인물 id)도 줄 수 있다
-##   progressive   true면 기능 단계 개방: 등장인물의 features만 열고 시작해 이야기·역할로 하나씩 연다 (FeatureGate)
-##   goals         (선택) 강호 일지의 첫 목표 { 시작 역할 id 또는 "default": 목표 }. 등장인물의 goal이 있으면 그쪽이 먼저
-##   common_endings false면 공용 엔딩(data/endings/)을 읽지 않고 이 시나리오의 엔딩만 쓴다 (기본 true)
+##   progressive   true면 기능 단계 개방: 등장인물의 features만 열고 시작해 이야기·신분으로 하나씩 연다 (FeatureGate)
+##   goals         (선택) 강호 일지의 첫 목표 { 시작 신분 id 또는 "default": 목표 }. 등장인물의 goal이 있으면 그쪽이 먼저
+##   common_endings false면 공용 결말(data/endings/)을 읽지 않고 이 시나리오의 결말만 쓴다 (기본 true)
 
 const SCENARIO_DIR := "res://data/scenarios/"
 const DEFAULT_ID := "cheonha"
 ## 등장인물(playables) 항목의 필드
-##   npc        인물 id (공용 또는 이 시나리오 npcs/의 인물). 능력치·무공·나이·도덕·초상화를 이 인물에게서 가져온다
-##   start_role 시작 역할 id (StartingRoles). 역할과 역할 화면이 이것으로 정해진다
+##   npc        인물 id (공용 또는 이 시나리오 npcs/의 인물). 자질·무공·나이·도덕·초상화를 이 인물에게서 가져온다
+##   start_role 시작 신분 id (StartingRoles). 신분과 신분 화면이 이것으로 정해진다
 ##   sect       소속 문파 id. "none"이면 무소속
 ##   summary    새 게임 화면에 보일 소개
 ##   level, morality, age  (선택) 인물 데이터 대신 쓸 값
@@ -40,7 +40,7 @@ const PLAYABLE_KEYS: PackedStringArray = [
 
 static var current_id: String = ""
 static var current: Dictionary = {}
-## 새 게임 "세부 설정"에서 바꾼 파라미터 (세이브에 함께 저장)
+## 새 게임 "세부 설정"에서 바꾼 파라미터 (저장본에 함께 저장)
 static var user_overrides: Dictionary = {}
 static var _scenarios: Dictionary = {}
 static var _loaded: bool = false
@@ -71,7 +71,7 @@ static func get_dir(scenario_id: String) -> String:
 	return SCENARIO_DIR.path_join(scenario_id)
 
 
-## 시나리오를 켠다: 전용 엔딩·인물·문파·기연을 불러오고 파라미터를 적용한다.
+## 시나리오를 켠다: 전용 결말·인물·문파·기연을 불러오고 파라미터를 적용한다.
 static func activate(scenario_id: String, overrides: Dictionary = {}) -> PackedStringArray:
 	_ensure_loaded()
 	var errors: PackedStringArray = []
@@ -118,7 +118,7 @@ static func get_start_role_ids(scenario: Dictionary = {}) -> Array:
 	return all_ids.filter(func(id: String) -> bool: return allowed.is_empty() or allowed.has(id))
 
 
-## 고를 수 있는 등장인물 목록 (없으면 빈 배열 → 시작 역할을 고른다)
+## 고를 수 있는 등장인물 목록 (없으면 빈 배열 → 시작 신분을 고른다)
 static func get_playables(scenario: Dictionary = {}) -> Array:
 	if scenario.is_empty():
 		scenario = current
@@ -194,26 +194,26 @@ static func validate_scenario_dict(data: Dictionary) -> PackedStringArray:
 		role_ids.append(entry["id"])
 	for role_id in data.get("start_roles", []):
 		if not role_ids.has(role_id):
-			errors.append("알 수 없는 시작 역할: %s" % role_id)
+			errors.append("알 수 없는 시작 신분: %s" % role_id)
 	for entry in data.get("playables", []):
 		errors.append_array(_validate_playable(entry, role_ids))
 	var goals: Variant = data.get("goals", {})
 	if not goals is Dictionary:
-		errors.append("goals는 { 역할 id: 목표 } 객체여야 함")
+		errors.append("goals는 { 신분 id: 목표 } 객체여야 함")
 	else:
 		for role_id in goals:
 			if role_id != "default" and not role_ids.has(role_id):
-				errors.append("goals: 알 수 없는 시작 역할 %s" % role_id)
+				errors.append("goals: 알 수 없는 시작 신분 %s" % role_id)
 	var common_files: PackedStringArray = EventManager.collect_json_files(EventManager.EVENTS_DIR)
 	for folder in data.get("common_events", []):
 		if not Array(common_files).any(func(path: String) -> bool: return EventManager._in_folders(path, EventManager.EVENTS_DIR, [folder])):
 			errors.append("공용 기연 폴더(앞부분)에 맞는 파일이 없음: %s" % folder)
 	if data.has("endings"):
-		errors.append("전용 엔딩은 scenario.json이 아니라 endings/ 폴더의 JSON으로 정의함")
+		errors.append("전용 결말은 scenario.json이 아니라 endings/ 폴더의 JSON으로 정의함")
 	var own_endings: Array = _read_ids(SCENARIO_DIR.path_join(str(data.get("id", ""))).path_join("endings"))
 	for ending_id in data.get("victory_endings", []):
 		if not (_is_common_ending(ending_id) or own_endings.has(ending_id)):
-			errors.append("알 수 없는 승리 엔딩: %s" % ending_id)
+			errors.append("알 수 없는 승리 결말: %s" % ending_id)
 	# 문파 id는 공용 데이터 기준으로 확인한다. (시나리오 전용 문파는 활성화 후 확인)
 	var scenario_sects_dir: String = SCENARIO_DIR.path_join(str(data.get("id", ""))).path_join("sects")
 	if not DirAccess.dir_exists_absolute(scenario_sects_dir):
@@ -237,7 +237,7 @@ static func _validate_playable(entry: Variant, role_ids: Array) -> PackedStringA
 		if not key in PLAYABLE_KEYS:
 			errors.append("등장인물 %s: 알 수 없는 필드 %s" % [entry["npc"], key])
 	if not role_ids.has(str(entry.get("start_role", ""))):
-		errors.append("등장인물 %s: 알 수 없는 시작 역할 %s" % [entry["npc"], entry.get("start_role")])
+		errors.append("등장인물 %s: 알 수 없는 시작 신분 %s" % [entry["npc"], entry.get("start_role")])
 	for feature_id in entry.get("features", []):
 		if not FeatureGate.has_feature(str(feature_id)):
 			errors.append("등장인물 %s: 알 수 없는 기능 %s" % [entry["npc"], feature_id])
@@ -253,7 +253,7 @@ static func _validate_playable(entry: Variant, role_ids: Array) -> PackedStringA
 	return errors
 
 
-## 공용 엔딩 폴더(data/endings/)에 있는 id인지. 현재 켜진 시나리오와 관계없이 확인한다.
+## 공용 결말 폴더(data/endings/)에 있는 id인지. 현재 켜진 시나리오와 관계없이 확인한다.
 static func _is_common_ending(ending_id: String) -> bool:
 	return _read_ids(EndingManager.ENDING_DIR).has(ending_id)
 

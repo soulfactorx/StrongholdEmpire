@@ -1,7 +1,7 @@
 class_name RoleActions
 extends RefCounted
 
-## 역할별 고유 행동과 역할 자원(불만도·신임도·노출도·현상금·신용도 등).
+## 신분별 고유 행동과 신분 자원(불만도·신임도·노출도·현상금·신용도 등).
 ## 상태는 GameManager.role_state 딕셔너리 하나에 담고, 이 클래스는 규칙만 담당한다.
 ## gm은 GameManager 노드다. (정적 함수라 오토로드 이름을 직접 쓰지 않는다)
 
@@ -60,7 +60,7 @@ const ACTIONS: Dictionary = {
 	},
 	"lie_low": {
 		"role": CharacterData.Role.ASSASSIN, "title": "은신", "target": "",
-		"description": "금화 %d로 몸을 숨겨 현상금을 %d 낮춥니다." % [_Balance.LIE_LOW_GOLD, _Balance.LIE_LOW_BOUNTY],
+		"description": "은자 %d로 몸을 숨겨 현상금을 %d 낮춥니다." % [_Balance.LIE_LOW_GOLD, _Balance.LIE_LOW_BOUNTY],
 	},
 	"contract": {
 		"role": CharacterData.Role.MERCENARY, "title": "계약 수주", "target": "sect",
@@ -72,20 +72,20 @@ const ACTIONS: Dictionary = {
 	},
 	"breach": {
 		"role": CharacterData.Role.MERCENARY, "title": "계약 위반", "target": "",
-		"description": "의뢰주를 팔아넘기고 금화 %d를 챙깁니다. 신용과 태도가 크게 떨어집니다." % _Balance.CONTRACT_BREACH_GOLD,
+		"description": "의뢰주를 팔아넘기고 은자 %d를 챙깁니다. 신용과 태도가 크게 떨어집니다." % _Balance.CONTRACT_BREACH_GOLD,
 	},
 }
 
 const DEPARTMENTS: Dictionary = {
-	"finance": {"title": "재정", "description": "계절 금화 수입 +%d%%" % int(_Balance.DEPT_FINANCE_GOLD_BONUS * 100)},
-	"training": {"title": "수련", "description": "계절마다 수련 경험치 +%d" % _Balance.DEPT_TRAINING_EXP},
+	"finance": {"title": "재정", "description": "계절 은자 수입 +%d%%" % int(_Balance.DEPT_FINANCE_GOLD_BONUS * 100)},
+	"training": {"title": "수련", "description": "계절마다 수련 +%d" % _Balance.DEPT_TRAINING_EXP},
 	"intel": {"title": "정보", "description": "문파전 정찰 비용 %d%%" % int(_Balance.DEPT_INTEL_SCOUT_SCALE * 100)},
 }
 
 const JOBS: Dictionary = {
 	"hunt": {"title": "토벌", "description": "도적 무리를 토벌합니다. (전술 전투)"},
 	"escort": {"title": "호위", "description": "상단을 호위합니다. 전투력이 높을수록 성공하기 쉽습니다."},
-	"search": {"title": "수색", "description": "잃어버린 비급·물건을 찾습니다. 연구점이나 경험을 얻습니다."},
+	"search": {"title": "수색", "description": "잃어버린 비급·물건을 찾습니다. 깨달음이나 경험을 얻습니다."},
 }
 
 
@@ -107,7 +107,7 @@ static func create_state() -> Dictionary:
 	}
 
 
-## 세이브에서 읽은 값을 기본값 위에 덮는다. (JSON 숫자는 실수로 읽히므로 정수로 되돌린다)
+## 저장본에서 읽은 값을 기본값 위에 덮는다. (JSON 숫자는 실수로 읽히므로 정수로 되돌린다)
 static func restore_state(data: Dictionary) -> Dictionary:
 	var state: Dictionary = create_state()
 	for key in data:
@@ -145,7 +145,7 @@ static func change_credit(state: Dictionary, sect_id: String, amount: int) -> vo
 	state["credit"][sect_id] = clampi(get_credit(state, sect_id) + amount, -_Balance.CREDIT_LIMIT, _Balance.CREDIT_LIMIT)
 
 
-## 이번 계절에 역할 행동을 더 할 수 있는지
+## 이번 계절에 신분 행동을 더 할 수 있는지
 static func can_act(state: Dictionary, turn: int) -> bool:
 	return state["last_action_turn"] != turn or state["actions_used"] < _Balance.ROLE_ACTIONS_PER_SEASON
 
@@ -186,11 +186,11 @@ static func get_targets(gm: Node, action_id: String) -> Array[Dictionary]:
 			# 지도의 지역 (경영 화면은 지도 화면을 열어 고르게 한다)
 			for region in WorldMap.get_regions():
 				if region["id"] != gm.player_region:
-					result.append({"id": region["id"], "title": region["name"], "description": "여비 금화 %d" % gm.get_travel_cost(region["id"])})
+					result.append({"id": region["id"], "title": region["name"], "description": "여비 은자 %d" % gm.get_travel_cost(region["id"])})
 	return result
 
 
-## 역할 행동을 실행한다. 결과: success, message, 그리고 필요하면 combat(CombatSetup)·event(기연)
+## 신분 행동을 실행한다. 결과: success, message, 그리고 필요하면 combat(CombatSetup)·event(기연)
 static func perform(gm: Node, action_id: String, target: String = "") -> Dictionary:
 	var state: Dictionary = gm.role_state
 	var character: CharacterData = gm.player_character
@@ -201,7 +201,7 @@ static func perform(gm: Node, action_id: String, target: String = "") -> Diction
 		return _fail("%s만 할 수 있는 행동입니다." % CharacterData.get_role_display_name(action["role"]))
 	var turn: int = gm._get_turn_index()
 	if not can_act(state, turn):
-		return _fail("이번 계절에는 이미 역할 행동을 했습니다.")
+		return _fail("이번 계절에는 이미 신분 행동을 했습니다.")
 	if action["target"] != "" and not _target_allowed(gm, action_id, target):
 		return _fail("대상을 고르세요.")
 	var result: Dictionary
@@ -221,7 +221,7 @@ static func perform(gm: Node, action_id: String, target: String = "") -> Diction
 		"contract": result = _do_contract(gm, target)
 		"fulfill": result = _do_fulfill(gm, target)
 		"breach": result = _do_breach(gm, target)
-	# 이동은 역할 행동 횟수를 쓰지 않는다 (계절에 한 번, 여비)
+	# 이동은 신분 행동 횟수를 쓰지 않는다 (계절에 한 번, 여비)
 	if action_id != "travel" and (result["success"] or result.get("consumed", false)):
 		_consume_action(state, turn)
 	return result
@@ -248,10 +248,10 @@ static func _roll(chance: int) -> bool:
 static func _do_council(gm: Node, _target: String) -> Dictionary:
 	var state: Dictionary = gm.role_state
 	if not gm.get_wallet().spend_resources(_Balance.COUNCIL_GOLD):
-		return _fail("금화가 부족합니다. (%d 필요)" % _Balance.COUNCIL_GOLD)
+		return _fail("은자가 부족합니다. (%d 필요)" % _Balance.COUNCIL_GOLD)
 	var before: int = state["discontent"]
 	state["discontent"] = maxi(0, before - _Balance.COUNCIL_DISCONTENT_RELIEF)
-	return {"success": true, "message": "문파 회의를 열어 원로와 제자들의 말을 들었습니다. 불만도 %d → %d (금화 -%d)" % [
+	return {"success": true, "message": "문파 회의를 열어 원로와 제자들의 말을 들었습니다. 불만도 %d → %d (은자 -%d)" % [
 		before, state["discontent"], _Balance.COUNCIL_GOLD,
 	]}
 
@@ -259,14 +259,14 @@ static func _do_council(gm: Node, _target: String) -> Dictionary:
 static func _do_envoy(gm: Node, target: String) -> Dictionary:
 	var sect: SectData = gm.get_world_sect(target)
 	if not gm.get_wallet().spend_resources(_Balance.ENVOY_GOLD):
-		return _fail("금화가 부족합니다. (%d 필요)" % _Balance.ENVOY_GOLD)
+		return _fail("은자가 부족합니다. (%d 필요)" % _Balance.ENVOY_GOLD)
 	sect.attitude = clampi(sect.attitude + _Balance.ENVOY_ATTITUDE, -100, 100)
-	return {"success": true, "message": "%s에 사절을 보냈습니다. 태도 %s(%d) (금화 -%d)" % [
+	return {"success": true, "message": "%s에 사절을 보냈습니다. 태도 %s(%d) (은자 -%d)" % [
 		sect.sect_name, sect.get_attitude_text(), sect.attitude, _Balance.ENVOY_GOLD,
 	]}
 
 
-# ── 중간관리자 ──
+# ── 총관 ──
 
 static func _do_department(gm: Node, target: String) -> Dictionary:
 	var state: Dictionary = gm.role_state
@@ -301,7 +301,7 @@ static func _do_proposal(gm: Node, _target: String) -> Dictionary:
 
 static func _do_teaching(gm: Node, _target: String) -> Dictionary:
 	var character: CharacterData = gm.player_character
-	var parts: PackedStringArray = ["경험치 +%d" % _Balance.TEACH_EXP]
+	var parts: PackedStringArray = ["수련 +%d" % _Balance.TEACH_EXP]
 	var master: RelationshipData = RelationshipManager.get_bond_with(gm.player_relationships, "npc_master")
 	if master:
 		master.increase_bond(_Balance.TEACH_BOND)
@@ -323,9 +323,9 @@ static func _do_outing(gm: Node, _target: String) -> Dictionary:
 			return {"success": true, "event": event, "message": "외출 길에 뜻밖의 일을 만났습니다."}
 	if randi() % 2 == 0:
 		gm.get_wallet().gold += _Balance.OUTING_GOLD
-		return {"success": true, "message": "저잣거리 심부름으로 금화 +%d를 벌었습니다." % _Balance.OUTING_GOLD}
+		return {"success": true, "message": "저잣거리 심부름으로 은자 +%d를 벌었습니다." % _Balance.OUTING_GOLD}
 	gm.player_character.gain_experience(_Balance.OUTING_EXP)
-	return {"success": true, "message": "산길을 걸으며 견문을 넓혔습니다. 경험치 +%d" % _Balance.OUTING_EXP}
+	return {"success": true, "message": "산길을 걸으며 견문을 넓혔습니다. 수련 +%d" % _Balance.OUTING_EXP}
 
 
 # ── 낭인 ──
@@ -370,7 +370,7 @@ static func _do_job_board(gm: Node, target: String) -> Dictionary:
 			if _roll(get_escort_chance(gm)):
 				var gold: int = roundi(_Balance.JOB_ESCORT_GOLD * scale)
 				gm.get_wallet().gold += gold
-				parts.append("금화 +%d" % gold)
+				parts.append("은자 +%d" % gold)
 				_gain_local_credit(state, parts, gm)
 				return {"success": true, "message": "상단을 무사히 호위했습니다. " + ", ".join(parts)}
 			var character: CharacterData = gm.player_character
@@ -381,11 +381,11 @@ static func _do_job_board(gm: Node, target: String) -> Dictionary:
 			if randi() % 2 == 0:
 				var research: int = roundi(_Balance.JOB_SEARCH_RESEARCH * scale)
 				gm.player_sect.research_points += research
-				parts.append("잃어버린 비급 조각을 찾아 연구점 +%d" % research)
+				parts.append("잃어버린 비급 조각을 찾아 깨달음 +%d" % research)
 			else:
 				var exp_gain: int = roundi(_Balance.JOB_SEARCH_EXP * scale)
 				gm.player_character.gain_experience(exp_gain)
-				parts.append("험한 산을 뒤져 경험치 +%d" % exp_gain)
+				parts.append("험한 산을 뒤져 수련 +%d" % exp_gain)
 			_gain_local_credit(state, parts, gm)
 			return {"success": true, "message": "수색 의뢰를 마쳤습니다. " + ", ".join(parts)}
 
@@ -399,7 +399,7 @@ static func get_location_name(gm: Node) -> String:
 	return gm.get_location_text()
 
 
-# ── 스파이 ──
+# ── 간자 ──
 
 static func _add_exposure(state: Dictionary, amount: int) -> void:
 	state["exposure"] = clampi(state["exposure"] + amount, 0, _Balance.EXPOSURE_MAX)
@@ -419,9 +419,9 @@ static func _do_intel(gm: Node, target: String) -> Dictionary:
 	state["intel_count"] += 1
 	state["spy_target"] = target
 	var parts: PackedStringArray = [
-		"%s: 전력 %d, 제자 %d, 금화 %d" % [sect.sect_name, SectWarManager.get_sect_power(sect), sect.disciple_count, sect.gold],
+		"%s: 전력 %d, 제자 %d, 은자 %d" % [sect.sect_name, SectWarManager.get_sect_power(sect), sect.disciple_count, sect.gold],
 		"이번 계절 작전 [%s]" % ", ".join(commands),
-		"연구점 +%d" % _Balance.INTEL_RESEARCH,
+		"깨달음 +%d" % _Balance.INTEL_RESEARCH,
 		"노출도 %d" % state["exposure"],
 	]
 	if state["intel_count"] >= _Balance.SPY_MISSION_INTEL and not gm.story_flags.get("spy_mission_complete", false):
@@ -440,12 +440,12 @@ static func _do_sabotage(gm: Node, target: String) -> Dictionary:
 	_add_exposure(state, _Balance.EXPOSURE_SABOTAGE)
 	state["spy_target"] = target
 	EventManager.set_flag(gm.story_flags, "sabotaged_%s" % target)
-	return {"success": true, "message": "%s 사보타주 성공: 제자 -%d, 금화 -%d. 노출도 %d" % [
+	return {"success": true, "message": "%s 사보타주 성공: 제자 -%d, 은자 -%d. 노출도 %d" % [
 		sect.sect_name, lost_disciples, lost_gold, state["exposure"],
 	]}
 
 
-# ── 암살자 ──
+# ── 자객 ──
 
 static func _do_assassination(gm: Node, _target: String) -> Dictionary:
 	var state: Dictionary = gm.role_state
@@ -462,14 +462,14 @@ static func _do_lie_low(gm: Node, _target: String) -> Dictionary:
 	if state["bounty"] <= 0:
 		return _fail("쫓는 자가 없어 숨을 필요가 없습니다.")
 	if not gm.get_wallet().spend_resources(_Balance.LIE_LOW_GOLD):
-		return _fail("금화가 부족합니다. (%d 필요)" % _Balance.LIE_LOW_GOLD)
+		return _fail("은자가 부족합니다. (%d 필요)" % _Balance.LIE_LOW_GOLD)
 	state["bounty"] = maxi(0, state["bounty"] - _Balance.LIE_LOW_BOUNTY)
-	return {"success": true, "message": "한 계절 몸을 숨겼습니다. 현상금 %d (금화 -%d)" % [
+	return {"success": true, "message": "한 계절 몸을 숨겼습니다. 현상금 %d (은자 -%d)" % [
 		state["bounty"], _Balance.LIE_LOW_GOLD,
 	]}
 
 
-# ── 의뢰인 ──
+# ── 청부객 ──
 
 static func _contract_reward(credit: int) -> int:
 	return roundi(_Balance.CONTRACT_REWARD * (1.0 + credit / 200.0))
@@ -535,7 +535,7 @@ static func _do_breach(gm: Node, _target: String) -> Dictionary:
 	state["contract"] = {}
 	gm.get_wallet().gold += _Balance.CONTRACT_BREACH_GOLD
 	var message: String = _apply_breach(gm, contract["sect"])
-	return {"success": true, "message": "의뢰주를 팔아넘기고 금화 +%d를 챙겼습니다. %s" % [_Balance.CONTRACT_BREACH_GOLD, message]}
+	return {"success": true, "message": "의뢰주를 팔아넘기고 은자 +%d를 챙겼습니다. %s" % [_Balance.CONTRACT_BREACH_GOLD, message]}
 
 
 ## 계약 위반의 대가: 신용과 태도가 떨어진다.
@@ -552,7 +552,7 @@ static func _apply_breach(gm: Node, sect_id: String) -> String:
 
 # ── 계절 처리 ──
 
-## 부서(재정)의 계절 금화 보너스. 예상 수지에도 쓴다.
+## 부서(재정)의 계절 은자 가산. 예상 수지에도 쓴다.
 static func get_income_gold_bonus(state: Dictionary, role: CharacterData.Role, base_gold: int) -> int:
 	if role == CharacterData.Role.MANAGER and state["department"] == "finance":
 		return roundi(base_gold * _Balance.DEPT_FINANCE_GOLD_BONUS)
@@ -566,12 +566,12 @@ static func get_scout_scale(state: Dictionary, role: CharacterData.Role) -> floa
 	return 1.0
 
 
-## 계절이 바뀔 때 역할 자원을 갱신하고 보고 문구를 돌려준다.
+## 계절이 바뀔 때 신분 자원을 갱신하고 보고 문구를 돌려준다.
 static func on_season(gm: Node) -> String:
 	var state: Dictionary = gm.role_state
 	var character: CharacterData = gm.player_character
 	var parts: PackedStringArray = []
-	# 노출도·현상금은 역할이 바뀌어도 남고, 시간이 지나면 잊힌다.
+	# 노출도·현상금은 신분이 바뀌어도 남고, 시간이 지나면 잊힌다.
 	state["exposure"] = maxi(0, state["exposure"] - _Balance.EXPOSURE_DECAY)
 	state["bounty"] = maxi(0, state["bounty"] - _Balance.BOUNTY_DECAY)
 	match character.role:
@@ -587,11 +587,11 @@ static func on_season(gm: Node) -> String:
 				state["trust"] = mini(100, state["trust"] + _Balance.DEPT_TRUST_PER_SEASON)
 				if state["department"] == "training":
 					character.gain_experience(_Balance.DEPT_TRAINING_EXP)
-					parts.append("수련 부서 경험치 +%d" % _Balance.DEPT_TRAINING_EXP)
+					parts.append("수련 부서 수련 +%d" % _Balance.DEPT_TRAINING_EXP)
 		CharacterData.Role.SPY:
 			# 간자를 심은 쪽에서 계절마다 활동비를 보낸다 (개인 재산)
 			gm.get_wallet().gold += _Balance.SPY_STIPEND_GOLD
-			parts.append("활동비 금화 +%d" % _Balance.SPY_STIPEND_GOLD)
+			parts.append("활동비 은자 +%d" % _Balance.SPY_STIPEND_GOLD)
 		CharacterData.Role.MERCENARY:
 			var contract: Dictionary = state["contract"]
 			if not contract.is_empty() and gm._get_turn_index() > int(contract["due"]):
@@ -600,7 +600,7 @@ static func on_season(gm: Node) -> String:
 	return ", ".join(parts)
 
 
-## 역할 자원이 한계에 이르렀을 때의 결과: 정체 발각(엔딩), 축출, 강등.
+## 신분 자원이 한계에 이르렀을 때의 결과: 정체 발각(결말), 축출, 강등.
 ## 강제 전환이 필요하면 {role, message, flag}를 돌려준다.
 static func check_consequences(gm: Node) -> Dictionary:
 	var state: Dictionary = gm.role_state
@@ -625,7 +625,7 @@ static func check_consequences(gm: Node) -> Dictionary:
 	return {}
 
 
-## 역할이 바뀔 때 역할 자원을 정리한다.
+## 신분이 바뀔 때 신분 자원을 정리한다.
 static func on_role_changed(state: Dictionary, new_role: CharacterData.Role) -> void:
 	state["failures"] = 0
 	match new_role:
@@ -642,7 +642,7 @@ static func on_role_changed(state: Dictionary, new_role: CharacterData.Role) -> 
 		state["contract"] = {}
 
 
-## 경영 화면에 보여 줄 역할 자원 요약
+## 경영 화면에 보여 줄 신분 자원 요약
 static func describe(gm: Node) -> String:
 	var state: Dictionary = gm.role_state
 	var lines: PackedStringArray = []
@@ -660,7 +660,7 @@ static func describe(gm: Node) -> String:
 				state["failures"], _Balance.DEMOTION_FAILURES,
 			])
 		CharacterData.Role.YOUNG_DISCIPLE:
-			lines.append("막내 제자는 시설을 확장할 수 없습니다.")
+			lines.append("막내 제자는 전각을 확장할 수 없습니다.")
 		CharacterData.Role.WANDERER:
 			lines.append("거처 %s · 호위 성공률 %d%%" % [get_location_name(gm), get_escort_chance(gm)])
 		CharacterData.Role.SPY:
@@ -680,5 +680,5 @@ static func describe(gm: Node) -> String:
 					int(contract["due"]) - gm._get_turn_index(), get_contract_chance(gm),
 				])
 	if not can_act(state, gm._get_turn_index()):
-		lines.append("이번 계절 역할 행동을 마쳤습니다.")
+		lines.append("이번 계절 신분 행동을 마쳤습니다.")
 	return "\n".join(lines)

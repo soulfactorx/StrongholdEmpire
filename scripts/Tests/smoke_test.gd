@@ -132,7 +132,7 @@ var _suites: Dictionary = {}
 
 
 func _initialize() -> void:
-	# 테스트의 저장(자동 저장 포함)은 실제 세이브와 다른 폴더에 한다.
+	# 테스트의 저장(자동 저장 포함)은 실제 저장본과 다른 폴더에 한다.
 	SaveManager.save_dir = TEST_SAVE_DIR
 	GameSettings.settings_path = TEST_SAVE_DIR.path_join("settings.cfg")
 	# 교전 줄 사이 간격 없이 바로 진행 (간격은 test_ui의 _test_input_and_tips에서 따로 시험)

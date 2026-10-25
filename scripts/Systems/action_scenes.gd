@@ -1,9 +1,9 @@
 class_name ActionScenes
 extends RefCounted
 
-## 행동 대화 장면: 경영 화면에서 행동(수련·영약·연회·시설·제자·역할 행동 등)을 하면 결과 알림 대신
+## 행동 대화 장면: 경영 화면에서 행동(수련·영약·연회·전각·제자·신분 행동 등)을 하면 결과 알림 대신
 ## 그 일에 얽힌 인물과 주고받는 짧은 대화 장면이 뜬다. 장면은 data/scenes/actions/*.json에 행동마다 여러 개를 두고,
-## 조건(계절·역할·문파 형편 등, 기연 조건 문법)과 결과(성공·실패)에 맞는 것 가운데 하나를 고른다.
+## 조건(계절·신분·문파 형편 등, 기연 조건 문법)과 결과(성공·실패)에 맞는 것 가운데 하나를 고른다.
 ## 형식은 docs/행동_장면_데이터_형식.md 참고.
 ## gm은 GameManager 노드다. (정적 함수라 오토로드 이름을 직접 쓰지 않는다)
 
@@ -103,7 +103,7 @@ static func validate(data: Dictionary) -> PackedStringArray:
 	return errors
 
 
-## 행동에 맞는 장면 하나를 골라 팝업 자료로 만든다. 없으면 {}.
+## 행동에 맞는 장면 하나를 골라 창 자료로 만든다. 없으면 {}.
 ## context: {title(행동 이름), counterpart_id, target_id, target_name, target_leader_id, disciple_name, detail}
 ## 반환: {title, description, choices: [이름], npc, scene_id, speaker_id, options: [{label, message, effects}]}
 static func build(gm: Node, action_id: String, result: Dictionary, context: Dictionary = {}, recent: Array = [], rng: RandomNumberGenerator = null) -> Dictionary:

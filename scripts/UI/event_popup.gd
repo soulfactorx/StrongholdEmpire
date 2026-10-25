@@ -46,7 +46,7 @@ func _ensure_portrait() -> void:
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	# reparent는 owner를 지켜 %이름 찾기가 계속 된다.
 	content.reparent(row, false)
-	# 초상화 옆 글 칸이 좁지 않게 팝업을 넓힌다. (세로 화면에서는 화면 폭에 맞춘다)
+	# 초상화 옆 글 칸이 좁지 않게 창을 넓힌다. (세로 화면에서는 화면 폭에 맞춘다)
 	LayoutMode.fit_width(panel as Control, 900)
 	desc_scroll = ScrollContainer.new()
 	desc_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED

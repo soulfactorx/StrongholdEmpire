@@ -12,7 +12,7 @@ const PORTRAIT_SIZE := Vector2(56, 70)
 @onready var sect_list: VBoxContainer = %SectList
 @onready var npc_list: VBoxContainer = %NpcList
 @onready var log_label: Label = %LogLabel
-## 외교 행동을 고르는 팝업과, 교섭 중인 세력 id
+## 외교 행동을 고르는 창과, 교섭 중인 세력 id
 var choice_popup: Control
 var _diplomacy_target: String = ""
 
@@ -28,7 +28,7 @@ func _ready() -> void:
 	_build_news()
 	_build_npc_list()
 	if not DiplomacyManager.can_negotiate(GameManager.player_character):
-		log_label.text = "외교는 문파를 대표하는 문주·중간관리자(총관)만 할 수 있습니다. 지금 역할(%s)로는 세력의 형편과 인물만 봅니다." % GameManager.player_character.get_role_name()
+		log_label.text = "외교는 문파를 대표하는 문주·총관만 할 수 있습니다. 지금 신분(%s)로는 세력의 형편과 인물만 봅니다." % GameManager.player_character.get_role_name()
 
 
 ## 강호 소식은 인물 목록 위에 최근 것부터 보여 준다.
@@ -60,7 +60,7 @@ func _rebuild_sect_list() -> void:
 func _on_diplomacy_pressed(sect_id: String) -> void:
 	AudioManager.play_click()
 	if not DiplomacyManager.can_negotiate(GameManager.player_character):
-		log_label.text = "외교는 문파를 대표하는 문주나 중간관리자만 할 수 있습니다."
+		log_label.text = "외교는 문파를 대표하는 문주나 총관만 할 수 있습니다."
 		Toast.notify(self, log_label.text, true)
 		return
 	var sect: SectData = GameManager.get_world_sect(sect_id)
@@ -104,7 +104,7 @@ func _build_sect_list() -> void:
 	var player_sect: SectData = GameManager.player_sect
 	if not GameManager.has_sect():
 		_add_entry(sect_list, "무소속 — %s" % GameManager.player_character.display_name,
-			"어느 문파에도 속하지 않은 떠돌이입니다. 신용을 쌓은 세력에 객경으로 들어갈 수 있습니다. (역할 전환)")
+			"어느 문파에도 속하지 않은 떠돌이입니다. 신용을 쌓은 세력에 객경으로 들어갈 수 있습니다. (신분 전환)")
 	else:
 		_add_player_sect_entry(player_sect)
 	_add_world_sect_entries()
@@ -157,7 +157,7 @@ func _add_world_sect_entries() -> void:
 			],
 			ArtAssets.emblem(sect.id), EMBLEM_SIZE
 		)
-		# 외교를 할 수 없는 역할에게는 버튼을 보이지 않는다 (눌러도 아무 일이 없는 것처럼 보이지 않게)
+		# 외교를 할 수 없는 신분에게는 버튼을 보이지 않는다 (눌러도 아무 일이 없는 것처럼 보이지 않게)
 		if not DiplomacyManager.can_negotiate(GameManager.player_character):
 			continue
 		var button := Button.new()

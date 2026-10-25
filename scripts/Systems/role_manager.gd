@@ -20,13 +20,13 @@ static func get_available_transitions(
 		if _can_become_manager(character, sect, relationships) or story_flags.get("arc_succession_heir", false):
 			options.append(_transition_option(
 				CharacterData.Role.MANAGER,
-				"중간관리자 승진",
-				"문파 내 신뢰를 얻어 중간관리자가 됩니다."
+				"총관 승진",
+				"문파 내 신뢰를 얻어 총관이 됩니다."
 			))
 		if _can_become_spy(character, story_flags):
 			options.append(_transition_option(
 				CharacterData.Role.SPY,
-				"스파이 임무 수락",
+				"간자 임무 수락",
 				"적 문파에 잠입해 정보를 수집합니다."
 			))
 
@@ -46,14 +46,14 @@ static func get_available_transitions(
 		if _can_become_assassin(character, story_flags):
 			options.append(_transition_option(
 				CharacterData.Role.ASSASSIN,
-				"암살자로 전향",
+				"자객으로 전향",
 				"은밀한 제거 임무를 전담합니다."
 			))
 		if story_flags.get("spy_mission_complete", false):
 			options.append(_transition_option(
 				CharacterData.Role.MANAGER,
 				"임무 완료 후 복귀",
-				"스파이 임무를 마치고 문파로 돌아옵니다."
+				"간자 임무를 마치고 문파로 돌아옵니다."
 			))
 		# 배신: 잠입한 세력에 붙는다.
 		var infiltrated: SectData = _find_sect(world_sects, str(role_state["spy_target"]))
@@ -61,14 +61,14 @@ static func get_available_transitions(
 			options.append(_sect_option(
 				infiltrated, "betray",
 				"%s(으)로 전향" % infiltrated.sect_name,
-				"잠입한 세력에 붙어 옛 문파를 배신합니다. 그곳의 중간관리자가 됩니다."
+				"잠입한 세력에 붙어 옛 문파를 배신합니다. 그곳의 총관이 됩니다."
 			))
 
 	elif character.role == CharacterData.Role.WANDERER:
 		if character.level >= _Balance.MERCENARY_LEVEL_REQ:
 			options.append(_transition_option(
 				CharacterData.Role.MERCENARY,
-				"의뢰인이 된다",
+				"청부객이 된다",
 				"세력들의 임무를 계약으로 맡는 청부업을 시작합니다."
 			))
 
@@ -79,7 +79,7 @@ static func get_available_transitions(
 			"계약에서 손을 떼고 다시 떠돌이 낭인이 됩니다."
 		))
 
-	# 입문: 무소속 낭인·의뢰인은 신용을 조금 쌓았거나 연줄(그 세력 인물과의 유대)이 있는 세력에 제자로 들어간다.
+	# 입문: 무소속 낭인·청부객은 신용을 조금 쌓았거나 연줄(그 세력 인물과의 유대)이 있는 세력에 제자로 들어간다.
 	if sect.id == NpcRoster.NO_SECT and character.role in [CharacterData.Role.WANDERER, CharacterData.Role.MERCENARY]:
 		for world_sect in world_sects:
 			var reason: String = get_join_block(world_sect, character, relationships, role_state)
@@ -105,10 +105,10 @@ static func get_available_transitions(
 				options.append(_sect_option(
 					world_sect, "defect",
 					"%s에 객경으로 들어간다" % world_sect.sect_name,
-					"신용을 쌓은 세력에 몸을 의탁합니다. 그곳의 중간관리자가 됩니다."
+					"신용을 쌓은 세력에 몸을 의탁합니다. 그곳의 총관이 됩니다."
 				))
 
-	# 배신: 도덕이 낮은 제자·관리자는 가장 적대적인 비정파 세력으로 넘어갈 수 있다.
+	# 배신: 도덕이 낮은 제자·총관은 가장 적대적인 비정파 세력으로 넘어갈 수 있다.
 	if character.role in [CharacterData.Role.YOUNG_DISCIPLE, CharacterData.Role.MANAGER]:
 		if character.morality <= _Balance.BETRAY_MORALITY_REQ:
 			var enemy: SectData = _most_hostile_unorthodox(world_sects)
@@ -116,15 +116,15 @@ static func get_available_transitions(
 				options.append(_sect_option(
 					enemy, "betray",
 					"%s(으)로 투항" % enemy.sect_name,
-					"문파를 배신하고 적에게 넘어갑니다. 그곳의 중간관리자가 됩니다."
+					"문파를 배신하고 적에게 넘어갑니다. 그곳의 총관이 됩니다."
 				))
 
 	return options
 
 
-# ── 역할 전환 안내 ──
+# ── 신분 전환 안내 ──
 
-## 지금 역할에서 갈 수 있는 길과 조건 (역할 전환 창의 안내). gm은 GameManager 노드다.
+## 지금 신분에서 갈 수 있는 길과 조건 (신분 전환 창의 안내). gm은 GameManager 노드다.
 ## [{title, conditions: [{text, ok}], alt: {text, ok} (있으면 이것만 채워도 됨), available}]
 static func get_transition_guide(gm: Node) -> Array[Dictionary]:
 	var c: CharacterData = gm.player_character
@@ -136,13 +136,13 @@ static func get_transition_guide(gm: Node) -> Array[Dictionary]:
 	var paths: Array[Dictionary] = []
 	match c.role:
 		CharacterData.Role.YOUNG_DISCIPLE:
-			paths.append(_path("총관(중간관리자) 승진", [
+			paths.append(_path("총관 승진", [
 				_req("경지 %d" % _Balance.MANAGER_LEVEL_REQ, c.level, _Balance.MANAGER_LEVEL_REQ),
 				_req("지혜 %d" % _Balance.MANAGER_WISDOM_REQ, c.wisdom, _Balance.MANAGER_WISDOM_REQ),
 				_req("문파 명성 %d" % _Balance.MANAGER_REPUTATION_REQ, sect.reputation, _Balance.MANAGER_REPUTATION_REQ),
 				_req("사부(문주) 유대 25", master, 25),
 			], {"text": "또는 「승계와 배신」에서 후계자로 지명", "ok": flags.get("arc_succession_heir", false)}))
-			paths.append(_path("간자(스파이) 임무", [
+			paths.append(_path("간자 임무", [
 				_req("신법 15", c.agility, 15), _req("매력 13", c.charisma, 13),
 			], {"text": "또는 포섭 기연을 겪음", "ok": flags.get("spy_recruitment", false)}))
 		CharacterData.Role.MANAGER:
@@ -168,7 +168,7 @@ static func get_transition_guide(gm: Node) -> Array[Dictionary]:
 				{"text": "정보를 캐는 세력이 있음 (정보 수집으로 정함)", "ok": not str(state["spy_target"]).is_empty()},
 			]))
 		CharacterData.Role.WANDERER:
-			paths.append(_path("의뢰인이 된다", [_req("경지 %d" % _Balance.MERCENARY_LEVEL_REQ, c.level, _Balance.MERCENARY_LEVEL_REQ)]))
+			paths.append(_path("청부객이 된다", [_req("경지 %d" % _Balance.MERCENARY_LEVEL_REQ, c.level, _Balance.MERCENARY_LEVEL_REQ)]))
 		CharacterData.Role.MERCENARY:
 			paths.append(_path("청부를 접고 낭인으로", [{"text": "언제든", "ok": true}]))
 		CharacterData.Role.LEADER:
@@ -179,7 +179,7 @@ static func get_transition_guide(gm: Node) -> Array[Dictionary]:
 		var best_credit: Array = _best_credit(gm)
 		if not in_sect:
 			var best_tie: Array = _best_tie(gm)
-			# 실제로 받아 줄 세력 (역할 전환 선택지와 같은 판정)
+			# 실제로 받아 줄 세력 (신분 전환 선택지와 같은 판정)
 			var joinable: PackedStringArray = []
 			for world_sect in gm.world_sects:
 				if get_join_block(world_sect, c, gm.player_relationships, state).is_empty():
@@ -284,7 +284,7 @@ static func get_join_block(
 	return "신용 %d 이상이나 그 세력 인물과 유대 %d 이상(연줄)이 필요" % [_Balance.JOIN_CREDIT_REQ, _Balance.JOIN_BOND_REQ]
 
 
-## 문파를 떠나는 선택지. 문주는 자리를 내려놓고, 의뢰인·자객은 그 일을 이어 가고, 나머지는 낭인이 된다.
+## 문파를 떠나는 선택지. 문주는 자리를 내려놓고, 청부객·자객은 그 일을 이어 가고, 나머지는 낭인이 된다.
 static func get_leave_option(character: CharacterData, sect: SectData, relationships: Array[RelationshipData]) -> Dictionary:
 	var blessed: bool = character.role == CharacterData.Role.LEADER or get_master_bond(sect, relationships) >= _Balance.LEAVE_BLESSING_BOND
 	var role: CharacterData.Role = character.role if character.role in [
@@ -297,7 +297,7 @@ static func get_leave_option(character: CharacterData, sect: SectData, relations
 		description = "문파를 원래 문주(원로회)에게 맡기고 강호로 나섭니다. 노자를 챙기고, 문파와의 사이는 좋게 남습니다."
 	elif blessed:
 		title = "사부의 허락을 받아 하산한다"
-		description = "사부와의 유대가 깊어 좋게 떠납니다. 노자(금화 %d·식량 %d)를 챙기고 %s의 태도 +%d." % [
+		description = "사부와의 유대가 깊어 좋게 떠납니다. 노자(은자 %d·식량 %d)를 챙기고 %s의 태도 +%d." % [
 			_Balance.PURSE_ALLOWANCE_GOLD, _Balance.PURSE_ALLOWANCE_FOOD, sect.sect_name, _Balance.LEAVE_BLESSED_ATTITUDE,
 		]
 	else:
@@ -363,7 +363,7 @@ static func apply_transition(
 	var new_name: String = character.get_role_name()
 	return {
 		"success": true,
-		"message": "%s에서 %s(으)로 역할이 전환되었습니다." % [old_name, new_name],
+		"message": "%s에서 %s(으)로 신분이 전환되었습니다." % [old_name, new_name],
 		"new_role": new_role,
 	}
 

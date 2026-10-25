@@ -215,7 +215,7 @@ static func set_font_size(control: Control, base: int) -> void:
 	control.add_theme_font_size_override("font_size", font_size(base))
 
 
-## 팝업 안의 결과 알림 줄: 방금 한 일의 결과를 팝업을 닫지 않고 바로 보이게 한다. (처음엔 숨김)
+## 창 안의 결과 알림 줄: 방금 한 일의 결과를 창을 닫지 않고 바로 보이게 한다. (처음엔 숨김)
 static func make_notice() -> Label:
 	var label := Label.new()
 	label.name = "NoticeLabel"

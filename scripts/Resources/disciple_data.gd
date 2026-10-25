@@ -5,7 +5,7 @@ extends Resource
 
 const _Balance = preload("res://scripts/Systems/game_balance.gd")
 
-## 시설 담당 (DiscipleRoster.ASSIGNMENTS의 키, 없으면 "")
+## 전각 담당 (DiscipleRoster.ASSIGNMENTS의 키, 없으면 "")
 const NO_ASSIGNMENT := ""
 
 @export var id: String = ""
@@ -34,7 +34,7 @@ func get_next_level_experience() -> int:
 	return _Balance.DISCIPLE_EXP_PER_LEVEL * level
 
 
-## 경험치를 더하고 오른 레벨 수를 돌려준다. 레벨마다 무력·신법·지혜 +1
+## 수련을 더하고 오른 경지 수를 돌려준다. 경지마다 무력·신법·지혜 +1
 func gain_experience(amount: int) -> int:
 	if amount <= 0 or level >= _Balance.DISCIPLE_MAX_LEVEL:
 		return 0

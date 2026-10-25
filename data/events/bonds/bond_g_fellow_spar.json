@@ -13,7 +13,7 @@
   "choices": [
     {
       "label": "전력으로 맞선다",
-      "message": "땀에 흠뻑 젖도록 겨루었습니다. 경험치 +20, 유대 +4",
+      "message": "땀에 흠뻑 젖도록 겨루었습니다. 수련 +20, 유대 +4",
       "effects": [
         {
           "type": "experience",

@@ -6,7 +6,7 @@ extends SceneTree
 
 const _EconomySim = preload("res://scripts/Tools/economy_sim.gd")
 
-## 전투 자동 플레이: 시험할 전투와 주인공 레벨, 판 수
+## 전투 자동 플레이: 시험할 전투와 주인공 경지, 판 수
 const COMBATS: Array[String] = [
 	"sparring", "rival_duel", "night_bandits", "bandit_hunt", "assassination", "bounty_hunters", "invasion",
 	"arc_love_trial", "arc_love_pursuit", "arc_revenge_duel", "arc_revenge_duel_allied", "arc_revenge_chief",
@@ -64,7 +64,7 @@ func _run_combat() -> void:
 	print("[전투 자동 플레이] %d판씩. 초식 배치 대결을 양쪽 모두 자동 배치로 치른다" % combat_runs)
 	print("  자동 배치: 상대가 지난 합에 낸 유형을 읽어 맞받고(주인공 60%, 적 45%), 기세가 차면 절초를 낸다. 사건 선택도 자동")
 	print("  코드 전투는 판마다 형식·전장·목표가 바뀐다 (CombatManager.varied)")
-	print("전투 / 주인공 레벨: 승률 · 이긴 판의 남은 체력 평균 · 평균 합 수 · 판당 전사한 동료")
+	print("전투 / 주인공 경지: 승률 · 이긴 판의 남은 체력 평균 · 평균 합 수 · 판당 전사한 동료")
 	for combat_id in COMBATS:
 		if not only_combats.is_empty() and not only_combats.has(combat_id):
 			continue
@@ -82,7 +82,7 @@ func _run_combat() -> void:
 				if result["victory"]:
 					wins += 1
 					hp_sum += result["hp_ratio"]
-			line += " | Lv.%d 승 %3d%% 체력 %3d%% %4.1f합 전사 %.1f" % [
+			line += " | 경지 %d 승 %3d%% 체력 %3d%% %4.1f합 전사 %.1f" % [
 				level, roundi(100.0 * wins / combat_runs), roundi(100.0 * hp_sum / maxi(1, wins)),
 				float(rounds_sum) / combat_runs, float(fallen_sum) / combat_runs,
 			]
@@ -95,7 +95,7 @@ func _play_combat(gm: Node, combat_id: String, level: int) -> Dictionary:
 	gm.start_new_game("시뮬", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
 	gm.player_character.gain_experience(CharacterData.get_experience_for_level(level))
 	gm.player_character.restore_internal_energy()
-	# 레벨에 맞는 무공 하나를 익힌다 (Lv.3부터)
+	# 경지에 맞는 무공 하나를 익힌다 (경지 3부터)
 	if level >= 3:
 		gm.player_character.learn_martial_art(MartialArtLibrary.create_art("preset_soul_chase_sword"))
 	var setup: CombatSetup
@@ -155,7 +155,7 @@ func _run_world() -> void:
 
 func _run_economy() -> void:
 	var gm: Node = root.get_node("GameManager")
-	print("[경제] 전략별 10년 뒤 금화 / 식량 / 제자 / 명성 (시작: 금화 500, 식량 300)")
+	print("[경제] 전략별 10년 뒤 은자 / 식량 / 제자 / 명성 (시작: 은자 500, 식량 300)")
 	for strategy in _EconomySim.STRATEGIES:
 		for role in ["young_disciple", "leader"]:
 			seed(1)

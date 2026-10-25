@@ -4,12 +4,12 @@ extends RefCounted
 ## NPC 명부. data/npcs/*.json 한 파일이 한 명이다.
 ##
 ## 필드: id, display_name, title, sect_id, role(CharacterData.Role 이름), description,
-##       level, stats{능력치}, scaling(선택), named(선택)
-## scaling: { base_level, level_offset, per_level{능력치: 레벨당 증가} }
-##   → 레벨 = max(base_level, 플레이어 레벨 + level_offset), 능력치는 base_level 대비 증가
+##       level, stats{자질}, scaling(선택), named(선택)
+## scaling: { base_level, level_offset, per_level{자질: 경지당 증가} }
+##   → 경지 = max(base_level, 플레이어 경지 + level_offset), 자질은 base_level 대비 증가
 ## 새 게임 시작 관계는 문파 데이터(initial_bonds)가 정한다.
-## martial_arts: [{ id(MartialArtLibrary), min_level }] — 해당 레벨 이상이면 그 무공을 쓴다
-## war_specialty: 문파전 장수로 참전할 때 보너스를 주는 명령 (CHARGE, DEFEND, FLANK)
+## martial_arts: [{ id(MartialArtLibrary), min_level }] — 해당 경지 이상이면 그 무공을 쓴다
+## war_specialty: 문파전 장수로 참전할 때 가산을 주는 명령 (CHARGE, DEFEND, FLANK)
 
 const NPC_DIR := "res://data/npcs/"
 const STAT_FIELDS: PackedStringArray = [
@@ -42,7 +42,7 @@ static func get_display_name(npc_id: String) -> String:
 	return get_npc(npc_id).get("display_name", "무명")
 
 
-## NPC 데이터로 캐릭터를 만든다. player를 주면 scaling에 따라 레벨을 맞춘다.
+## NPC 데이터로 캐릭터를 만든다. player를 주면 scaling에 따라 경지를 맞춘다.
 static func create_character(npc_id: String, player: CharacterData = null) -> CharacterData:
 	var data: Dictionary = get_npc(npc_id)
 	var character := CharacterData.new()
@@ -103,13 +103,13 @@ static func validate_npc_dict(data: Dictionary) -> PackedStringArray:
 		if not data.get(key) is String or String(data.get(key)).is_empty():
 			errors.append("'%s'가 비어 있음" % key)
 	if not CharacterData.Role.has(data.get("role", "")):
-		errors.append("알 수 없는 역할: %s" % data.get("role"))
+		errors.append("알 수 없는 신분: %s" % data.get("role"))
 	for key in data.get("stats", {}):
 		if not key in STAT_FIELDS:
-			errors.append("알 수 없는 능력치: %s" % key)
+			errors.append("알 수 없는 자질: %s" % key)
 	for key in data.get("scaling", {}).get("per_level", {}):
 		if not key in STAT_FIELDS:
-			errors.append("알 수 없는 성장 능력치: %s" % key)
+			errors.append("알 수 없는 성장 자질: %s" % key)
 	for entry in data.get("martial_arts", []):
 		if not entry is Dictionary or not MartialArtLibrary.has_art(str(entry.get("id", ""))):
 			errors.append("알 수 없는 무공: %s" % entry)

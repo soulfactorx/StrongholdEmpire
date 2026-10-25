@@ -19,7 +19,7 @@ enum Role {
 @export var display_name: String = "무명"
 @export var role: Role = Role.YOUNG_DISCIPLE
 
-@export_group("기본 능력치")
+@export_group("기본 자질")
 @export var strength: int = 10
 @export var agility: int = 10
 @export var wisdom: int = 10
@@ -33,7 +33,7 @@ enum Role {
 @export var level: int = 1
 @export var experience: int = 0
 @export var age: int = 18
-## 초상화로 쓸 명부 인물 id (등장인물 선택 플레이). 비우면 역할 초상화
+## 초상화로 쓸 명부 인물 id (등장인물 선택 플레이). 비우면 신분 초상화
 @export var portrait_id: String = ""
 @export var morality: int = 55
 
@@ -67,17 +67,17 @@ static func get_role_display_name(role: Role) -> String:
 		Role.LEADER:
 			return "문주"
 		Role.MANAGER:
-			return "중간관리자"
+			return "총관"
 		Role.YOUNG_DISCIPLE:
 			return "막내 제자"
 		Role.WANDERER:
 			return "낭인"
 		Role.SPY:
-			return "스파이"
+			return "간자"
 		Role.ASSASSIN:
-			return "암살자"
+			return "자객"
 		Role.MERCENARY:
-			return "의뢰인"
+			return "청부객"
 		_:
 			return "알 수 없음"
 
@@ -94,7 +94,7 @@ func get_next_level_experience() -> int:
 	return get_experience_for_level(level + 1)
 
 
-## 누적 경험치를 더하고 도달한 만큼 레벨업한다. 오른 레벨 수를 반환한다.
+## 누적 수련을 더하고 도달한 만큼 경지업한다. 오른 경지 수를 반환한다.
 func gain_experience(amount: int) -> int:
 	if amount <= 0:
 		return 0
@@ -140,7 +140,7 @@ func knows_martial_art(art_id: String) -> bool:
 ## 보유 무공 목록 (무공마다 범주·오행·전투 수치·효과)
 func get_martial_arts_detail() -> String:
 	if martial_arts.is_empty():
-		return "아직 익힌 무공이 없습니다. 무공 연구소에서 창조하거나 비급을 연구하세요."
+		return "아직 익힌 무공이 없습니다. 장경각에서 창안하거나 비급을 참오하세요."
 	var lines: PackedStringArray = []
 	for art in martial_arts:
 		lines.append(art.get_detail_text())

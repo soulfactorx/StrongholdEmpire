@@ -51,7 +51,7 @@ static func get_military_power(sect: SectData, character: CharacterData) -> int:
 	return power
 
 
-## 적 문파의 전력. 문주 NPC의 능력치와 문파 규모로 계산한다.
+## 적 문파의 전력. 문주 NPC의 자질과 문파 규모로 계산한다.
 static func get_sect_power(sect: SectData) -> int:
 	var leader: CharacterData = NpcRoster.create_character(sect.leader_id)
 	return roundi(get_military_power(sect, leader) * ScenarioRules.enemy_strength_scale())
@@ -373,7 +373,7 @@ static func resolve_battle(
 		enemy_sect.disciple_count = maxi(0, enemy_sect.disciple_count - enemy_loss)
 		enemy_sect.reputation = maxi(0, enemy_sect.reputation - _Balance.WAR_ENEMY_REPUTATION_LOSS)
 		enemy_sect.attitude = maxi(-100, enemy_sect.attitude - _Balance.WAR_ATTITUDE_LOSS)
-		var message: String = "%s와의 문파전 승리! 명성 +%d, 금화 +%d (적 제자 -%d)" % [
+		var message: String = "%s와의 문파전 승리! 명성 +%d, 은자 +%d (적 제자 -%d)" % [
 			enemy_sect.sect_name, rep_gain, gold_gain, enemy_loss,
 		]
 		var subjugated: bool = false
@@ -382,7 +382,7 @@ static func resolve_battle(
 			enemy_sect.subjugated = true
 			player_sect.reputation += _Balance.SUBJUGATE_REPUTATION_BONUS
 			player_sect.gold += _Balance.SUBJUGATE_GOLD_BONUS
-			message += "\n%s이(가) 굴복했습니다! 명성 +%d, 금화 +%d" % [
+			message += "\n%s이(가) 굴복했습니다! 명성 +%d, 은자 +%d" % [
 				enemy_sect.sect_name, _Balance.SUBJUGATE_REPUTATION_BONUS, _Balance.SUBJUGATE_GOLD_BONUS,
 			]
 		return {

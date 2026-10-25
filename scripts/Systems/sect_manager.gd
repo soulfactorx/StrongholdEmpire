@@ -4,11 +4,11 @@ extends RefCounted
 const _Balance = preload("res://scripts/Systems/game_balance.gd")
 
 
-## 계절 유지비를 낸다. 모자라면 제자 이탈·명성 하락이 생기고 연속 부족 계절이 늘어난다.
+## 계절 씀씀이를 낸다. 모자라면 제자 이탈·명성 하락이 생기고 연속 부족 계절이 늘어난다.
 static func pay_upkeep(sect: SectData) -> Dictionary:
 	var food_cost: int = sect.get_food_upkeep()
 	var gold_cost: int = sect.get_gold_upkeep()
-	var parts: PackedStringArray = ["유지비: 식량 -%d, 금화 -%d" % [food_cost, gold_cost]]
+	var parts: PackedStringArray = ["씀씀이: 식량 -%d, 은자 -%d" % [food_cost, gold_cost]]
 	var shortage: bool = false
 	var deserted: int = 0
 
@@ -30,7 +30,7 @@ static func pay_upkeep(sect: SectData) -> Dictionary:
 		sect.gold = 0
 		var rep_loss: int = mini(sect.reputation, _Balance.GOLD_SHORTAGE_REPUTATION_LOSS)
 		sect.reputation -= rep_loss
-		parts.append("금화 부족! 급여가 밀려 명성 -%d" % rep_loss)
+		parts.append("은자 부족! 급여가 밀려 명성 -%d" % rep_loss)
 
 	if shortage:
 		sect.shortage_seasons += 1
@@ -53,7 +53,7 @@ static func train_disciples(sect: SectData, character: CharacterData) -> Diction
 	if sect.disciple_count >= sect.max_disciples:
 		return {"success": false, "message": "제자 정원이 가득 찼습니다."}
 	if not sect.spend_resources(_Balance.TRAIN_GOLD, _Balance.TRAIN_FOOD):
-		return {"success": false, "message": "자원이 부족합니다. (금화 30, 식량 20 필요)"}
+		return {"success": false, "message": "자원이 부족합니다. (은자 30, 식량 20 필요)"}
 
 	sect.disciple_count += 1
 	character.strength += 1
@@ -63,13 +63,13 @@ static func train_disciples(sect: SectData, character: CharacterData) -> Diction
 	return {"success": true, "message": "제자 훈련 완료! 문파 전력이 강해졌습니다."}
 
 
-## 시설 정보: 이름과 효과 설명. 수치는 GameBalance.FACILITIES
+## 전각 정보: 이름과 효과 설명. 수치는 GameBalance.FACILITIES
 const FACILITY_INFO: Dictionary = {
-	"library": {"name": "서고", "effect": "연구점 수입과 무공 연구 성공률"},
-	"training_ground": {"name": "무술장", "effect": "식량 수입, 문파전 전력, 제자 전투력"},
-	"treasury": {"name": "금고", "effect": "금화 수입"},
+	"library": {"name": "서고", "effect": "깨달음 수입과 무공 참오 성공률"},
+	"training_ground": {"name": "연무장", "effect": "식량 수입, 문파전 전력, 제자 전투력"},
+	"treasury": {"name": "금고", "effect": "은자 수입"},
 	"apothecary": {"name": "약방", "effect": "계절마다 내공 회복"},
-	"meditation_hall": {"name": "연공실", "effect": "계절마다 수련 경험치"},
+	"meditation_hall": {"name": "연공실", "effect": "계절마다 수련"},
 }
 
 
@@ -81,7 +81,7 @@ static func get_facility_level(sect: SectData, facility: String) -> int:
 	return int(sect.get(facility + "_level"))
 
 
-## 다음 단계로 확장하는 비용. 최대 레벨이면 -1
+## 다음 단계로 확장하는 비용. 최대 단계가면 -1
 static func get_upgrade_cost(sect: SectData, facility: String) -> int:
 	var spec: Array = _Balance.FACILITIES[facility]
 	var level: int = get_facility_level(sect, facility)
@@ -92,25 +92,25 @@ static func get_upgrade_cost(sect: SectData, facility: String) -> int:
 
 static func upgrade_facility(sect: SectData, facility: String) -> Dictionary:
 	if not _Balance.FACILITIES.has(facility):
-		return {"success": false, "message": "알 수 없는 시설입니다."}
+		return {"success": false, "message": "알 수 없는 전각입니다."}
 	var name: String = FACILITY_INFO[facility]["name"]
 	var cost: int = get_upgrade_cost(sect, facility)
 	if cost < 0:
 		return {"success": false, "message": "%s은(는) 이미 최고 수준입니다." % name}
 	if not sect.spend_resources(cost):
-		return {"success": false, "message": "금화가 부족합니다. (%d 필요)" % cost}
+		return {"success": false, "message": "은자가 부족합니다. (%d 필요)" % cost}
 	var level: int = get_facility_level(sect, facility) + 1
 	sect.set(facility + "_level", level)
 	var verb: String = "지었습니다" if level == 1 and _Balance.FACILITIES[facility][0] == 0 else "확장했습니다"
 	return {
 		"success": true,
-		"message": "%s을(를) %s (Lv.%d). %s 상승, 계절 유지비 금화 +%d" % [
+		"message": "%s을(를) %s (%d단계). %s 상승, 계절 씀씀이 은자 +%d" % [
 			name, verb, level, FACILITY_INFO[facility]["effect"], _Balance.FACILITY_UPKEEP_GOLD,
 		],
 	}
 
 
-## 이번 계절 수입 (적용 전 계산값). 역할 보정과 시나리오 수입 배율을 반영한다.
+## 이번 계절 수입 (적용 전 계산값). 신분 보정과 시나리오 수입 배율을 반영한다.
 static func compute_seasonal_income(sect: SectData, character: CharacterData, season: String) -> Dictionary:
 	var role_bonus: float = RoleManager.get_role_management_bonus(character.role)
 	var bonus: Array = _Balance.SEASON_INCOME_BONUS.get(season, [0, 0, 0])
@@ -130,7 +130,7 @@ static func compute_seasonal_income(sect: SectData, character: CharacterData, se
 	}
 
 
-## 해마다 재고 손실: 안전량을 넘는 금화·식량의 일부가 사라진다.
+## 해마다 재고 손실: 안전량을 넘는 은자·식량의 일부가 사라진다.
 static func apply_yearly_losses(sect: SectData) -> Dictionary:
 	var gold_loss: int = int(maxi(0, sect.gold - _Balance.GOLD_SAFE_AMOUNT) * _Balance.GOLD_LOSS_RATE)
 	var food_loss: int = int(maxi(0, sect.food - _Balance.FOOD_SAFE_AMOUNT) * _Balance.FOOD_SPOIL_RATE)
@@ -138,7 +138,7 @@ static func apply_yearly_losses(sect: SectData) -> Dictionary:
 	sect.food -= food_loss
 	var parts: PackedStringArray = []
 	if gold_loss > 0:
-		parts.append("쌓아 둔 재물을 노린 도둑과 관부의 수탈로 금화 -%d" % gold_loss)
+		parts.append("쌓아 둔 재물을 노린 도둑과 관부의 수탈로 은자 -%d" % gold_loss)
 	if food_loss > 0:
 		parts.append("곳간의 곡식이 상해 식량 -%d" % food_loss)
 	return {"gold_loss": gold_loss, "food_loss": food_loss, "message": ", ".join(parts)}

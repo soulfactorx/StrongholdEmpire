@@ -39,7 +39,7 @@ theme_override_constants/separation = 16
 [node name="Title" type="Label" parent="Margin/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
-text = "플레이 가이드"
+text = "강호 입문서"
 
 [node name="Scroll" type="ScrollContainer" parent="Margin/VBox"]
 layout_mode = 2

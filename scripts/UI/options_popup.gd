@@ -129,7 +129,7 @@ func _ready() -> void:
 	box.add_child(faction_report_check)
 	action_scenes_check = CheckButton.new()
 	action_scenes_check.name = "ActionScenesCheck"
-	action_scenes_check.text = "행동 대화 장면 (수련·연회·역할 행동 뒤에 인물과 대화)"
+	action_scenes_check.text = "행동 대화 장면 (수련·연회·신분 행동 뒤에 인물과 대화)"
 	action_scenes_check.custom_minimum_size = Vector2(0, 48)
 	action_scenes_check.toggled.connect(func(on: bool) -> void: GameSettings.set_and_save("action_scenes", on, get_tree()))
 	box.add_child(action_scenes_check)
