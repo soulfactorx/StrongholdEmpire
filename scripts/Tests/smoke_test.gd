@@ -63,6 +63,7 @@ const RUNTIME_SEQUENCE: Array = [
 	["combat", "_test_duel_formats"],
 	["combat", "_test_duel_variety_rules"],
 	["combat", "_test_duel_screen_formats"],
+	["events", "_test_action_scenes"],
 	["events", "_test_event_progress_tracking"],
 	["scenario", "_test_scenario_data"],
 	["scenario", "_test_scenario_parameters"],
@@ -135,9 +136,10 @@ func _initialize() -> void:
 	GameSettings.settings_path = TEST_SAVE_DIR.path_join("settings.cfg")
 	# 교전 줄 사이 간격 없이 바로 진행 (간격은 test_ui의 _test_input_and_tips에서 따로 시험)
 	GameSettings.combat_delay = 0.0
-	# 경영 행동 미리보기도 끈다 (켠 상태는 test_ui의 _test_action_preview에서 따로)
+	# 경영 행동 미리보기와 행동 대화 장면도 끈다 (켠 상태는 test_ui의 _test_action_preview, test_events의 _test_action_scenes에서 따로)
 	GameSettings.action_preview = false
 	GameSettings.faction_report = false
+	GameSettings.action_scenes = false
 	# 세력 AI는 계절마다 강호 세력 수치를 바꾸므로, 그 영향을 시험하는 곳에서만 켠다.
 	SectAI.active = false
 	# 우리 문파 직책 인물(NpcAgent)도 문파 수치를 바꾸므로 시험하는 곳에서만 켠다.
@@ -161,6 +163,7 @@ func _run_runtime_tests() -> void:
 	GameSettings.combat_delay = 0.0
 	GameSettings.action_preview = false
 	GameSettings.faction_report = false
+	GameSettings.action_scenes = false
 	# 각 검사가 끝까지 실행됐는지 확인한다. 스크립트 오류로 중단되면 완료 표시가 남지 않는다.
 	# 환경 변수 SMOKE_ONLY="검사1,검사2"를 주면 그 런타임 검사만 돌린다 (개발 중 빠른 확인용).
 	var only: PackedStringArray = OS.get_environment("SMOKE_ONLY").split(",", false)

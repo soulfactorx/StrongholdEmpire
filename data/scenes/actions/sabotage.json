@@ -1,0 +1,76 @@
+{
+  "action": "sabotage",
+  "scenes": [
+    {
+      "id": "sabotage_fire",
+      "title": "곳간의 불",
+      "result": "success",
+      "speaker": "$narrator",
+      "lines": [
+        "{target}의 곳간에서 연기가 피어오른다.",
+        "멀리서 종소리가 울리고 사람들이 물동이를 들고 뛴다. 그 틈에 어둠 속으로 사라졌다."
+      ],
+      "choices": [
+        {
+          "label": "뒤돌아보지 않는다",
+          "message": "도덕 -1",
+          "effects": [
+            {
+              "type": "character",
+              "field": "morality",
+              "add": -1
+            }
+          ]
+        },
+        {
+          "label": "다친 사람이 없기를 빈다"
+        }
+      ]
+    },
+    {
+      "id": "sabotage_guilt",
+      "title": "아이의 울음",
+      "speaker": "$narrator",
+      "lines": [
+        "일을 마치고 돌아서는 골목에서 {target} 제자의 어린 동생이 울고 있었다.",
+        "간자의 길은 늘 누군가의 눈물 위에 놓인다."
+      ],
+      "choices": [
+        {
+          "label": "눈을 질끈 감는다"
+        },
+        {
+          "label": "몰래 은자를 두고 간다",
+          "message": "도덕 +1, 금화 -5",
+          "effects": [
+            {
+              "type": "character",
+              "field": "morality",
+              "add": 1
+            },
+            {
+              "type": "sect",
+              "field": "gold",
+              "add": -5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sabotage_fail",
+      "title": "어긋난 계획",
+      "result": "fail",
+      "speaker": "$narrator",
+      "lines": [
+        "기름이 젖어 불이 붙지 않았다. 순찰의 발소리가 가까워진다.",
+        "담을 넘어 도망치며 이를 악문다."
+      ],
+      "choices": [
+        {
+          "label": "다음을 노린다"
+        }
+      ]
+    }
+  ]
+}

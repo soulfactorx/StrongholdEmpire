@@ -13,6 +13,7 @@ var text_option: OptionButton
 var speed_option: OptionButton
 var action_preview_check: CheckButton
 var faction_report_check: CheckButton
+var action_scenes_check: CheckButton
 var layout_option: OptionButton
 
 
@@ -125,7 +126,13 @@ func _ready() -> void:
 	faction_report_check.custom_minimum_size = Vector2(0, 48)
 	faction_report_check.toggled.connect(func(on: bool) -> void: GameSettings.set_and_save("faction_report", on, get_tree()))
 	box.add_child(faction_report_check)
-	for check in [fullscreen_check, action_preview_check, faction_report_check]:
+	action_scenes_check = CheckButton.new()
+	action_scenes_check.name = "ActionScenesCheck"
+	action_scenes_check.text = "행동 대화 장면 (수련·연회·역할 행동 뒤에 인물과 대화)"
+	action_scenes_check.custom_minimum_size = Vector2(0, 48)
+	action_scenes_check.toggled.connect(func(on: bool) -> void: GameSettings.set_and_save("action_scenes", on, get_tree()))
+	box.add_child(action_scenes_check)
+	for check in [fullscreen_check, action_preview_check, faction_report_check, action_scenes_check]:
 		check.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var note := Label.new()
 	note.text = "글자 크기는 다음에 여는 화면부터 적용됩니다."
@@ -147,6 +154,7 @@ func open() -> void:
 	fullscreen_check.set_pressed_no_signal(GameSettings.fullscreen)
 	action_preview_check.set_pressed_no_signal(GameSettings.action_preview)
 	faction_report_check.set_pressed_no_signal(GameSettings.faction_report)
+	action_scenes_check.set_pressed_no_signal(GameSettings.action_scenes)
 	layout_option.select(GameSettings.layout_mode)
 	for i in GameSettings.TEXT_SCALES.size():
 		if is_equal_approx(GameSettings.TEXT_SCALES[i][1], GameSettings.text_scale):

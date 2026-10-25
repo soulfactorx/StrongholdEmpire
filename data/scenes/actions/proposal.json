@@ -1,0 +1,88 @@
+{
+  "action": "proposal",
+  "scenes": [
+    {
+      "id": "proposal_yes",
+      "title": "받아들여진 건의",
+      "result": "success",
+      "speaker": [
+        "$leader",
+        "$narrator"
+      ],
+      "lines": [
+        "{speaker}: 음… 생각지 못한 방도로군. 그대로 시행하라.",
+        "주변의 원로들이 당신을 다시 보는 눈치다."
+      ],
+      "choices": [
+        {
+          "label": "공을 문주께 돌린다",
+          "message": "유대 +2",
+          "effects": [
+            {
+              "type": "bond",
+              "target": "$speaker",
+              "add": 2
+            }
+          ]
+        },
+        {
+          "label": "자부심을 숨기지 않는다"
+        }
+      ]
+    },
+    {
+      "id": "proposal_no",
+      "title": "꺾인 건의",
+      "result": "fail",
+      "speaker": [
+        "$leader",
+        "$narrator"
+      ],
+      "lines": [
+        "{speaker}: 쓸데없는 소리. 문파 일은 내가 정한다.",
+        "회의장을 나서는 등 뒤로 수군거림이 들린다."
+      ],
+      "choices": [
+        {
+          "label": "묵묵히 물러난다"
+        },
+        {
+          "label": "다음엔 더 다듬어 오겠다고 말한다",
+          "message": "유대 +1",
+          "effects": [
+            {
+              "type": "bond",
+              "target": "$speaker",
+              "add": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "proposal_night",
+      "title": "밤의 독대",
+      "speaker": [
+        "$leader",
+        "$narrator"
+      ],
+      "lines": [
+        "늦은 밤, 문주가 당신을 따로 불렀다.",
+        "{speaker}: 낮에는 사람들 눈이 있어 그리 말했네. 자네 뜻은 알고 있으니 너무 서운해 말게."
+      ],
+      "choices": [
+        {
+          "label": "고개를 숙인다",
+          "message": "유대 +1",
+          "effects": [
+            {
+              "type": "bond",
+              "target": "$speaker",
+              "add": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

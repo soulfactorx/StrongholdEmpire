@@ -1,0 +1,119 @@
+{
+  "action": "elixir",
+  "scenes": [
+    {
+      "id": "elixir_healer",
+      "title": "약방의 처방",
+      "speaker": [
+        "$officer:healer",
+        "npc_healer",
+        "$narrator"
+      ],
+      "lines": [
+        "{speaker}: 이 영약은 기혈을 크게 돌립니다. 하룻밤은 열이 오를 테니 놀라지 마세요.",
+        "{player}: 쓴맛이 혀끝에 오래 남는구려.",
+        "{speaker}: 좋은 약은 입에 쓰다지요. 단전에 기를 모으세요."
+      ],
+      "choices": [
+        {
+          "label": "고맙다고 인사한다",
+          "message": "유대 +1",
+          "effects": [
+            {
+              "type": "bond",
+              "target": "$speaker",
+              "add": 1
+            }
+          ]
+        },
+        {
+          "label": "단숨에 들이켠다"
+        }
+      ]
+    },
+    {
+      "id": "elixir_merchant",
+      "title": "약재상의 흥정",
+      "speaker": [
+        "npc_merchant",
+        "$narrator"
+      ],
+      "lines": [
+        "{speaker}: 장백산 삼 백 년 묵은 뿌리요! 다른 데선 두 배는 부르지요.",
+        "{player}: 백 년이라더니 잔뿌리가 너무 싱싱한데.",
+        "{speaker}: 허허, 눈이 밝으시구려. 그럼 덤으로 감초 한 줌 얹어 드리지요."
+      ],
+      "choices": [
+        {
+          "label": "웃으며 받는다",
+          "message": "유대 +1",
+          "effects": [
+            {
+              "type": "bond",
+              "target": "$speaker",
+              "add": 1
+            }
+          ]
+        },
+        {
+          "label": "다음엔 속지 않겠다고 한다",
+          "message": "지혜 +1 (값을 깎는 법을 익혔다)",
+          "effects": [
+            {
+              "type": "character",
+              "field": "wisdom",
+              "add": 1
+            },
+            {
+              "type": "bond",
+              "target": "$speaker",
+              "add": -1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "elixir_night",
+      "title": "운기의 밤",
+      "speaker": "$narrator",
+      "lines": [
+        "영약의 기운이 단전에서 뜨겁게 피어오른다.",
+        "{player}은(는) 가부좌를 틀고 밤새 기혈을 돌렸다. 새벽녘, 손끝까지 맑은 기운이 흐른다."
+      ],
+      "choices": [
+        {
+          "label": "숨을 고른다"
+        }
+      ]
+    },
+    {
+      "id": "elixir_bond",
+      "title": "걱정하는 이",
+      "speaker": [
+        "$bond"
+      ],
+      "lines": [
+        "{speaker}: 영약을 또 드셨다고요? 몸을 너무 혹사하시는 것 아니에요?",
+        "{player}: 강해지지 않으면 지킬 수 없는 것들이 있소.",
+        "{speaker}: …그래도 무리는 하지 마세요."
+      ],
+      "choices": [
+        {
+          "label": "걱정해 줘서 고맙다고 한다",
+          "message": "유대 +2",
+          "effects": [
+            {
+              "type": "bond",
+              "target": "$speaker",
+              "add": 2
+            }
+          ]
+        },
+        {
+          "label": "괜찮다며 웃어넘긴다"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "action": "envoy",
+  "scenes": [
+    {
+      "id": "envoy_leader",
+      "title": "사절의 귀환",
+      "speaker": [
+        "$target_leader",
+        "$narrator"
+      ],
+      "lines": [
+        "사절이 {target}에서 돌아와 그곳 문주의 말을 전했다.",
+        "{speaker}: 「귀파의 예물은 잘 받았소. 강호가 험하니 서로 칼끝을 겨누지 맙시다.」",
+        "{player}: 말 한마디에 피 한 방울이 덜 흐르면 그것으로 족하다."
+      ],
+      "choices": [
+        {
+          "label": "답례 서신을 보낸다"
+        }
+      ]
+    },
+    {
+      "id": "envoy_cold",
+      "title": "냉담한 답",
+      "result": "fail",
+      "speaker": [
+        "$target_leader",
+        "$narrator"
+      ],
+      "lines": [
+        "사절이 굳은 얼굴로 돌아왔다.",
+        "{speaker}: 「예물로 마음을 살 수 있다 생각했다면 오산이오.」",
+        "{player}: …시간이 걸리겠군."
+      ],
+      "choices": [
+        {
+          "label": "다시 기회를 보겠다"
+        }
+      ]
+    },
+    {
+      "id": "envoy_road",
+      "title": "사절의 여정",
+      "speaker": "$narrator",
+      "lines": [
+        "사절단이 {target}(으)로 가는 길에 산적을 만났으나, 예물 상자를 보고도 물러났다고 한다.",
+        "\"{sect}의 깃발을 보고 감히 덤비지 못하더이다.\" 사절이 웃으며 보고했다."
+      ],
+      "choices": [
+        {
+          "label": "사절을 치하한다",
+          "message": "명성 +1",
+          "effects": [
+            {
+              "type": "sect",
+              "field": "reputation",
+              "add": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

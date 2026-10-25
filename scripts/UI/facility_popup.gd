@@ -111,6 +111,7 @@ func _on_upgrade_pressed(facility: String) -> void:
 
 func _upgrade(facility: String) -> void:
 	var result: Dictionary = GameManager.upgrade_facility(facility)
+	result["facility_name"] = SectManager.FACILITY_INFO[facility]["name"]
 	_UiTheme.show_notice(notice_label, result)
 	upgraded.emit(result)
 	_refresh()

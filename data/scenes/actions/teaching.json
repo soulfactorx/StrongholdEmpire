@@ -1,0 +1,129 @@
+{
+  "action": "teaching",
+  "scenes": [
+    {
+      "id": "teach_master",
+      "title": "스승의 가르침",
+      "speaker": [
+        "$master",
+        "$leader",
+        "$officer:instructor"
+      ],
+      "lines": [
+        "{speaker}: 검을 들기 전에 먼저 마음을 내려놓아라.",
+        "{player}: 마음을 내려놓으면 무엇으로 검을 쥡니까?",
+        "{speaker}: …허허, 그 물음이 바로 오늘의 공부다."
+      ],
+      "choices": [
+        {
+          "label": "깊이 고개를 숙인다",
+          "message": "유대 +1",
+          "effects": [
+            {
+              "type": "bond",
+              "target": "$speaker",
+              "add": 1
+            }
+          ]
+        },
+        {
+          "label": "다시 묻는다",
+          "message": "지혜 +1 (스승이 한참을 웃었다)",
+          "effects": [
+            {
+              "type": "character",
+              "field": "wisdom",
+              "add": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "teach_fail",
+      "title": "엇나간 수련",
+      "result": "fail",
+      "speaker": [
+        "$master",
+        "$leader",
+        "$narrator"
+      ],
+      "lines": [
+        "{speaker}: 오늘은 마음이 콩밭에 가 있구나. 그만 쉬어라.",
+        "부끄러움에 얼굴이 달아오른다."
+      ],
+      "choices": [
+        {
+          "label": "밤새 혼자 연습한다",
+          "message": "무력 +1, 내공 -10",
+          "effects": [
+            {
+              "type": "character",
+              "field": "strength",
+              "add": 1
+            },
+            {
+              "type": "character",
+              "field": "internal_energy_current",
+              "add": -10
+            }
+          ]
+        },
+        {
+          "label": "일찍 잠자리에 든다"
+        }
+      ]
+    },
+    {
+      "id": "teach_story",
+      "title": "옛이야기",
+      "speaker": [
+        "$master",
+        "$leader"
+      ],
+      "lines": [
+        "수련을 마치고 {speaker}이(가) 차를 따르며 젊은 날을 이야기했다.",
+        "{speaker}: 나도 너만 할 땐 사부께 매일 혼났지. 그때는 몰랐다, 그게 사랑이었다는 걸."
+      ],
+      "choices": [
+        {
+          "label": "조용히 듣는다",
+          "message": "유대 +2",
+          "effects": [
+            {
+              "type": "bond",
+              "target": "$speaker",
+              "add": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "teach_snow",
+      "title": "첫눈",
+      "if": [
+        {
+          "type": "season",
+          "in": [
+            "겨울"
+          ]
+        }
+      ],
+      "speaker": [
+        "$master",
+        "$leader"
+      ],
+      "lines": [
+        "첫눈이 내리는 날, {speaker}이(가) 눈송이 하나를 검끝에 얹어 보였다.",
+        "{speaker}: 눈송이가 녹지 않을 만큼만 힘을 써 보아라."
+      ],
+      "choices": [
+        {
+          "label": "따라 해 본다",
+          "message": "검끝의 눈송이가 녹아내립니다. 아직 멀었다."
+        }
+      ]
+    }
+  ]
+}

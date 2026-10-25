@@ -837,6 +837,7 @@ func _test_map_screens() -> void:
 	hub._on_advance_turn_pressed()
 	SectAI.active = false
 	GameSettings.faction_report = false
+	GameSettings.action_scenes = false
 	_check(hub.faction_popup.visible and hub.faction_popup._message.text.contains("전략"), "계절을 넘기면 세력 동향 창")
 	hub.faction_popup.visible = false
 

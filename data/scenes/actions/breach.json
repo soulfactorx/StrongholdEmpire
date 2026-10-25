@@ -1,0 +1,63 @@
+{
+  "action": "breach",
+  "scenes": [
+    {
+      "id": "breach_cold",
+      "title": "배신의 대가",
+      "speaker": [
+        "$target_leader",
+        "$narrator"
+      ],
+      "lines": [
+        "의뢰주를 팔아넘긴 대가로 받은 금화가 묵직하다.",
+        "등 뒤에서 누군가 침을 뱉는다. \"돈이면 뭐든 하는 놈.\""
+      ],
+      "choices": [
+        {
+          "label": "돈주머니를 쥔다",
+          "message": "도덕 -2",
+          "effects": [
+            {
+              "type": "character",
+              "field": "morality",
+              "add": -2
+            }
+          ]
+        },
+        {
+          "label": "금화 일부를 버린다",
+          "message": "도덕 -1, 금화 -10",
+          "effects": [
+            {
+              "type": "character",
+              "field": "morality",
+              "add": -1
+            },
+            {
+              "type": "sect",
+              "field": "gold",
+              "add": -10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "breach_drink",
+      "title": "씁쓸한 술",
+      "speaker": [
+        "npc_innkeeper",
+        "$narrator"
+      ],
+      "lines": [
+        "{speaker}: 오늘은 웬일로 비싼 술을 시키시네요.",
+        "잔을 비워도 입이 쓰다."
+      ],
+      "choices": [
+        {
+          "label": "한 병 더 시킨다"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "action": "transmit",
+  "scenes": [
+    {
+      "id": "transmit_vow",
+      "title": "전수의 예",
+      "speaker": "$disciple",
+      "lines": [
+        "향을 피우고 조사의 위패 앞에 섰다.",
+        "{player}: 이제부터 「{detail}」은(는) 너의 것이다. 함부로 쓰지 말고, 약한 자를 위해 써라.",
+        "{speaker}: 목숨을 걸고 지키겠습니다!"
+      ],
+      "choices": [
+        {
+          "label": "고개를 끄덕인다"
+        }
+      ]
+    },
+    {
+      "id": "transmit_fail",
+      "title": "아직은",
+      "result": "fail",
+      "speaker": "$disciple",
+      "lines": [
+        "{speaker}: 송구합니다… 아직 그 초식을 감당하기엔 부족한가 봅니다.",
+        "{player}: 괜찮다. 때가 오면 저절로 열린다."
+      ],
+      "choices": [
+        {
+          "label": "등을 두드려 준다"
+        }
+      ]
+    },
+    {
+      "id": "transmit_memory",
+      "title": "스승의 말",
+      "speaker": "$disciple",
+      "lines": [
+        "「{detail}」을(를) 가르치다 문득 옛 스승의 목소리가 떠올랐다.",
+        "{player}: 내 스승께서도 이 대목에서 똑같이 혼내셨지.",
+        "{speaker}이(가) 키득거리다 다시 자세를 고쳐 잡는다."
+      ],
+      "choices": [
+        {
+          "label": "웃으며 다시 가르친다"
+        }
+      ]
+    }
+  ]
+}

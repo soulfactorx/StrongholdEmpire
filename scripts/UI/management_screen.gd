@@ -71,13 +71,14 @@ func _ready() -> void:
 	_UiTheme.apply_to_control(self)
 	facility_popup = _FacilityPopup.new()
 	add_child(facility_popup)
-	facility_popup.upgraded.connect(_execute_action)
+	facility_popup.upgraded.connect(func(result: Dictionary) -> void: _execute_action(result, "facility", {"detail": str(result.get("facility_name", ""))}))
 	choice_popup = _ChoicePopup.new()
 	add_child(choice_popup)
 	choice_popup.chosen.connect(_on_role_target_chosen)
 	disciple_popup = _DisciplePopup.new()
 	add_child(disciple_popup)
-	disciple_popup.changed.connect(_execute_action)
+	disciple_popup.changed.connect(func(result: Dictionary) -> void:
+		_execute_action(result, str(result.get("scene_action", "")), {"disciple_name": str(result.get("disciple_name", "")), "detail": str(result.get("art_name", ""))}))
 	bond_popup = _BondPopup.new()
 	add_child(bond_popup)
 	bond_popup.acted.connect(_on_bond_acted)
@@ -103,6 +104,7 @@ func _ready() -> void:
 	_connect_bus(EventBus.relationships_changed, _on_relationships_changed)
 	_connect_bus(EventBus.action_message, _on_action_message)
 	_connect_bus(EventBus.event_triggered, _on_event_triggered)
+	_connect_bus(EventBus.action_scene_triggered, _on_action_scene)
 	_connect_bus(EventBus.role_transitions_available, _on_role_transitions_available)
 	_connect_bus(EventBus.role_changed, _on_role_changed)
 	_connect_bus(EventBus.ending_reached, _on_ending_reached)
@@ -119,6 +121,9 @@ func _ready() -> void:
 	_attach_tips()
 	if not GameManager.pending_event.is_empty():
 		event_popup.show_event(GameManager.pending_event)
+	elif not GameManager.pending_action_scene.is_empty():
+		# 고르지 않고 화면을 떠났던 대화 장면을 다시 띄운다
+		event_popup.show_event(GameManager.pending_action_scene)
 	_show_invasion()
 	# 게임패드가 있으면 계절 진행에 포커스를 두어 바로 조작할 수 있게 한다.
 	if not Input.get_connected_joypads().is_empty() and not event_popup.visible:
@@ -419,7 +424,10 @@ func _simulate_role_action(action_id: String, target_id: String) -> Dictionary:
 func _do_role_action(action_id: String, target_id: String) -> void:
 	var result: Dictionary = GameManager.do_role_action(action_id, target_id)
 	var lines: PackedStringArray = result.get("dialogue", PackedStringArray())
-	_on_action_message(result["message"] + ("\n" + "\n".join(lines) if not lines.is_empty() else ""))
+	if GameManager.show_action_scene(_role_scene_id(action_id, target_id), result, _role_scene_context(action_id, target_id)):
+		log_label.text = result["message"]
+	else:
+		_on_action_message(result["message"] + ("\n" + "\n".join(lines) if not lines.is_empty() else ""))
 	if result["success"]:
 		AudioManager.play_success()
 	else:
@@ -655,11 +663,46 @@ func _on_game_over(_game_over_id: String) -> void:
 	SceneRouter.goto(get_tree(), SceneRouter.ENDING)
 
 
-func _execute_action(result: Dictionary) -> void:
-	EventBus.action_message.emit(result["message"])
+## 경영 행동의 결과: 대화 장면(ActionScenes)을 띄울 수 있으면 장면 안에 결과를 보이고, 아니면 알림으로
+func _execute_action(result: Dictionary, action_id: String = "", context: Dictionary = {}) -> void:
+	if not action_id.is_empty() and GameManager.show_action_scene(action_id, result, context):
+		log_label.text = result["message"]
+	else:
+		EventBus.action_message.emit(result["message"])
 	if result["success"]:
 		EventBus.resources_changed.emit(GameManager.player_sect)
 		EventBus.character_updated.emit(GameManager.player_character)
+
+
+## 역할 행동의 장면 id: 의뢰 게시판은 의뢰마다(호위·수색), 그 밖에는 행동 id
+func _role_scene_id(action_id: String, target_id: String) -> String:
+	return "job_%s" % target_id if action_id == "job_board" else action_id
+
+
+## 역할 행동 장면의 인물·대상: 상대 세력과 그 문주, 부서·의뢰 이름, 스승·문주
+func _role_scene_context(action_id: String, target_id: String) -> Dictionary:
+	var context: Dictionary = {"title": RoleActions.ACTIONS[action_id]["title"]}
+	var sect: SectData = GameManager.get_world_sect(target_id) if not target_id.is_empty() else null
+	if sect:
+		context["target_name"] = sect.sect_name
+		context["target_leader_id"] = sect.leader_id
+	elif RoleActions.DEPARTMENTS.has(target_id):
+		context["detail"] = RoleActions.DEPARTMENTS[target_id]["title"]
+	elif RoleActions.JOBS.has(target_id):
+		context["detail"] = RoleActions.JOBS[target_id]["title"]
+	var contract: Dictionary = GameManager.role_state.get("contract", {}) if GameManager.role_state.get("contract") is Dictionary else {}
+	if not contract.is_empty() and GameManager.get_world_sect(str(contract.get("sect", ""))):
+		var client: SectData = GameManager.get_world_sect(str(contract["sect"]))
+		context["target_name"] = client.sect_name
+		context["target_leader_id"] = client.leader_id
+	return context
+
+
+## 경영 행동 뒤의 대화 장면: 기연 창으로 보이고, 고르면 GameManager.resolve_action_scene
+func _on_action_scene(scene: Dictionary) -> void:
+	AudioManager.play_event()
+	event_popup.show_event(scene)
+	event_popup.move_to_front()
 
 
 func _on_advance_turn_pressed() -> void:
@@ -691,7 +734,7 @@ func _advance_preview_text() -> String:
 func _on_train_pressed() -> void:
 	ActionPreview.confirm(self, "제자 수련",
 		func() -> Dictionary: return SectManager.train_disciples(GameManager.player_sect, GameManager.player_character),
-		func() -> void: _execute_action(SectManager.train_disciples(GameManager.player_sect, GameManager.player_character))
+		func() -> void: _execute_action(SectManager.train_disciples(GameManager.player_sect, GameManager.player_character), "train", {"title": "제자 수련"})
 	)
 
 
@@ -718,11 +761,11 @@ func _on_facility_pressed() -> void:
 
 
 func _on_elixir_pressed() -> void:
-	ActionPreview.confirm(self, "영약 구매", GameManager.buy_elixir, func() -> void: _execute_action(GameManager.buy_elixir()))
+	ActionPreview.confirm(self, "영약 구매", GameManager.buy_elixir, func() -> void: _execute_action(GameManager.buy_elixir(), "elixir", {"title": "영약 구매"}))
 
 
 func _on_feast_pressed() -> void:
-	ActionPreview.confirm(self, "문파 연회", GameManager.hold_feast, func() -> void: _execute_action(GameManager.hold_feast()))
+	ActionPreview.confirm(self, "문파 연회", GameManager.hold_feast, func() -> void: _execute_action(GameManager.hold_feast(), "feast", {"title": "문파 연회"}))
 
 
 func _on_martial_art_pressed() -> void:

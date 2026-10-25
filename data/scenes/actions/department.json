@@ -1,0 +1,53 @@
+{
+  "action": "department",
+  "scenes": [
+    {
+      "id": "dept_leader",
+      "title": "새 소임",
+      "speaker": [
+        "$leader",
+        "$officer:steward"
+      ],
+      "lines": [
+        "{speaker}: {detail} 일을 맡겠다고? 쉽지 않을 걸세.",
+        "{player}: 맡겨 주시면 반드시 성과를 내겠습니다.",
+        "{speaker}: 좋아. 자네를 믿어 보지."
+      ],
+      "choices": [
+        {
+          "label": "머리를 숙인다",
+          "message": "유대 +1",
+          "effects": [
+            {
+              "type": "bond",
+              "target": "$speaker",
+              "add": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dept_ledger",
+      "title": "장부 더미",
+      "speaker": "$narrator",
+      "lines": [
+        "{detail} 일을 맡자 책상 위에 장부가 산처럼 쌓였다.",
+        "먹을 갈고, 밤을 새우고, 또 먹을 간다. 강호의 일도 결국 누군가는 셈해야 한다."
+      ],
+      "choices": [
+        {
+          "label": "소매를 걷어붙인다",
+          "message": "지혜 +1",
+          "effects": [
+            {
+              "type": "character",
+              "field": "wisdom",
+              "add": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

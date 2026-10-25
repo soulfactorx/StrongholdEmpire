@@ -16,6 +16,10 @@ var world_sects: Array[SectData] = []
 var player_relationships: Array[RelationshipData] = []
 var triggered_event_ids: Array[String] = []
 var pending_event: Dictionary = {}
+## 고르기를 기다리는 행동 대화 장면 (ActionScenes.build의 결과). 저장하지 않는다
+var pending_action_scene: Dictionary = {}
+## 행동마다 최근에 본 장면 id (같은 장면이 이어지지 않게)
+var _recent_action_scenes: Dictionary = {}
 var story_flags: Dictionary = {}
 ## 플래그 이름 → 켜진 계절. 기연의 turns_since_flag 조건에 쓴다.
 var flag_turns: Dictionary = {}
@@ -300,6 +304,8 @@ func _initialize_new_game(
 	observed_arts = {}
 	duel_memory = {}
 	art_mastery = {}
+	pending_action_scene = {}
+	_recent_action_scenes = {}
 	owned_manuals.clear()
 	analyzed_elements = []
 	challenge_target = ""
@@ -1862,6 +1868,40 @@ func finish_combat(outcome: CombatManager.Outcome, fallen_allies: int = 0, falle
 	return result
 
 
+## 경영 행동 뒤의 대화 장면을 띄운다. 띄웠으면 true (그러면 결과 알림은 장면 안에 보인다).
+## 설정에서 껐거나, 기연·장면이 이미 기다리거나, 행동이 전투·기연으로 이어지면 띄우지 않는다.
+func show_action_scene(action_id: String, result: Dictionary, context: Dictionary = {}) -> bool:
+	if not GameSettings.action_scenes or is_game_over() or not pending_event.is_empty() or not pending_action_scene.is_empty():
+		return false
+	if result.has("combat") or result.has("event") or pending_combat != null:
+		return false
+	var recent: Array = _recent_action_scenes.get(action_id, [])
+	var scene: Dictionary = ActionScenes.build(self, action_id, result, context, recent)
+	if scene.is_empty():
+		return false
+	recent.append(scene["scene_id"])
+	_recent_action_scenes[action_id] = recent.slice(maxi(0, recent.size() - 3))
+	pending_action_scene = scene
+	EventBus.action_scene_triggered.emit(scene)
+	return true
+
+
+## 행동 대화 장면의 선택지를 고른다: 작은 여파(유대 등)를 반영하고 알림을 남긴다
+func resolve_action_scene(index: int) -> void:
+	if pending_action_scene.is_empty():
+		return
+	var options: Array = pending_action_scene["options"]
+	var option: Dictionary = options[clampi(index, 0, options.size() - 1)]
+	pending_action_scene = {}
+	if not option["effects"].is_empty():
+		EventManager.apply_effects(option["effects"], player_character, player_sect, player_relationships, story_flags)
+	if not str(option["message"]).is_empty():
+		EventBus.action_message.emit(option["message"])
+	EventBus.resources_changed.emit(player_sect)
+	EventBus.character_updated.emit(player_character)
+	EventBus.relationships_changed.emit(player_relationships)
+
+
 ## 대결 요약을 반영하고 결과 문장 조각을 돌려준다: 평가, 도전 보상, 받아 낸 절초(연구점), 사건 선택 효과, 비무대회 성적 플래그
 func _apply_combat_summary(summary: Dictionary) -> PackedStringArray:
 	var parts: PackedStringArray = []
@@ -2002,6 +2042,7 @@ func load_game(slot: int = 1) -> Dictionary:
 
 
 func _apply_save_data(data: Dictionary) -> void:
+	pending_action_scene = {}
 	# 시나리오를 먼저 켜야 전용 인물·문파·기연이 준비된다. 구버전 세이브는 기본 시나리오.
 	ScenarioManager.activate(
 		data.get("scenario_id", ScenarioManager.DEFAULT_ID),

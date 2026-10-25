@@ -171,7 +171,8 @@ func _on_deploy_pressed(disciple_id: String) -> void:
 func _on_train_pressed(disciple_id: String) -> void:
 	var train := func() -> Dictionary:
 		return DiscipleRoster.train(GameManager.player_sect, disciple_id, GameManager._get_turn_index())
-	ActionPreview.confirm(self, "제자 개별 수련", train, func() -> void: _apply(train.call()))
+	var name: String = DiscipleRoster.get_disciple(GameManager.player_sect, disciple_id).display_name
+	ActionPreview.confirm(self, "제자 개별 수련", train, func() -> void: _apply(train.call(), "disciple_train", name))
 
 
 func _on_transmit_pressed(disciple_id: String) -> void:
@@ -211,10 +212,16 @@ func _on_art_chosen(art_id: String) -> void:
 			chosen = art
 	var target: String = _transmit_target
 	var transmit := func() -> Dictionary: return DiscipleRoster.transmit(GameManager.player_sect, target, chosen)
-	ActionPreview.confirm(self, "무공 전수", transmit, func() -> void: _apply(transmit.call()))
+	var name: String = DiscipleRoster.get_disciple(GameManager.player_sect, target).display_name
+	ActionPreview.confirm(self, "무공 전수", transmit, func() -> void: _apply(transmit.call(), "transmit", name, chosen.display_name))
 
 
-func _apply(result: Dictionary) -> void:
+## 결과를 알린다. scene_action이 있으면 경영 화면이 그 행동의 대화 장면을 띄운다 (제자 이름·무공 이름과 함께)
+func _apply(result: Dictionary, scene_action: String = "", disciple_name: String = "", art_name: String = "") -> void:
+	if not scene_action.is_empty():
+		result["scene_action"] = scene_action
+		result["disciple_name"] = disciple_name
+		result["art_name"] = art_name
 	_UiTheme.show_notice(notice_label, result)
 	if result.get("success", false):
 		AudioManager.play_success()

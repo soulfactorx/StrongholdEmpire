@@ -544,6 +544,100 @@ func _test_story_arcs() -> void:
 const SAGA_IDS: Array = ["saga_1_blood_moon", "saga_2_black_lotus", "saga_3_blue_sky"]
 
 
+## 행동 대화 장면: 데이터가 다 읽히고, 어느 역할·결과에도 장면이 있고, 경영 화면에서 행동하면 대화 창이 뜬다
+func _test_action_scenes() -> void:
+	var g: Node = gm()
+	ActionScenes.reload_data()
+	# 경영 화면의 행동마다 장면 (전투·기연으로 이어지는 토벌·표적 의뢰와 이동은 빼고)
+	var actions: Array = ["train", "elixir", "feast", "facility", "disciple_train", "transmit", "council", "envoy", "department",
+		"proposal", "teaching", "outing", "job_escort", "job_search", "intel", "sabotage", "lie_low", "contract", "fulfill", "breach"]
+	var missing: Array = actions.filter(func(a: String) -> bool: return ActionScenes.get_scenes(a).size() < 2)
+	_check(missing.is_empty(), "행동 장면: 행동마다 장면 둘 이상 (%s)" % [missing])
+	var total: int = 0
+	for path in EventManager.collect_json_files(ActionScenes.SCENE_DIR):
+		total += JSON.parse_string(FileAccess.get_file_as_string(path))["scenes"].size()
+	var loaded: int = actions.reduce(func(sum: int, a: String) -> int: return sum + ActionScenes.get_scenes(a).size(), 0)
+	_check(loaded == total, "행동 장면: 모든 장면이 검사를 통과해 읽힘 (%d/%d)" % [loaded, total])
+	# 역할마다, 성공·실패 모두에 고를 장면이 있다 (서술 장면이 받쳐 준다)
+	var roles: Dictionary = {
+		"leader": ["train", "elixir", "feast", "facility", "disciple_train", "transmit", "council", "envoy"],
+		"manager": ["department", "proposal"], "young_disciple": ["teaching", "outing"], "wanderer": ["job_escort", "job_search"],
+		"spy": ["intel", "sabotage"], "assassin": ["lie_low"], "mercenary": ["contract", "fulfill", "breach"],
+	}
+	var empty: Array = []
+	for role in roles:
+		_new_quiet_game(g, role)
+		for action in roles[role]:
+			for success in [true, false]:
+				var scene: Dictionary = ActionScenes.build(g, action, {"success": success, "message": "결과"}, {"title": action, "disciple_name": "갑돌", "detail": "서고", "target_name": "흑풍채", "target_leader_id": "npc_heukpung_chief"})
+				if scene.is_empty() or scene["description"].contains("{") or not scene["description"].contains("【결과】"):
+					empty.append("%s/%s/%s" % [role, action, success])
+	_check(empty.is_empty(), "행동 장면: 역할·결과마다 장면이 있고 빈칸이 다 채워짐 (%s)" % [empty])
+	# 서술 장면: "{speaker}:" 줄이 이름 없이 따옴표 대사로
+	_new_quiet_game(g, "young_disciple")
+	var narrated: Dictionary = ActionScenes._compose(g, {"id": "x", "lines": ["{speaker}: 반갑소.", "{speaker}이(가) 웃는다."]}, {"id": "", "name": ""}, {"message": ""}, {})
+	_check(narrated["description"].begins_with("“반갑소.”") and narrated["description"].contains("상대이(가)"), "행동 장면: 말할 인물이 없으면 서술로")
+	# 같은 장면이 이어지지 않는다
+	var seen: Dictionary = {}
+	var recent: Array = []
+	for i in 6:
+		var scene: Dictionary = ActionScenes.build(g, "outing", {"success": true, "message": ""}, {}, recent)
+		_check(not scene["scene_id"] in recent.slice(maxi(0, recent.size() - 1)), "행동 장면: 바로 앞 장면은 피함") if i == 1 else null
+		recent.append(scene["scene_id"])
+		seen[scene["scene_id"]] = true
+	_check(seen.size() >= 3, "행동 장면: 여러 장면이 돌아가며 나옴 (%d가지)" % seen.size())
+
+	# 경영 화면: 연회를 열면 대화 창이 뜨고, 고르면 작은 여파와 알림
+	GameSettings.action_scenes = true
+	_new_quiet_game(g, "leader")
+	g.player_sect.gold = 500
+	g.player_sect.food = 500
+	SceneRouter.goto(tree, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	var hub: Node = current_scene
+	var reputation: int = g.player_sect.reputation
+	hub._on_feast_pressed()
+	await process_frame
+	_check(hub.event_popup.visible and not g.pending_action_scene.is_empty() and hub.event_popup.title_label.text.begins_with("문파 연회"), "연회: 대화 장면이 뜸 (%s)" % hub.event_popup.title_label.text)
+	_check(hub.event_popup.desc_label.text.contains("【") and hub.event_popup.choice_box.get_child_count() >= 1, "대화 장면: 대사·결과·선택지")
+	_check(g.player_sect.reputation > reputation, "연회 결과는 그대로 반영")
+	hub.event_popup._on_choice_pressed(0)
+	_check(g.pending_action_scene.is_empty() and not hub.event_popup.visible, "선택하면 장면이 닫힘")
+	# 역할 행동: 문파 회의
+	hub._on_role_action_pressed("council")
+	await process_frame
+	_check(hub.event_popup.visible and hub.event_popup.title_label.text.begins_with("문파 회의 소집"), "역할 행동: 문파 회의 장면")
+	hub.event_popup._on_choice_pressed(0)
+	# 대화 장면이 떠 있으면 다음 장면은 기다리지 않고 알림으로
+	g.pending_action_scene = {"options": [{"label": "확인", "message": "", "effects": []}]}
+	_check(not g.show_action_scene("train", {"success": true, "message": "x"}), "장면이 이미 떠 있으면 새 장면을 띄우지 않음")
+	g.pending_action_scene = {}
+	# 말한 인물과의 유대가 선택지로 오른다
+	var master: RelationshipData = RelationshipManager.get_bond_with(g.player_relationships, "npc_master")
+	if master:
+		var before: int = master.bond_strength
+		g.pending_action_scene = {"options": [{"label": "고맙다", "message": "유대 +2", "effects": [{"type": "bond", "target": "npc_master", "add": 2}]}]}
+		g.resolve_action_scene(0)
+		_check(master.bond_strength == before + 2, "선택지 여파: 말한 인물과의 유대")
+	# 고르지 않고 화면을 떠났다 돌아오면 다시 뜨고, 새 게임에서는 사라진다
+	g.show_action_scene("train", {"success": true, "message": "x"}, {"title": "제자 수련"})
+	SceneRouter.goto(tree, SceneRouter.WORLD)
+	await process_frame
+	SceneRouter.goto(tree, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	_check(current_scene.event_popup.visible and current_scene.event_popup.title_label.text.begins_with("제자 수련"), "떠났다 돌아오면 남은 대화 장면을 다시 띄움")
+	_new_quiet_game(g, "leader")
+	_check(g.pending_action_scene.is_empty(), "새 게임에서는 남은 장면이 사라짐")
+	# 설정에서 끄면 알림만
+	GameSettings.action_scenes = false
+	_check(not g.show_action_scene("train", {"success": true, "message": "x"}), "설정에서 끄면 대화 장면 없음")
+	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
+	await process_frame
+	_completed["_test_action_scenes"] = true
+
+
 func gm() -> Node:
 	return root.get_node("GameManager")
 
