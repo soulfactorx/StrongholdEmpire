@@ -23,6 +23,9 @@ func _test_save_slots() -> void:
 	var summary: Dictionary = SaveManager.get_slot_summary(2)
 	_check(summary["exists"] and summary["detail"].contains("둘") and summary["detail"].contains("낭인") and summary["title"].contains("천하대란"), "슬롯 요약: 날짜·인물·역할·시나리오")
 	_check(not SaveManager.get_slot_summary(3)["exists"], "빈 슬롯 요약")
+	_check(summary["detail"].begins_with("오늘 ") and summary["detail"].contains("저장"), "슬롯 요약: 저장한 시각 (%s)" % summary["detail"])
+	var now: int = int(Time.get_unix_time_from_system())
+	_check(SaveManager.format_saved_time(now - 400 * 86400, now).contains("년") and not SaveManager.format_saved_time(now, now).contains("년"), "저장 시각: 해가 다르면 연도까지")
 
 	# 계절이 바뀔 때마다 자동 저장
 	gm.start_new_game("자동", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})

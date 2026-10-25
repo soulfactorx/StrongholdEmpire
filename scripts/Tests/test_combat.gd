@@ -917,9 +917,16 @@ func _test_duel_screen_formats() -> void:
 	var order_button: Button = c.squad_box.find_child("Order_*", true, false)
 	order_button.pressed.emit()
 	_check(ally.order == "defend" and c.squad_box.find_child("Order_*", true, false).text.contains("수비"), "동료 지시 바꾸기 (공세 → 수비)")
+	# 첫 합에 승부가 나지 않게 모두 체력을 넉넉히 (결단은 첫 합 뒤)
+	for unit in c.engine.friends + c.engine.foes:
+		unit.max_hp = 9999
+		unit.hp = 9999
 	c.auto_fill()
 	c.fight()
-	await process_frame
+	for i in 20:
+		if c.choice_popup != null and c.choice_popup.visible:
+			break
+		await process_frame
 	_check(c.choice_popup != null and c.choice_popup.visible and c.fight_button.disabled, "사건: 결단을 고를 때까지 겨루지 않음")
 	c.choice_popup._on_option_pressed("1")
 	await process_frame

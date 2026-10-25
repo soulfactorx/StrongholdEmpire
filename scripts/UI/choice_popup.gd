@@ -67,6 +67,8 @@ func open(title: String, description: String, options: Array[Dictionary], allow_
 		var button := Button.new()
 		button.custom_minimum_size = Vector2(0, 56)
 		button.text = "%s\n%s" % [option["title"], option.get("description", "")]
+		# 설명이 길면 버튼 안에서 줄을 바꾼다 (세로 화면)
+		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		button.disabled = option.get("disabled", false)
 		button.pressed.connect(_on_option_pressed.bind(option["id"]))
 		_UiTheme.style_button(button)
