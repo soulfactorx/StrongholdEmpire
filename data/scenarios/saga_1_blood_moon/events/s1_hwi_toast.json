@@ -1,0 +1,89 @@
+{
+  "id": "s1_hwi_toast",
+  "title": "취한 대사형",
+  "description": "밤이 깊었습니다. 연회장 뒤 정자에서 진무겸이 혼자 술병을 기울이고 있었습니다.",
+  "can_repeat": false,
+  "priority": false,
+  "weight": 10,
+  "follow_up": true,
+  "npc": "npc_senior_brother",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_rival",
+      "value": true
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_senior_brother",
+      "text": "스무 해일세. 스무 해를 그 산에서 검만 휘둘렀지. 그런데 사부님은 맹주 자리를 남궁 가주에게 주자 하시더군."
+    },
+    {
+      "speaker": "npc_senior_brother",
+      "text": "자네는 모르겠지. 아무리 잘해도 인정받지 못하는 기분을."
+    },
+    {
+      "speaker": "player",
+      "text": "……(아버지의 명단에서 내 이름이 빠지던 날이 생각났다.)"
+    },
+    {
+      "speaker": "npc_senior_brother",
+      "text": "남궁 소가주. 붉은 달이 다시 뜨는 날, 자네는 어디에 서 있겠나?"
+    }
+  ],
+  "choices": [
+    {
+      "label": "곁에 앉아 이야기를 들어 준다",
+      "message": "\"…자네는 좋은 사람이군. 그래서 위험해.\" 진무겸 유대 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_toast",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_senior_brother",
+          "add": 10
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hwi_heard_mg",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "맹주 자리가 그리 탐나시오?",
+      "message": "진무겸의 얼굴에서 취기가 싹 가셨습니다. 진무겸 유대 -5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_toast",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_senior_brother",
+          "add": -5
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hwi_suspects_mg",
+          "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "청운의 대사형이 밤마다 산을 내려간다는 말이 있다."
+        }
+      ]
+    }
+  ]
+}

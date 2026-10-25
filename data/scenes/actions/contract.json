@@ -1,0 +1,60 @@
+{
+  "action": "contract",
+  "scenes": [
+    {
+      "id": "contract_seal",
+      "title": "계약서",
+      "speaker": [
+        "$target_leader",
+        "$narrator"
+      ],
+      "lines": [
+        "{target}의 전각에서 계약서에 손도장을 찍었다.",
+        "{speaker}: 선금은 넉넉히 주겠소. 실망시키지 마시오.",
+        "{player}: 받은 만큼은 하오. 그게 용병의 법도요."
+      ],
+      "choices": [
+        {
+          "label": "선금을 받아 든다"
+        }
+      ]
+    },
+    {
+      "id": "contract_haggle",
+      "title": "보수 흥정",
+      "speaker": [
+        "$target_leader",
+        "$narrator"
+      ],
+      "lines": [
+        "{speaker}: 이 정도면 후한 보수 아니오?",
+        "{player}: 목숨값치고는 싸지.",
+        "잠시 침묵이 흐르고, 상대가 쓴웃음을 짓는다."
+      ],
+      "choices": [
+        {
+          "label": "물러서지 않는다",
+          "message": "유대 -1",
+          "effects": [
+            {
+              "type": "bond",
+              "target": "$speaker",
+              "add": -1
+            }
+          ]
+        },
+        {
+          "label": "이번만 그 값에 하겠다",
+          "message": "유대 +1",
+          "effects": [
+            {
+              "type": "bond",
+              "target": "$speaker",
+              "add": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

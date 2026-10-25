@@ -67,7 +67,7 @@
   "choices": [
     {
       "label": "누이를 찾아가 사실을 묻는다",
-      "message": "누이는 대답 대신 울었습니다. 남궁설 유대 +5",
+      "message": "누이는 한참 말이 없었습니다.",
       "effects": [
         {
           "type": "flag",
@@ -83,8 +83,17 @@
           "type": "flag",
           "flag": "s1_hwi_knows",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "누이와 마교의 사내 사이의 일을 어떻게 할지 정하기"
+        },
+        {
+          "type": "rumor",
+          "text": "남궁세가 뒤뜰에 붉은 소매의 사내가 숨어 있었다는 이야기가 하인들 사이에 돈다."
         }
       ],
+      "next": "s1_hwi_sister_secret",
       "conditions": [
         {
           "type": "flag",
@@ -116,6 +125,10 @@
           "type": "flag",
           "flag": "s1_hwi_exposed_sister",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "남궁세가 뒤뜰에 붉은 소매의 사내가 숨어 있었다는 이야기가 하인들 사이에 돈다."
         }
       ],
       "conditions": [
@@ -138,6 +151,10 @@
         {
           "type": "combat",
           "combat": "s1_shadow_duel"
+        },
+        {
+          "type": "rumor",
+          "text": "남궁세가 뒤뜰에 붉은 소매의 사내가 숨어 있었다는 이야기가 하인들 사이에 돈다."
         }
       ],
       "conditions": [
@@ -172,6 +189,14 @@
           "type": "flag",
           "flag": "s1_hy_loves",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "남궁세가 뒤뜰에 붉은 소매의 사내가 숨어 있었다는 이야기가 하인들 사이에 돈다."
+        },
+        {
+          "type": "goal",
+          "text": "혈월의 밤, 칼과 그녀 사이에서 길을 고르기"
         }
       ],
       "conditions": [
@@ -201,6 +226,10 @@
           "target": "npc_namgung_lady",
           "bond_type": "ACQUAINTANCE",
           "strength": 30
+        },
+        {
+          "type": "rumor",
+          "text": "남궁세가 뒤뜰에 붉은 소매의 사내가 숨어 있었다는 이야기가 하인들 사이에 돈다."
         }
       ],
       "conditions": [
@@ -234,6 +263,10 @@
           "type": "flag",
           "flag": "s1_hy_killed_seol",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "남궁세가 뒤뜰에 붉은 소매의 사내가 숨어 있었다는 이야기가 하인들 사이에 돈다."
         }
       ],
       "conditions": [
@@ -267,6 +300,10 @@
           "type": "bond",
           "target": "npc_haomun_master",
           "add": 5
+        },
+        {
+          "type": "rumor",
+          "text": "남궁세가 뒤뜰에 붉은 소매의 사내가 숨어 있었다는 이야기가 하인들 사이에 돈다."
         }
       ],
       "conditions": [
@@ -289,8 +326,53 @@
         {
           "type": "experience",
           "amount": 10
+        },
+        {
+          "type": "rumor",
+          "text": "남궁세가 뒤뜰에 붉은 소매의 사내가 숨어 있었다는 이야기가 하인들 사이에 돈다."
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "달빛 아래의 두 사람",
+    "hint": "남궁설이 다친 마교의 사내를 숨겨 준다.",
+    "branches": [
+      {
+        "text": "남궁휘: 누이를 찾아가면 비밀을 듣는다 — 누이와 쌓은 추억(청운산 길·담장 위의 밤)이 대화를 바꾼다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_rival",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "남궁휘: 청운산 길을 누이와 함께 갔다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_rival",
+            "value": true
+          },
+          {
+            "type": "flag",
+            "flag": "s1_hwi_ran_off",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "혈영: 그녀의 손을 잡으면 사랑의 길(칼을 거둔 자객)이 열리고, 베면 돌이킬 수 없다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_cheonma_envoy",
+            "value": true
+          }
+        ]
+      }
+    ]
+  }
 }

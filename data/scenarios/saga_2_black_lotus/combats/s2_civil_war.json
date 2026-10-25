@@ -1,4 +1,20 @@
 {
+  "battlefield": "town",
+  "objective": {
+    "type": "defeat_target",
+    "target": "s2_jin_mugyeom"
+  },
+  "reinforcements": [
+    {
+      "round": 3,
+      "npc": "npc_cheonma_cultist",
+      "position": [
+        15,
+        5
+      ],
+      "name": "반역 교도 병"
+    }
+  ],
   "id": "s2_civil_war",
   "title": "신교 내전 — 총관의 반역",
   "player_position": [
@@ -11,6 +27,9 @@
       "position": [
         12,
         5
+      ],
+      "traits": [
+        "enrage"
       ]
     },
     {
@@ -19,7 +38,8 @@
         13,
         3
       ],
-      "name": "반역 교도 갑"
+      "name": "반역 교도 갑",
+      "mook": true
     },
     {
       "npc": "npc_cheonma_cultist",
@@ -27,7 +47,8 @@
         13,
         7
       ],
-      "name": "반역 교도 을"
+      "name": "반역 교도 을",
+      "mook": true
     }
   ],
   "relationship_target": "s2_jin_mugyeom",
@@ -41,5 +62,6 @@
     "injury_ratio": 0.3
   },
   "victory_flag": "s2_y_civil_won",
-  "defeat_flag": "s2_y_civil_lost"
+  "defeat_flag": "s2_y_civil_lost",
+  "format": "formation"
 }

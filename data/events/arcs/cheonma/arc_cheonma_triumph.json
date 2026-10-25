@@ -57,5 +57,16 @@
         }
       ]
     }
+  ],
+  "npc": "npc_rival",
+  "scene": [
+    {
+      "speaker": "npc_rival",
+      "text": "해냈어! 천마가 쓰러졌다고! 강호가 네 이름만 부르고 있어!"
+    },
+    {
+      "speaker": "npc_master",
+      "text": "…잘했다. 이제 이 이름을 어떻게 쓸지가 남았구나."
+    }
   ]
 }

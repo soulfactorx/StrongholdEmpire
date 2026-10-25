@@ -152,5 +152,55 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "칼의 주인 — 혈영",
+    "hint": "상처 입은 천마 앞에서 칼의 주인을 정한다.",
+    "branches": [
+      {
+        "text": "남궁설과 떠나려면 그녀와 이어져 있어야 한다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "s1_hy_loves",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "천마를 꺾으려면 악(도덕 35 이하)이고 경지 9 이상 — 이기면 마도지존 (지존 엔딩)",
+        "if": [
+          {
+            "type": "alignment",
+            "in": [
+              "evil"
+            ]
+          },
+          {
+            "type": "character",
+            "field": "level",
+            "op": ">=",
+            "value": 9
+          }
+        ]
+      },
+      {
+        "text": "경지 9 미만으로 천마에게 칼을 들면 천마의 분노 (배드 엔딩)",
+        "if": [
+          {
+            "type": "alignment",
+            "in": [
+              "evil"
+            ]
+          },
+          {
+            "type": "character",
+            "field": "level",
+            "op": "<",
+            "value": 9
+          }
+        ]
+      }
+    ]
+  }
 }

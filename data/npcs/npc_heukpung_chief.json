@@ -4,6 +4,7 @@
   "title": "흑풍채 채주",
   "sect_id": "heukpung",
   "role": "LEADER",
+  "combat_style": "fist",
   "description": "흑풍랑이라 불리는 산적 두목. 관도를 장악하고 통행세를 걷는다.",
   "level": 5,
   "stats": {

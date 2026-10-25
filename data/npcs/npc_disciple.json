@@ -4,6 +4,7 @@
   "title": "청운검파 제자",
   "sect_id": "qingyun",
   "role": "YOUNG_DISCIPLE",
+  "combat_style": "mook",
   "description": "청운검파의 평범한 제자. 문파를 지키는 싸움에서 함께 검을 든다.",
   "level": 1,
   "stats": {

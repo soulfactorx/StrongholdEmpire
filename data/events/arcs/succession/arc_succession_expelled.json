@@ -39,5 +39,16 @@
         }
       ]
     }
+  ],
+  "npc": "npc_master",
+  "scene": [
+    {
+      "speaker": "npc_master",
+      "text": "너를 벌하는 것이 아니다. 나를 벌하는 것이다. 너를 그렇게 가르친 나를."
+    },
+    {
+      "speaker": "npc_healer",
+      "text": "(울음을 참으며) 몸조심하세요…"
+    }
   ]
 }

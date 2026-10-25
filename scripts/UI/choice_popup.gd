@@ -11,6 +11,7 @@ signal chosen(option_id: String)
 var _title: Label
 var _description: Label
 var _rows: VBoxContainer
+var _close: Button
 
 
 func _ready() -> void:
@@ -46,16 +47,17 @@ func _ready() -> void:
 	_rows.add_theme_constant_override("separation", 8)
 	box.add_child(_rows)
 
-	var close := Button.new()
-	close.text = "취소"
-	close.custom_minimum_size = Vector2(0, 48)
-	close.pressed.connect(func() -> void: visible = false)
-	box.add_child(close)
+	_close = Button.new()
+	_close.text = "취소"
+	_close.custom_minimum_size = Vector2(0, 48)
+	_close.pressed.connect(func() -> void: visible = false)
+	box.add_child(_close)
 	_UiTheme.apply_to_control(panel)
 
 
-## options: [{id, title, description, disabled(선택)}]
-func open(title: String, description: String, options: Array[Dictionary]) -> void:
+## options: [{id, title, description, disabled(선택)}]. allow_cancel이 false면 반드시 하나를 고른다 (전투 중 결단 등)
+func open(title: String, description: String, options: Array[Dictionary], allow_cancel: bool = true) -> void:
+	_close.visible = allow_cancel
 	_title.text = title
 	_description.text = description
 	for child in _rows.get_children():
@@ -65,6 +67,8 @@ func open(title: String, description: String, options: Array[Dictionary]) -> voi
 		var button := Button.new()
 		button.custom_minimum_size = Vector2(0, 56)
 		button.text = "%s\n%s" % [option["title"], option.get("description", "")]
+		# 설명이 길면 버튼 안에서 줄을 바꾼다 (세로 화면)
+		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		button.disabled = option.get("disabled", false)
 		button.pressed.connect(_on_option_pressed.bind(option["id"]))
 		_UiTheme.style_button(button)

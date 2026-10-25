@@ -38,6 +38,10 @@
           "sect": "heukpung",
           "field": "attitude",
           "add": 15
+        },
+        {
+          "type": "rumor",
+          "text": "흑풍채가 관도마다 통행세를 걷는다고 한다."
         }
       ]
     },
@@ -54,6 +58,10 @@
         {
           "type": "combat",
           "combat": "night_bandits"
+        },
+        {
+          "type": "rumor",
+          "text": "흑풍채가 관도마다 통행세를 걷는다고 한다."
         }
       ]
     },
@@ -71,6 +79,10 @@
           "sect": "heukpung",
           "field": "attitude",
           "add": -5
+        },
+        {
+          "type": "rumor",
+          "text": "흑풍채가 관도마다 통행세를 걷는다고 한다."
         }
       ],
       "branches": [
@@ -92,6 +104,13 @@
           ]
         }
       ]
+    }
+  ],
+  "npc": "npc_heukpung_chief",
+  "scene": [
+    {
+      "speaker": "npc_heukpung_chief",
+      "text": "관도는 흑풍의 길이오. 지나가려면 길값을 내야지. 청운이라고 다를 건 없소."
     }
   ]
 }

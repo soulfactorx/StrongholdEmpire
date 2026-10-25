@@ -58,6 +58,10 @@
           "type": "character",
           "field": "morality",
           "add": -15
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
         }
       ]
     },
@@ -84,6 +88,10 @@
           "type": "flag",
           "flag": "s2_hr_defied_test",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
         }
       ]
     },
@@ -105,6 +113,10 @@
           "type": "character",
           "field": "wisdom",
           "add": 2
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
         }
       ]
     }

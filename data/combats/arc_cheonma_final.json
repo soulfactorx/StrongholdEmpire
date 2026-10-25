@@ -20,6 +20,10 @@
       "position": [
         13,
         5
+      ],
+      "traits": [
+        "telegraph",
+        "two_phase"
       ]
     }
   ],
@@ -45,8 +49,8 @@
       ]
     ]
   },
-  "enemy_hp_scale": 1.3,
-  "enemy_damage_scale": 1.15,
+  "enemy_hp_scale": 1.0,
+  "enemy_damage_scale": 0.95,
   "rewards": {
     "experience": 120,
     "reputation": 20
@@ -56,5 +60,28 @@
     "injury_ratio": 0.2
   },
   "victory_flag": "arc_cheonma_repelled",
-  "defeat_flag": "arc_cheonma_final_lost"
+  "defeat_flag": "arc_cheonma_final_lost",
+  "format": "duel",
+  "events": [
+    {
+      "type": "bond_intervene",
+      "when": {
+        "player_hp_below": 0.3
+      },
+      "npc": "npc_rival",
+      "lines": [
+        "남궁휘: 아직이다! 같이 끝을 보자!"
+      ]
+    },
+    {
+      "type": "decision",
+      "title": "천마의 마지막 일격",
+      "when": {
+        "enemy_hp_below": 0.25
+      },
+      "lines": [
+        "천마의 기운이 폭주한다. 다음 일격에 모든 것이 갈린다."
+      ]
+    }
+  ]
 }

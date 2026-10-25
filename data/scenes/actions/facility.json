@@ -1,0 +1,89 @@
+{
+  "action": "facility",
+  "scenes": [
+    {
+      "id": "facility_steward",
+      "title": "공사장",
+      "speaker": [
+        "$officer:steward",
+        "$officer:elder",
+        "$disciple"
+      ],
+      "lines": [
+        "{detail} 공사가 시작되자 산문에 망치 소리가 울린다.",
+        "{speaker}: 목재는 넉넉히 들였습니다. 다만 일꾼들 품삯이 조금 올랐습니다.",
+        "{player}: 튼튼하게만 지어 주게. 백 년은 써야 하니."
+      ],
+      "choices": [
+        {
+          "label": "일꾼들에게 술을 돌린다",
+          "message": "금화 -5, 공사가 더 신이 납니다. 명성 +1",
+          "effects": [
+            {
+              "type": "sect",
+              "field": "gold",
+              "add": -5
+            },
+            {
+              "type": "sect",
+              "field": "reputation",
+              "add": 1
+            }
+          ]
+        },
+        {
+          "label": "공사를 지켜본다"
+        }
+      ]
+    },
+    {
+      "id": "facility_done",
+      "title": "완공",
+      "speaker": "$narrator",
+      "lines": [
+        "마지막 기와가 얹히자 제자들이 박수를 친다.",
+        "새로 단장한 {detail}에 햇살이 비친다. {sect}의 모습이 한층 당당해졌다."
+      ],
+      "choices": [
+        {
+          "label": "현판을 건다"
+        }
+      ]
+    },
+    {
+      "id": "facility_disciple",
+      "title": "어린 제자의 눈",
+      "speaker": [
+        "$disciple"
+      ],
+      "lines": [
+        "{speaker}: 우와… 새 {detail}이(가) 생기는 거예요?",
+        "{speaker}: 다 지으면 제가 제일 먼저 써 봐도 돼요?",
+        "{player}: 제일 열심히 수련하는 자에게 먼저 주겠다."
+      ],
+      "choices": [
+        {
+          "label": "머리를 쓰다듬는다"
+        }
+      ]
+    },
+    {
+      "id": "facility_fail",
+      "title": "모자란 금고",
+      "result": "fail",
+      "speaker": [
+        "$officer:steward",
+        "$narrator"
+      ],
+      "lines": [
+        "{speaker}: 송구하오나 지금 금고로는 {detail} 공사를 감당하기 어렵습니다.",
+        "{player}: …알겠소. 때를 기다리지."
+      ],
+      "choices": [
+        {
+          "label": "고개를 끄덕인다"
+        }
+      ]
+    }
+  ]
+}

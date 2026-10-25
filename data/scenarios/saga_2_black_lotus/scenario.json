@@ -64,7 +64,8 @@
     "time_limit_years": 5,
     "legacy_enabled": false,
     "exp_scale": 1.5,
-    "end_on_victory": true
+    "end_on_victory": true,
+    "sect_game_over": false
   },
   "common_events": [
     "bonds/bond_g_",
@@ -92,7 +93,12 @@
         "s2_ma_jin": "MASTER_DISCIPLE",
         "s2_dokgo_cheon": "ACQUAINTANCE",
         "s2_biyeon": "ACQUAINTANCE"
-      }
+      },
+      "features": [
+        "role_action",
+        "bond"
+      ],
+      "goal": "흑련의 방이 나붙었다 — 아버지와 흑풍채가 살아남을 길을 찾기"
     },
     {
       "npc": "s2_namgung_hwi",
@@ -104,7 +110,14 @@
         "s2_seokun": "FRIEND",
         "s2_biyeon": "BENEFACTOR",
         "s2_hyeolyeong": "HATRED"
-      }
+      },
+      "features": [
+        "role_action",
+        "bond",
+        "spar",
+        "martial"
+      ],
+      "goal": "흑련의 방이 나붙었다 — 피 끓는 아들을 붙잡고 남궁을 지키기"
     },
     {
       "npc": "s2_hyeolyeong",
@@ -115,7 +128,14 @@
         "s2_wi_muryang": "MASTER_DISCIPLE",
         "s2_jin_mugyeom": "RIVALRY",
         "s2_biyeon": "ACQUAINTANCE"
-      }
+      },
+      "features": [
+        "role_action",
+        "bond",
+        "spar",
+        "martial"
+      ],
+      "goal": "흑련의 방이 나붙었다 — 병든 천마 곁에서 신교를 지키기"
     },
     {
       "npc": "s2_seokun",
@@ -126,7 +146,14 @@
         "s2_biyeon": "BENEFACTOR",
         "s2_namgung_hwi": "FRIEND",
         "s2_namgung_un": "ACQUAINTANCE"
-      }
+      },
+      "features": [
+        "role_action",
+        "bond",
+        "spar"
+      ],
+      "goal": "흑련의 방이 나붙었다 — 여덟 제자와 청운산을 지키기"
     }
-  ]
+  ],
+  "progressive": true
 }

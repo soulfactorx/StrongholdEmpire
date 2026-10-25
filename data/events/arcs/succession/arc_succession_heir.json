@@ -31,6 +31,10 @@
           "type": "bond",
           "target": "npc_master",
           "add": 10
+        },
+        {
+          "type": "goal",
+          "text": "청운의 후계자로서 문파를 이끌 준비를 하기"
         }
       ]
     },
@@ -54,6 +58,17 @@
           "add": 5
         }
       ]
+    }
+  ],
+  "npc": "npc_master",
+  "scene": [
+    {
+      "speaker": "npc_master",
+      "text": "무겸은 나를 넘으려 했고, 너는 나를 지키려 했다. 검은 그 차이를 안다."
+    },
+    {
+      "speaker": "npc_healer",
+      "text": "사부님이 웃으시는 거, 정말 오랜만에 봐요."
     }
   ]
 }

@@ -60,5 +60,20 @@
         }
       ]
     }
+  ],
+  "npc": "npc_namgung_lady",
+  "scene": [
+    {
+      "speaker": "npc_namgung_lord",
+      "text": "약속은 지킨다. 남궁의 딸을 맡긴다. 울리면 남궁의 검이 찾아갈 게다."
+    },
+    {
+      "speaker": "npc_rival",
+      "text": "매형! …아, 이 말 아직 입에 안 붙네."
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "이제 매화 질 때마다 같이 세요. 혼자 세는 건 지겨웠어요."
+    }
   ]
 }

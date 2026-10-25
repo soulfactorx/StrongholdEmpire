@@ -1,4 +1,8 @@
 {
+  "objective": {
+    "type": "defeat_target",
+    "target": "npc_cheonma"
+  },
   "id": "s1_heaven_duel",
   "title": "천마를 베다",
   "player_position": [
@@ -15,7 +19,11 @@
       "stats": {
         "strength": -6,
         "internal_energy_max": -120
-      }
+      },
+      "traits": [
+        "telegraph",
+        "two_phase"
+      ]
     }
   ],
   "terrain": {
@@ -45,5 +53,7 @@
     "injury_ratio": 0.1
   },
   "victory_flag": "s1_hy_heaven_won",
-  "defeat_flag": "s1_hy_heaven_lost"
+  "defeat_flag": "s1_hy_heaven_lost",
+  "format": "standoff",
+  "standoff_then": "duel"
 }

@@ -43,6 +43,10 @@
           "target": "npc_cheonma_envoy",
           "bond_type": "BLOOD_OATH",
           "strength": 20
+        },
+        {
+          "type": "rumor",
+          "text": "천마신교의 밀사가 정파 문파들을 하나씩 찾아다닌다는 소문이다."
         }
       ]
     },
@@ -71,6 +75,10 @@
           "type": "flag",
           "flag": "cheonma_letter_refused",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "천마신교의 밀사가 정파 문파들을 하나씩 찾아다닌다는 소문이다."
         }
       ]
     },
@@ -94,8 +102,19 @@
           "type": "flag",
           "flag": "cheonma_letter_refused",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "천마신교의 밀사가 정파 문파들을 하나씩 찾아다닌다는 소문이다."
         }
       ]
+    }
+  ],
+  "npc": "npc_cheonma_envoy",
+  "scene": [
+    {
+      "speaker": "npc_cheonma_envoy",
+      "text": "교주께서는 무릎 꿇는 자를 버리지 않으신다. 답은 다음 보름까지."
     }
   ]
 }

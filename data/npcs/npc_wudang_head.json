@@ -4,6 +4,7 @@
   "title": "무당파 장문인",
   "sect_id": "wudang",
   "role": "LEADER",
+  "combat_style": "taoist",
   "description": "태극의 이치를 깨친 도인. 싸움을 즐기지 않지만, 무당의 검은 한번 뽑히면 물러서지 않는다.",
   "level": 8,
   "stats": {

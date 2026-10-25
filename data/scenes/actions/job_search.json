@@ -1,0 +1,94 @@
+{
+  "action": "job_search",
+  "scenes": [
+    {
+      "id": "search_found",
+      "title": "되찾은 물건",
+      "result": "success",
+      "speaker": [
+        "npc_scholar",
+        "npc_old_drunk",
+        "$narrator"
+      ],
+      "lines": [
+        "무너진 사당 아래에서 낡은 함을 찾아냈다.",
+        "{speaker}: 이것이오! 이것을 찾느라 삼 년을 헤맸소.",
+        "함 속의 빛바랜 서책에서 묘한 기운이 느껴진다."
+      ],
+      "choices": [
+        {
+          "label": "그대로 돌려준다",
+          "message": "도덕 +1, 유대 +1",
+          "effects": [
+            {
+              "type": "character",
+              "field": "morality",
+              "add": 1
+            },
+            {
+              "type": "bond",
+              "target": "$speaker",
+              "add": 1
+            }
+          ]
+        },
+        {
+          "label": "한 장만 몰래 읽어 본다",
+          "message": "지혜 +1, 도덕 -1",
+          "effects": [
+            {
+              "type": "character",
+              "field": "wisdom",
+              "add": 1
+            },
+            {
+              "type": "character",
+              "field": "morality",
+              "add": -1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "search_fail",
+      "title": "헛걸음",
+      "result": "fail",
+      "speaker": "$narrator",
+      "lines": [
+        "사흘 밤낮을 뒤졌지만 찾는 물건은 그림자도 없다.",
+        "돌아오는 길, 진흙투성이 신발이 유난히 무겁다."
+      ],
+      "choices": [
+        {
+          "label": "다음을 기약한다"
+        }
+      ]
+    },
+    {
+      "id": "search_cave",
+      "title": "동굴의 벽화",
+      "speaker": "$narrator",
+      "lines": [
+        "수색 중 들어간 동굴 벽에 누군가 검로를 새겨 두었다.",
+        "선이 끊긴 곳마다 이끼가 끼어 있다. 백 년은 묵은 흔적이다."
+      ],
+      "choices": [
+        {
+          "label": "벽화를 따라 몸을 움직여 본다",
+          "message": "무력 +1",
+          "effects": [
+            {
+              "type": "character",
+              "field": "strength",
+              "add": 1
+            }
+          ]
+        },
+        {
+          "label": "서둘러 나간다"
+        }
+      ]
+    }
+  ]
+}

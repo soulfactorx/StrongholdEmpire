@@ -28,6 +28,14 @@
         {
           "type": "flag",
           "flag": "heukpung_declared"
+        },
+        {
+          "type": "goal",
+          "text": "흑풍채의 습격을 막아 내고 굴복시키기"
+        },
+        {
+          "type": "rumor",
+          "text": "흑풍채가 청운산을 노린다고 공공연히 떠든다."
         }
       ]
     },
@@ -53,8 +61,39 @@
         {
           "type": "flag",
           "flag": "asked_namgung"
+        },
+        {
+          "type": "goal",
+          "text": "남궁세가와 손잡고 흑풍채를 막아 내기"
+        },
+        {
+          "type": "rumor",
+          "text": "흑풍채가 청운산을 노린다고 공공연히 떠든다."
         }
       ]
     }
-  ]
+  ],
+  "npc": "npc_heukpung_chief",
+  "scene": [
+    {
+      "speaker": "npc_heukpung_chief",
+      "text": "청운산 아래 땅은 원래 흑풍의 사냥터였소. 돌려받으러 가겠소. 겨울이 오기 전에."
+    },
+    {
+      "speaker": "npc_master",
+      "text": "마진이 세를 불렸다더니 정말이구나. 산문을 지킬 준비를 하거라."
+    }
+  ],
+  "timeline": {
+    "title": "흑풍채의 선전포고",
+    "hint": "첫해가 지나면 흑풍채가 청운검파를 노린다고 선포한다",
+    "branches": [
+      {
+        "text": "결전을 준비하면 문파가 단단해진다"
+      },
+      {
+        "text": "남궁세가에 도움을 청하면 원군이 올 수도 있다"
+      }
+    ]
+  }
 }

@@ -115,5 +115,50 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "장의 끝 — 남궁연",
+    "hint": "청천 5년 봄, 열린 결말 가운데 하나를 고른다.",
+    "branches": [
+      {
+        "text": "무림맹주 (지존): 선, 맹주 추대, 개봉 성문 전투 승리, 경지 9 이상",
+        "if": [
+          {
+            "type": "alignment",
+            "in": [
+              "good"
+            ]
+          },
+          {
+            "type": "flag",
+            "flag": "s3_ny_leader",
+            "value": true
+          },
+          {
+            "type": "flag",
+            "flag": "s3_kaifeng_won",
+            "value": true
+          },
+          {
+            "type": "character",
+            "field": "level",
+            "op": ">=",
+            "value": 9
+          }
+        ]
+      },
+      {
+        "text": "남궁의 귀환: 선·중립",
+        "if": [
+          {
+            "type": "alignment",
+            "in": [
+              "good",
+              "neutral"
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }

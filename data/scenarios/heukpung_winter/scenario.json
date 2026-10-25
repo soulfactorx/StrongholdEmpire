@@ -32,5 +32,9 @@
   },
   "victory_endings": [
     "winter_defended"
-  ]
+  ],
+  "goals": {
+    "default": "다섯 해 안에 흑풍채를 굴복시켜 청운검파를 지키기",
+    "young_disciple": "흑풍채의 위협에서 문파를 지키는 데 힘을 보태기"
+  }
 }

@@ -57,5 +57,28 @@
         }
       ]
     }
-  ]
+  ],
+  "npc": "npc_bandit",
+  "scene": [
+    {
+      "speaker": "npc_bandit",
+      "text": "불을 놔라! 곳간부터 털어!"
+    },
+    {
+      "speaker": "npc_disciple",
+      "text": "사형! 흑풍채가 담을 넘었습니다!"
+    }
+  ],
+  "timeline": {
+    "title": "흑풍채의 습격",
+    "hint": "선전포고 뒤 가을·겨울마다 흑풍채가 습격해 온다",
+    "branches": [
+      {
+        "text": "맞서 싸워 이기면 흑풍채의 세가 꺾인다"
+      },
+      {
+        "text": "성문을 걸어 잠그면 피해를 줄인다"
+      }
+    ]
+  }
 }

@@ -52,6 +52,20 @@
         "s2_namgung_hwi",
         "s2_seokun"
       ]
+    },
+    {
+      "speaker": "s2_jin_mugyeom",
+      "text": "(회랑 끝에서) 혈영대주, 교주의 약은 내가 챙기겠네. 자네는 칼이나 갈게.",
+      "only": [
+        "s2_hyeolyeong"
+      ],
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s2_y_warned_mg",
+          "value": true
+        }
+      ]
     }
   ],
   "choices": [
@@ -96,6 +110,10 @@
           "type": "flag",
           "flag": "s2_hw_preparing",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "마교의 혼란을 틈타 북쪽 땅을 되찾기"
         }
       ],
       "conditions": [
@@ -124,6 +142,14 @@
           "type": "flag",
           "flag": "s2_y_sworn",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "goal",
+          "text": "교주의 뜻을 받들어 신교를 지키기"
         }
       ],
       "conditions": [
@@ -152,6 +178,14 @@
           "type": "flag",
           "flag": "s2_y_strike_first",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "goal",
+          "text": "진무겸이 움직이기 전에 먼저 치기"
         }
       ],
       "conditions": [
@@ -200,5 +234,21 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "쓰러진 천마",
+    "hint": "늙은 천마가 쓰러진다. 혈영과 진무겸 사이에 후계 다툼이 시작된다.",
+    "branches": [
+      {
+        "text": "혈영: 진무겸을 먼저 칠 계획을 세우면 도덕이 내려간다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s2_hyeolyeong",
+            "value": true
+          }
+        ]
+      }
+    ]
+  }
 }

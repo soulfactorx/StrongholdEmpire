@@ -22,7 +22,8 @@
         12,
         2
       ],
-      "name": "교도 갑"
+      "name": "교도 갑",
+      "mook": true
     },
     {
       "npc": "npc_cheonma_cultist",
@@ -30,7 +31,8 @@
         13,
         4
       ],
-      "name": "교도 을"
+      "name": "교도 을",
+      "mook": true
     },
     {
       "npc": "npc_cheonma_cultist",
@@ -38,7 +40,8 @@
         13,
         6
       ],
-      "name": "교도 병"
+      "name": "교도 병",
+      "mook": true
     },
     {
       "npc": "npc_cheonma_cultist",
@@ -46,7 +49,8 @@
         12,
         8
       ],
-      "name": "교도 정"
+      "name": "교도 정",
+      "mook": true
     }
   ],
   "blocked": [
@@ -110,5 +114,21 @@
     "injury_ratio": 0.3
   },
   "victory_flag": "arc_cheonma_siege_won",
-  "defeat_flag": "arc_cheonma_siege_lost"
+  "defeat_flag": "arc_cheonma_siege_lost",
+  "format": "formation",
+  "objective": {
+    "type": "hold_line",
+    "rounds": 4
+  },
+  "stage": "burning",
+  "events": [
+    {
+      "type": "reinforce",
+      "when": {
+        "bout": 2
+      },
+      "npc": "npc_cheonma_cultist",
+      "name": "광신도 후속대"
+    }
+  ]
 }

@@ -28,7 +28,10 @@
         "strength": -5,
         "agility": -4,
         "internal_energy_max": -100
-      }
+      },
+      "traits": [
+        "telegraph"
+      ]
     },
     {
       "npc": "npc_disciple",
@@ -36,7 +39,8 @@
         12,
         3
       ],
-      "name": "호위 제자 갑"
+      "name": "호위 제자 갑",
+      "mook": true
     },
     {
       "npc": "npc_disciple",
@@ -44,7 +48,8 @@
         12,
         7
       ],
-      "name": "호위 제자 을"
+      "name": "호위 제자 을",
+      "mook": true
     }
   ],
   "blocked": [
@@ -75,5 +80,6 @@
     "injury_ratio": 0.3
   },
   "victory_flag": "arc_succession_usurped",
-  "defeat_flag": "arc_succession_traitor_caught"
+  "defeat_flag": "arc_succession_traitor_caught",
+  "format": "formation"
 }

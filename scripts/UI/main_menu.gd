@@ -130,6 +130,3 @@ func _on_dev_sect_war_pressed() -> void:
 func _on_dev_ending_pressed() -> void:
 	_dev_goto(SceneRouter.ENDING)
 
-
-func _on_dev_grid_pressed() -> void:
-	_dev_goto(SceneRouter.GRID_DEMO)

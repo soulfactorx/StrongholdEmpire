@@ -47,5 +47,12 @@
         }
       ]
     }
+  ],
+  "npc": "npc_rival",
+  "scene": [
+    {
+      "speaker": "npc_rival",
+      "text": "아버지 명으로 왔다. 흑풍 놈들 정도는 남궁이 같이 막아 주지!"
+    }
   ]
 }

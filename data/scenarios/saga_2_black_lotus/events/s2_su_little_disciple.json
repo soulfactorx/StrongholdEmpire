@@ -1,0 +1,86 @@
+{
+  "id": "s2_su_little_disciple",
+  "title": "가장 어린 제자",
+  "description": "청운산 연무장. 여덟 명의 제자 가운데 가장 어린 청하가 목검을 끌고 와 섰습니다. \"장문인, 저도 진짜 검법을 배우고 싶어요.\"",
+  "can_repeat": false,
+  "priority": false,
+  "weight": 10,
+  "follow_up": true,
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_seokun",
+      "value": true
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "",
+      "text": "(어린 제자 청하) 장문인은 누구한테 검을 배웠어요?"
+    },
+    {
+      "speaker": "player",
+      "text": "…이름도 모르는 분께. 그분이 남긴 검과 책 한 권에게."
+    },
+    {
+      "speaker": "",
+      "text": "(청하) 그럼 그분이 제 사조님이에요? 이름이 없으면 제가 지어 드릴까요?"
+    },
+    {
+      "speaker": "player",
+      "text": "하하. 청운검선이라 부르면 된다. 그분 이름은 이제 이 산이다."
+    }
+  ],
+  "choices": [
+    {
+      "label": "사부님의 검을 처음부터 가르친다",
+      "message": "스물다섯 해 전 절벽 아래에서 찾은 청운검법의 첫 장을 폈습니다. 경험 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_su_little_disciple",
+          "value": true
+        },
+        {
+          "type": "experience",
+          "amount": 10
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
+        },
+        {
+          "type": "flag",
+          "flag": "s2_su_taught_cheongha",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "먼저 물을 길어 오라 이른다",
+      "message": "청하가 입을 삐죽였지만 하루 종일 물을 길었습니다. 저녁에 조용히 무공서를 건넸습니다. 지혜 +1",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_su_little_disciple",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 1
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
+        }
+      ]
+    }
+  ]
+}

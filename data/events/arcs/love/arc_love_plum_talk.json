@@ -1,0 +1,68 @@
+{
+  "id": "arc_love_plum_talk",
+  "title": "매화 아래 한 수",
+  "follow_up": true,
+  "can_repeat": false,
+  "priority": false,
+  "weight": 10,
+  "npc": "npc_namgung_lady",
+  "description": "남궁설이 검을 칼집에 넣지 않은 채 다가왔습니다. \"말로만 칭찬하는 사람은 많았어요. 검으로 말해 줄 사람은 없었고요.\"",
+  "conditions": [],
+  "scene": [
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "아버지는 제 검을 꽃꽂이라고 하세요. 휘는 웃기만 하고요."
+    },
+    {
+      "speaker": "player",
+      "text": "꽃꽂이치고는 손목이 너무 빠르던데요."
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "…그 말, 처음 들어요."
+    }
+  ],
+  "choices": [
+    {
+      "label": "검무가 아름다웠다고 말한다",
+      "message": "그녀가 고개를 돌렸지만 귀가 붉었습니다. 남궁설 유대 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_love_plum_talk",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lady",
+          "add": 5
+        }
+      ]
+    },
+    {
+      "label": "한 수 겨뤄 보자고 청한다",
+      "message": "매화잎이 흩날리는 사이로 세 합이 오갔습니다. 둘 다 웃었습니다. 남궁설 유대 +3, 경험 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_love_plum_talk",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "arc_love_sparred",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lady",
+          "add": 3
+        },
+        {
+          "type": "experience",
+          "amount": 10
+        }
+      ]
+    }
+  ]
+}

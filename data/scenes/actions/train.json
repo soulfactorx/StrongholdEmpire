@@ -1,0 +1,200 @@
+{
+  "action": "train",
+  "scenes": [
+    {
+      "id": "train_instructor",
+      "title": "연무장의 아침",
+      "speaker": [
+        "$officer:instructor",
+        "$leader",
+        "$disciple"
+      ],
+      "lines": [
+        "새벽안개가 걷히기도 전에 연무장에 목검 부딪는 소리가 가득하다.",
+        "{speaker}: 다들 기합이 들어갔습니다. 다만 어린 녀석들이 무리하지 않을까 걱정입니다.",
+        "{player}: 오늘은 기본기만 다지게 하시오. 서두르면 다치는 법이오."
+      ],
+      "choices": [
+        {
+          "label": "직접 시범을 보인다",
+          "message": "제자들이 눈을 반짝이며 따라 합니다. 유대 +1",
+          "effects": [
+            {
+              "type": "bond",
+              "target": "$speaker",
+              "add": 1
+            }
+          ]
+        },
+        {
+          "label": "교두에게 맡긴다",
+          "message": "교두가 고개를 끄덕입니다."
+        }
+      ]
+    },
+    {
+      "id": "train_summer",
+      "title": "삼복더위",
+      "if": [
+        {
+          "type": "season",
+          "in": [
+            "여름"
+          ]
+        }
+      ],
+      "speaker": [
+        "$disciple"
+      ],
+      "lines": [
+        "불볕 아래 제자들이 땀을 비 오듯 흘린다.",
+        "{speaker}: 문주님… 물 한 바가지만 마시고 하면 안 될까요?",
+        "옆의 제자들이 숨을 죽이고 당신의 대답을 기다린다."
+      ],
+      "choices": [
+        {
+          "label": "그늘에서 쉬게 한다",
+          "message": "제자들이 환호합니다. 도덕 +1",
+          "effects": [
+            {
+              "type": "character",
+              "field": "morality",
+              "add": 1
+            }
+          ]
+        },
+        {
+          "label": "더위도 수련이다",
+          "message": "제자들이 이를 악물고 버팁니다. 무력 +1 (함께 뛰었다)",
+          "effects": [
+            {
+              "type": "character",
+              "field": "strength",
+              "add": 1
+            },
+            {
+              "type": "character",
+              "field": "morality",
+              "add": -1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "train_winter",
+      "title": "눈 속의 수련",
+      "if": [
+        {
+          "type": "season",
+          "in": [
+            "겨울"
+          ]
+        }
+      ],
+      "speaker": [
+        "$officer:instructor",
+        "$disciple"
+      ],
+      "lines": [
+        "눈발이 흩날리는 연무장. 제자들의 입김이 하얗게 피어오른다.",
+        "{speaker}: 손이 곱아 검이 자꾸 미끄러집니다.",
+        "{player}: 추위를 이기는 것도 공부다. 단전에 기를 모아 보거라."
+      ],
+      "choices": [
+        {
+          "label": "운기법을 일러 준다",
+          "message": "제자들의 얼굴에 혈색이 돕니다. 유대 +1",
+          "effects": [
+            {
+              "type": "bond",
+              "target": "$speaker",
+              "add": 1
+            }
+          ]
+        },
+        {
+          "label": "일찍 마친다",
+          "message": "따뜻한 차를 돌렸습니다."
+        }
+      ]
+    },
+    {
+      "id": "train_rivalry",
+      "title": "제자들의 다툼",
+      "speaker": [
+        "$disciple"
+      ],
+      "lines": [
+        "대련 도중 두 제자가 목검을 내던지고 멱살을 잡았다.",
+        "{speaker}: 저 녀석이 먼저 비겁한 수를 썼습니다!",
+        "연무장이 술렁인다. 모두 당신을 바라본다."
+      ],
+      "choices": [
+        {
+          "label": "둘 다 벌을 준다",
+          "message": "기강이 섭니다. 명성 +1",
+          "effects": [
+            {
+              "type": "sect",
+              "field": "reputation",
+              "add": 1
+            }
+          ]
+        },
+        {
+          "label": "다시 정정당당하게 겨루게 한다",
+          "message": "두 제자가 끝내 서로 손을 맞잡습니다. 도덕 +1",
+          "effects": [
+            {
+              "type": "character",
+              "field": "morality",
+              "add": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "train_poor",
+      "title": "닳은 목검",
+      "if": [
+        {
+          "type": "sect",
+          "field": "gold",
+          "op": "<",
+          "value": 80
+        }
+      ],
+      "speaker": [
+        "$officer:steward",
+        "$officer:instructor",
+        "$disciple"
+      ],
+      "lines": [
+        "{speaker}: 목검이 다 닳아 쪼개진 것을 끈으로 묶어 씁니다.",
+        "{speaker}: 금고 사정을 아니 말씀드리기도 송구합니다만…",
+        "{player}: 조금만 더 버텨 주게. 곧 형편이 나아질 걸세."
+      ],
+      "choices": [
+        {
+          "label": "고개를 끄덕인다"
+        }
+      ]
+    },
+    {
+      "id": "train_quiet",
+      "title": "고요한 연무장",
+      "speaker": "$narrator",
+      "lines": [
+        "{season}의 바람이 연무장을 쓸고 지나간다.",
+        "{sect}의 제자들이 한 동작 한 동작 초식을 되새긴다. 서툴던 발놀림이 조금씩 가지런해진다."
+      ],
+      "choices": [
+        {
+          "label": "흐뭇하게 지켜본다"
+        }
+      ]
+    }
+  ]
+}

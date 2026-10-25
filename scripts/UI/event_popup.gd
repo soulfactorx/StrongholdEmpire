@@ -11,6 +11,8 @@ var portrait_name: Label
 ## 긴 설명(길잡이 등)은 끌어서 스크롤한다. 높이는 내용에 맞추되 화면의 이 비율을 넘지 않는다.
 var desc_scroll: ScrollContainer
 const DESC_MAX_HEIGHT_RATIO := 0.5
+## 지금 보이는 것이 경영 행동 뒤의 대화 장면인지 (고르면 GameManager.resolve_action_scene)
+var _action_scene: bool = false
 
 
 ## 내용 왼쪽에 초상화 자리를 만든다. (한 번만)
@@ -57,6 +59,7 @@ func _ensure_portrait() -> void:
 
 func show_event(event_data: Dictionary) -> void:
 	_ensure_portrait()
+	_action_scene = event_data.get("action_scene", false)
 	var npc_id: String = str(event_data.get("npc", ""))
 	portrait.texture = ArtAssets.portrait(npc_id) if not npc_id.is_empty() else null
 	portrait.visible = portrait.texture != null
@@ -102,4 +105,8 @@ func _fit_description() -> void:
 
 func _on_choice_pressed(index: int) -> void:
 	visible = false
+	if _action_scene:
+		_action_scene = false
+		GameManager.resolve_action_scene(index)
+		return
 	GameManager.resolve_pending_event(index)

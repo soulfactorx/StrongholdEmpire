@@ -41,6 +41,17 @@
     {
       "speaker": "npc_healer",
       "text": "(진무겸의 소매를 당기며) 대사형, 취하셨어요."
+    },
+    {
+      "speaker": "npc_healer",
+      "text": "어머, 청운산 주막에서 뵌 남궁 소가주님이시네요? 누님은 잘 계세요?",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_ran_off",
+          "value": true
+        }
+      ]
     }
   ],
   "choices": [
@@ -61,7 +72,7 @@
     },
     {
       "label": "웃으며 잔을 받는다",
-      "message": "\"…생각보다 그릇이 크군.\" 진무겸 유대 +10, 도덕 +2",
+      "message": "진무겸이 의외라는 듯 눈을 가늘게 떴습니다.",
       "effects": [
         {
           "type": "flag",
@@ -71,14 +82,10 @@
         {
           "type": "bond",
           "target": "npc_senior_brother",
-          "add": 10
-        },
-        {
-          "type": "character",
-          "field": "morality",
-          "add": 2
+          "add": 5
         }
-      ]
+      ],
+      "next": "s1_hwi_toast"
     },
     {
       "label": "잔을 엎고 자리를 뜬다",

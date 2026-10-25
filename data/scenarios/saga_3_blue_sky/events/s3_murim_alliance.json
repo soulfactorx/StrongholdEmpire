@@ -67,6 +67,18 @@
           "type": "flag",
           "flag": "s3_ch_leader",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "role_change"
+        },
+        {
+          "type": "unlock",
+          "feature": "diplomacy"
+        },
+        {
+          "type": "goal",
+          "text": "무림맹을 이끌고 개봉의 흑련을 무너뜨리기"
         }
       ],
       "conditions": [
@@ -101,6 +113,14 @@
           "type": "flag",
           "flag": "s3_ch_yielded",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "role_change"
+        },
+        {
+          "type": "goal",
+          "text": "무림맹의 검이 되어 개봉으로 가기"
         }
       ],
       "conditions": [
@@ -129,6 +149,18 @@
           "type": "flag",
           "flag": "s3_ny_leader",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "role_change"
+        },
+        {
+          "type": "unlock",
+          "feature": "diplomacy"
+        },
+        {
+          "type": "goal",
+          "text": "무림맹을 이끌고 개봉의 흑련을 무너뜨리기"
         }
       ],
       "conditions": [
@@ -163,6 +195,14 @@
           "type": "flag",
           "flag": "s3_ny_backed_ch",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "role_change"
+        },
+        {
+          "type": "goal",
+          "text": "청하를 맹주로 세우고 남궁의 검으로 개봉에 들어가기"
         }
       ],
       "conditions": [
@@ -262,5 +302,32 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "무림맹 재건",
+    "hint": "정파의 맹이 백 년 만에 다시 선다.",
+    "branches": [
+      {
+        "text": "청하·남궁연: 선(도덕 65 이상)이면 맹주로 추대받을 수 있다 — 무림맹주(지존)의 첫 조건",
+        "if": [
+          {
+            "type": "alignment",
+            "in": [
+              "good"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "위설아: 사자를 보내면 정과 마가 처음으로 마주 앉는다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s3_wi_seola",
+            "value": true
+          }
+        ]
+      }
+    ]
+  }
 }

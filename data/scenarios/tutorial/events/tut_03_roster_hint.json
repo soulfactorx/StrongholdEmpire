@@ -43,6 +43,10 @@
           "type": "flag",
           "flag": "tut_03",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "다음 계절에 일어나는 기연을 겪어 보기"
         }
       ]
     }

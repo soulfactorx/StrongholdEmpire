@@ -40,6 +40,8 @@ static func save_game(state: Dictionary, slot: int = 1) -> Dictionary:
 	var file := FileAccess.open(get_slot_path(slot), FileAccess.WRITE)
 	if file == null:
 		return {"success": false, "message": "세이브 파일을 쓸 수 없습니다."}
+	# 저장한 때 (슬롯 목록에 보인다)
+	state["saved_at"] = int(Time.get_unix_time_from_system())
 	file.store_string(JSON.stringify(state, "\t"))
 	var where: String = "자동 저장" if slot == AUTO_SLOT else "슬롯 %d" % slot
 	return {"success": true, "message": "게임을 저장했습니다. (%s)" % where}
@@ -87,14 +89,33 @@ static func get_slot_summary(slot: int) -> Dictionary:
 	if not data is Dictionary:
 		return {"exists": true, "title": label, "detail": "손상된 세이브"}
 	var summary: Dictionary = data.get("summary", {})
-	var detail: String = "%s · %s (%s) · 제%d세대" % [
-		summary.get("date", "?"), summary.get("name", "?"), summary.get("role", "?"), int(summary.get("generation", 1)),
+	# 예전 세이브는 저장 시각이 없으므로 파일을 고친 시각을 쓴다
+	var saved_at: int = int(data.get("saved_at", FileAccess.get_modified_time(get_slot_path(slot))))
+	var detail: String = "%s 저장\n%s · %s (%s) · 제%d세대" % [
+		format_saved_time(saved_at), summary.get("date", "?"), summary.get("name", "?"), summary.get("role", "?"), int(summary.get("generation", 1)),
 	]
 	if summary.get("ironman", false):
 		detail += " · 철인"
 	if not str(summary.get("ending", "")).is_empty():
 		detail += " · " + str(summary["ending"])
 	return {"exists": true, "title": "%s — 「%s」" % [label, summary.get("scenario", "")], "detail": detail}
+
+
+## 저장 시각 (이 기기의 시간대): 오늘이면 "오늘 14:03", 올해면 "10월 25일 14:03", 아니면 "2025년 10월 25일 14:03"
+static func format_saved_time(unix_time: int, now: int = -1) -> String:
+	if unix_time <= 0:
+		return "때를 모름"
+	if now < 0:
+		now = int(Time.get_unix_time_from_system())
+	var bias: int = int(Time.get_time_zone_from_system().get("bias", 0)) * 60
+	var t: Dictionary = Time.get_datetime_dict_from_unix_time(unix_time + bias)
+	var today: Dictionary = Time.get_datetime_dict_from_unix_time(now + bias)
+	var clock: String = "%02d:%02d" % [t["hour"], t["minute"]]
+	if t["year"] == today["year"] and t["month"] == today["month"] and t["day"] == today["day"]:
+		return "오늘 " + clock
+	if t["year"] == today["year"]:
+		return "%d월 %d일 %s" % [t["month"], t["day"], clock]
+	return "%d년 %d월 %d일 %s" % [t["year"], t["month"], t["day"], clock]
 
 
 ## 오래된 세이브를 현재 버전으로 올린다. 버전마다 새로 생긴 항목에 기본값을 채운다.
@@ -162,6 +183,7 @@ static func serialize_martial_arts(arts: Array[MartialArtData]) -> Array:
 			"range": art.range,
 			"heal_amount": art.heal_amount,
 			"move_bonus": art.move_bonus,
+			"card_type": art.card_type,
 			"description": art.description,
 			"enhance_level": art.enhance_level,
 		})
@@ -319,6 +341,7 @@ static func deserialize_martial_arts(data: Array) -> Array[MartialArtData]:
 		art.range = int(entry.get("range", 1))
 		art.heal_amount = int(entry.get("heal_amount", 0))
 		art.move_bonus = int(entry.get("move_bonus", 0))
+		art.card_type = str(entry.get("card_type", ""))
 		art.description = entry.get("description", "")
 		art.enhance_level = int(entry.get("enhance_level", 0))
 		result.append(art)

@@ -58,8 +58,9 @@ static func get_layout(role: CharacterData.Role) -> Dictionary:
 	return LAYOUTS.get(role, LAYOUTS[CharacterData.Role.LEADER])
 
 
+## 역할에 맞고, 기능 단계 개방으로 열린 버튼인지
 static func is_button_visible(role: CharacterData.Role, button_name: String) -> bool:
-	return not button_name in get_layout(role)["hidden"]
+	return not button_name in get_layout(role)["hidden"] and FeatureGate.is_button_open(button_name)
 
 
 ## 문파 칸 제목: 문파를 운영하는 역할은 문파 이름, 아니면 몸담은 곳과 개인 재산
@@ -131,4 +132,5 @@ static func get_season_steps(gm: Node) -> Array[Dictionary]:
 			if gm.get_region_action(region_id)["reason"].is_empty():
 				result.append({"id": "pacify", "title": "땅 평정", "detail": "맞닿은 빈 땅을 차지합니다 (강호 지도)"})
 				break
-	return result
+	# 아직 열리지 않은 기능의 일은 뺀다 (기능 단계 개방)
+	return result.filter(func(step: Dictionary) -> bool: return FeatureGate.is_step_open(step["id"]))

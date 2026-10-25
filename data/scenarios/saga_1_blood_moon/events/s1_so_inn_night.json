@@ -1,0 +1,89 @@
+{
+  "id": "s1_so_inn_night",
+  "title": "객잔의 밤",
+  "description": "붉은 달이 뜬 밤, 취운객잔은 늦게까지 불을 끄지 않았습니다. 구석 자리에서 철검객 고무진이 혼자 술을 마시고 있었습니다.",
+  "can_repeat": false,
+  "priority": false,
+  "weight": 10,
+  "follow_up": true,
+  "npc": "npc_iron_blade",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_swallow",
+      "value": true
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_innkeeper",
+      "text": "소화야, 저 사람 사흘째 저 자리야. 술값은 꼬박꼬박 내는데 말이 없어."
+    },
+    {
+      "speaker": "npc_iron_blade",
+      "text": "…비연검. 소문은 들었다. 검이 가볍다더군."
+    },
+    {
+      "speaker": "player",
+      "text": "가벼운 게 아니라 빠른 거예요."
+    },
+    {
+      "speaker": "npc_iron_blade",
+      "text": "빠른 검은 처음 세 합까지만 빠르다. 그 뒤엔 무게가 이긴다. 난리 통에 세 합으로 끝나는 싸움은 없어."
+    }
+  ],
+  "choices": [
+    {
+      "label": "고무진에게 검을 봐 달라고 청한다",
+      "message": "고무진이 술잔을 내려놓고 일어섰습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_so_inn_night",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_iron_blade",
+          "add": 5
+        }
+      ],
+      "next": "s1_so_iron_lesson"
+    },
+    {
+      "label": "한매향을 도와 피난민 받을 방을 비운다",
+      "message": "새벽까지 이불을 날랐습니다. 한매향이 말없이 국밥 한 그릇을 내밀었습니다. 한매향 유대 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_so_inn_night",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_innkeeper",
+          "add": 8
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 2
+        },
+        {
+          "type": "unlock",
+          "feature": "spar"
+        },
+        {
+          "type": "rumor",
+          "text": "천산 아래 마을들이 하룻밤 사이에 비었다고 한다."
+        }
+      ]
+    }
+  ]
+}

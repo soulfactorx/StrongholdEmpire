@@ -49,5 +49,16 @@
         }
       ]
     }
+  ],
+  "npc": "npc_rival",
+  "scene": [
+    {
+      "speaker": "npc_rival",
+      "text": "늦지 않았지? 약속은 지키는 게 남궁이야!"
+    },
+    {
+      "speaker": "npc_disciple",
+      "text": "산문 아래가 검은 깃발로 가득합니다!"
+    }
   ]
 }

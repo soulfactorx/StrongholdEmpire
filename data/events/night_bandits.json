@@ -33,5 +33,12 @@
         }
       ]
     }
+  ],
+  "npc": "npc_bandit",
+  "scene": [
+    {
+      "speaker": "npc_bandit",
+      "text": "(복면 너머로) 조용히 재물만 내놓으면 아무도 안 다친다!"
+    }
   ]
 }

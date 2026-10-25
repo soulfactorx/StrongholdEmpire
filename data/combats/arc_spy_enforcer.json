@@ -13,6 +13,9 @@
       "position": [
         12,
         5
+      ],
+      "traits": [
+        "telegraph"
       ]
     },
     {
@@ -50,5 +53,10 @@
     "injury_ratio": 0.2
   },
   "victory_flag": "arc_spy_enforcer_slain",
-  "defeat_flag": "spy_exposed"
+  "defeat_flag": "spy_exposed",
+  "format": "duel",
+  "objective": {
+    "type": "disarm",
+    "count": 1
+  }
 }

@@ -1,0 +1,95 @@
+{
+  "id": "s3_ny_plum_dawn",
+  "title": "매화원의 목검",
+  "description": "남궁세가 매화원. 아버지 남궁운이 할아버지의 낡은 목검 두 자루를 꺼내 왔습니다. \"할아버지와 내가 쓰던 거다. 한 판 하자.\"",
+  "can_repeat": false,
+  "priority": false,
+  "weight": 10,
+  "follow_up": true,
+  "npc": "s3_namgung_un",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s3_namgung_yeon",
+      "value": true
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_namgung_un",
+      "text": "개봉에 갔었지. 네 신발에 처형장 흙이 묻어 있더구나.",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s3_ny_saw_kaifeng",
+          "value": true
+        }
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "아버지. 남궁은 언제까지 기다려요?"
+    },
+    {
+      "speaker": "s3_namgung_un",
+      "text": "봄이 올 때까지. …아니. 네가 봄이 될 때까지겠지."
+    },
+    {
+      "speaker": "npc_namgung_guard",
+      "text": "가주님, 아가씨. 청운산에서 서신이 왔습니다. 청하 아가씨입니다."
+    }
+  ],
+  "choices": [
+    {
+      "label": "전력으로 덤빈다",
+      "message": "아버지의 목검이 당신의 어깨를 가볍게 두드렸습니다. \"어깨에 힘 빼라. 네 할아버지가 늘 듣던 말이다.\" 남궁운 유대 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_ny_plum_dawn",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s3_namgung_un",
+          "add": 8
+        },
+        {
+          "type": "unlock",
+          "feature": "spar"
+        },
+        {
+          "type": "flag",
+          "flag": "s3_ny_sparred_father",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "아버지의 검을 끝까지 지켜본다",
+      "message": "아버지의 검에는 기다린 스무 해가 담겨 있었습니다. 지혜 +1",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_ny_plum_dawn",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 1
+        },
+        {
+          "type": "unlock",
+          "feature": "spar"
+        }
+      ]
+    }
+  ]
+}

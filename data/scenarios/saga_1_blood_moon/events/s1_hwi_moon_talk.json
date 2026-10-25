@@ -1,0 +1,103 @@
+{
+  "id": "s1_hwi_moon_talk",
+  "title": "담장 위의 밤",
+  "description": "붉은 달이 뜬 밤. 잠이 오지 않아 세가의 담장 위에 올랐더니, 누이 남궁설이 먼저 앉아 있었습니다.",
+  "can_repeat": false,
+  "priority": false,
+  "weight": 10,
+  "follow_up": true,
+  "npc": "npc_namgung_lady",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_rival",
+      "value": true
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "아까 서신 찢는 거 봤어. 아버지 얼굴 굳는 것도. 넌 정말 겁이 없구나.",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s1_defiant",
+          "value": true
+        }
+      ]
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "아까 아버지 뒤에 얌전히 서 있더라. 웬일이야, 우리 휘가?",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s1_defiant",
+          "value": false
+        }
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "천마든 뭐든, 남궁의 검 앞에서는 다 똑같아."
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "휘야. 저 달, 꼭 피 같지 않아? 사람이 많이 죽을 것 같아."
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "…넌 죽지 마. 아버지 말 잘 듣고, 무서우면 무섭다고 해."
+    }
+  ],
+  "choices": [
+    {
+      "label": "누이, 나는 하나도 안 무서워",
+      "message": "누이가 피식 웃었습니다. \"거짓말할 때 귀 빨개지는 건 여전하네.\"",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_moon_talk",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lady",
+          "add": 5
+        }
+      ]
+    },
+    {
+      "label": "사실… 조금 무서워",
+      "message": "누이가 말없이 당신의 손을 잡았습니다. 손이 차가웠습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_moon_talk",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_namgung_lady",
+          "add": 10
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 1
+        },
+        {
+          "type": "flag",
+          "flag": "s1_hwi_admitted_fear",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

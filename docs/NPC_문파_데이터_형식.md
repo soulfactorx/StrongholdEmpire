@@ -31,6 +31,7 @@
 | `role` | `LEADER`, `MANAGER`, `YOUNG_DISCIPLE`, `WANDERER`, `SPY`, `ASSASSIN`, `MERCENARY` |
 | `level`, `stats` | 레벨과 능력치 (`strength`, `agility`, `wisdom`, `charisma`, `internal_energy_max`, `age`, `morality`) |
 | `scaling` | (선택) 플레이어와 함께 성장. 레벨 = max(`base_level`, 플레이어 레벨 + `level_offset`), `per_level` 능력치가 레벨당 증가 |
+| `combat_style` | (선택) 대결에서 초식을 놓는 성격: `sword`(검객: 속공·회피) · `fist`(권사: 강공·막기) · `hidden`(암기수: 술) · `poison`(독공: 술·운기) · `taoist`(도사: 운기·막기) · `mook`(졸개: 포위·진형에서 칸 2개, 체력·피해 약함). 없으면 익힌 무공 갈래로 짐작 |
 | `named` | (선택) `true`면 이름 있는 인물. 인물 목록에 오르고 인연(만남 기연·새 게임 시작 인연)을 맺을 수 있습니다 |
 
 `scaling`이 있고 `named`가 없는 인물(예: 도적)은 이름 없는 졸개로 보고 인물 목록과 인연에서 뺍니다.

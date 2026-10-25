@@ -1,0 +1,92 @@
+{
+  "id": "s1_mu_dawn",
+  "title": "새벽 연무장",
+  "description": "붉은 달이 지기 전, 청운산 연무장. 당신은 잠들지 못하고 검을 휘두르고 있었습니다. 약방 쪽에서 백소하가 김이 오르는 사발을 들고 왔습니다.",
+  "can_repeat": false,
+  "priority": false,
+  "weight": 10,
+  "follow_up": true,
+  "npc": "npc_healer",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_senior_brother",
+      "value": true
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_healer",
+      "text": "사형, 또 밤새셨죠. 검 끝이 떨려요."
+    },
+    {
+      "speaker": "player",
+      "text": "떨리는 건 검이 아니라 산이다. 붉은 달이 뜬 밤에 잠드는 놈은 없어."
+    },
+    {
+      "speaker": "npc_healer",
+      "text": "사부님은 주무시던데요."
+    },
+    {
+      "speaker": "player",
+      "text": "…그래서 사부님이 사부님인 거겠지."
+    },
+    {
+      "speaker": "npc_healer",
+      "text": "사형은 사형이라서 좋은 거예요. 그것도 기억해 주세요."
+    }
+  ],
+  "choices": [
+    {
+      "label": "사제들을 깨워 함께 수련시킨다",
+      "message": "졸린 눈의 사제들이 하나둘 모였습니다. \"대사형, 붙어 보시겠습니까?\" 명성 +2",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_dawn",
+          "value": true
+        },
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 2
+        },
+        {
+          "type": "unlock",
+          "feature": "spar"
+        },
+        {
+          "type": "flag",
+          "flag": "s1_mu_trained_juniors",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "백소하가 준 약을 받아 마신다",
+      "message": "쓴맛 뒤에 단맛이 남았습니다. \"사형, 오늘은 좀 주무세요.\" 백소하 유대 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_dawn",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_healer",
+          "add": 8
+        },
+        {
+          "type": "unlock",
+          "feature": "spar"
+        }
+      ]
+    }
+  ]
+}

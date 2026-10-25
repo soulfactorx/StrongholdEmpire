@@ -12,7 +12,8 @@
         11,
         4
       ],
-      "name": "옥졸 갑"
+      "name": "옥졸 갑",
+      "mook": true
     },
     {
       "npc": "npc_namgung_guard",
@@ -20,7 +21,8 @@
         11,
         6
       ],
-      "name": "옥졸 을"
+      "name": "옥졸 을",
+      "mook": true
     },
     {
       "npc": "npc_namgung_guard",
@@ -28,7 +30,8 @@
         13,
         5
       ],
-      "name": "옥졸 병"
+      "name": "옥졸 병",
+      "mook": true
     }
   ],
   "blocked": [
@@ -94,5 +97,17 @@
     "injury_ratio": 0.3
   },
   "victory_flag": "arc_spy_rescued",
-  "defeat_flag": "arc_spy_rescue_failed"
+  "defeat_flag": "arc_spy_rescue_failed",
+  "format": "stealth",
+  "stage": "shrine",
+  "hidden": [
+    {
+      "npc": "npc_namgung_guard",
+      "name": "순찰 무사"
+    },
+    {
+      "npc": "npc_namgung_guard",
+      "name": "옥졸"
+    }
+  ]
 }

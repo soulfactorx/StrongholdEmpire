@@ -41,6 +41,17 @@
     {
       "speaker": "npc_cheonma",
       "text": "명심해라. 내게 칼은 많다. 하지만 '혈영'은 하나다."
+    },
+    {
+      "speaker": "npc_cheonma",
+      "text": "연무장에서 열 명을 피 한 방울 없이 눕혔다지. 칼집째로. 너답구나.",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s1_hy_showed_blade",
+          "value": true
+        }
+      ]
     }
   ],
   "choices": [
@@ -62,6 +73,10 @@
           "type": "character",
           "field": "strength",
           "add": 2
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
         }
       ]
     },
@@ -83,6 +98,10 @@
           "type": "character",
           "field": "morality",
           "add": 3
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
         }
       ]
     }

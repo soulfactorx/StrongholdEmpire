@@ -113,6 +113,8 @@ static func validate_npc_dict(data: Dictionary) -> PackedStringArray:
 	for entry in data.get("martial_arts", []):
 		if not entry is Dictionary or not MartialArtLibrary.has_art(str(entry.get("id", ""))):
 			errors.append("알 수 없는 무공: %s" % entry)
+	if data.has("combat_style") and not DuelAI.STYLE_TYPES.has(str(data["combat_style"])):
+		errors.append("알 수 없는 무인 성격: %s (%s)" % [data["combat_style"], ", ".join(DuelAI.STYLE_TYPES.keys())])
 	if data.has("war_specialty") and not data["war_specialty"] in ["CHARGE", "DEFEND", "FLANK"]:
 		errors.append("알 수 없는 장수 특기: %s" % data["war_specialty"])
 	if data.has("portrait") and not ResourceLoader.exists("res://assets/art/" + str(data["portrait"])):

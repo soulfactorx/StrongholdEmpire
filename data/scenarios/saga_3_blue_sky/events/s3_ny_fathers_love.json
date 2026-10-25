@@ -54,6 +54,14 @@
           "type": "flag",
           "flag": "s3_ny_asked",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "goal",
+          "text": "아버지가 강 건너에 두고 온 사람을 데려오기"
         }
       ]
     },
@@ -70,6 +78,10 @@
           "type": "character",
           "field": "wisdom",
           "add": 1
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
         }
       ]
     }

@@ -75,6 +75,14 @@
           "type": "flag",
           "flag": "s1_mu_refused",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
+        },
+        {
+          "type": "rumor",
+          "text": "마교의 밀사가 청운산 아래 주막에 나타났다고 한다."
         }
       ]
     },
@@ -102,6 +110,14 @@
           "target": "npc_cheonma_envoy",
           "bond_type": "ACQUAINTANCE",
           "strength": 30
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
+        },
+        {
+          "type": "goal",
+          "text": "혈월의 밤 — 서문을 열고 중원의 총관이 되기"
         }
       ]
     },
@@ -118,6 +134,10 @@
           "type": "flag",
           "flag": "s1_mu_wavering",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
         }
       ]
     }

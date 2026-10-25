@@ -15,5 +15,8 @@
     "new_sect_founder",
     "wanderer_legend",
     "cheonma_repelled"
-  ]
+  ],
+  "goals": {
+    "default": "대를 이어 문파를 키우고, 열다섯 해 뒤 천마신교의 침공에 대비하기"
+  }
 }

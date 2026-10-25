@@ -273,5 +273,46 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "개봉 대전 — 3차 대전",
+    "hint": "무림맹과 흑련이 개봉에서 맞붙는다. 정파가 이긴다(정해진 역사).",
+    "branches": [
+      {
+        "text": "홀로 흑련 본진에 뛰어들면 개봉의 불길 (배드 엔딩)",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s3_dokgo_gyeol",
+            "value": false
+          }
+        ]
+      },
+      {
+        "text": "흑련의 성문을 깨면 전투 — 독고결만 쓰러뜨리면 이긴다. 이기면 무림맹주의 둘째 조건",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s3_dokgo_gyeol",
+            "value": false
+          },
+          {
+            "type": "flag",
+            "flag": "playing_s3_wi_seola",
+            "value": false
+          }
+        ]
+      },
+      {
+        "text": "독고결: 마지막 성루에서 4라운드를 버티거나, 깃발을 스스로 내린다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s3_dokgo_gyeol",
+            "value": true
+          }
+        ]
+      }
+    ]
+  }
 }

@@ -58,6 +58,14 @@
           "type": "flag",
           "flag": "s1_hy_loyal",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "goal",
+          "text": "천마의 오른팔로 신교를 지키기"
         }
       ]
     },
@@ -79,6 +87,14 @@
           "type": "flag",
           "flag": "s1_hy_saw_wound",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "goal",
+          "text": "천마의 상처가 아물기 전에 때를 노리기"
         }
       ]
     },
@@ -95,6 +111,14 @@
           "type": "bond",
           "target": "npc_namgung_lady",
           "add": 10
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "goal",
+          "text": "칼을 내려놓고 그녀 곁으로 갈 길을 찾기"
         }
       ],
       "conditions": [

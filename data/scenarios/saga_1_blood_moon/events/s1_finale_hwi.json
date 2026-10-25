@@ -33,7 +33,30 @@
   "scene": [
     {
       "speaker": "npc_namgung_lady",
-      "text": "휘야, 아버지 검이 너한테 잘 어울려."
+      "text": "휘야, 아버지 검이 너한테 잘 어울려.",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s1_seol_dead",
+          "value": false
+        }
+      ]
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "그 사람한테서 서신이 왔어. 바다가 보이는 곳에 집을 구했대. …가도 될까?",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s1_hwi_trusts_seol",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "s1_seol_dead",
+          "value": false
+        }
+      ]
     },
     {
       "speaker": "npc_namgung_enforcer",
@@ -136,5 +159,58 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "장의 끝 — 남궁휘",
+    "hint": "혈월 5년 봄, 열린 결말 가운데 하나를 고른다.",
+    "branches": [
+      {
+        "text": "남궁의 재건: 가주가 되어 가문을 다시 세우기로 했고 선·중립",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "s1_hwi_rebuild",
+            "value": true
+          },
+          {
+            "type": "alignment",
+            "in": [
+              "good",
+              "neutral"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "혈월을 넘어서: 선이고 혈월의 밤에 맞서 싸웠다",
+        "if": [
+          {
+            "type": "alignment",
+            "in": [
+              "good"
+            ]
+          },
+          {
+            "type": "flag",
+            "flag": "s1_resisted",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "마도에 물들다: 악",
+        "if": [
+          {
+            "type": "alignment",
+            "in": [
+              "evil"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "난세의 생존자: 언제나 고를 수 있다"
+      }
+    ]
+  }
 }

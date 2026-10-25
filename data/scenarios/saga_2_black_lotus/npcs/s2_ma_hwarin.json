@@ -4,6 +4,7 @@
   "title": "흑풍채 소채주",
   "sect_id": "heukpung",
   "role": "MANAGER",
+  "combat_style": "hidden",
   "description": "흑풍채주 마진의 딸. 아버지의 그늘과 독고천의 손아귀를 함께 벗어나고 싶어 한다.",
   "level": 5,
   "named": true,

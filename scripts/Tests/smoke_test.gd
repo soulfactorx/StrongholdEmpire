@@ -39,6 +39,8 @@ const INIT_SEQUENCE: Array = [
 	["world", "_test_sect_registry"],
 	["world", "_test_world_sect_events"],
 	["combat", "_test_combat_rules"],
+	["combat", "_test_duel_rules"],
+	["combat", "_test_duel_cards_and_ai"],
 	["combat", "_test_damage_randomness"],
 	["combat", "_test_martial_art_library"],
 	["combat", "_test_ally_setup"],
@@ -56,11 +58,13 @@ const RUNTIME_SEQUENCE: Array = [
 	["events", "_test_event_popup_choices"],
 	["core", "_test_game_over_flow"],
 	["world", "_test_world_state_and_war"],
-	["combat", "_test_combat_effects"],
-	["combat", "_test_ally_combat"],
-	["combat", "_test_basic_attack_limit"],
-	["combat", "_test_grid_cursor"],
-	["combat", "_test_combat_preview_and_history"],
+	["combat", "_test_duel_engine"],
+	["combat", "_test_duel_screen"],
+	["combat", "_test_duel_stage"],
+	["combat", "_test_duel_formats"],
+	["combat", "_test_duel_variety_rules"],
+	["combat", "_test_duel_screen_formats"],
+	["events", "_test_action_scenes"],
 	["events", "_test_event_progress_tracking"],
 	["scenario", "_test_scenario_data"],
 	["scenario", "_test_scenario_parameters"],
@@ -79,9 +83,11 @@ const RUNTIME_SEQUENCE: Array = [
 	["roles", "_test_role_transitions_extended"],
 	["roles", "_test_role_actions_hub"],
 	["combat", "_test_combat_library"],
+	["combat", "_test_combat_variety"],
 	["events", "_test_story_arcs"],
 	["events", "_test_main_saga_system"],
 	["events", "_test_main_saga_paths"],
+	["events", "_test_saga_timeline"],
 	["roles", "_test_starting_sect"],
 	["roles", "_test_disciple_roster"],
 	["roles", "_test_disciple_roster_flow"],
@@ -129,18 +135,20 @@ func _initialize() -> void:
 	# 테스트의 저장(자동 저장 포함)은 실제 세이브와 다른 폴더에 한다.
 	SaveManager.save_dir = TEST_SAVE_DIR
 	GameSettings.settings_path = TEST_SAVE_DIR.path_join("settings.cfg")
-	# 적 차례 간격 없이 바로 진행 (간격은 test_ui의 _test_input_and_tips에서 따로 시험)
+	# 교전 줄 사이 간격 없이 바로 진행 (간격은 test_ui의 _test_input_and_tips에서 따로 시험)
 	GameSettings.combat_delay = 0.0
-	# 공격 미리보기는 끄고 바로 실행한다 (켠 상태는 test_combat의 _test_combat_preview_and_history에서 따로)
-	GameSettings.combat_preview = false
-	GameSettings.enemy_preview = false
-	# 경영 행동 미리보기도 끈다 (켠 상태는 test_ui의 _test_action_preview에서 따로)
+	# 경영 행동 미리보기와 행동 대화 장면도 끈다 (켠 상태는 test_ui의 _test_action_preview, test_events의 _test_action_scenes에서 따로)
 	GameSettings.action_preview = false
 	GameSettings.faction_report = false
+	GameSettings.action_scenes = false
+	# 전투 무대 연출도 끈다 (켠 상태는 test_combat의 _test_duel_stage에서 따로)
+	GameSettings.combat_effects = false
 	# 세력 AI는 계절마다 강호 세력 수치를 바꾸므로, 그 영향을 시험하는 곳에서만 켠다.
 	SectAI.active = false
 	# 우리 문파 직책 인물(NpcAgent)도 문파 수치를 바꾸므로 시험하는 곳에서만 켠다.
 	NpcAgent.active = false
+	# 코드 전투의 무작위 전장·날씨·목표는 끈다 (정해진 전장으로 시험, 켠 상태는 test_combat의 _test_combat_variety에서 따로)
+	CombatManager.varied = false
 	# 피해 흔들림·회심은 끄고 정확한 값으로 시험한다 (켠 상태는 test_combat의 _test_damage_randomness에서 따로)
 	CombatRules.randomness = false
 	for key in SUITES:
@@ -156,10 +164,10 @@ func _initialize() -> void:
 func _run_runtime_tests() -> void:
 	# GameManager가 준비되며 설정 파일을 읽으므로, 시험용 전투 설정을 다시 맞춘다.
 	GameSettings.combat_delay = 0.0
-	GameSettings.combat_preview = false
-	GameSettings.enemy_preview = false
 	GameSettings.action_preview = false
 	GameSettings.faction_report = false
+	GameSettings.action_scenes = false
+	GameSettings.combat_effects = false
 	# 각 검사가 끝까지 실행됐는지 확인한다. 스크립트 오류로 중단되면 완료 표시가 남지 않는다.
 	# 환경 변수 SMOKE_ONLY="검사1,검사2"를 주면 그 런타임 검사만 돌린다 (개발 중 빠른 확인용).
 	var only: PackedStringArray = OS.get_environment("SMOKE_ONLY").split(",", false)

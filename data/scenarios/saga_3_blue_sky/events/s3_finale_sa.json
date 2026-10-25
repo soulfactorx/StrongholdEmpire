@@ -128,5 +128,51 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "장의 끝 — 위설아",
+    "hint": "청천 5년 봄, 열린 결말 가운데 하나를 고른다.",
+    "branches": [
+      {
+        "text": "성녀의 화친: 무림맹을 찾아갔고 선·중립",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "s3_sa_went",
+            "value": true
+          },
+          {
+            "type": "alignment",
+            "in": [
+              "good",
+              "neutral"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "신교의 부활: 선·중립",
+        "if": [
+          {
+            "type": "alignment",
+            "in": [
+              "good",
+              "neutral"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "천마의 재림: 악",
+        "if": [
+          {
+            "type": "alignment",
+            "in": [
+              "evil"
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }

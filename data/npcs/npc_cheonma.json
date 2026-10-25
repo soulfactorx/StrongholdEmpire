@@ -4,6 +4,7 @@
   "title": "천마신교 교주",
   "sect_id": "cheonma",
   "role": "LEADER",
+  "combat_style": "fist",
   "description": "천마의 재림을 자처하는 마교의 교주. 천하대란을 틈타 중원 침공을 노린다.",
   "level": 14,
   "stats": {

@@ -63,6 +63,14 @@
           "type": "flag",
           "flag": "s1_mu_soha_knows",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "goal",
+          "text": "마교와의 약조를 되돌리고 사부를 지키기"
         }
       ],
       "conditions": [
@@ -86,6 +94,10 @@
           "type": "bond",
           "target": "npc_healer",
           "add": -10
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
         }
       ],
       "conditions": [
@@ -114,6 +126,10 @@
           "type": "flag",
           "flag": "s1_mu_threatened_soha",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
         }
       ],
       "conditions": [
@@ -137,6 +153,10 @@
           "type": "bond",
           "target": "npc_healer",
           "add": 10
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
         }
       ]
     }

@@ -4,6 +4,7 @@
   "title": "흑련맹 부맹주",
   "sect_id": "heukpung",
   "role": "MANAGER",
+  "combat_style": "hidden",
   "description": "흑련의 꽃. 스무 해 동안 맹의 두 번째 자리를 지켰다. 강 건너에 두고 온 사람을 잊은 적이 없다.",
   "level": 11,
   "named": true,

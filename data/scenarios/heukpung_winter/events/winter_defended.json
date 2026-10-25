@@ -20,5 +20,12 @@
         }
       ]
     }
+  ],
+  "npc": "npc_master",
+  "scene": [
+    {
+      "speaker": "npc_master",
+      "text": "긴 겨울이었다. 산문이 아직 서 있구나. 네 덕이다."
+    }
   ]
 }

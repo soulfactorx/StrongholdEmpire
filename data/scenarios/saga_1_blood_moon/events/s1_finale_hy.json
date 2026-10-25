@@ -95,5 +95,31 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "장의 끝 — 혈영",
+    "hint": "혈월 5년 봄, 열린 결말 가운데 하나를 고른다. (마도지존은 그 전에 천마를 꺾어야 한다)",
+    "branches": [
+      {
+        "text": "칼을 거둔 자객: 남궁설과 함께 교를 떠났다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "s1_hy_fled",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "천마의 그림자: 교에 남았다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "s1_hy_fled",
+            "value": false
+          }
+        ]
+      }
+    ]
+  }
 }

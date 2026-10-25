@@ -4,6 +4,7 @@
   "title": "무당파 제자",
   "sect_id": "wudang",
   "role": "WANDERER",
+  "combat_style": "mook",
   "description": "태극검을 익힌 무당의 도사. 여럿이 검진을 이루어 싸운다.",
   "level": 1,
   "stats": {

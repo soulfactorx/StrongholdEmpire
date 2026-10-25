@@ -45,5 +45,16 @@
         }
       ]
     }
+  ],
+  "npc": "npc_namgung_lady",
+  "scene": [
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "여기는 아무도 몰라요. 남궁도, 청운도, 강호도."
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "…그런데 이상하죠. 조용하니까 오히려 아버지 목소리가 들려요."
+    }
   ]
 }

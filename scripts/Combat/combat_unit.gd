@@ -1,31 +1,39 @@
 class_name CombatUnit
 extends RefCounted
 
-const _Balance = preload("res://scripts/Systems/game_balance.gd")
+## 대결에 나선 한 사람: 체력·배율·상태와 초식 배치 대결의 기세·초식.
 
 const STATUS_NAMES: Dictionary = {
 	"stunned": "기절",
-	"empowered": "기세",
 	"stun_immune": "기절 저항",
 }
 
 var character: CharacterData
 var display_name: String
 var is_player: bool = false
-## 플레이어가 조종하는 아군 (제자 등)
+## 주인공 편에서 함께 싸우는 동료 (제자·인연 인물)
 var is_ally: bool = false
-var grid_pos: Vector2i = Vector2i.ZERO
 var hp: int = 100
 var max_hp: int = 100
-var action_points: int = 4
-## 이번 차례에 남은 기본 공격 횟수
-var basic_attacks_left: int = _Balance.BASIC_ATTACKS_PER_TURN
-var max_action_points: int = 4
-## 오행 판정과 속도에 쓰는 대표 무공 (가장 최근에 쓴 무공)
-var active_martial_art: MartialArtData = null
 var damage_scale: float = 1.0
-## 상태 이름 → 남은 턴 수. 자기 턴이 끝날 때 1씩 줄어든다.
+## 상태 이름 → 남은 칸 수 (기절은 다음 칸에서 쓰이고, 기절 저항은 칸마다 준다)
 var statuses: Dictionary = {}
+## 초식 배치 대결: 기세(0~5, 절초에 쓴다)와 쓸 수 있는 초식
+var momentum: int = 0
+var cards: Array[DuelCard] = []
+## 인연 배율: 지금 상대에게 주는 피해(원한·연모 등), 받는 피해를 나누는 가호(함께 싸우는 깊은 인연)
+var bond_attack: float = 1.0
+var bond_guard: float = 1.0
+## 전투 다양화: 특성(광폭·예고 절초 등, Battlefield.TRAITS), 진형 앞줄 여부, 동료 지시(DuelAI.ORDERS)
+var traits: Array = []
+var front: bool = true
+var order: String = "attack"
+## 칸 수 보정(부상 -1, 광폭 +1)과 상한(졸개 2, 0이면 없음)
+var slot_bonus: int = 0
+var slot_cap: int = 0
+## 광폭이 시작됐는지, 단계 전환으로 다시 일어났는지
+var enraged: bool = false
+var second_phase: bool = false
 
 
 func _init(char: CharacterData, player: bool = false, ally: bool = false) -> void:
@@ -35,35 +43,6 @@ func _init(char: CharacterData, player: bool = false, ally: bool = false) -> voi
 	is_ally = ally
 	max_hp = 80 + char.strength * 3 + char.level * 5
 	hp = max_hp
-	max_action_points = 3 + int(char.agility / 5.0)
-	action_points = max_action_points
-	if not char.martial_arts.is_empty():
-		active_martial_art = char.martial_arts[0]
-
-
-## 플레이어 편(주인공 또는 아군)인지
-func is_friendly() -> bool:
-	return is_player or is_ally
-
-
-func get_speed() -> int:
-	return character.agility + (active_martial_art.move_bonus if active_martial_art else 0)
-
-
-func get_martial_arts() -> Array[MartialArtData]:
-	return character.martial_arts
-
-
-func get_active_element() -> MartialArtData.FiveElement:
-	if active_martial_art == null:
-		return MartialArtData.FiveElement.NONE
-	return active_martial_art.element
-
-
-## 기본 공격의 기준 피해 (배율 적용 전)
-func get_basic_attack_base() -> int:
-	var base: int = _Balance.BASE_ATTACK_DAMAGE if is_friendly() else _Balance.ENEMY_BASE_ATTACK_DAMAGE
-	return base + character.strength
 
 
 func scale_stats(hp_scale: float, new_damage_scale: float) -> void:
@@ -80,13 +59,6 @@ func has_status(status: String) -> bool:
 	return statuses.get(status, 0) > 0
 
 
-func tick_statuses() -> void:
-	for status in statuses.keys():
-		statuses[status] -= 1
-		if statuses[status] <= 0:
-			statuses.erase(status)
-
-
 func get_status_text() -> String:
 	var names: PackedStringArray = []
 	for status in statuses:
@@ -96,14 +68,17 @@ func get_status_text() -> String:
 	return ", ".join(names)
 
 
-func restore_action_points() -> void:
-	action_points = max_action_points
-	basic_attacks_left = _Balance.BASIC_ATTACKS_PER_TURN
+## 한 합에 놓을 수 있는 칸 수: 경지에 따라 3~6
+func slot_count() -> int:
+	var level: int = character.level
+	var count: int = 3 + (1 if level >= 5 else 0) + (1 if level >= 10 else 0) + (1 if level >= 15 else 0) + slot_bonus
+	if slot_cap > 0:
+		count = mini(count, slot_cap)
+	return clampi(count, 1, 7)
 
 
-## 기본 공격을 할 수 있는지 (행동력 1과 이번 차례의 남은 횟수)
-func can_basic_attack() -> bool:
-	return action_points >= 1 and basic_attacks_left > 0
+func has_trait(trait_name: String) -> bool:
+	return trait_name in traits
 
 
 func take_damage(amount: int) -> void:

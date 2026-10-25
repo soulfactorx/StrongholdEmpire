@@ -1,0 +1,63 @@
+{
+  "id": "arc_revenge_bedside",
+  "title": "병상의 밤",
+  "follow_up": true,
+  "can_repeat": false,
+  "priority": false,
+  "weight": 10,
+  "npc": "npc_master",
+  "description": "약 냄새가 밴 장문인 처소. 스승이 눈을 뜨고 당신을 불렀습니다.",
+  "conditions": [],
+  "scene": [
+    {
+      "speaker": "npc_master",
+      "text": "밤새 여기 있었느냐. …무겸이 같았으면 벌써 칼을 들고 산을 내려갔을 게다."
+    },
+    {
+      "speaker": "player",
+      "text": "사부님, 그 자객의 얼굴을 보셨습니까?"
+    },
+    {
+      "speaker": "npc_master",
+      "text": "얼굴은 못 봤다. 다만 비수에 검은 바람 무늬가 있었지. …쫓지 말라 해도 너는 쫓겠지."
+    }
+  ],
+  "choices": [
+    {
+      "label": "자객의 흔적을 더 여쭙는다",
+      "message": "스승이 비수의 무늬를 손가락으로 그려 보였습니다. 흑풍채의 표식이었습니다.",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_revenge_bedside",
+          "value": true
+        },
+        {
+          "type": "flag",
+          "flag": "arc_revenge_heard_master",
+          "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "청운검선을 찌른 비수에 검은 바람 무늬가 있었다고 한다."
+        }
+      ]
+    },
+    {
+      "label": "아무것도 묻지 않고 곁을 지킨다",
+      "message": "스승이 다시 잠들 때까지 손을 잡고 있었습니다. 청운검선 유대 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_revenge_bedside",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_master",
+          "add": 5
+        }
+      ]
+    }
+  ]
+}

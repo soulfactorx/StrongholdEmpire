@@ -303,6 +303,10 @@ func select_region(region_id: String) -> void:
 			action_button.visible = true
 			action_button.text = "평정 (금화 %d · 식량 %d)" % [action["cost"]["gold"], action["cost"]["food"]]
 			action_button.disabled = not action["reason"].is_empty()
+		"annex":
+			action_button.visible = true
+			action_button.text = "편입 — 굴복한 %s (금화 %d · 식량 %d)" % [_sect_name(action["owner"]), action["cost"]["gold"], action["cost"]["food"]]
+			action_button.disabled = not action["reason"].is_empty()
 		"attack":
 			action_button.visible = true
 			action_button.text = "공략 — %s와(과) 문파전" % _sect_name(action["owner"])
@@ -325,6 +329,9 @@ func _on_action_pressed() -> void:
 		"pacify":
 			ActionPreview.confirm(self, "평정: %s" % WorldMap.get_region(_selected)["name"],
 				GameManager.pacify_region.bind(_selected), _pacify.bind(_selected))
+		"annex":
+			ActionPreview.confirm(self, "편입: %s" % WorldMap.get_region(_selected)["name"],
+				GameManager.annex_region.bind(_selected), _annex.bind(_selected))
 		"attack":
 			var result: Dictionary = GameManager.prepare_region_attack(_selected)
 			log_label.text = result["message"]
@@ -349,6 +356,18 @@ func travel_to(region_id: String) -> void:
 
 func _pacify(region_id: String) -> void:
 	var result: Dictionary = GameManager.pacify_region(region_id)
+	if result["success"]:
+		AudioManager.play_success()
+	else:
+		AudioManager.play_failure()
+	refresh()
+	select_region(region_id)
+	log_label.text = result["message"]
+	Toast.notify_result(self, result)
+
+
+func _annex(region_id: String) -> void:
+	var result: Dictionary = GameManager.annex_region(region_id)
 	if result["success"]:
 		AudioManager.play_success()
 	else:

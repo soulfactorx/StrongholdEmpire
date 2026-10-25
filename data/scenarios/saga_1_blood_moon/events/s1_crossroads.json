@@ -75,6 +75,10 @@
           "type": "flag",
           "flag": "s1_guardian",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "천마가 혈월의 밤에 깊은 상처를 입었다는 말이 은밀히 돈다. 내년 봄이면 강호의 판이 정해질 것이다."
         }
       ],
       "conditions": [
@@ -99,6 +103,10 @@
           "type": "flag",
           "flag": "s1_neutral_path",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "천마가 혈월의 밤에 깊은 상처를 입었다는 말이 은밀히 돈다. 내년 봄이면 강호의 판이 정해질 것이다."
         }
       ],
       "conditions": [
@@ -128,6 +136,10 @@
           "type": "flag",
           "flag": "s1_ambition",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "천마가 혈월의 밤에 깊은 상처를 입었다는 말이 은밀히 돈다. 내년 봄이면 강호의 판이 정해질 것이다."
         }
       ],
       "conditions": [
@@ -151,8 +163,51 @@
         {
           "type": "experience",
           "amount": 15
+        },
+        {
+          "type": "rumor",
+          "text": "천마가 혈월의 밤에 깊은 상처를 입었다는 말이 은밀히 돈다. 내년 봄이면 강호의 판이 정해질 것이다."
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "갈림길",
+    "hint": "성향이 장의 결말을 가른다.",
+    "branches": [
+      {
+        "text": "선 (도덕 65 이상): 지켜야 할 사람들 곁에 선다",
+        "if": [
+          {
+            "type": "alignment",
+            "in": [
+              "good"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "중립 (36~64): 누구의 편도 아닌 길",
+        "if": [
+          {
+            "type": "alignment",
+            "in": [
+              "neutral"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "악 (35 이하): 더 높은 곳을 노린다",
+        "if": [
+          {
+            "type": "alignment",
+            "in": [
+              "evil"
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }

@@ -1,0 +1,70 @@
+{
+  "action": "intel",
+  "scenes": [
+    {
+      "id": "intel_inn",
+      "title": "객잔의 귓속말",
+      "speaker": [
+        "npc_innkeeper",
+        "npc_haomun_master",
+        "$narrator"
+      ],
+      "lines": [
+        "{speaker}: {target} 사람들이 요즘 술값을 넉넉히 쓰더군요. 큰일을 앞둔 사람들처럼.",
+        "{player}: 술값 말고 다른 건 없었소?",
+        "{speaker}: 공짜로요? 호호, 이건 다음에 들려 드리지요."
+      ],
+      "choices": [
+        {
+          "label": "은자를 쥐여 준다",
+          "message": "금화 -5, 유대 +1",
+          "effects": [
+            {
+              "type": "sect",
+              "field": "gold",
+              "add": -5
+            },
+            {
+              "type": "bond",
+              "target": "$speaker",
+              "add": 1
+            }
+          ]
+        },
+        {
+          "label": "눈치껏 물러난다"
+        }
+      ]
+    },
+    {
+      "id": "intel_close",
+      "title": "들킬 뻔한 밤",
+      "result": "fail",
+      "speaker": "$narrator",
+      "lines": [
+        "{target}의 담을 넘다 순찰 무사와 눈이 마주쳤다.",
+        "숨을 죽이고 처마 밑에 매달린 채 한 식경을 버텼다. 심장 소리가 천둥 같다."
+      ],
+      "choices": [
+        {
+          "label": "숨을 고른다"
+        }
+      ]
+    },
+    {
+      "id": "intel_map",
+      "title": "몰래 본 지도",
+      "result": "success",
+      "speaker": "$narrator",
+      "lines": [
+        "{target}의 전각에 펼쳐진 지도에 붉은 점이 몇 개 찍혀 있다.",
+        "붓으로 옮겨 적는 손이 떨린다. 이 한 장이 몇 사람의 목숨을 구할지 모른다."
+      ],
+      "choices": [
+        {
+          "label": "밤길을 서둘러 돌아온다"
+        }
+      ]
+    }
+  ]
+}

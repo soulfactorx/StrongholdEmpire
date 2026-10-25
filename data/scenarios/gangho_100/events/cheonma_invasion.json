@@ -38,6 +38,14 @@
         {
           "type": "flag",
           "flag": "cheonma_invasion"
+        },
+        {
+          "type": "goal",
+          "text": "정파 연합을 이끌어 천마신교를 물리치기"
+        },
+        {
+          "type": "rumor",
+          "text": "천마신교가 중원 침공을 시작했다."
         }
       ]
     },
@@ -53,8 +61,39 @@
         {
           "type": "flag",
           "flag": "cheonma_invasion"
+        },
+        {
+          "type": "goal",
+          "text": "문을 닫고 천마신교의 침공을 버텨 내기"
+        },
+        {
+          "type": "rumor",
+          "text": "천마신교가 중원 침공을 시작했다."
         }
       ]
     }
-  ]
+  ],
+  "npc": "npc_cheonma",
+  "scene": [
+    {
+      "speaker": "npc_cheonma",
+      "text": "열다섯 해를 기다렸다. 중원의 문파들이 서로 물어뜯는 동안 신교는 칼을 갈았지."
+    },
+    {
+      "speaker": "npc_namgung_lord",
+      "text": "모두 모이시오. 이번에는 정파가 먼저 손을 잡아야 하오."
+    }
+  ],
+  "timeline": {
+    "title": "천마신교 대침공",
+    "hint": "강호에 열다섯 해가 흐르면 서역에서 검은 깃발이 일어난다",
+    "branches": [
+      {
+        "text": "정파 연합을 결성하면 천마와의 결전에 나설 수 있다"
+      },
+      {
+        "text": "문을 닫고 버틸 수도 있다"
+      }
+    ]
+  }
 }

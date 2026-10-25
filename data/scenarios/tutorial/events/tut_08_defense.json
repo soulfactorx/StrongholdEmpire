@@ -31,6 +31,10 @@
           "type": "flag",
           "flag": "tut_08",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "[강호 정세]에서 세력과 외교 살펴보기"
         }
       ]
     }

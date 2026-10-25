@@ -45,6 +45,10 @@
           "sect": "cheonma",
           "field": "attitude",
           "add": -30
+        },
+        {
+          "type": "unlock",
+          "feature": "diplomacy"
         }
       ]
     },
@@ -66,6 +70,10 @@
           "type": "flag",
           "flag": "s3_dg_pact_cult",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "diplomacy"
         }
       ]
     }

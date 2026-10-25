@@ -11,7 +11,6 @@ const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
 const MAIN_SCENES: Array[String] = [
 	"res://scenes/main.tscn",
 	"res://scenes/Combat/combat_scene.tscn",
-	"res://scenes/Combat/grid_demo.tscn",
 	"res://scenes/UI/management_screen.tscn",
 	"res://scenes/UI/martial_art_screen.tscn",
 	"res://scenes/UI/sect_war_screen.tscn",

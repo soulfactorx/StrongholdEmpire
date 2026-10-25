@@ -37,6 +37,10 @@
           "type": "flag",
           "flag": "arc_love_deepened",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "남궁세가 아가씨의 처소에 밤마다 늦게까지 불이 켜져 있다고 한다."
         }
       ]
     },
@@ -52,6 +56,28 @@
         {
           "type": "flag",
           "flag": "arc_love_ended",
+          "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "남궁세가 아가씨의 처소에 밤마다 늦게까지 불이 켜져 있다고 한다."
+        }
+      ]
+    }
+  ],
+  "npc": "npc_namgung_lady",
+  "scene": [
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "(서신) 오늘도 매화가 졌어요. 지는 꽃을 세다 보니 당신 생각이 났어요. 이상하죠."
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "(서신) 그날 매화 아래서 겨룬 한 수, 손목이 아직도 기억해요. 다음엔 지지 않을 거예요.",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "arc_love_sparred",
           "value": true
         }
       ]

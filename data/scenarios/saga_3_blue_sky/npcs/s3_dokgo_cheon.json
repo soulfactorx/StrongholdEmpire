@@ -4,6 +4,7 @@
   "title": "흑련맹주",
   "sect_id": "heukpung",
   "role": "LEADER",
+  "combat_style": "poison",
   "description": "천하를 쥔 지 스무 해. 늙은 맹주는 아들조차 믿지 않는다.",
   "level": 13,
   "named": true,

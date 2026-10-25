@@ -73,5 +73,16 @@
         }
       ]
     }
+  ],
+  "npc": "npc_namgung_enforcer",
+  "scene": [
+    {
+      "speaker": "npc_namgung_enforcer",
+      "text": "(혼잣말처럼) 이번 기밀은 진짜 중요하지. 아무도 손대지 않길 바라네."
+    },
+    {
+      "speaker": "player",
+      "text": "(너무 쉽다. 함정이다.)"
+    }
   ]
 }

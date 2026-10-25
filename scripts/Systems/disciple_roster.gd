@@ -186,6 +186,77 @@ static func train(sect: SectData, disciple_id: String, turn: int) -> Dictionary:
 	return {"success": true, "message": message}
 
 
+## 일괄 수련 방식: id → 이름, 설명
+const BATCH_MODES: Dictionary = {
+	"best": {"title": "최적 수련 (추천)", "desc": "다음 계절 유지비만큼 금화를 남기고, 출전 지정 제자 → 이번 수련으로 경지가 오르는 제자 → 강한 제자 순으로 수련합니다."},
+	"all": {"title": "모두 수련", "desc": "수련할 수 있는 제자를 모두 수련합니다. 금화가 모자라면 강한 제자부터 합니다."},
+	"deployed": {"title": "출전 지정 제자만", "desc": "방어전에 함께 싸울 출전 지정 제자만 수련합니다."},
+	"lowest": {"title": "낮은 경지부터 고르게", "desc": "경지가 낮은 제자부터 수련해 문파 전체를 고르게 키웁니다. 다음 계절 유지비만큼 금화를 남깁니다."},
+}
+
+
+## 이번 계절에 수련할 수 있는 제자
+static func get_trainable(sect: SectData, turn: int) -> Array[DiscipleData]:
+	return sect.disciples.filter(func(d: DiscipleData) -> bool:
+		return d.last_train_turn != turn and d.level < _Balance.DISCIPLE_MAX_LEVEL)
+
+
+## 일괄 수련 계획: 수련 순서대로 제자 목록 (쓸 수 있는 금화 안에서)
+static func plan_batch_train(sect: SectData, turn: int, mode: String) -> Array[DiscipleData]:
+	var pool: Array[DiscipleData] = get_trainable(sect, turn)
+	if mode == "deployed":
+		pool = pool.filter(func(d: DiscipleData) -> bool: return d.deployed)
+	match mode:
+		"best":
+			# 출전 지정 → 이번 수련으로 경지가 오름 → 강한 순
+			pool.sort_custom(func(a: DiscipleData, b: DiscipleData) -> bool:
+				if a.deployed != b.deployed:
+					return a.deployed
+				if _levels_up(a) != _levels_up(b):
+					return _levels_up(a)
+				return a.get_power() > b.get_power())
+		"lowest":
+			pool.sort_custom(func(a: DiscipleData, b: DiscipleData) -> bool:
+				return a.level < b.level or (a.level == b.level and a.experience > b.experience))
+		_:
+			pool.sort_custom(func(a: DiscipleData, b: DiscipleData) -> bool: return a.get_power() > b.get_power())
+	var budget: int = sect.gold - get_batch_reserve(sect, mode)
+	var count: int = clampi(budget / _Balance.DISCIPLE_TRAIN_GOLD, 0, pool.size())
+	return pool.slice(0, count)
+
+
+## 일괄 수련이 남겨 둘 금화 (최적·고르게: 다음 계절 금화 유지비)
+static func get_batch_reserve(sect: SectData, mode: String) -> int:
+	return sect.get_gold_upkeep() if mode in ["best", "lowest"] else 0
+
+
+static func _levels_up(disciple: DiscipleData) -> bool:
+	return disciple.experience + _Balance.DISCIPLE_TRAIN_EXP >= disciple.get_next_level_experience()
+
+
+## 일괄 수련: 계획대로 수련하고 결과를 모아 알린다.
+static func batch_train(sect: SectData, turn: int, mode: String) -> Dictionary:
+	var plan: Array[DiscipleData] = plan_batch_train(sect, turn, mode)
+	if plan.is_empty():
+		if get_trainable(sect, turn).is_empty():
+			return {"success": false, "message": "이번 계절에 수련할 수 있는 제자가 없습니다."}
+		if mode == "deployed" and not sect.disciples.any(func(d: DiscipleData) -> bool: return d.deployed):
+			return {"success": false, "message": "출전 지정한 제자가 없습니다."}
+		return {"success": false, "message": "금화가 부족합니다. (수련 한 번에 %d, 남길 금화 %d)" % [_Balance.DISCIPLE_TRAIN_GOLD, get_batch_reserve(sect, mode)]}
+	var names: PackedStringArray = []
+	var level_ups: int = 0
+	for disciple in plan:
+		var before: int = disciple.level
+		if train(sect, disciple.id, turn).get("success", false):
+			names.append(disciple.display_name + (" Lv.%d 상승" % disciple.level if disciple.level > before else ""))
+			level_ups += disciple.level - before
+	var message: String = "일괄 수련 %d명: 경험치 각 +%d (금화 -%d)" % [names.size(), _Balance.DISCIPLE_TRAIN_EXP, names.size() * _Balance.DISCIPLE_TRAIN_GOLD]
+	if level_ups > 0:
+		message += " — 경지 상승 %d" % level_ups
+	message += "\n" + ", ".join(names)
+	return {"success": not names.is_empty(), "message": message, "count": names.size(), "level_ups": level_ups}
+
+
 static func get_deployed_count(sect: SectData) -> int:
 	return sect.disciples.filter(func(d: DiscipleData) -> bool: return d.deployed).size()
 

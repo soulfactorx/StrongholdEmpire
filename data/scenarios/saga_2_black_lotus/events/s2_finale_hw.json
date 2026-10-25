@@ -98,5 +98,39 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "장의 끝 — 남궁휘",
+    "hint": "흑련 5년 봄, 열린 결말 가운데 하나를 고른다.",
+    "branches": [
+      {
+        "text": "정파의 등불: 선·중립이고 흑련에 굴복하지 않았다",
+        "if": [
+          {
+            "type": "alignment",
+            "in": [
+              "good",
+              "neutral"
+            ]
+          },
+          {
+            "type": "flag",
+            "flag": "s2_hw_submitted",
+            "value": false
+          }
+        ]
+      },
+      {
+        "text": "흑련의 사냥개: 악",
+        "if": [
+          {
+            "type": "alignment",
+            "in": [
+              "evil"
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }

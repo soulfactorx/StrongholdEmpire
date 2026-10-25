@@ -1,0 +1,76 @@
+{
+  "action": "job_escort",
+  "scenes": [
+    {
+      "id": "escort_merchant",
+      "title": "상단 호위",
+      "result": "success",
+      "speaker": [
+        "npc_merchant",
+        "$narrator"
+      ],
+      "lines": [
+        "무사히 목적지에 닿자 상단주가 손을 맞잡는다.",
+        "{speaker}: 덕분에 짐 하나 잃지 않았소! 다음에도 꼭 그대에게 맡기겠소.",
+        "{player}: 다음엔 산적보다 당신 흥정이 더 무섭겠소."
+      ],
+      "choices": [
+        {
+          "label": "웃으며 보수를 받는다",
+          "message": "유대 +1",
+          "effects": [
+            {
+              "type": "bond",
+              "target": "$speaker",
+              "add": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "escort_fail",
+      "title": "잃어버린 짐",
+      "result": "fail",
+      "speaker": [
+        "npc_merchant",
+        "$narrator"
+      ],
+      "lines": [
+        "산적의 기습에 수레 하나를 잃었다.",
+        "{speaker}: …목숨이 붙어 있으니 다행이라 해야겠지요.",
+        "상단주의 눈길이 차갑다."
+      ],
+      "choices": [
+        {
+          "label": "고개를 숙여 사과한다",
+          "message": "도덕 +1",
+          "effects": [
+            {
+              "type": "character",
+              "field": "morality",
+              "add": 1
+            }
+          ]
+        },
+        {
+          "label": "말없이 떠난다"
+        }
+      ]
+    },
+    {
+      "id": "escort_road",
+      "title": "길 위의 밤",
+      "speaker": "$narrator",
+      "lines": [
+        "모닥불 앞에서 짐꾼들이 고향 이야기를 한다.",
+        "누구는 아이가 태어났고, 누구는 노모가 아프다. 칼을 차고 걷는 길에도 저마다의 사연이 있다."
+      ],
+      "choices": [
+        {
+          "label": "밤 경계를 선다"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "action": "fulfill",
+  "scenes": [
+    {
+      "id": "fulfill_ok",
+      "title": "약속을 지키다",
+      "result": "success",
+      "speaker": [
+        "$target_leader",
+        "$narrator"
+      ],
+      "lines": [
+        "피 묻은 칼을 닦으며 의뢰주 앞에 섰다.",
+        "{speaker}: 소문대로군. 잔금은 여기 있소.",
+        "{player}: 다음에도 부르시오. 값은 오를 테지만."
+      ],
+      "choices": [
+        {
+          "label": "고개만 까딱인다"
+        }
+      ]
+    },
+    {
+      "id": "fulfill_fail",
+      "title": "어긋난 임무",
+      "result": "fail",
+      "speaker": "$narrator",
+      "lines": [
+        "임무는 실패했다. 의뢰주의 전갈은 짧았다. \"다시는 우리 문을 두드리지 마시오.\"",
+        "칼집이 유난히 가볍게 느껴진다."
+      ],
+      "choices": [
+        {
+          "label": "술로 달랜다"
+        }
+      ]
+    },
+    {
+      "id": "fulfill_road",
+      "title": "돌아오는 길",
+      "speaker": "$narrator",
+      "lines": [
+        "임무를 마치고 돌아오는 길, 들판에 노을이 번진다.",
+        "칼로 먹고사는 삶. 오늘은 그래도 아무도 울지 않았다."
+      ],
+      "choices": [
+        {
+          "label": "묵묵히 걷는다"
+        }
+      ]
+    }
+  ]
+}

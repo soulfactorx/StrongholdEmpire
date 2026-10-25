@@ -90,6 +90,18 @@
           "type": "flag",
           "flag": "s1_sworn_alliance",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "rumor",
+          "text": "정도맹이 낙양에 맹부를 열었다. 서쪽 문은 청운검파가 지킨다고 한다."
         }
       ],
       "conditions": [
@@ -115,6 +127,22 @@
           "type": "bond",
           "target": "npc_namgung_lord",
           "add": 5
+        },
+        {
+          "type": "goal",
+          "text": "맹회에서 만난 청운의 대사형 진무겸을 넘어서기"
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "rumor",
+          "text": "정도맹이 낙양에 맹부를 열었다. 서쪽 문은 청운검파가 지킨다고 한다."
         }
       ],
       "conditions": [
@@ -138,6 +166,22 @@
           "type": "bond",
           "target": "npc_master",
           "add": 3
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "rumor",
+          "text": "정도맹이 낙양에 맹부를 열었다. 서쪽 문은 청운검파가 지킨다고 한다."
+        },
+        {
+          "type": "unlock",
+          "feature": "diplomacy"
         }
       ],
       "conditions": [
@@ -166,6 +210,22 @@
           "type": "flag",
           "flag": "s1_mu_resent",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "rumor",
+          "text": "정도맹이 낙양에 맹부를 열었다. 서쪽 문은 청운검파가 지킨다고 한다."
+        },
+        {
+          "type": "unlock",
+          "feature": "diplomacy"
         }
       ],
       "conditions": [
@@ -189,6 +249,26 @@
           "type": "flag",
           "flag": "s1_hy_infiltrated",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "rumor",
+          "text": "정도맹이 낙양에 맹부를 열었다. 서쪽 문은 청운검파가 지킨다고 한다."
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
+        },
+        {
+          "type": "goal",
+          "text": "정도맹 안에 문을 열어 줄 사람을 찾기"
         }
       ],
       "conditions": [
@@ -217,6 +297,18 @@
           "type": "flag",
           "flag": "s1_so_ignored",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "rumor",
+          "text": "정도맹이 낙양에 맹부를 열었다. 서쪽 문은 청운검파가 지킨다고 한다."
         }
       ],
       "conditions": [
@@ -239,8 +331,56 @@
         {
           "type": "experience",
           "amount": 10
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "rumor",
+          "text": "정도맹이 낙양에 맹부를 열었다. 서쪽 문은 청운검파가 지킨다고 한다."
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "정도맹 결성",
+    "hint": "청운·남궁·무당이 낙양에 모여 맹을 세운다. 맹주 자리를 둘러싼 속내가 드러난다.",
+    "branches": [
+      {
+        "text": "남궁휘: 이 자리에서 진무겸과 마주친다 — 뒤이어 비무를 청하거나 술잔을 받을 수 있다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_rival",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "진무겸: 맹주 자리를 빼앗긴 분노를 삼키면 마교의 손길이 더 쉽게 닿는다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_senior_brother",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "혈영: 하인으로 숨어들어 맹의 얼굴들을 익힌다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_npc_cheonma_envoy",
+            "value": true
+          }
+        ]
+      }
+    ]
+  }
 }

@@ -11,10 +11,10 @@ var music_label: Label
 var fullscreen_check: CheckButton
 var text_option: OptionButton
 var speed_option: OptionButton
-var preview_check: CheckButton
-var enemy_preview_check: CheckButton
 var action_preview_check: CheckButton
 var faction_report_check: CheckButton
+var action_scenes_check: CheckButton
+var combat_effects_check: CheckButton
 var layout_option: OptionButton
 
 
@@ -105,7 +105,7 @@ func _ready() -> void:
 	var speed_row := HBoxContainer.new()
 	speed_row.add_theme_constant_override("separation", 12)
 	var speed_label := Label.new()
-	speed_label.text = "전투 속도 (적 차례)"
+	speed_label.text = "전투 속도 (교전이 지나가는 속도)"
 	speed_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	speed_row.add_child(speed_label)
 	speed_option = OptionButton.new()
@@ -117,16 +117,6 @@ func _ready() -> void:
 	)
 	speed_row.add_child(speed_option)
 	box.add_child(speed_row)
-	preview_check = CheckButton.new()
-	preview_check.text = "공격 전 미리보기 (예상 피해 확인 후 실행)"
-	preview_check.custom_minimum_size = Vector2(0, 48)
-	preview_check.toggled.connect(func(on: bool) -> void: GameSettings.set_and_save("combat_preview", on, get_tree()))
-	box.add_child(preview_check)
-	enemy_preview_check = CheckButton.new()
-	enemy_preview_check.text = "적 공격 예고 (적이 치기 전에 예상 피해 확인)"
-	enemy_preview_check.custom_minimum_size = Vector2(0, 48)
-	enemy_preview_check.toggled.connect(func(on: bool) -> void: GameSettings.set_and_save("enemy_preview", on, get_tree()))
-	box.add_child(enemy_preview_check)
 	action_preview_check = CheckButton.new()
 	action_preview_check.text = "행동 전 미리보기 (수치 변화 확인 후 실행)"
 	action_preview_check.custom_minimum_size = Vector2(0, 48)
@@ -137,7 +127,19 @@ func _ready() -> void:
 	faction_report_check.custom_minimum_size = Vector2(0, 48)
 	faction_report_check.toggled.connect(func(on: bool) -> void: GameSettings.set_and_save("faction_report", on, get_tree()))
 	box.add_child(faction_report_check)
-	for check in [fullscreen_check, preview_check, enemy_preview_check, action_preview_check, faction_report_check]:
+	action_scenes_check = CheckButton.new()
+	action_scenes_check.name = "ActionScenesCheck"
+	action_scenes_check.text = "행동 대화 장면 (수련·연회·역할 행동 뒤에 인물과 대화)"
+	action_scenes_check.custom_minimum_size = Vector2(0, 48)
+	action_scenes_check.toggled.connect(func(on: bool) -> void: GameSettings.set_and_save("action_scenes", on, get_tree()))
+	box.add_child(action_scenes_check)
+	combat_effects_check = CheckButton.new()
+	combat_effects_check.name = "CombatEffectsCheck"
+	combat_effects_check.text = "전투 연출 (합마다 달려들기·피해 숫자·흔들림)"
+	combat_effects_check.custom_minimum_size = Vector2(0, 48)
+	combat_effects_check.toggled.connect(func(on: bool) -> void: GameSettings.set_and_save("combat_effects", on, get_tree()))
+	box.add_child(combat_effects_check)
+	for check in [fullscreen_check, action_preview_check, faction_report_check, action_scenes_check, combat_effects_check]:
 		check.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var note := Label.new()
 	note.text = "글자 크기는 다음에 여는 화면부터 적용됩니다."
@@ -157,10 +159,10 @@ func open() -> void:
 	music_slider.set_value_no_signal(roundi(GameSettings.music_volume * 100))
 	_update_volume_label()
 	fullscreen_check.set_pressed_no_signal(GameSettings.fullscreen)
-	preview_check.set_pressed_no_signal(GameSettings.combat_preview)
-	enemy_preview_check.set_pressed_no_signal(GameSettings.enemy_preview)
 	action_preview_check.set_pressed_no_signal(GameSettings.action_preview)
 	faction_report_check.set_pressed_no_signal(GameSettings.faction_report)
+	action_scenes_check.set_pressed_no_signal(GameSettings.action_scenes)
+	combat_effects_check.set_pressed_no_signal(GameSettings.combat_effects)
 	layout_option.select(GameSettings.layout_mode)
 	for i in GameSettings.TEXT_SCALES.size():
 		if is_equal_approx(GameSettings.TEXT_SCALES[i][1], GameSettings.text_scale):

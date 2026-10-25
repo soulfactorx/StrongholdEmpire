@@ -11,6 +11,9 @@
       "position": [
         12,
         5
+      ],
+      "traits": [
+        "poison_mist"
       ]
     },
     {
@@ -19,7 +22,8 @@
         13,
         3
       ],
-      "name": "혈영대원 갑"
+      "name": "혈영대원 갑",
+      "mook": true
     },
     {
       "npc": "npc_cheonma_cultist",
@@ -27,7 +31,8 @@
         13,
         7
       ],
-      "name": "혈영대원 을"
+      "name": "혈영대원 을",
+      "mook": true
     }
   ],
   "terrain": {
@@ -62,5 +67,7 @@
     "injury_ratio": 0.3
   },
   "victory_flag": "arc_cheonma_envoy_slain",
-  "defeat_flag": "arc_cheonma_envoy_escaped"
+  "defeat_flag": "arc_cheonma_envoy_escaped",
+  "format": "siege",
+  "weather": "night"
 }

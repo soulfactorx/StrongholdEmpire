@@ -1,0 +1,172 @@
+{
+  "action": "feast",
+  "scenes": [
+    {
+      "id": "feast_elder",
+      "title": "잔치의 밤",
+      "speaker": [
+        "$officer:elder",
+        "$officer:steward",
+        "$leader",
+        "$bond"
+      ],
+      "lines": [
+        "등불이 산문을 환히 밝히고, 술 향기가 골짜기를 채운다.",
+        "{speaker}: 이렇게 다 모인 게 얼마 만입니까. {sect}의 앞날을 위하여!",
+        "모두가 잔을 높이 든다."
+      ],
+      "choices": [
+        {
+          "label": "건배사를 한다",
+          "message": "제자들이 환호합니다. 유대 +1",
+          "effects": [
+            {
+              "type": "bond",
+              "target": "$speaker",
+              "add": 1
+            }
+          ]
+        },
+        {
+          "label": "조용히 잔을 비운다"
+        }
+      ]
+    },
+    {
+      "id": "feast_guests",
+      "title": "불청객",
+      "speaker": [
+        "npc_old_drunk",
+        "$narrator"
+      ],
+      "lines": [
+        "잔치가 한창일 때, 누더기를 걸친 노인이 슬그머니 끼어 앉았다.",
+        "{speaker}: 이 집 술 인심이 좋다길래… 한 잔만 얻어 마셔도 되겠소?",
+        "제자 몇이 내쫓으려 일어선다."
+      ],
+      "choices": [
+        {
+          "label": "상석에 앉힌다",
+          "message": "노인이 껄껄 웃으며 손가락으로 탁자에 검결을 그어 보입니다. 지혜 +1",
+          "effects": [
+            {
+              "type": "character",
+              "field": "wisdom",
+              "add": 1
+            },
+            {
+              "type": "character",
+              "field": "morality",
+              "add": 1
+            }
+          ]
+        },
+        {
+          "label": "술 한 병 들려 보낸다"
+        }
+      ]
+    },
+    {
+      "id": "feast_music",
+      "title": "현악의 밤",
+      "speaker": [
+        "npc_musician",
+        "$narrator"
+      ],
+      "lines": [
+        "{speaker}: 좋은 자리에 소리가 빠질 수 없지요. 한 곡 올리겠습니다.",
+        "칠현금 소리가 밤하늘에 퍼지자 떠들썩하던 자리가 숙연해진다."
+      ],
+      "choices": [
+        {
+          "label": "후하게 사례한다",
+          "message": "금화 -10, 유대 +2",
+          "effects": [
+            {
+              "type": "sect",
+              "field": "gold",
+              "add": -10
+            },
+            {
+              "type": "bond",
+              "target": "$speaker",
+              "add": 2
+            }
+          ]
+        },
+        {
+          "label": "박수로 답한다"
+        }
+      ]
+    },
+    {
+      "id": "feast_spring",
+      "title": "꽃놀이",
+      "if": [
+        {
+          "type": "season",
+          "in": [
+            "봄"
+          ]
+        }
+      ],
+      "speaker": "$narrator",
+      "lines": [
+        "복숭아꽃이 흩날리는 마당에 자리를 폈다.",
+        "꽃잎이 술잔에 떨어지자 제자들이 저마다 시를 읊는다며 소란을 피운다."
+      ],
+      "choices": [
+        {
+          "label": "한 수 읊는다",
+          "message": "모두 웃음을 터뜨립니다. 명성 +1",
+          "effects": [
+            {
+              "type": "sect",
+              "field": "reputation",
+              "add": 1
+            }
+          ]
+        },
+        {
+          "label": "구경만 한다"
+        }
+      ]
+    },
+    {
+      "id": "feast_harvest",
+      "title": "추수의 잔치",
+      "if": [
+        {
+          "type": "season",
+          "in": [
+            "가을"
+          ]
+        }
+      ],
+      "speaker": [
+        "$disciple",
+        "$narrator"
+      ],
+      "lines": [
+        "올해 거둔 곡식으로 떡을 찌고 술을 빚었다.",
+        "{speaker}: 문주님 덕분에 올해는 굶지 않고 겨울을 나겠습니다!"
+      ],
+      "choices": [
+        {
+          "label": "모두의 덕이라 답한다",
+          "message": "도덕 +1",
+          "effects": [
+            {
+              "type": "character",
+              "field": "morality",
+              "add": 1
+            }
+          ]
+        },
+        {
+          "label": "내년엔 더 거두자고 다짐한다"
+        }
+      ]
+    }
+  ]
+}

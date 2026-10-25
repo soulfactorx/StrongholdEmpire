@@ -4,6 +4,7 @@
   "title": "남궁세가 가주",
   "sect_id": "namgung",
   "role": "LEADER",
+  "combat_style": "sword",
   "description": "남궁휘의 아들. 젊은 날 사파의 딸을 사랑했으나 그녀는 흑련에 남았다. 이제는 딸 남궁연을 지키는 가주.",
   "level": 10,
   "named": true,

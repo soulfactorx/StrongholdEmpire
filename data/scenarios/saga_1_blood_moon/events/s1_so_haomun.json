@@ -37,6 +37,10 @@
     {
       "speaker": "npc_haomun_master",
       "text": "물론이지. 그러니 하오문은 어느 쪽이 이겨도 살아남는다네. 자네도 그래야지."
+    },
+    {
+      "speaker": "npc_innkeeper",
+      "text": "소화야, 하오문 사람이 두고 간 약값 장부야. 영약 구할 길도 저쪽이 쥐고 있다더라."
     }
   ],
   "choices": [
@@ -62,6 +66,14 @@
         {
           "type": "learn_art",
           "art": "manual_haomun_ghost_step"
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "goal",
+          "text": "하오문의 소식으로 마교의 진군로보다 한발 앞서기"
         }
       ]
     },
@@ -78,6 +90,10 @@
           "type": "character",
           "field": "morality",
           "add": 5
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
         }
       ]
     }

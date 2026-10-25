@@ -1,0 +1,43 @@
+{
+  "id": "martial_tournament",
+  "title": "무림대회 — 천하제일 비무",
+  "format": "tournament",
+  "stage": "arena",
+  "conditions": [
+    "honor"
+  ],
+  "enemies": [
+    {
+      "npc": "npc_wudang_disciple",
+      "name": "무당파 기재"
+    },
+    {
+      "npc": "npc_iron_blade"
+    },
+    {
+      "npc": "npc_swallow"
+    },
+    {
+      "npc": "npc_rival"
+    }
+  ],
+  "enemy_hp_scale": 0.8,
+  "enemy_damage_scale": 0.7,
+  "placement_flags": {
+    "2": "tourney_semifinal",
+    "3": "tourney_runner_up"
+  },
+  "challenge": {
+    "type": "no_gap"
+  },
+  "rewards": {
+    "experience": 80,
+    "gold": 100,
+    "reputation": 12
+  },
+  "defeat_penalty": {
+    "injury_ratio": 0.6
+  },
+  "victory_flag": "tourney_champion",
+  "defeat_flag": "tourney_lost"
+}

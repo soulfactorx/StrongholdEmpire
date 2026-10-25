@@ -4,6 +4,7 @@
   "title": "천마신교 광신도",
   "sect_id": "cheonma",
   "role": "WANDERER",
+  "combat_style": "mook",
   "description": "교주를 신으로 섬기는 마교의 교도. 무리를 지어 싸운다.",
   "level": 1,
   "stats": {

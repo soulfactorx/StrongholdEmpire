@@ -1,0 +1,59 @@
+{
+  "id": "arc_succession_sickroom",
+  "title": "약 달이는 밤",
+  "follow_up": true,
+  "can_repeat": false,
+  "priority": false,
+  "weight": 10,
+  "npc": "npc_healer",
+  "description": "약방에서 백소하가 스승의 약을 달이고 있었습니다. 그녀는 당신을 보자 목소리를 낮췄습니다.",
+  "conditions": [],
+  "scene": [
+    {
+      "speaker": "npc_healer",
+      "text": "대사형이 어젯밤에도 후원에서 누굴 만났어요. 처음 보는 사람이었어요."
+    },
+    {
+      "speaker": "player",
+      "text": "사부님께는 말씀드렸어?"
+    },
+    {
+      "speaker": "npc_healer",
+      "text": "…못 했어요. 대사형은 제게도 사형이니까요. 그래서 당신한테 말하는 거예요."
+    }
+  ],
+  "choices": [
+    {
+      "label": "후원을 지켜보겠다고 약속한다",
+      "message": "\"고마워요. 저도 약방에서 귀를 열어 둘게요.\" 백소하 유대 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_succession_sickroom",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_healer",
+          "add": 5
+        }
+      ]
+    },
+    {
+      "label": "함께 약을 달여 스승께 올린다",
+      "message": "스승이 쓴 약을 다 비우고 웃었습니다. \"너희 둘이 달인 약은 덜 쓰구나.\" 청운검선 유대 +5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "arc_succession_sickroom",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_master",
+          "add": 5
+        }
+      ]
+    }
+  ]
+}

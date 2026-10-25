@@ -73,6 +73,7 @@ static func _parse_martial_art_json(path: String) -> MartialArtData:
 	art.range = data.get("range", 1)
 	art.heal_amount = data.get("heal_amount", 0)
 	art.move_bonus = data.get("move_bonus", 0)
+	art.card_type = str(data.get("card_type", ""))
 	art.description = data.get("description", "")
 	for effect in data.get("effects", []):
 		art.special_effects.append(effect as MartialArtData.SpecialEffect)

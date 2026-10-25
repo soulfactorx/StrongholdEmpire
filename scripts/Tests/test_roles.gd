@@ -460,6 +460,33 @@ func _test_disciple_roster() -> void:
 	var strength: int = b.strength
 	_check(b.gain_experience(_Balance.DISCIPLE_EXP_PER_LEVEL * 3) >= 1 and b.strength > strength, "경지가 오르면 능력치 상승")
 
+	# 일괄 수련: 이미 수련한 제자는 빼고, 최적은 출전 지정·경지 오를 제자를 먼저, 유지비만큼 금화를 남긴다
+	var deployed: DiscipleData = sect.disciples[3]
+	deployed.deployed = true
+	var near: DiscipleData = sect.disciples[4]
+	for disciple in sect.disciples:
+		disciple.experience = 0
+	near.experience = near.get_next_level_experience() - 1
+	sect.gold = 100000
+	var best: Array[DiscipleData] = DiscipleRoster.plan_batch_train(sect, turn, "best")
+	_check(not best.has(b) and best.size() == sect.disciples.size() - 1, "일괄 수련: 이미 수련한 제자는 빠짐")
+	_check(best[0] == deployed and best[1] == near, "최적 수련: 출전 지정 → 경지 오를 제자 순")
+	var lowest: Array[DiscipleData] = DiscipleRoster.plan_batch_train(sect, turn, "lowest")
+	_check(lowest[0].level <= lowest[-1].level, "고르게: 낮은 경지부터")
+	_check(DiscipleRoster.plan_batch_train(sect, turn, "deployed").all(func(d: DiscipleData) -> bool: return d.deployed), "출전 지정 제자만")
+	var reserve: int = DiscipleRoster.get_batch_reserve(sect, "best")
+	sect.gold = reserve + _Balance.DISCIPLE_TRAIN_GOLD * 2 + 5
+	_check(DiscipleRoster.plan_batch_train(sect, turn, "best").size() == 2 and DiscipleRoster.plan_batch_train(sect, turn, "all").size() > 2, "최적 수련은 유지비만큼 남기고, 모두 수련은 금화를 다 씀")
+	var level_before: int = near.level
+	var batch: Dictionary = DiscipleRoster.batch_train(sect, turn, "best")
+	_check(batch["success"] and batch["count"] == 2 and sect.gold == reserve + 5 and near.level == level_before + 1 and deployed.last_train_turn == turn, "일괄 수련 실행 (%s)" % batch["message"])
+	sect.gold = reserve
+	_check(not DiscipleRoster.batch_train(sect, turn, "best")["success"], "일괄 수련: 금화가 모자라면 실패와 까닭")
+	sect.gold = 100000
+	DiscipleRoster.batch_train(sect, turn, "all")
+	_check(DiscipleRoster.get_trainable(sect, turn).is_empty() and DiscipleRoster.batch_train(sect, turn, "all")["message"].contains("없습니다"), "모두 수련 뒤에는 이번 계절 수련할 제자가 없음")
+	deployed.deployed = false
+
 	# 출전 지정과 방어전
 	_check(DiscipleRoster.toggle_deploy(sect, sect.disciples[5].id)["success"], "출전 지정")
 	DiscipleRoster.toggle_deploy(sect, sect.disciples[6].id)
@@ -546,16 +573,17 @@ func _test_disciple_roster_flow() -> void:
 	await process_frame
 	var controller: Node = current_scene
 	var fallen_unit: CombatUnit = null
-	for unit in controller._units:
+	for unit in controller.engine.friends:
 		if unit.is_ally and unit.character.id == deployed_id:
 			fallen_unit = unit
 	_check(fallen_unit != null, "전투: 출전 지정 제자가 아군으로 참전")
 	if fallen_unit:
 		fallen_unit.take_damage(99999)
 		var count_before: int = sect.disciple_count
-		for unit in controller._get_alive_enemies():
-			unit.take_damage(99999)
-		controller._check_victory()
+		for unit in controller.engine.foes:
+			unit.take_damage(unit.hp - 1)
+		controller.engine.friend_index = controller.engine.friends.find(controller.engine.get_player())
+		await controller.skip_to_result()
 		_check(DiscipleRoster.get_disciple(sect, deployed_id) == null and sect.disciple_count == count_before - 1, "전투에서 쓰러진 제자가 명단에서 빠짐")
 	gm.start_new_game("정리", "young_disciple")
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
@@ -668,9 +696,10 @@ func _test_bond_evolution() -> void:
 	_check(guard > 1.0 and RelationshipManager.get_defense_modifier(gm.player_relationships, ["npc_rival"]) == 1.0, "사제는 가호, 라이벌은 없음")
 	var attacker := CombatUnit.new(NpcRoster.create_character("npc_bandit"))
 	var defender := CombatUnit.new(gm.player_character, true)
-	var plain: int = CombatRules.calculate_damage(attacker, defender, null, CombatRules.Terrain.PLAIN, CombatRules.Terrain.PLAIN)["damage"]
-	var guarded: Dictionary = CombatRules.calculate_damage(attacker, defender, null, CombatRules.Terrain.PLAIN, CombatRules.Terrain.PLAIN, 1.0, 1.5)
-	_check(guarded["damage"] < plain and "인연의 가호" in guarded["notes"], "인연의 가호로 받는 피해 감소")
+	var slash: DuelCard = DuelCard.basic_cards()[0]
+	var plain: int = DuelRules._hit(attacker, slash, defender, null, "clear")["damage"]
+	defender.bond_guard = guard
+	_check(DuelRules._hit(attacker, slash, defender, null, "clear")["damage"] < plain, "인연의 가호로 받는 피해 감소")
 
 	# 기연 검증: priority 형식
 	var errors: PackedStringArray = EventManager.validate_event_dict({"id": "x", "title": "x", "description": "x", "priority": "yes", "conditions": [], "choices": [{"label": "a", "message": "b", "effects": []}]})
@@ -714,12 +743,18 @@ func _test_bond_flow() -> void:
 	await process_frame
 	var controller: Node = current_scene
 	var master_unit: CombatUnit = null
-	var enemy_unit: CombatUnit = controller._get_alive_enemies()[0]
-	for unit in controller._units:
+	for unit in controller.engine.friends:
 		if unit.is_ally and unit.character.id == "npc_master":
 			master_unit = unit
 	_check(controller.scene_file_path == SceneRouter.COMBAT and master_unit != null, "야습 도적: 스승이 아군으로 합류")
-	_check(controller._relationship_defense(enemy_unit, controller._get_player()) > 1.0, "스승과 함께 싸우면 주인공이 인연의 가호를 받음")
+	controller._toggle_order()
+	var hero_unit: CombatUnit = controller.engine.current_friend()
+	_check(hero_unit.is_player and hero_unit.bond_guard > 1.0, "스승과 함께 싸우면 주인공이 인연의 가호를 받음")
+	_check(hero_unit.cards.any(func(c: DuelCard) -> bool: return c.id == "combo_npc_master"), "깊은 인연의 스승과 합격 초식")
+	_check(controller.hand_grid.get_node_or_null("Card_combo_npc_master") != null, "손패에 합격 초식")
+	master_unit.take_damage(99999)
+	controller.engine._apply_bonds()
+	_check(not hero_unit.cards.any(func(c: DuelCard) -> bool: return c.id == "combo_npc_master"), "동료가 쓰러지면 합격도 사라짐")
 	gm.pending_combat = null
 	gm.start_new_game("정리", "young_disciple")
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)

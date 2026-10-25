@@ -161,5 +161,64 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "장의 끝 — 연소화",
+    "hint": "혈월 5년 봄, 열린 결말 가운데 하나를 고른다.",
+    "branches": [
+      {
+        "text": "피난길의 등불: 피난민의 맨 앞에 섰고 선",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "s1_so_led",
+            "value": true
+          },
+          {
+            "type": "alignment",
+            "in": [
+              "good"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "비연이 되다: 하오문의 손을 잡았다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "s1_so_haomun",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "혈월을 넘어서: 선이고 혈월의 밤에 맞서 싸웠다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "s1_resisted",
+            "value": true
+          },
+          {
+            "type": "alignment",
+            "in": [
+              "good"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "마도에 물들다: 악",
+        "if": [
+          {
+            "type": "alignment",
+            "in": [
+              "evil"
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }

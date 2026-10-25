@@ -1,0 +1,72 @@
+{
+  "action": "disciple_train",
+  "scenes": [
+    {
+      "id": "dtrain_eager",
+      "title": "개별 지도",
+      "speaker": "$disciple",
+      "lines": [
+        "{speaker}: 문주님께서 직접 봐 주신다니… 영광입니다!",
+        "{player}: 손목에 힘을 빼라. 검은 쥐는 것이 아니라 얹는 것이다.",
+        "{speaker}이(가) 몇 번이고 같은 초식을 되풀이한다. 점점 날이 서 간다."
+      ],
+      "choices": [
+        {
+          "label": "칭찬한다",
+          "message": "{speaker}의 눈이 반짝입니다."
+        },
+        {
+          "label": "더 엄하게 몰아친다",
+          "message": "무력 +1 (함께 땀을 흘렸다)",
+          "effects": [
+            {
+              "type": "character",
+              "field": "strength",
+              "add": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dtrain_doubt",
+      "title": "흔들리는 제자",
+      "speaker": "$disciple",
+      "lines": [
+        "{speaker}: 문주님… 저는 재능이 없는 걸까요. 다른 사형들은 벌써…",
+        "{player}: 남과 견주지 마라. 어제의 너와 견주어라."
+      ],
+      "choices": [
+        {
+          "label": "자신의 젊은 날을 들려준다",
+          "message": "도덕 +1",
+          "effects": [
+            {
+              "type": "character",
+              "field": "morality",
+              "add": 1
+            }
+          ]
+        },
+        {
+          "label": "말없이 함께 수련한다"
+        }
+      ]
+    },
+    {
+      "id": "dtrain_night",
+      "title": "달빛 아래",
+      "speaker": "$disciple",
+      "lines": [
+        "모두 잠든 밤, 연무장에 홀로 남은 {speaker}을(를) 보았다.",
+        "{speaker}: 아, 문주님! 낮에 배운 걸 잊을까 봐서요.",
+        "{player}: 그 마음이면 되었다. 한 번만 더 보여 다오."
+      ],
+      "choices": [
+        {
+          "label": "한 수 더 가르친다"
+        }
+      ]
+    }
+  ]
+}

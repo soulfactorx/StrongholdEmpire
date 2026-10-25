@@ -1,0 +1,92 @@
+{
+  "id": "s2_hr_rope_night",
+  "title": "줄 위의 밤",
+  "description": "그날 밤, 흑풍채 산채 뒤 벼랑. 아버지 마진이 두 봉우리 사이에 걸린 낡은 밧줄 위에 서 있었습니다. 젊을 때부터 생각이 많으면 그 위에 올랐다고 합니다.",
+  "can_repeat": false,
+  "priority": false,
+  "weight": 10,
+  "follow_up": true,
+  "npc": "s2_ma_jin",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_ma_hwarin",
+      "value": true
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s2_ma_jin",
+      "text": "올라와 보거라. 줄 위에서는 아래가 잘 보인다. 누가 누구 편인지."
+    },
+    {
+      "speaker": "player",
+      "text": "아버지는 평생 줄 위에서만 사셨잖아요. 내려와서 땅을 디뎌 본 적은 있어요?"
+    },
+    {
+      "speaker": "s2_ma_jin",
+      "text": "…혈월의 밤에 한 번. 그날 땅을 디딘 놈들은 다 죽었다."
+    },
+    {
+      "speaker": "s2_ma_jin",
+      "text": "화린아, 독고천은 흑풍을 삼켰다. 다음은 너다. 그 전에 네 칼이 얼마나 되는지 알아 둬야겠다."
+    }
+  ],
+  "choices": [
+    {
+      "label": "아버지와 칼을 맞대 본다",
+      "message": "줄 위에서 세 번 칼이 부딪쳤습니다. 아버지가 먼저 칼을 거뒀습니다. \"많이 컸구나.\" 마진 유대 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hr_rope_night",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_ma_jin",
+          "add": 8
+        },
+        {
+          "type": "unlock",
+          "feature": "spar"
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hr_sparred_father",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "흑련의 장부를 몰래 훔쳐본다",
+      "message": "독고천이 당가에서 사들인 독의 양이 적혀 있었습니다. 한 고을을 몰살하고도 남을 양이었습니다. 지혜 +1",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hr_rope_night",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 1
+        },
+        {
+          "type": "unlock",
+          "feature": "spar"
+        },
+        {
+          "type": "rumor",
+          "text": "흑련맹이 당가에서 독을 수레째 사들였다고 한다."
+        }
+      ]
+    }
+  ]
+}

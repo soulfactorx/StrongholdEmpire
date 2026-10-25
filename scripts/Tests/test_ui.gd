@@ -23,6 +23,9 @@ func _test_save_slots() -> void:
 	var summary: Dictionary = SaveManager.get_slot_summary(2)
 	_check(summary["exists"] and summary["detail"].contains("둘") and summary["detail"].contains("낭인") and summary["title"].contains("천하대란"), "슬롯 요약: 날짜·인물·역할·시나리오")
 	_check(not SaveManager.get_slot_summary(3)["exists"], "빈 슬롯 요약")
+	_check(summary["detail"].begins_with("오늘 ") and summary["detail"].contains("저장"), "슬롯 요약: 저장한 시각 (%s)" % summary["detail"])
+	var now: int = int(Time.get_unix_time_from_system())
+	_check(SaveManager.format_saved_time(now - 400 * 86400, now).contains("년") and not SaveManager.format_saved_time(now, now).contains("년"), "저장 시각: 해가 다르면 연도까지")
 
 	# 계절이 바뀔 때마다 자동 저장
 	gm.start_new_game("자동", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
@@ -173,10 +176,9 @@ func _test_settings_and_reports() -> void:
 	GameSettings.set_and_save("text_scale", 1.0, tree)
 	# 불러오기로 기본값(0.3)이 된 전투 간격을 다시 시험용 0으로
 	GameSettings.combat_delay = 0.0
-	GameSettings.combat_preview = false
-	GameSettings.enemy_preview = false
 	GameSettings.action_preview = false
 	GameSettings.faction_report = false
+	GameSettings.action_scenes = false
 	_check(ProjectSettings.get_setting("display/window/stretch/aspect") == "expand", "화면 비율: 넓은 화면은 보이는 영역을 넓힘")
 
 	# 연간 보고서
@@ -509,6 +511,19 @@ func _test_portrait_layout() -> void:
 	await process_frame
 	_check(gm.player_character.internal_energy_max > energy and not hub.todo_box.has_node("Step_elixir"), "할 일 버튼으로 바로 실행, 한 일은 목록에서 빠짐")
 	_check(hub.status_label.text.contains("금화") and hub.status_label.text.contains("제자"), "맨 위 자원 한 줄")
+	# 인물 쪽: 긴 능력치 줄·큰 글자에도 화면 폭을 넘지 않는다 (줄바꿈)
+	hub.show_page("hero")
+	hub.character_stats_label.text = "내공 1440/1440 | 전투력 333 | 도력 72 선(협객) | Lv.13 (경험 13600/14300) | 아주 긴 줄 시험"
+	hub.character_role_label.text = "막내 제자 · 지역: 합비 · 우리 본거지 · 소속 남궁세가 · 아주 긴 역할 줄 시험"
+	await process_frame
+	await process_frame
+	# 시험 창은 가로 크기라 실제 폭 대신 최소 폭이 휴대폰 폭(여백 빼고) 안인지 본다
+	var needed: float = hub.pages["hero"].get_child(0).get_combined_minimum_size().x
+	_check(needed <= LayoutMode.PORTRAIT_SIZE.x - 20, "세로 인물 쪽: 긴 글줄도 휴대폰 폭 안 (최소 폭 %d)" % needed)
+	var unwrapped: Array = hub.pages.values().map(func(page: Control) -> Array:
+		return page.find_children("*", "Label", true, false).filter(func(l: Label) -> bool: return l.autowrap_mode == TextServer.AUTOWRAP_OFF)
+	).reduce(func(acc: Array, x: Array) -> Array: return acc + x, [])
+	_check(unwrapped.is_empty(), "세로 쪽의 글줄은 모두 줄바꿈 (%s)" % [unwrapped.map(func(l: Label) -> String: return l.name)])
 	hub.show_page("sect")
 	_check(hub.pages["sect"].visible and not hub.pages["todo"].visible and hub._action_buttons["TrainButton"].is_visible_in_tree(), "탭: 문파 쪽에 문파 운영 버튼")
 	root.get_node("EventBus").action_message.emit("토스트 시험")
@@ -544,13 +559,13 @@ func _test_portrait_layout() -> void:
 	_check(current_scene.get_node("Margin/RootHBoxScroll/RootHBox") is VBoxContainer and current_scene.known_arts_label != null, "무공 연구소: 위아래로 쌓고 스크롤")
 	current_scene._on_save_blueprint_pressed()
 	_check(not Toast.get_text(current_scene).is_empty(), "무공 연구소: 결과가 토스트로 보임")
-	# 전투: 격자를 화면 폭에 맞춰 줄이고 칸 판정은 그대로
+	# 전투: 손패는 두 줄, 화면 폭을 넘지 않는다
 	gm.start_combat(CombatManager.create_sparring(gm.player_character))
 	await process_frame
 	await process_frame
 	var c: Node = current_scene
-	var board_bottom: float = c.position.y + c.GRID_HEIGHT * c.GRID_SIZE * c.scale.y
-	_check(c.position == Vector2(8, 8) and c.get_node("HUD/Panel").offset_left == 8 and c.get_node("HUD/Panel").offset_top >= board_bottom, "세로 전투: 격자 위, 조작 칸 아래")
+	_check(c.hand_grid.columns == 2, "세로 대결: 손패 두 줄")
+	_check(c.hand_grid.get_combined_minimum_size().x <= LayoutMode.PORTRAIT_SIZE.x and c.slot_row.get_combined_minimum_size().x <= LayoutMode.PORTRAIT_SIZE.x, "세로 대결: 칸·손패가 화면 폭 안")
 	c.leave_combat()
 	await process_frame
 	await process_frame
@@ -628,39 +643,23 @@ func _test_input_and_tips() -> void:
 	_check(hub.save_popup._rows.get_child(0).has_focus(), "선택 팝업: 첫 항목에 포커스")
 	hub.save_popup.visible = false
 
-	# 전투: 이동 취소, 단축키
+	# 전투: 단축키와 진행 속도
 	gm.player_character.learn_martial_art(MartialArtLibrary.create_art("preset_soul_chase_sword"))
 	gm.start_combat(CombatManager.create_sparring(gm.player_character))
 	await process_frame
 	await process_frame
 	var c: Node = current_scene
-	var player: CombatUnit = c._get_player()
-	var start: Vector2i = player.grid_pos
-	var ap: int = player.action_points
-	var target: Vector2i = start + Vector2i(1, 0)
-	c._try_move(player, target)
-	_check(player.grid_pos == target and not c.undo_move_button.disabled, "이동하면 이동 취소 가능")
-	c._unhandled_key_input(_key(KEY_Z))
-	_check(player.grid_pos == start and player.action_points == ap and c.undo_move_button.disabled, "Z: 이동 취소 (위치·행동력 복원)")
-	c._try_move(player, target)
-	var enemy: CombatUnit = c._get_alive_enemies()[0]
-	enemy.grid_pos = player.grid_pos + Vector2i(1, 0)
-	c._perform_attack(player, enemy)
-	c._on_undo_move_pressed()
-	_check(player.grid_pos == target, "공격한 뒤에는 이동 취소 불가")
 	c._unhandled_key_input(_key(KEY_A))
-	_check(c._action_mode == c.ActionMode.ATTACK, "A: 공격 모드")
-	c._unhandled_key_input(_key(KEY_1))
-	_check(c._selected_art != null and c._action_mode == c.ActionMode.MARTIAL_ART, "1: 첫 무공 선택")
-	c._unhandled_key_input(_key(KEY_M))
-	_check(c._action_mode == c.ActionMode.MOVE, "M: 이동 모드")
-
-	# 전투 속도: 적 차례 사이에 간격을 두고, 그동안은 조작할 수 없다
+	_check(not c.plan.has(null), "A: 자동 배치")
+	# 전투 속도: 교전 줄 사이에 간격을 두고, 그동안은 조작할 수 없다
 	GameSettings.combat_delay = 0.2
 	c._unhandled_key_input(_key(KEY_SPACE))
-	_check(c._enemy_acting and c._get_controlled() == null and c.end_turn_button.disabled, "적이 움직이는 동안 조작 불가")
-	await create_timer(0.5).timeout
-	_check(not c._enemy_acting and c._get_controlled() == player, "간격 뒤 적이 행동하고 다시 내 차례")
+	_check(c._busy and c.fight_button.disabled and c.engine.bout_total == 1, "Space: 겨루기, 교전이 지나가는 동안 조작 불가")
+	var guard: int = 0
+	while c._busy and guard < 100:
+		guard += 1
+		await create_timer(0.1).timeout
+	_check(not c._busy and (c.engine.over or not c.fight_button.disabled), "교전이 끝나면 다시 배치")
 	GameSettings.combat_delay = 0.0
 	c.leave_combat()
 	await process_frame
@@ -789,16 +788,10 @@ func _test_art_assets() -> void:
 	await process_frame
 	var combat: Node = current_scene
 	_check(combat.get_node_or_null("Background/Art") != null, "전투 화면에 배경 그림")
-	var tile_count: int = 0
-	for child in combat.grid_overlay.get_children():
-		if child is TextureRect and not child.is_queued_for_deletion():
-			tile_count += 1
-	_check(tile_count == combat.GRID_WIDTH * combat.GRID_HEIGHT, "전투 칸마다 지형 그림")
-	var token_count: int = 0
-	for child in combat.units_layer.get_children():
-		if not child.is_queued_for_deletion():
-			token_count += 1
-	_check(token_count == 2, "비무 양쪽 장기말")
+	_check(combat.foe_portrait.texture == ArtAssets.portrait("npc_rival") and combat.friend_portrait.texture != null, "대결 화면: 양쪽 초상화")
+	combat.leave_combat()
+	await process_frame
+	await process_frame
 	gm.pending_combat = null
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
 	await process_frame
@@ -816,7 +809,7 @@ func _test_audio() -> void:
 	for track in tracks:
 		var stream: AudioStream = load(audio.MUSIC_DIR + track + ".ogg")
 		_check(stream is AudioStreamOggVorbis and stream.get_length() > 20.0, "배경음악 %s" % track)
-	for sfx in ["click", "success", "failure", "event", "hit", "art", "level_up", "battle_start", "victory", "defeat"]:
+	for sfx in ["click", "success", "failure", "event", "hit", "art", "level_up", "battle_start", "victory", "defeat", "block", "evade", "fall", "focus"]:
 		_check(load(audio.SFX_DIR + sfx + ".ogg") is AudioStreamOggVorbis, "효과음 %s" % sfx)
 	_check(AudioServer.get_bus_index(GameSettings.MUSIC_BUS) > 0 and AudioServer.get_bus_index(GameSettings.SFX_BUS) > 0, "배경음악·효과음 버스")
 	_check(audio._sfx_players[0].bus == GameSettings.SFX_BUS and audio._music_players[0].bus == GameSettings.MUSIC_BUS, "재생기가 각자의 버스로")
@@ -835,14 +828,13 @@ func _test_audio() -> void:
 	await process_frame
 	var combat: Node = current_scene
 	_check(audio.current_music == "combat", "전투 화면: 전투 곡")
-	var player_unit: CombatUnit = combat._get_player()
-	var enemy: CombatUnit = combat._get_alive_enemies()[0]
-	enemy.grid_pos = player_unit.grid_pos + Vector2i(1, 0)
-	combat._perform_attack(player_unit, enemy)
-	_check(audio.last_sfx == "hit", "기본 공격: 타격 소리")
-	enemy.hp = 1
-	player_unit.action_points = 5
-	combat._perform_attack(player_unit, enemy)
+	# 무대 연출을 끈 경우의 소리 (연출을 켜면 칸마다 타격·막기·회피 소리가 따로 난다)
+	GameSettings.combat_effects = false
+	combat.plan.assign([DuelCard.basic_cards()[0], DuelCard.basic_cards()[0], DuelCard.basic_cards()[0]])
+	combat.fight()
+	_check(audio.last_sfx == "hit", "기본 동작으로 겨루기: 타격 소리")
+	combat.engine.current_foe().hp = 1
+	await combat.skip_to_result()
 	_check(audio.last_sfx in ["victory", "level_up"], "승리: 승전 소리")
 	gm.pending_combat = null
 
@@ -929,6 +921,30 @@ func _test_role_guide() -> void:
 	_completed["_test_role_guide"] = true
 
 
+## 창으로 실제 누름 → 끌기(4번에 나눠) → 떼기를 보낸다. delta가 0이면 그 자리에서 눌렀다 뗀다.
+func _drag(to_window: Transform2D, origin: Vector2, delta: Vector2) -> void:
+	var press: InputEventMouseButton = _mouse(true)
+	press.position = to_window * origin
+	press.global_position = press.position
+	root.push_input(press)
+	await process_frame
+	for step in 4:
+		if delta == Vector2.ZERO:
+			break
+		var move := InputEventMouseMotion.new()
+		move.button_mask = MOUSE_BUTTON_MASK_LEFT
+		move.position = to_window * (origin + delta * (step + 1) / 4.0)
+		move.global_position = move.position
+		move.relative = to_window.basis_xform(delta / 4.0)
+		root.push_input(move)
+	var release: InputEventMouseButton = _mouse(false)
+	release.position = to_window * (origin + delta)
+	release.global_position = release.position
+	root.push_input(release)
+	await process_frame
+	await process_frame
+
+
 func _test_list_drag_scroll() -> void:
 	SceneRouter.goto(tree, SceneRouter.NEW_GAME)
 	await process_frame
@@ -987,6 +1003,74 @@ func _test_list_drag_scroll() -> void:
 	root.push_input(real_release)
 	await process_frame
 	_check(bar.value > 0 and list.get_selected_items()[0] == now, "목록 끌어 스크롤: 실제 입력으로 끌기 (%.0f)" % bar.value)
+	# 스크롤 칸: 버튼·판 위에서 끌어도 화면이 움직이고, 끄는 동안 누른 버튼은 눌리지 않는다 (문파전 화면)
+	root.get_node("GameManager").start_new_game("끌기", "leader", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
+	SceneRouter.goto(tree, SceneRouter.SECT_WAR)
+	await process_frame
+	await process_frame
+	var war: Node = current_scene
+	var node: Node = war.target_box
+	while not node is ScrollContainer:
+		node = node.get_parent()
+	var scroll: ScrollContainer = node
+	_check(scroll.has_node("TouchScroll"), "스크롤 칸에 끌기 도우미")
+	# 헤드리스 창은 커서 내용이 다 들어가므로 칸을 줄여 스크롤이 생기게 한다
+	scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	scroll.custom_minimum_size.y = 300
+	await process_frame
+	await process_frame
+	scroll.scroll_vertical = 0
+	var button: Button = war.round_rows[0]["buttons"][0]
+	var start: Vector2 = button.get_global_rect().get_center()
+	if not scroll.get_global_rect().has_point(start):
+		start = scroll.get_global_rect().get_center()
+	await _drag(to_window, start, Vector2(0, -120))
+	_check(scroll.scroll_vertical > 0 and war.get_commands().is_empty(), "스크롤 칸 끌기: 버튼 위에서 끌면 스크롤되고 버튼은 안 눌림 (%d)" % scroll.scroll_vertical)
+	# 칸 안에 보이는 고르기 버튼(상대·진형·명령) 하나를 그대로 누른다
+	var candidates: Array = war.target_buttons + war.formation_buttons
+	for row in war.round_rows:
+		candidates.append_array(row["buttons"])
+	var visible_button: Button = null
+	for candidate in candidates:
+		if visible_button == null and not candidate.text.begins_with("▶") and scroll.get_global_rect().grow(-4).encloses(candidate.get_global_rect()):
+			visible_button = candidate
+	_check(visible_button != null, "스크롤한 칸 안에 고르기 버튼이 보임")
+	if visible_button:
+		await _drag(to_window, visible_button.get_global_rect().get_center(), Vector2.ZERO)
+		_check(visible_button.text.begins_with("▶"), "스크롤 칸 끌기: 그대로 누르면 버튼이 눌림")
+	# 팝업 안의 스크롤 칸(인연 돌보기): 뒤의 경영 화면이 아니라 팝업 목록이 움직인다.
+	# 휴대폰처럼 마우스 올림 없이 바로 누르고 끈다 (Viewport의 올려 둔 컨트롤은 엉뚱한 곳에 머문 채)
+	var gm_node: Node = root.get_node("GameManager")
+	for npc_id in ["npc_swallow", "npc_healer", "npc_iron_blade", "npc_innkeeper", "npc_scholar", "npc_musician", "npc_merchant", "npc_old_drunk"]:
+		if RelationshipManager.get_bond_with(gm_node.player_relationships, npc_id) == null:
+			gm_node.player_relationships.append(RelationshipManager.make_relationship(npc_id, "ACQUAINTANCE", 20))
+	SceneRouter.goto(tree, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	var hub: Node = current_scene
+	hub.event_popup.visible = false
+	hub.bond_popup.open()
+	await process_frame
+	await process_frame
+	var bond_scroll: ScrollContainer = hub.bond_popup._rows.get_parent()
+	bond_scroll.custom_minimum_size.y = 200
+	await process_frame
+	await process_frame
+	bond_scroll.scroll_vertical = 0
+	var interactions: int = RelationshipManager.get_interactions_left(gm_node.story_flags, gm_node._get_turn_index())
+	var row_button: Button = null
+	for candidate in hub.bond_popup._rows.find_children("*", "Button", true, false):
+		if row_button == null and bond_scroll.get_global_rect().grow(-4).encloses(candidate.get_global_rect()):
+			row_button = candidate
+	var bond_start: Vector2 = row_button.get_global_rect().get_center() if row_button else bond_scroll.get_global_rect().get_center()
+	await _drag(to_window, bond_scroll.get_global_rect().get_center() if row_button == null else bond_start, Vector2(0, -100))
+	_check(bond_scroll.scroll_vertical > 0, "인연 돌보기 팝업: 버튼 위에서 끌어도 목록이 스크롤 (%d)" % bond_scroll.scroll_vertical)
+	_check(RelationshipManager.get_interactions_left(gm_node.story_flags, gm_node._get_turn_index()) == interactions, "인연 돌보기 팝업: 끄는 동안 버튼은 안 눌림")
+	# 팝업이 덮고 있으면 뒤의 경영 화면 스크롤 칸은 그 자리를 자기 몫으로 보지 않는다
+	for behind in hub.find_children("TouchScroll", "", true, false):
+		if behind.get_parent() != bond_scroll and behind.get_parent().is_visible_in_tree() and behind.get_parent().get_global_rect().has_point(bond_start):
+			_check(not behind.owns_point(bond_start), "팝업 뒤의 스크롤 칸은 움직이지 않음 (%s)" % behind.get_parent().name)
+	hub.bond_popup.visible = false
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
 	await process_frame
 	ScenarioManager.activate(ScenarioManager.DEFAULT_ID)

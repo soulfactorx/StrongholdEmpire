@@ -9,6 +9,13 @@ enum Outcome { VICTORY, DEFEAT, RETREAT }
 
 const RIVAL_ID := "npc_rival"
 
+## 코드로 만드는 전투(도적·추격·침공 등)를 판마다 다르게: 지역에 맞는 전장, 계절 날씨, 목표·증원.
+## 스모크 테스트는 정해진 전장으로 시험하므로 끈다.
+static var varied: bool = true
+## 지금 있는 지역과 계절 (GameManager가 맞춘다)
+static var region_id: String = ""
+static var season: String = ""
+
 
 ## 기연 데이터 등에서 id로 전투를 만들 때 쓴다.
 const COMBAT_IDS: PackedStringArray = [
@@ -50,6 +57,12 @@ static func create_sparring(player: CharacterData) -> CombatSetup:
 	setup.blocked_tiles = _central_wall()
 	_add_arena_terrain(setup)
 	setup.add_enemy(_create_rival(player), Vector2i(13, 5))
+	if varied:
+		Battlefield.generate(setup, "courtyard", setup.unit_tiles())
+		# 비무: 비무대에서 정정당당하게
+		setup.stage = "arena"
+		setup.conditions.append("honor")
+		setup.challenge = Battlefield.random_challenge(3)
 	setup.enemy_hp_scale = 0.8
 	setup.enemy_damage_scale = 0.65
 	setup.rewards = {"experience": _Balance.SPAR_EXP, "bond": 5}
@@ -92,6 +105,12 @@ static func create_rival_duel(player: CharacterData) -> CombatSetup:
 	setup.rewards = {"experience": 40, "reputation": 5, "strength": 1, "bond": 10}
 	setup.defeat_penalty = {"reputation": 5, "injury_ratio": 0.3, "bond": -5}
 	setup.victory_flag = "won_rival_duel"
+	if varied:
+		# 진검 승부: 칼을 뽑기 전 기세 싸움부터
+		setup.format = "standoff"
+		setup.standoff_then = "duel"
+		setup.stage = ["arena", "rooftop", "bridge"][randi() % 3]
+		setup.challenge = Battlefield.random_challenge(4)
 	return setup
 
 
@@ -127,6 +146,13 @@ static func create_night_bandits(player: CharacterData, sect: SectData = null) -
 	setup.enemy_damage_scale = 0.6
 	setup.rewards = {"experience": 30, "gold": 30, "reputation": 3, "strength": 1}
 	setup.defeat_penalty = {"gold": 40, "reputation": 3, "injury_ratio": 0.3}
+	if varied:
+		# 야습: 밤, 우리 지역의 전장, 도적이 하나 더 뒤를 받친다
+		setup.add_reinforcement(3, _create_bandit(player, positions.size()), Vector2i(15, 5))
+		_vary(setup, "", "night")
+		# 도적 떼가 한꺼번에 덮친다
+		setup.format = "siege"
+		_mark_mooks(setup)
 	return setup
 
 
@@ -143,6 +169,8 @@ static func create_bandit_hunt(player: CharacterData, gold_reward: int = _Balanc
 	setup.enemy_damage_scale = 0.6
 	setup.rewards = {"experience": 30, "gold": gold_reward}
 	setup.defeat_penalty = {"injury_ratio": 0.4}
+	if varied:
+		_vary_hunt(setup, player)
 	return setup
 
 
@@ -172,6 +200,17 @@ static func create_assassination(player: CharacterData) -> CombatSetup:
 	setup.rewards = {"experience": _Balance.ASSASSINATION_EXP, "gold": _Balance.ASSASSINATION_GOLD}
 	setup.defeat_penalty = {"injury_ratio": 0.3}
 	setup.victory_flag = "assassination_success"
+	if varied:
+		# 표적만 쓰러뜨리면 된다. 시간을 끌면 순찰 무사가 달려온다.
+		setup.set_target_objective(target)
+		var patrol: CharacterData = _create_bandit(player, 3)
+		patrol.display_name = "순찰 무사"
+		patrol.id = "npc_bandit_patrol"
+		# 들키면 순찰 무사가 달려온다
+		setup.format = "stealth"
+		setup.hidden_foes.append(patrol)
+		_vary(setup, "town", "night")
+		setup.stage = ["shrine", "rooftop"][randi() % 2]
 	return setup
 
 
@@ -192,6 +231,20 @@ static func create_bounty_hunters(player: CharacterData) -> CombatSetup:
 	setup.enemy_damage_scale = 0.65
 	setup.rewards = {"experience": 35, "reputation": 2}
 	setup.defeat_penalty = {"gold": 40, "injury_ratio": 0.3}
+	if varied and randf() < 0.5:
+		# 지붕을 타고 달아난다: 끝까지 벌리면 따돌린다 (붙잡히면 그 자리에서 겨룬다)
+		setup.objective = "escape"
+		setup.format = "chase"
+		var blocker: CharacterData = _create_bandit(player, 3)
+		blocker.display_name = "길목의 사냥꾼"
+		setup.add_enemy(blocker, Vector2i(4, 5))
+	elif varied:
+		setup.format = "siege"
+		_mark_mooks(setup)
+	if varied:
+		_vary(setup)
+		if setup.format == "chase":
+			setup.stage = "rooftop"
 	return setup
 
 
@@ -368,7 +421,85 @@ static func create_invasion(invader: SectData, player: CharacterData, sect: Sect
 	setup.rewards = {"experience": 40, "gold": 50, "reputation": 5}
 	setup.defeat_penalty = {"gold": 80, "reputation": _Balance.INVASION_YIELD_REPUTATION, "injury_ratio": 0.3}
 	setup.victory_flag = "repelled_invasion"
+	if varied:
+		# 둘째 물결: 졸개가 더 밀려와 뒤에 선다
+		var wave: CharacterData = NpcRoster.create_character(soldier_id, player)
+		wave.id = "%s_wave" % soldier_id
+		wave.display_name = "%s 후속대" % wave.display_name
+		setup.add_reinforcement(3, wave, Vector2i(15, 5))
+		_vary(setup)
+		# 산문 앞에서 진을 치고 맞선다. 졸개는 졸개답게
+		setup.format = "formation"
+		for character in _all_enemies(setup):
+			if character.id.begins_with(soldier_id):
+				setup.mooks[character.id] = true
+		if randf() < 0.3:
+			setup.stage = "burning"
 	return setup
+
+
+## 판마다 다른 전투: 지역 전장(kind가 비면 지금 지역), 날씨(비면 계절에 맞게 무작위)
+static func _vary(setup: CombatSetup, kind: String = "", weather: String = "") -> void:
+	if kind.is_empty():
+		kind = Battlefield.kind_for_region(region_id)
+	Battlefield.generate(setup, kind, setup.unit_tiles())
+	setup.weather = weather if not weather.is_empty() else Battlefield.random_weather(kind, season)
+	setup.region_id = region_id
+	if setup.stage.is_empty():
+		setup.stage = Battlefield.random_stage(kind)
+	if setup.challenge.is_empty():
+		setup.challenge = Battlefield.random_challenge(3 + setup.enemies.size())
+
+
+## 적과 증원 모두
+static func _all_enemies(setup: CombatSetup) -> Array:
+	var result: Array = Array(setup.enemies)
+	for entry in setup.reinforcements:
+		result.append(entry["character"])
+	return result
+
+
+## 도적 같은 졸개 표시 (포위·진형에서 칸이 둘)
+static func _mark_mooks(setup: CombatSetup) -> void:
+	for character in _all_enemies(setup):
+		if character.id.begins_with("npc_bandit"):
+			setup.mooks[character.id] = true
+
+
+## 토벌 의뢰의 여러 모습: 우두머리 토벌, 상인 호위, 또는 모두 격파
+static func _vary_hunt(setup: CombatSetup, player: CharacterData) -> void:
+	var roll: float = randf()
+	if roll >= 0.6 and roll < 0.8:
+		# 현상수배범 생포: 죽이면 현상금을 못 받는다
+		var wanted: CharacterData = setup.enemies[0]
+		wanted.display_name = "현상수배범"
+		setup.objective = "capture"
+		setup.objective_target = wanted.id
+		setup.objective_target_name = wanted.display_name
+		setup.title = "토벌 의뢰 — 현상수배범 생포"
+		_vary(setup)
+		return
+	if roll >= 0.8:
+		setup.format = "siege"
+		_mark_mooks(setup)
+	if roll < 0.35:
+		var chief: CharacterData = _create_bandit(player, 2)
+		chief.display_name = "도적 두목"
+		chief.strength += 3
+		chief.internal_energy_max += 30
+		chief.restore_internal_energy()
+		setup.add_enemy(chief, Vector2i(14, 5))
+		setup.set_target_objective(chief)
+		setup.title = "토벌 의뢰 — 도적 두목"
+	elif roll < 0.6 and NpcRoster.has_npc("npc_merchant"):
+		var merchant: CharacterData = NpcRoster.create_character("npc_merchant", player)
+		setup.add_ally(merchant, Vector2i(2, 5))
+		setup.player_position = Vector2i(3, 4)
+		setup.objective = "protect"
+		setup.objective_target = merchant.id
+		setup.objective_target_name = merchant.display_name
+		setup.title = "호위 의뢰 — 습격당한 상단"
+	_vary(setup)
 
 
 ## 방어전에 깊은 인연(사제·혈맹·연인)의 인물이 아군으로 합류한다. 합류한 인물 이름을 돌려준다.

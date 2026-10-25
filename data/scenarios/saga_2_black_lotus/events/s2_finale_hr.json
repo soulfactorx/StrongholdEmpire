@@ -124,5 +124,42 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "장의 끝 — 마화린",
+    "hint": "흑련 5년 봄, 열린 결말 가운데 하나를 고른다.",
+    "branches": [
+      {
+        "text": "강을 건넌 연인: 남궁운에게 가기로 했다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "s2_hr_elope",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "흑련의 꽃: 흑련에 남는다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "s2_hr_elope",
+            "value": false
+          }
+        ]
+      },
+      {
+        "text": "흑련의 사냥개: 악",
+        "if": [
+          {
+            "type": "alignment",
+            "in": [
+              "evil"
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }

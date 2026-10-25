@@ -49,6 +49,10 @@
           "target": "npc_shadow_blade",
           "bond_type": "HATRED",
           "strength": 30
+        },
+        {
+          "type": "goal",
+          "text": "스승을 해친 자객을 찾아 복수하기"
         }
       ]
     },
@@ -76,8 +80,28 @@
           "target": "npc_shadow_blade",
           "bond_type": "HATRED",
           "strength": 15
+        },
+        {
+          "type": "goal",
+          "text": "스승을 돌보며 자객의 흔적을 쫓기"
         }
-      ]
+      ],
+      "next": "arc_revenge_bedside"
+    }
+  ],
+  "npc": "npc_master",
+  "scene": [
+    {
+      "speaker": "npc_master",
+      "text": "(피를 토하며) 쫓지 마라… 저 자는 처음부터 나를 노렸다. 너희가 다칠 일이 아니다."
+    },
+    {
+      "speaker": "npc_healer",
+      "text": "비수에 독은 없어요. 하지만 경맥이 상했어요. 한동안 검은 못 드실 거예요."
+    },
+    {
+      "speaker": "player",
+      "text": "누가 감히 청운산에서… 반드시 찾아내겠습니다."
     }
   ]
 }

@@ -1,4 +1,20 @@
 {
+  "battlefield": "town",
+  "objective": {
+    "type": "defeat_target",
+    "target": "s3_dokgo_gyeol"
+  },
+  "reinforcements": [
+    {
+      "round": 3,
+      "npc": "npc_bandit",
+      "position": [
+        15,
+        5
+      ],
+      "name": "흑련 무사 병"
+    }
+  ],
   "id": "s3_kaifeng_gate",
   "title": "개봉 대전 — 흑련의 성문",
   "player_position": [
@@ -11,6 +27,9 @@
       "position": [
         13,
         5
+      ],
+      "traits": [
+        "enrage"
       ]
     },
     {
@@ -19,7 +38,8 @@
         12,
         3
       ],
-      "name": "흑련 무사 갑"
+      "name": "흑련 무사 갑",
+      "mook": true
     },
     {
       "npc": "npc_bandit",
@@ -27,25 +47,10 @@
         12,
         7
       ],
-      "name": "흑련 무사 을"
+      "name": "흑련 무사 을",
+      "mook": true
     }
   ],
-  "terrain": {
-    "HIGH": [
-      [
-        6,
-        4
-      ],
-      [
-        6,
-        5
-      ],
-      [
-        6,
-        6
-      ]
-    ]
-  },
   "disciple_allies": [
     [
       2,
@@ -67,5 +72,6 @@
     "injury_ratio": 0.3
   },
   "victory_flag": "s3_kaifeng_won",
-  "defeat_flag": "s3_kaifeng_lost"
+  "defeat_flag": "s3_kaifeng_lost",
+  "format": "formation"
 }

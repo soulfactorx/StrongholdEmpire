@@ -1,0 +1,64 @@
+{
+  "id": "martial_tournament",
+  "title": "무림대회",
+  "description": "낙양에서 삼 년 만에 무림대회가 열립니다. 각 문파의 기재와 이름난 낭인들이 비무대에 오르고, 우승자의 이름은 강호에 퍼집니다.\n\n■ 비무대회: 대진표대로 연달아 겨룹니다. 판 사이 회복은 조금뿐이고, 다음 상대의 지난 경기를 관전해 버릇을 미리 봅니다. 비무대에서는 술(암기·독)이 금지되고 빈 칸을 둘 수 없습니다.",
+  "can_repeat": false,
+  "weight": 2,
+  "conditions": [
+    {
+      "type": "year",
+      "op": ">=",
+      "value": 2
+    },
+    {
+      "type": "character",
+      "field": "level",
+      "op": ">=",
+      "value": 3
+    },
+    {
+      "type": "season",
+      "in": [
+        "가을"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "label": "비무대에 오른다",
+      "message": "대진표에 이름을 올렸습니다.",
+      "effects": [
+        {
+          "type": "combat",
+          "combat": "martial_tournament"
+        },
+        {
+          "type": "rumor",
+          "text": "낙양에서 천하 무림대회가 열린다는 방이 붙었다."
+        }
+      ]
+    },
+    {
+      "label": "관중석에서 지켜본다",
+      "message": "고수들의 겨룸을 보며 깨달은 바가 있습니다. 지혜 +1",
+      "effects": [
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 1
+        },
+        {
+          "type": "rumor",
+          "text": "낙양에서 천하 무림대회가 열린다는 방이 붙었다."
+        }
+      ]
+    }
+  ],
+  "npc": "npc_rival",
+  "scene": [
+    {
+      "speaker": "npc_rival",
+      "text": "너도 왔구나! 이번 대회 우승은 남궁이 가져간다. 각오해!"
+    }
+  ]
+}

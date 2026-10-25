@@ -4,6 +4,7 @@
   "title": "검을 든 서생",
   "sect_id": "none",
   "role": "WANDERER",
+  "combat_style": "sword",
   "named": true,
   "description": "과거를 포기하고 검을 든 몰락 명문가의 공자. 시와 검을 함께 논한다.",
   "level": 3,

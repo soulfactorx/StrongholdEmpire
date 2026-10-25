@@ -33,6 +33,10 @@
           "type": "flag",
           "flag": "tut_09",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "[문파전]으로 흑풍채 응징하기"
         }
       ]
     }

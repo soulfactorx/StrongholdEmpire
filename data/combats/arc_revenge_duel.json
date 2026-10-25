@@ -54,5 +54,43 @@
     "injury_ratio": 0.3
   },
   "victory_flag": "arc_revenge_won",
-  "defeat_flag": "arc_revenge_lost"
+  "defeat_flag": "arc_revenge_lost",
+  "format": "duel",
+  "stage": "shrine",
+  "events": [
+    {
+      "type": "parley",
+      "title": "원수의 목숨",
+      "when": {
+        "enemy_hp_below": 0.4
+      },
+      "lines": [
+        "귀영이 무릎을 꿇는다. \"죽여라. 그것이 강호의 셈법이다.\""
+      ],
+      "choices": [
+        {
+          "label": "칼을 거둔다",
+          "description": "복수 대신 용서 (도덕 +5)",
+          "action": "withdraw_foe",
+          "effects": [
+            {
+              "type": "character",
+              "field": "morality",
+              "add": 5
+            },
+            {
+              "type": "flag",
+              "flag": "arc_revenge_spared",
+              "value": true
+            }
+          ]
+        },
+        {
+          "label": "끝을 본다",
+          "action": "fight"
+        }
+      ],
+      "auto": 1
+    }
+  ]
 }

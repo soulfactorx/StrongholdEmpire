@@ -49,5 +49,20 @@
         }
       ]
     }
+  ],
+  "npc": "npc_senior_brother",
+  "scene": [
+    {
+      "speaker": "npc_senior_brother",
+      "text": "사제, 비켜라. 오늘 이 문을 넘는 것은 청운의 내일이다."
+    },
+    {
+      "speaker": "player",
+      "text": "대사형이 넘으려는 건 사부님의 목입니다."
+    },
+    {
+      "speaker": "npc_disciple",
+      "text": "사형! 동쪽 쪽문이 뚫렸습니다! 흑풍채 놈들이에요!"
+    }
   ]
 }

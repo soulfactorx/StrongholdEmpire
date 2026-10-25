@@ -58,6 +58,8 @@ enum SpecialEffect {
 @export var range: int = 1
 @export var heal_amount: int = 0
 @export var move_bonus: int = 0
+## 초식 배치 대결의 카드 유형 (DuelCard.Type 이름: STRIKE·QUICK·GUARD·EVADE·FOCUS·TRICK). 비우면 성격으로 정한다
+@export var card_type: String = ""
 @export var description: String = ""
 
 
@@ -140,10 +142,12 @@ func _effect_name(effect: SpecialEffect) -> String:
 			return "?"
 
 
-## 전투 수치 한 줄: "피해 18 · 사거리 2 · 행동력 2 · 내공 15" (회복 무공은 회복량)
+## 전투 수치 한 줄: "피해 18 · 내공 15 · 초식 강공 (절초: 기세 2)" (회복 무공은 회복량)
 func get_stats_text() -> String:
 	var main: String = "회복 %d" % heal_amount if heal_amount > 0 else "피해 %d" % damage
-	return "%s · 사거리 %d · 행동력 %d · 내공 %d" % [main, range, action_cost, internal_cost]
+	var card: DuelCard = DuelCard.from_art(self)
+	var finisher: String = " (절초: 기세 %d)" % card.momentum_cost if card.momentum_cost > 0 else ""
+	return "%s · 내공 %d · 초식 %s%s" % [main, internal_cost, card.get_type_name(), finisher]
 
 
 ## 보유 무공 목록용 자세한 설명: 이름·강화, 범주·오행·음양, 전투 수치, 효과

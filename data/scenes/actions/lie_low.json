@@ -1,0 +1,80 @@
+{
+  "action": "lie_low",
+  "scenes": [
+    {
+      "id": "lie_inn",
+      "title": "다락방",
+      "speaker": [
+        "npc_innkeeper",
+        "$narrator"
+      ],
+      "lines": [
+        "{speaker}: 다락방은 비어 있어요. 아무것도 묻지 않을게요. 대신 방값은 두 배.",
+        "{player}: 입이 무거운 값이라 생각하지."
+      ],
+      "choices": [
+        {
+          "label": "방값을 넉넉히 치른다",
+          "message": "금화 -5, 유대 +1",
+          "effects": [
+            {
+              "type": "sect",
+              "field": "gold",
+              "add": -5
+            },
+            {
+              "type": "bond",
+              "target": "$speaker",
+              "add": 1
+            }
+          ]
+        },
+        {
+          "label": "말없이 올라간다"
+        }
+      ]
+    },
+    {
+      "id": "lie_monk",
+      "title": "산사의 객",
+      "speaker": "$narrator",
+      "lines": [
+        "깊은 산 절에 몸을 의탁했다. 노승은 칼을 보고도 아무것도 묻지 않았다.",
+        "새벽 예불 소리에 잠이 깬다. 오랜만에 꿈 없이 잤다."
+      ],
+      "choices": [
+        {
+          "label": "마당을 쓸어 보답한다",
+          "message": "도덕 +1",
+          "effects": [
+            {
+              "type": "character",
+              "field": "morality",
+              "add": 1
+            }
+          ]
+        },
+        {
+          "label": "칼을 품고 다시 잠든다"
+        }
+      ]
+    },
+    {
+      "id": "lie_poster",
+      "title": "벽보",
+      "speaker": "$narrator",
+      "lines": [
+        "저잣거리 벽에 붙은 현상 벽보 속 얼굴이 자신과 조금 닮았다.",
+        "삿갓을 깊이 눌러쓰고 인파 속으로 섞여 든다."
+      ],
+      "choices": [
+        {
+          "label": "벽보를 몰래 떼어 낸다"
+        },
+        {
+          "label": "그냥 지나간다"
+        }
+      ]
+    }
+  ]
+}

@@ -42,6 +42,10 @@
           "type": "sect",
           "field": "reputation",
           "add": 10
+        },
+        {
+          "type": "goal",
+          "text": "선봉에 서서 천마신교를 막아 내기"
         }
       ]
     },
@@ -72,6 +76,21 @@
           "value": true
         }
       ]
+    }
+  ],
+  "npc": "npc_namgung_lord",
+  "scene": [
+    {
+      "speaker": "npc_namgung_lord",
+      "text": "남궁이 앞장서겠소. 다만 선봉은 젊은 피가 맡아야 하오. 누가 서겠소?"
+    },
+    {
+      "speaker": "npc_rival",
+      "text": "아버지, 제가—"
+    },
+    {
+      "speaker": "npc_namgung_lord",
+      "text": "휘, 앉아라."
     }
   ]
 }

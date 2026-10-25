@@ -1,4 +1,6 @@
 {
+  "weather": "night",
+  "battlefield": "courtyard",
   "id": "s1_duel_mugyeom",
   "title": "비무 — 청운의 대사형",
   "player_position": [
@@ -38,5 +40,19 @@
     "injury_ratio": 0.6
   },
   "victory_flag": "s1_hwi_beat_mugyeom",
-  "defeat_flag": "s1_hwi_lost_mugyeom"
+  "defeat_flag": "s1_hwi_lost_mugyeom",
+  "format": "duel",
+  "stage": "rooftop",
+  "events": [
+    {
+      "type": "parley",
+      "title": "배신자의 변명",
+      "when": {
+        "enemy_hp_below": 0.5
+      },
+      "lines": [
+        "진무겸: 사부는 이미 졌다. 너도 살길을 찾아라!"
+      ]
+    }
+  ]
 }

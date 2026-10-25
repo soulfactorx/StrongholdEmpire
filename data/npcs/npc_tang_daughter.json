@@ -4,6 +4,7 @@
   "title": "사천당가 셋째 아가씨",
   "sect_id": "tang",
   "role": "YOUNG_DISCIPLE",
+  "combat_style": "hidden",
   "named": true,
   "description": "당가의 막내딸. 독보다 약을 좋아해 가문의 골칫거리다.",
   "level": 2,

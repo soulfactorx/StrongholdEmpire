@@ -16,6 +16,10 @@ var world_sects: Array[SectData] = []
 var player_relationships: Array[RelationshipData] = []
 var triggered_event_ids: Array[String] = []
 var pending_event: Dictionary = {}
+## 고르기를 기다리는 행동 대화 장면 (ActionScenes.build의 결과). 저장하지 않는다
+var pending_action_scene: Dictionary = {}
+## 행동마다 최근에 본 장면 id (같은 장면이 이어지지 않게)
+var _recent_action_scenes: Dictionary = {}
 var story_flags: Dictionary = {}
 ## 플래그 이름 → 켜진 계절. 기연의 turns_since_flag 조건에 쓴다.
 var flag_turns: Dictionary = {}
@@ -31,6 +35,17 @@ var observed_arts: Dictionary = {}
 var purse: SectData = create_purse()
 ## 등장인물 선택 플레이: 주인공이 된 명부 인물 id (시나리오 playables). 일반 시작이면 ""
 var player_npc_id: String = ""
+## 기능 단계 개방 (FeatureGate): 단계 개방 중인지, 열린 기능, 아직 소개하지 않은 새 기능
+var progressive_features: bool = false
+var unlocked_features: Array[String] = []
+var pending_intros: Array[String] = []
+## 강호 일지: 지금의 목표와 들려오는 소문 (최근 것이 뒤). 기연 효과 goal·rumor로 바뀐다
+var journal_goal: String = ""
+## 초식 배치 대결: 상대의 버릇 기록 {인물 id: {bouts, first: {유형: 횟수}}}, 초식 숙련 {무공 id: 쓴 횟수}
+var duel_memory: Dictionary = {}
+var art_mastery: Dictionary = {}
+var journal_rumors: Array[String] = []
+const JOURNAL_RUMOR_LIMIT := 6
 ## 지금 있는 지역 (강호 지도의 지역 id). 문파 일을 하는 역할은 본거지에 있고, 개인 재산을 쓰는 역할은 지도에서 옮겨 다닌다.
 var player_region: String = ""
 ## 가진 비급 (무공 id). 소속 문파 서고의 비급과 함께 무공 연구소에서 연구할 수 있다. 기연·사부에게서 얻는다.
@@ -268,6 +283,22 @@ func _initialize_new_game(
 		EventManager.set_flag(story_flags, "playing_" + player_npc_id)
 		for flag in playable.get("flags", []):
 			EventManager.set_flag(story_flags, str(flag))
+	# 기능 단계 개방: 단계 개방 시나리오의 등장인물은 정한 기능만 열고 시작한다 (나머지는 모두 열림)
+	progressive_features = ScenarioManager.current.get("progressive", false) == true and playable.has("features")
+	unlocked_features.clear()
+	pending_intros.clear()
+	if progressive_features:
+		for feature_id in playable["features"]:
+			unlocked_features.append(str(feature_id))
+		for feature_id in FeatureGate.ROLE_FEATURES.get(CharacterData.Role.keys()[player_character.role], []):
+			if not unlocked_features.has(feature_id):
+				unlocked_features.append(feature_id)
+	journal_goal = str(playable.get("goal", ""))
+	# 등장인물이 없는 시나리오는 시나리오의 역할별 첫 목표 (goals: {역할 id 또는 "default": 목표})
+	var scenario_goals: Variant = ScenarioManager.current.get("goals", {})
+	if journal_goal.is_empty() and scenario_goals is Dictionary:
+		journal_goal = str(scenario_goals.get(role_id, scenario_goals.get("default", "")))
+	journal_rumors.clear()
 	role_history.clear()
 	_record_role(player_character.role)
 	role_state = RoleActions.create_state()
@@ -275,6 +306,10 @@ func _initialize_new_game(
 	legacy_records.clear()
 	year_start = _take_year_snapshot()
 	observed_arts = {}
+	duel_memory = {}
+	art_mastery = {}
+	pending_action_scene = {}
+	_recent_action_scenes = {}
 	owned_manuals.clear()
 	analyzed_elements = []
 	challenge_target = ""
@@ -389,6 +424,9 @@ func _sync_event_context() -> void:
 	EventManager.owned_manuals = owned_manuals
 	EventManager.player_name = player_character.display_name if player_character else ""
 	EventManager.player_npc_id = player_npc_id
+	FeatureGate.sync(progressive_features, unlocked_features)
+	CombatManager.region_id = player_region
+	CombatManager.season = get_current_season()
 	EventManager.current_year = current_year
 	EventManager.current_turn = _get_turn_index()
 	EventManager.current_generation = generation
@@ -704,6 +742,10 @@ func _process_yearly_events() -> String:
 
 ## announce: 새 전환이 있으면 알린다 (역할 전환 창을 열 때는 조용히 다시 계산만)
 func refresh_role_transitions(announce: bool = true) -> void:
+	# 역할 전환이 아직 열리지 않았으면 (기능 단계 개방) 알리지 않는다
+	if not FeatureGate.is_open("role_change"):
+		pending_role_transitions = []
+		return
 	pending_role_transitions = RoleManager.get_available_transitions(
 		player_character,
 		player_sect,
@@ -848,6 +890,11 @@ func _force_end(end_id: String) -> void:
 func resolve_pending_event(choice_index: int) -> void:
 	if pending_event.is_empty():
 		return
+	# 기능 소개 장면은 읽고 닫으면 끝이다. 다음 소개가 있으면 이어서 띄운다.
+	if pending_event.get("intro", false):
+		pending_event.clear()
+		_show_next_intro()
+		return
 
 	# 보이는 선택지 순번 → 원래 선택지 번호 (선택지 조건으로 일부만 보일 때)
 	var choice_map: Array = pending_event.get("choice_map", [])
@@ -906,10 +953,98 @@ func _change_role(role: CharacterData.Role) -> Dictionary:
 	_sync_event_context()
 	add_chronicle("역할", str(result.get("message", "")))
 	_record_role(player_character.role)
+	# 새 역할의 기능이 열린다 (기능 단계 개방)
+	for feature_id in FeatureGate.ROLE_FEATURES.get(CharacterData.Role.keys()[player_character.role], []):
+		unlock_feature(feature_id)
 	EventBus.character_updated.emit(player_character)
 	EventBus.resources_changed.emit(player_sect)
 	EventBus.role_changed.emit(player_character.role)
 	return result
+
+
+## 기능을 연다. 단계 개방 중이 아니거나 이미 열렸으면 false. 연 기능은 소개 장면을 기다린다.
+func unlock_feature(feature_id: String) -> bool:
+	if not progressive_features or unlocked_features.has(feature_id) or not FeatureGate.has_feature(feature_id):
+		return false
+	unlocked_features.append(feature_id)
+	pending_intros.append(feature_id)
+	add_chronicle("새 길", "「%s」이(가) 열렸습니다." % FeatureGate.get_title(feature_id))
+	return true
+
+
+## 기연 결과 중 이야기 진행에 관한 것: 기능 개방·역할 변화·강호 일지, 그리고 이어지는 장면(next)이나 기능 소개를 띄운다.
+func _apply_story_result(result: Dictionary) -> void:
+	for feature_id in result.get("unlock", []):
+		unlock_feature(feature_id)
+	if result.has("set_role"):
+		var role: CharacterData.Role = CharacterData.Role.get(result["set_role"])
+		if player_character.role != role:
+			_change_role(role)
+	if result.has("goal"):
+		journal_goal = str(result["goal"])
+	for rumor in result.get("rumors", []):
+		add_rumor(str(rumor))
+	if not str(result.get("next", "")).is_empty():
+		var next_event: EventData = EventManager.get_event(result["next"])
+		if next_event:
+			pending_event = EventManager.make_popup(
+				next_event, player_character, player_sect, player_relationships, get_current_season(), story_flags,
+				str(result.get("subject", ""))
+			)
+			EventBus.event_triggered.emit(pending_event)
+			return
+	_show_next_intro()
+
+
+## 기다리는 기능 소개가 있으면 띄운다 (다른 기연이 떠 있지 않을 때)
+func _show_next_intro() -> void:
+	if not pending_event.is_empty() or pending_intros.is_empty() or is_game_over():
+		return
+	pending_event = FeatureGate.intro_popup(pending_intros.duplicate())
+	pending_intros.clear()
+	EventBus.event_triggered.emit(pending_event)
+
+
+## 강호 연표 (EventManager.get_timeline). 항목에 남은 계절(seasons_left)과 예상 날짜(date)를 붙인다.
+func get_timeline() -> Array[Dictionary]:
+	var now: int = _get_turn_index()
+	var entries: Array[Dictionary] = EventManager.get_timeline(
+		player_character, player_sect, player_relationships, get_current_season(), story_flags, triggered_event_ids, now
+	)
+	for entry in entries:
+		var turn: int = entry["turn"]
+		entry["seasons_left"] = turn - now if turn >= 0 else -1
+		entry["date"] = "%s %d년 %s" % [ScenarioManager.get_era_name(), turn / SEASONS.size(), SEASONS[turn % SEASONS.size()]] if turn >= 0 else ""
+	return entries
+
+
+## 저장된 버릇 기록: JSON을 거치며 유형 키가 문자열이 되므로 숫자로 되돌린다
+static func _load_duel_memory(data: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for npc_id in data:
+		var record: Dictionary = data[npc_id]
+		var first: Dictionary = {}
+		for type in record.get("first", {}):
+			first[int(type)] = int(record["first"][type])
+		result[str(npc_id)] = {"bouts": int(record.get("bouts", 0)), "first": first}
+	return result
+
+
+## 다음 큰 사건 (없으면 {})
+func get_next_timeline_event() -> Dictionary:
+	for entry in get_timeline():
+		if not entry["done"]:
+			return entry
+	return {}
+
+
+func add_rumor(text: String) -> void:
+	if text.is_empty():
+		return
+	journal_rumors.append(text)
+	if journal_rumors.size() > JOURNAL_RUMOR_LIMIT:
+		journal_rumors = journal_rumors.slice(journal_rumors.size() - JOURNAL_RUMOR_LIMIT)
+	add_chronicle("소문", text)
 
 
 ## 개인 재산을 쓰는 역할과 문파 금고를 쓰는 역할 사이를 오갈 때 재산을 옮긴다.
@@ -1253,7 +1388,8 @@ func get_player_regions() -> Array[String]:
 	return WorldMap.regions_of(map_state, player_sect.id)
 
 
-## 지도 화면에서 고른 땅에 할 수 있는 일: {kind: "pacify"|"attack"|"none", reason, cost?, owner?}
+## 지도 화면에서 고른 땅에 할 수 있는 일: {kind: "pacify"|"annex"|"attack"|"none", reason, cost?, owner?}
+## 굴복한 세력의 땅은 본거지까지 문파전 없이 편입한다 (평정과 같은 비용, 같은 계절 제한).
 func get_region_action(region_id: String) -> Dictionary:
 	if not WorldMap.has_region(region_id):
 		return {"kind": "none", "reason": "없는 땅입니다."}
@@ -1278,14 +1414,19 @@ func get_region_action(region_id: String) -> Dictionary:
 		return {"kind": "pacify", "reason": reason, "cost": cost, "power": power, "defense": defense}
 	var sect: SectData = get_world_sect(owner)
 	var reason: String = ""
+	if sect and sect.subjugated:
+		var annex_cost: Dictionary = WorldMap.pacify_cost(region_id)
+		if not can_do_seasonal("last_pacify_turn"):
+			reason = "이번 계절에는 이미 땅을 평정·편입했습니다."
+		elif player_sect.gold < annex_cost["gold"] or player_sect.food < annex_cost["food"]:
+			reason = "자원이 모자랍니다. (금화 %d, 식량 %d 필요)" % [annex_cost["gold"], annex_cost["food"]]
+		return {"kind": "annex", "reason": reason, "cost": annex_cost, "owner": owner}
 	if sect == null:
 		reason = "알 수 없는 세력의 땅입니다."
 	elif not WorldMap.can_be_taken(map_state, region_id):
 		reason = "%s의 본거지는 빼앗을 수 없습니다. 문파전으로 굴복시키세요." % sect.sect_name
 	elif sect.allied:
 		reason = "동맹 세력의 땅입니다. 먼저 동맹을 깨야 합니다."
-	elif sect.subjugated:
-		reason = "굴복한 세력입니다."
 	elif not can_wage_war():
 		reason = "이번 계절에는 이미 문파전을 치렀습니다."
 	return {"kind": "attack", "reason": reason, "owner": owner}
@@ -1307,6 +1448,31 @@ func pacify_region(region_id: String) -> Dictionary:
 	]
 	add_chronicle("영토", message)
 	add_world_news("%s이(가) %s을(를) 차지했습니다." % [player_sect.sect_name, region["name"]])
+	EventBus.resources_changed.emit(player_sect)
+	_check_end_states()
+	return {"success": true, "message": message}
+
+
+## 굴복한 세력의 땅 편입: 문파전 없이 금화·식량을 들여 차지한다. 본거지도 편입할 수 있다.
+func annex_region(region_id: String) -> Dictionary:
+	var action: Dictionary = get_region_action(region_id)
+	if action["kind"] != "annex":
+		return {"success": false, "message": action.get("reason", "편입할 수 없는 땅입니다.")}
+	if not action["reason"].is_empty():
+		return {"success": false, "message": action["reason"]}
+	var sect: SectData = get_world_sect(action["owner"])
+	player_sect.spend_resources(action["cost"]["gold"], action["cost"]["food"])
+	_mark_seasonal("last_pacify_turn")
+	var was_home: bool = WorldMap.get_home(map_state, sect.id) == region_id
+	WorldMap.transfer(map_state, region_id, player_sect.id, [player_sect, sect])
+	if was_home:
+		map_state["homes"].erase(sect.id)
+	var region: Dictionary = WorldMap.get_region(region_id)
+	var message: String = "굴복한 %s의 %s%s을(를) 편입했습니다. 계절마다 금화 +%d, 식량 +%d (금화 -%d, 식량 -%d)" % [
+		sect.sect_name, "본거지 " if was_home else "", region["name"], region["gold"], region["food"], action["cost"]["gold"], action["cost"]["food"],
+	]
+	add_chronicle("영토", message)
+	add_world_news("%s이(가) 굴복한 %s의 %s을(를) 거두었습니다." % [player_sect.sect_name, sect.sect_name, region["name"]])
 	EventBus.resources_changed.emit(player_sect)
 	_check_end_states()
 	return {"success": true, "message": message}
@@ -1390,7 +1556,7 @@ func scout_war(target_id: String) -> Dictionary:
 	return {
 		"success": true,
 		"round": round_index,
-		"message": "정찰 성공 (금화 -%d): 적은 %d라운드에 [%s]을(를) 준비하고 있습니다." % [
+		"message": "정찰 성공 (금화 -%d): 적은 %d합에 [%s]을(를) 준비하고 있습니다." % [
 			cost, round_index + 1, SectWarManager.COMMAND_NAMES[command],
 		],
 	}
@@ -1694,10 +1860,12 @@ func start_sparring() -> Dictionary:
 
 
 ## 전투 결과를 반영하고 결과(message, outcome 포함)를 돌려준다.
-func finish_combat(outcome: CombatManager.Outcome, fallen_allies: int = 0, fallen_ids: Array = []) -> Dictionary:
+## summary: DuelEngine.summary() — 평가·도전·사건 선택 효과·받아 낸 상대 무공·비무대회 성적
+func finish_combat(outcome: CombatManager.Outcome, fallen_allies: int = 0, fallen_ids: Array = [], summary: Dictionary = {}) -> Dictionary:
 	if pending_combat == null:
 		return {"success": false, "message": "진행 중인 전투가 없습니다."}
 	_record_observed_arts(pending_combat)
+	var extra: PackedStringArray = _apply_combat_summary(summary)
 	# 침공 방어전: 막아 내면 침략 세력이 제자를 잃는다.
 	if not pending_combat.invader_id.is_empty():
 		var invader: SectData = get_world_sect(pending_combat.invader_id)
@@ -1718,6 +1886,8 @@ func finish_combat(outcome: CombatManager.Outcome, fallen_allies: int = 0, falle
 		fallen_ids,
 		get_wallet()
 	)
+	if not extra.is_empty():
+		result["message"] = "%s\n%s" % [result.get("message", ""), " · ".join(extra)]
 	add_chronicle("전투", str(result.get("message", "")), last_combat_history.slice(maxi(0, last_combat_history.size() - 6)))
 	pending_combat = null
 	EventBus.combat_finished.emit(result)
@@ -1731,6 +1901,67 @@ func finish_combat(outcome: CombatManager.Outcome, fallen_allies: int = 0, falle
 	else:
 		AudioManager.play_failure()
 	return result
+
+
+## 경영 행동 뒤의 대화 장면을 띄운다. 띄웠으면 true (그러면 결과 알림은 장면 안에 보인다).
+## 설정에서 껐거나, 기연·장면이 이미 기다리거나, 행동이 전투·기연으로 이어지면 띄우지 않는다.
+func show_action_scene(action_id: String, result: Dictionary, context: Dictionary = {}) -> bool:
+	if not GameSettings.action_scenes or is_game_over() or not pending_event.is_empty() or not pending_action_scene.is_empty():
+		return false
+	if result.has("combat") or result.has("event") or pending_combat != null:
+		return false
+	var recent: Array = _recent_action_scenes.get(action_id, [])
+	var scene: Dictionary = ActionScenes.build(self, action_id, result, context, recent)
+	if scene.is_empty():
+		return false
+	recent.append(scene["scene_id"])
+	_recent_action_scenes[action_id] = recent.slice(maxi(0, recent.size() - 3))
+	pending_action_scene = scene
+	EventBus.action_scene_triggered.emit(scene)
+	return true
+
+
+## 행동 대화 장면의 선택지를 고른다: 작은 여파(유대 등)를 반영하고 알림을 남긴다
+func resolve_action_scene(index: int) -> void:
+	if pending_action_scene.is_empty():
+		return
+	var options: Array = pending_action_scene["options"]
+	var option: Dictionary = options[clampi(index, 0, options.size() - 1)]
+	pending_action_scene = {}
+	if not option["effects"].is_empty():
+		EventManager.apply_effects(option["effects"], player_character, player_sect, player_relationships, story_flags)
+	if not str(option["message"]).is_empty():
+		EventBus.action_message.emit(option["message"])
+	EventBus.resources_changed.emit(player_sect)
+	EventBus.character_updated.emit(player_character)
+	EventBus.relationships_changed.emit(player_relationships)
+
+
+## 대결 요약을 반영하고 결과 문장 조각을 돌려준다: 평가, 도전 보상, 받아 낸 절초(연구점), 사건 선택 효과, 비무대회 성적 플래그
+func _apply_combat_summary(summary: Dictionary) -> PackedStringArray:
+	var parts: PackedStringArray = []
+	if summary.is_empty():
+		return parts
+	parts.append("평가: %s" % summary.get("rating", ""))
+	var challenge: String = str(summary.get("challenge", ""))
+	if not challenge.is_empty():
+		if summary.get("challenge_met", false):
+			player_sect.reputation += _Balance.DUEL_CHALLENGE_REPUTATION
+			player_sect.research_points += _Balance.DUEL_CHALLENGE_RESEARCH
+			parts.append("도전 달성 「%s」 명성 +%d, 연구점 +%d" % [challenge, _Balance.DUEL_CHALLENGE_REPUTATION, _Balance.DUEL_CHALLENGE_RESEARCH])
+		else:
+			parts.append("도전 실패 「%s」" % challenge)
+	var studied: Array = summary.get("studied_arts", [])
+	if not studied.is_empty():
+		player_sect.research_points += _Balance.STUDY_RESEARCH * studied.size()
+		parts.append("상대 절초를 받아 내며 깨달음 (연구점 +%d)" % (_Balance.STUDY_RESEARCH * studied.size()))
+	var effects: Array = summary.get("effects", [])
+	if not effects.is_empty():
+		EventManager.apply_effects(effects, player_character, player_sect, player_relationships, story_flags)
+	var flag: String = str(summary.get("placement_flag", ""))
+	if not flag.is_empty():
+		EventManager.set_flag(story_flags, flag)
+	return parts
 
 
 ## 전투에서 상대가 지닌 무공을 기록한다.
@@ -1802,6 +2033,13 @@ func _build_save_state() -> Dictionary:
 		"owned_manuals": owned_manuals,
 		"player_region": player_region,
 		"player_npc_id": player_npc_id,
+		"progressive_features": progressive_features,
+		"unlocked_features": unlocked_features.duplicate(),
+		"pending_intros": pending_intros.duplicate(),
+		"journal_goal": journal_goal,
+		"duel_memory": duel_memory.duplicate(true),
+		"art_mastery": art_mastery.duplicate(),
+		"journal_rumors": journal_rumors.duplicate(),
 		"purse": {"gold": purse.gold, "food": purse.food},
 		"challenge_target": challenge_target,
 		"pending_invasion": pending_invasion,
@@ -1839,6 +2077,7 @@ func load_game(slot: int = 1) -> Dictionary:
 
 
 func _apply_save_data(data: Dictionary) -> void:
+	pending_action_scene = {}
 	# 시나리오를 먼저 켜야 전용 인물·문파·기연이 준비된다. 구버전 세이브는 기본 시나리오.
 	ScenarioManager.activate(
 		data.get("scenario_id", ScenarioManager.DEFAULT_ID),
@@ -1931,6 +2170,13 @@ func _apply_save_data(data: Dictionary) -> void:
 	else:
 		map_state = WorldMap.create_state(_all_sect_ids())
 	player_npc_id = str(data.get("player_npc_id", ""))
+	progressive_features = data.get("progressive_features", false) == true
+	unlocked_features.assign(Array(data.get("unlocked_features", [])).map(func(x: Variant) -> String: return str(x)))
+	pending_intros.assign(Array(data.get("pending_intros", [])).map(func(x: Variant) -> String: return str(x)))
+	journal_goal = str(data.get("journal_goal", ""))
+	duel_memory = _load_duel_memory(data.get("duel_memory", {}))
+	art_mastery = data.get("art_mastery", {}).duplicate()
+	journal_rumors.assign(Array(data.get("journal_rumors", [])).map(func(x: Variant) -> String: return str(x)))
 	player_region = str(data.get("player_region", ""))
 	if not WorldMap.has_region(player_region):
 		player_region = _default_region()
@@ -1954,6 +2200,7 @@ func has_save_file(slot: int = -1) -> bool:
 func _apply_event_result(result: Dictionary) -> void:
 	if result.has("end_game"):
 		_force_end(result["end_game"])
+	_apply_story_result(result)
 	EventBus.event_resolved.emit(result)
 	EventBus.action_message.emit(result.get("message", ""))
 	EventBus.resources_changed.emit(player_sect)

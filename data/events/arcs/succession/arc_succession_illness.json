@@ -38,6 +38,14 @@
           "target": "npc_senior_brother",
           "bond_type": "BLOOD_OATH",
           "strength": 20
+        },
+        {
+          "type": "goal",
+          "text": "대사형 진무겸 곁에서 문파의 앞날을 지켜보기"
+        },
+        {
+          "type": "rumor",
+          "text": "청운검파 대사형 진무겸이 밤마다 제자들을 모은다는 수군거림이 돈다."
         }
       ]
     },
@@ -60,8 +68,32 @@
           "type": "bond",
           "target": "npc_master",
           "add": 3
+        },
+        {
+          "type": "goal",
+          "text": "대사형의 움직임을 살펴 스승을 지키기"
+        },
+        {
+          "type": "rumor",
+          "text": "청운검파 대사형 진무겸이 밤마다 제자들을 모은다는 수군거림이 돈다."
         }
-      ]
+      ],
+      "next": "arc_succession_sickroom"
+    }
+  ],
+  "npc": "npc_senior_brother",
+  "scene": [
+    {
+      "speaker": "npc_master",
+      "text": "(기침) 산문은… 걱정 마라. 아직 숨이 붙어 있다."
+    },
+    {
+      "speaker": "npc_senior_brother",
+      "text": "사제, 사부님은 이제 검을 드실 수 없다. 청운의 다음을 생각할 때다. 자네도 생각해 두게."
+    },
+    {
+      "speaker": "npc_healer",
+      "text": "대사형, 사부님 앞에서 그런 말씀은…"
     }
   ]
 }

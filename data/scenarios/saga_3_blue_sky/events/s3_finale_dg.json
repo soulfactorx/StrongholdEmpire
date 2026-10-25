@@ -99,5 +99,34 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "장의 끝 — 독고결",
+    "hint": "청천 5년 봄, 열린 결말 가운데 하나를 고른다.",
+    "branches": [
+      {
+        "text": "아버지를 넘어: 선·중립",
+        "if": [
+          {
+            "type": "alignment",
+            "in": [
+              "good",
+              "neutral"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "피의 계승자: 악",
+        "if": [
+          {
+            "type": "alignment",
+            "in": [
+              "evil"
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }

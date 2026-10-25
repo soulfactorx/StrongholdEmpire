@@ -1,0 +1,98 @@
+{
+  "id": "s3_dg_scaffold",
+  "title": "처형대 아래",
+  "description": "해가 진 개봉의 처형대. 형리들이 모두 돌아간 뒤, 부맹주 마화린이 처형대 계단에 홀로 앉아 있었습니다.",
+  "can_repeat": false,
+  "priority": false,
+  "weight": 10,
+  "follow_up": true,
+  "npc": "s3_ma_hwarin",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s3_dokgo_gyeol",
+      "value": true
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_ma_hwarin",
+      "text": "결아. 오늘 네가 벤 사람 중에 열네 살짜리가 있었어. 알아?",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s3_dg_cruel",
+          "value": true
+        }
+      ]
+    },
+    {
+      "speaker": "s3_ma_hwarin",
+      "text": "결아. 오늘 처형을 미뤘다며. 형리들이 네 욕을 하더라. …잘했어.",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s3_dg_mercy",
+          "value": true
+        }
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "아버지는 오늘 저를 한 번도 보지 않으셨습니다."
+    },
+    {
+      "speaker": "s3_ma_hwarin",
+      "text": "네 아버지는 스무 해 동안 아무도 보지 않았어. 천하만 봤지."
+    }
+  ],
+  "choices": [
+    {
+      "label": "그녀 곁에 앉는다",
+      "message": "한참 동안 둘 다 아무 말도 하지 않았습니다. 마화린 유대 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_dg_scaffold",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s3_ma_hwarin",
+          "add": 8
+        },
+        {
+          "type": "flag",
+          "flag": "s3_dg_sat_with_hwarin",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "부맹주가 왜 여기 있느냐고 묻는다",
+      "message": "\"맹주의 아들이 하는 일을 보러.\" 그녀가 일어나 떠났습니다. 지혜 +1",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_dg_scaffold",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 1
+        },
+        {
+          "type": "rumor",
+          "text": "흑련의 부맹주가 밤마다 처형대에 꽃을 놓는다는 말이 있다."
+        }
+      ]
+    }
+  ]
+}

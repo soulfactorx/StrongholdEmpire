@@ -103,6 +103,10 @@
           "type": "flag",
           "flag": "s3_dg_obeyed",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "아버지의 명대로 개봉을 지키기"
         }
       ],
       "conditions": [
@@ -125,6 +129,10 @@
         {
           "type": "combat",
           "combat": "s3_father_duel"
+        },
+        {
+          "type": "goal",
+          "text": "아버지를 꺾고 흑련을 손에 넣기"
         }
       ],
       "conditions": [
@@ -159,6 +167,10 @@
           "type": "flag",
           "flag": "s3_dg_left",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "흑련을 떠나 아버지가 짓밟은 것을 되돌리기"
         }
       ],
       "conditions": [
@@ -191,5 +203,44 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "늙은 맹주의 명",
+    "hint": "독고천이 개봉에서 무림맹을 끝장내라 명한다.",
+    "branches": [
+      {
+        "text": "독고결: 악이면 아버지에게 칼을 겨눌 수 있다 (전투)",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s3_dokgo_gyeol",
+            "value": true
+          },
+          {
+            "type": "alignment",
+            "in": [
+              "evil"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "독고결: 선·중립이면 흑련을 떠날 수 있다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s3_dokgo_gyeol",
+            "value": true
+          },
+          {
+            "type": "alignment",
+            "in": [
+              "good",
+              "neutral"
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }

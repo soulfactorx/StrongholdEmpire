@@ -4,6 +4,7 @@
   "title": "흑풍채 부채주 '독사'",
   "sect_id": "heukpung",
   "role": "MANAGER",
+  "combat_style": "poison",
   "named": true,
   "description": "마진의 오른팔. 칼보다 독과 계략을 즐겨 쓴다. 채주의 자리를 노린다는 소문이 있다.",
   "level": 4,

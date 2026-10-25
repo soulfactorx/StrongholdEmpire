@@ -1,0 +1,195 @@
+{
+  "action": "outing",
+  "scenes": [
+    {
+      "id": "out_inn",
+      "title": "객잔의 소문",
+      "speaker": [
+        "npc_innkeeper",
+        "$narrator"
+      ],
+      "lines": [
+        "산 아래 객잔에 들르자 여주인이 반갑게 맞는다.",
+        "{speaker}: 어머, {sect} 도령이네! 요즘 강호에 흉흉한 소문이 돌아요. 조심해요.",
+        "{player}: 무슨 소문 말입니까?",
+        "{speaker}: 밤마다 산길에 복면 쓴 자들이 다닌대요."
+      ],
+      "choices": [
+        {
+          "label": "국수 한 그릇을 시킨다",
+          "message": "유대 +1",
+          "effects": [
+            {
+              "type": "bond",
+              "target": "$speaker",
+              "add": 1
+            }
+          ]
+        },
+        {
+          "label": "소문을 더 캐묻는다",
+          "message": "지혜 +1",
+          "effects": [
+            {
+              "type": "character",
+              "field": "wisdom",
+              "add": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "out_drunk",
+      "title": "취한 거지",
+      "speaker": [
+        "npc_old_drunk",
+        "$narrator"
+      ],
+      "lines": [
+        "다리 밑에서 거지 노인이 술병을 끌어안고 코를 곤다.",
+        "{speaker}: …이봐, 젊은이. 술 한 병만 사 주면 재밌는 걸 보여 주지.",
+        "노인의 눈빛이 술 취한 사람치고 너무 맑다."
+      ],
+      "choices": [
+        {
+          "label": "술을 사 준다",
+          "message": "노인이 젓가락으로 기막힌 초식을 그어 보입니다. 지혜 +1, 금화 -5",
+          "effects": [
+            {
+              "type": "character",
+              "field": "wisdom",
+              "add": 1
+            },
+            {
+              "type": "sect",
+              "field": "gold",
+              "add": -5
+            }
+          ]
+        },
+        {
+          "label": "모른 척 지나간다"
+        }
+      ]
+    },
+    {
+      "id": "out_orphan",
+      "title": "떠돌이 소년",
+      "speaker": [
+        "npc_orphan",
+        "$narrator"
+      ],
+      "lines": [
+        "저잣거리에서 소년 하나가 만두를 훔쳐 달아나다 당신과 부딪혔다.",
+        "{speaker}: 노, 놓아줘요! 동생이 사흘을 굶었단 말이에요!"
+      ],
+      "choices": [
+        {
+          "label": "만두값을 대신 치른다",
+          "message": "도덕 +2, 금화 -3",
+          "effects": [
+            {
+              "type": "character",
+              "field": "morality",
+              "add": 2
+            },
+            {
+              "type": "sect",
+              "field": "gold",
+              "add": -3
+            }
+          ]
+        },
+        {
+          "label": "훈계하고 보낸다"
+        }
+      ]
+    },
+    {
+      "id": "out_music",
+      "title": "다리 위의 악사",
+      "speaker": [
+        "npc_musician",
+        "$narrator"
+      ],
+      "lines": [
+        "강 위 다리에서 칠현금 소리가 흐른다.",
+        "{speaker}: 이 곡은 검을 내려놓은 어느 협객의 노래랍니다.",
+        "강물 소리와 금 소리가 하나로 섞인다."
+      ],
+      "choices": [
+        {
+          "label": "끝까지 듣는다",
+          "message": "마음이 맑아집니다. 내공 +10",
+          "effects": [
+            {
+              "type": "character",
+              "field": "internal_energy_current",
+              "add": 10
+            }
+          ]
+        },
+        {
+          "label": "동전을 던지고 간다"
+        }
+      ]
+    },
+    {
+      "id": "out_scholar",
+      "title": "검을 든 서생",
+      "speaker": [
+        "npc_scholar",
+        "$narrator"
+      ],
+      "lines": [
+        "서점 앞에서 검을 찬 서생이 책을 고르고 있다.",
+        "{speaker}: 무공도 결국 글과 같지요. 한 획 한 획에 뜻이 있어야 합니다.",
+        "{player}: 그럼 검법을 서체로 써 볼 수도 있겠습니까?",
+        "{speaker}: 허, 재미있는 생각이오!"
+      ],
+      "choices": [
+        {
+          "label": "한참 이야기를 나눈다",
+          "message": "지혜 +1",
+          "effects": [
+            {
+              "type": "character",
+              "field": "wisdom",
+              "add": 1
+            }
+          ]
+        },
+        {
+          "label": "인사하고 돌아선다"
+        }
+      ]
+    },
+    {
+      "id": "out_rain",
+      "title": "소나기",
+      "if": [
+        {
+          "type": "season",
+          "in": [
+            "여름"
+          ]
+        }
+      ],
+      "speaker": "$narrator",
+      "lines": [
+        "산길에서 소나기를 만나 정자에 몸을 피했다.",
+        "빗소리 사이로 멀리서 누군가의 검 휘두르는 소리가 들린다. 빗방울을 베는 소리다."
+      ],
+      "choices": [
+        {
+          "label": "소리를 따라가 본다",
+          "message": "정자를 떠나자 소리가 그쳤습니다. 꿈이었을까."
+        },
+        {
+          "label": "비가 그치길 기다린다"
+        }
+      ]
+    }
+  ]
+}

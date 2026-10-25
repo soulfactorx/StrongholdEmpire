@@ -12,6 +12,9 @@
       "position": [
         13,
         5
+      ],
+      "traits": [
+        "enrage"
       ]
     },
     {
@@ -20,7 +23,8 @@
         12,
         3
       ],
-      "name": "산채 졸개 갑"
+      "name": "산채 졸개 갑",
+      "mook": true
     },
     {
       "npc": "npc_bandit",
@@ -28,7 +32,8 @@
         12,
         7
       ],
-      "name": "산채 졸개 을"
+      "name": "산채 졸개 을",
+      "mook": true
     }
   ],
   "blocked": [
@@ -90,5 +95,7 @@
     "injury_ratio": 0.3
   },
   "victory_flag": "arc_revenge_chief_slain",
-  "defeat_flag": "arc_revenge_chief_failed"
+  "defeat_flag": "arc_revenge_chief_failed",
+  "format": "siege",
+  "stage": "bamboo"
 }

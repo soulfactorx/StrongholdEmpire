@@ -4,6 +4,7 @@
   "title": "남궁세가 집법당주",
   "sect_id": "namgung",
   "role": "MANAGER",
+  "combat_style": "sword",
   "description": "남궁세가의 규율을 맡은 집법당주. 세가 안의 첩자를 찾아내는 데 집요하다.",
   "level": 5,
   "stats": {

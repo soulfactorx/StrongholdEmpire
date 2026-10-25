@@ -87,6 +87,14 @@
           "type": "flag",
           "flag": "s2_hr_loves_un",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "남궁운과 함께 갈 길을 찾기"
+        },
+        {
+          "type": "rumor",
+          "text": "흑련의 나루에서 남궁의 아들이 사라졌다고 한다."
         }
       ],
       "conditions": [
@@ -120,6 +128,10 @@
           "type": "flag",
           "flag": "s2_un_captured",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "맹주의 신임을 얻어 흑련의 윗자리에 오르기"
         }
       ],
       "conditions": [
@@ -241,5 +253,31 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "장강의 두 사람",
+    "hint": "흑풍채의 딸과 남궁의 아들이 장강 나루에서 마주친다.",
+    "branches": [
+      {
+        "text": "마화린: 밧줄을 끊어 풀어 주면 남궁운과 연인이 된다 — 강을 건넌 연인의 길",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s2_ma_hwarin",
+            "value": true
+          }
+        ]
+      },
+      {
+        "text": "석운: 두 사람을 숨겨 줄 수 있다",
+        "if": [
+          {
+            "type": "flag",
+            "flag": "playing_s2_seokun",
+            "value": true
+          }
+        ]
+      }
+    ]
+  }
 }

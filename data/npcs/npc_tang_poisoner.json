@@ -4,6 +4,7 @@
   "title": "사천당가 암기수",
   "sect_id": "tang",
   "role": "WANDERER",
+  "combat_style": "hidden",
   "description": "독침과 비수를 다루는 당가의 무사.",
   "level": 1,
   "stats": {

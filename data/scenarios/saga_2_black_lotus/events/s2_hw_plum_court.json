@@ -1,0 +1,88 @@
+{
+  "id": "s2_hw_plum_court",
+  "title": "매화원의 저녁",
+  "description": "흑련의 방이 나붙은 날 저녁. 세가의 매화원에서 아들 남궁운이 혼자 검을 휘두르고 있었습니다. 늙은 집법당주 남궁철이 옆에서 혀를 찹니다.",
+  "can_repeat": false,
+  "priority": false,
+  "weight": 10,
+  "follow_up": true,
+  "npc": "s2_namgung_un",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_namgung_hwi",
+      "value": true
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_namgung_enforcer",
+      "text": "가주, 소가주의 검이 꼭 가주 젊을 때 같습니다. 어깨에 힘이 너무 들어가 있지요."
+    },
+    {
+      "speaker": "player",
+      "text": "…누이가 늘 그 말을 했지. 힘 빼라고."
+    },
+    {
+      "speaker": "s2_namgung_un",
+      "text": "아버지, 흑련이 마교를 친다면 남궁도 나서야 합니다. 할아버지의 원수잖아요."
+    },
+    {
+      "speaker": "player",
+      "text": "운아. 원수를 갚으려고 검을 드는 자는 원수가 사라지면 검을 둘 곳이 없다."
+    }
+  ],
+  "choices": [
+    {
+      "label": "운에게 매화검법의 마지막 초식을 보여 준다",
+      "message": "아버지 남궁천이 혈월의 밤에 마지막으로 쓴 초식이었습니다. 운의 눈이 커졌습니다. 남궁운 유대 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hw_plum_court",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_namgung_un",
+          "add": 8
+        },
+        {
+          "type": "experience",
+          "amount": 15
+        },
+        {
+          "type": "flag",
+          "flag": "s2_hw_showed_last_form",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "집법당주와 북쪽 정세를 논한다",
+      "message": "\"흑련은 마교보다 빠릅니다, 가주. 돈으로 움직이니까요.\" 지혜 +1",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_hw_plum_court",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 1
+        },
+        {
+          "type": "rumor",
+          "text": "흑련맹주 독고천이 하오문과 당가에 금을 실어 보냈다고 한다."
+        }
+      ]
+    }
+  ]
+}

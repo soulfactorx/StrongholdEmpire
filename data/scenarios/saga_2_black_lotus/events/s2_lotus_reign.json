@@ -139,5 +139,35 @@
         }
       ]
     }
-  ]
+  ],
+  "timeline": {
+    "title": "흑련 천하",
+    "hint": "흑련이 강호의 법을 정한다.",
+    "branches": [
+      {
+        "text": "선·중립: 흑련의 법을 따르지 않는 이들을 숨겨 줄 수 있다",
+        "if": [
+          {
+            "type": "alignment",
+            "in": [
+              "good",
+              "neutral"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "악·중립: 옛 동료를 팔면 흑련의 사냥개의 길",
+        "if": [
+          {
+            "type": "alignment",
+            "in": [
+              "evil",
+              "neutral"
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }

@@ -18,14 +18,14 @@ static var music_volume: float = 0.6
 static var fullscreen: bool = false
 static var text_scale: float = 1.0
 static var combat_delay: float = 0.3
-## 공격·무공 전에 예상 결과를 보여 주고 확인받는다
-static var combat_preview: bool = true
-## 적이 아군을 치기 전에 예고(예상 피해)를 보여 주고 확인받는다
-static var enemy_preview: bool = true
 ## 경영 행동(수련·영약·시설·유대 등) 전에 수치 변화를 보여 주고 확인받는다
 static var action_preview: bool = true
 ## 계절을 넘기면 강호 세력이 무엇을 했는지 보고 창을 띄운다
 static var faction_report: bool = true
+## 경영 행동을 하면 결과 알림 대신 인물과의 대화 장면을 띄운다 (ActionScenes)
+static var action_scenes: bool = true
+## 전투에서 합마다 무대 연출(달려들기·피해 숫자·흔들림)을 보여 준다 (DuelStage)
+static var combat_effects: bool = true
 ## 화면 배치: LayoutMode.Mode (자동·가로·세로)
 static var layout_mode: int = 0
 
@@ -38,10 +38,10 @@ static func load_settings() -> void:
 		fullscreen = config.get_value("display", "fullscreen", false) == true
 		text_scale = float(config.get_value("display", "text_scale", 1.0))
 		combat_delay = float(config.get_value("combat", "delay", 0.3))
-		combat_preview = config.get_value("combat", "preview", true) == true
-		enemy_preview = config.get_value("combat", "enemy_preview", true) == true
 		action_preview = config.get_value("game", "action_preview", true) == true
 		faction_report = config.get_value("game", "faction_report", true) == true
+		action_scenes = config.get_value("game", "action_scenes", true) == true
+		combat_effects = config.get_value("combat", "effects", true) == true
 		layout_mode = clampi(int(config.get_value("display", "layout_mode", 0)), 0, 2)
 	if not TEXT_SCALES.any(func(entry: Array) -> bool: return is_equal_approx(entry[1], text_scale)):
 		text_scale = 1.0
@@ -56,10 +56,10 @@ static func save_settings() -> void:
 	config.set_value("display", "fullscreen", fullscreen)
 	config.set_value("display", "text_scale", text_scale)
 	config.set_value("combat", "delay", combat_delay)
-	config.set_value("combat", "preview", combat_preview)
-	config.set_value("combat", "enemy_preview", enemy_preview)
 	config.set_value("game", "action_preview", action_preview)
 	config.set_value("game", "faction_report", faction_report)
+	config.set_value("game", "action_scenes", action_scenes)
+	config.set_value("combat", "effects", combat_effects)
 	config.set_value("display", "layout_mode", layout_mode)
 	config.save(settings_path)
 
@@ -99,14 +99,14 @@ static func set_and_save(key: String, value: Variant, tree: SceneTree = null) ->
 			text_scale = float(value)
 		"combat_delay":
 			combat_delay = float(value)
-		"combat_preview":
-			combat_preview = value == true
-		"enemy_preview":
-			enemy_preview = value == true
 		"action_preview":
 			action_preview = value == true
 		"faction_report":
 			faction_report = value == true
+		"action_scenes":
+			action_scenes = value == true
+		"combat_effects":
+			combat_effects = value == true
 		"layout_mode":
 			layout_mode = clampi(int(value), 0, 2)
 	save_settings()

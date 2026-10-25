@@ -1,4 +1,20 @@
 {
+  "battlefield": "forest",
+  "objective": {
+    "type": "defeat_target",
+    "target": "npc_heukpung_second"
+  },
+  "reinforcements": [
+    {
+      "round": 3,
+      "npc": "npc_bandit",
+      "position": [
+        15,
+        5
+      ],
+      "name": "흑풍 도적 병"
+    }
+  ],
   "id": "s1_black_wind_ambush",
   "title": "흑풍채의 매복",
   "player_position": [
@@ -11,6 +27,9 @@
       "position": [
         12,
         5
+      ],
+      "traits": [
+        "poison_mist"
       ]
     },
     {
@@ -19,7 +38,8 @@
         13,
         3
       ],
-      "name": "흑풍 도적 갑"
+      "name": "흑풍 도적 갑",
+      "mook": true
     },
     {
       "npc": "npc_bandit",
@@ -27,29 +47,10 @@
         13,
         7
       ],
-      "name": "흑풍 도적 을"
+      "name": "흑풍 도적 을",
+      "mook": true
     }
   ],
-  "terrain": {
-    "FOREST": [
-      [
-        8,
-        2
-      ],
-      [
-        8,
-        3
-      ],
-      [
-        9,
-        7
-      ],
-      [
-        9,
-        8
-      ]
-    ]
-  },
   "enemy_hp_scale": 0.6,
   "enemy_damage_scale": 0.6,
   "rewards": {
@@ -61,5 +62,7 @@
     "injury_ratio": 0.4
   },
   "victory_flag": "s1_so_ambush_won",
-  "defeat_flag": "s1_so_ambush_lost"
+  "defeat_flag": "s1_so_ambush_lost",
+  "format": "siege",
+  "stage": "bamboo"
 }

@@ -1,0 +1,176 @@
+{
+  "action": "council",
+  "scenes": [
+    {
+      "id": "council_elder",
+      "title": "원로들의 근심",
+      "speaker": [
+        "$officer:elder",
+        "$officer:steward"
+      ],
+      "lines": [
+        "{speaker}: 문주, 요즘 젊은 제자들이 바깥 문파로 눈을 돌린다는 말이 있소.",
+        "{speaker}: 녹봉도, 무공도 남부럽지 않게 해 줘야 붙잡을 수 있을 게요.",
+        "{player}: 귀담아듣겠소. 다른 의견도 말해 보시오."
+      ],
+      "choices": [
+        {
+          "label": "원로의 손을 잡아 준다",
+          "message": "유대 +2",
+          "effects": [
+            {
+              "type": "bond",
+              "target": "$speaker",
+              "add": 2
+            }
+          ]
+        },
+        {
+          "label": "젊은 제자들의 말도 들어 본다",
+          "message": "도덕 +1",
+          "effects": [
+            {
+              "type": "character",
+              "field": "morality",
+              "add": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "council_disciple",
+      "title": "막내의 한마디",
+      "speaker": [
+        "$disciple"
+      ],
+      "lines": [
+        "회의가 무르익을 무렵, 맨 끝자리 막내가 쭈뼛거리며 손을 들었다.",
+        "{speaker}: 저… 밥에 고기가 조금만 더 있으면 수련이 더 잘될 것 같습니다.",
+        "회의장에 웃음이 터진다."
+      ],
+      "choices": [
+        {
+          "label": "고기를 늘리라 이른다",
+          "message": "식량 -5, 제자들의 사기가 오릅니다. 명성 +1",
+          "effects": [
+            {
+              "type": "sect",
+              "field": "food",
+              "add": -5
+            },
+            {
+              "type": "sect",
+              "field": "reputation",
+              "add": 1
+            }
+          ]
+        },
+        {
+          "label": "기특하다며 웃는다"
+        }
+      ]
+    },
+    {
+      "id": "council_poor",
+      "title": "곳간 이야기",
+      "if": [
+        {
+          "type": "sect",
+          "field": "food",
+          "op": "<",
+          "value": 60
+        }
+      ],
+      "speaker": [
+        "$officer:steward",
+        "$officer:elder",
+        "$narrator"
+      ],
+      "lines": [
+        "{speaker}: 곳간이 바닥을 보입니다. 이대로면 겨울을 넘기기 어렵습니다.",
+        "{player}: …허리띠를 졸라매야겠군. 수련보다 먹는 것이 먼저요."
+      ],
+      "choices": [
+        {
+          "label": "내 몫부터 줄이겠다",
+          "message": "도덕 +2",
+          "effects": [
+            {
+              "type": "character",
+              "field": "morality",
+              "add": 2
+            }
+          ]
+        },
+        {
+          "label": "대책을 맡긴다"
+        }
+      ]
+    },
+    {
+      "id": "council_proud",
+      "title": "기세등등",
+      "if": [
+        {
+          "type": "sect",
+          "field": "reputation",
+          "op": ">=",
+          "value": 70
+        }
+      ],
+      "speaker": [
+        "$officer:elder",
+        "$officer:instructor",
+        "$narrator"
+      ],
+      "lines": [
+        "{speaker}: 강호에서 {sect}의 이름을 모르는 자가 없소! 이제 천하를 노려 볼 때 아니겠소?",
+        "{player}: 높이 오를수록 바람도 거센 법이오."
+      ],
+      "choices": [
+        {
+          "label": "야망을 드러낸다",
+          "message": "모두가 들뜹니다. 도덕 -1",
+          "effects": [
+            {
+              "type": "character",
+              "field": "morality",
+              "add": -1
+            },
+            {
+              "type": "sect",
+              "field": "reputation",
+              "add": 1
+            }
+          ]
+        },
+        {
+          "label": "자중하라 이른다",
+          "message": "도덕 +1",
+          "effects": [
+            {
+              "type": "character",
+              "field": "morality",
+              "add": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "council_quiet",
+      "title": "긴 회의",
+      "speaker": "$narrator",
+      "lines": [
+        "회의는 해가 질 때까지 이어졌다. 사소한 불평부터 문파의 앞날까지.",
+        "말을 다 쏟아 낸 이들의 얼굴이 한결 가벼워 보인다."
+      ],
+      "choices": [
+        {
+          "label": "회의를 마친다"
+        }
+      ]
+    }
+  ]
+}

@@ -49,5 +49,16 @@
         }
       ]
     }
+  ],
+  "npc": "npc_senior_brother",
+  "scene": [
+    {
+      "speaker": "npc_senior_brother",
+      "text": "잘했다, 사제. 이제 청운은 우리 것이다. …우리 것이지?"
+    },
+    {
+      "speaker": "player",
+      "text": "(그의 손이 검 자루 위에 있었다. 나의 손도.)"
+    }
   ]
 }

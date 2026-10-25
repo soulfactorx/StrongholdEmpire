@@ -4,6 +4,7 @@
   "title": "천마신교 혈영대주",
   "sect_id": "cheonma",
   "role": "ASSASSIN",
+  "combat_style": "fist",
   "description": "교주의 명을 받아 정파 문파들을 은밀히 흔드는 암살자.",
   "level": 7,
   "stats": {

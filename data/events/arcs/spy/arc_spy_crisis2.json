@@ -71,5 +71,12 @@
         }
       ]
     }
+  ],
+  "npc": "npc_namgung_enforcer",
+  "scene": [
+    {
+      "speaker": "npc_namgung_enforcer",
+      "text": "저놈이 입을 열 때까지 사흘이면 충분하다. 사흘 뒤에 누구 이름이 나올지 궁금하군."
+    }
   ]
 }

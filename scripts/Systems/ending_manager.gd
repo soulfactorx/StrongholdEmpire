@@ -168,6 +168,9 @@ static func evaluate(
 
 
 static func check_game_over(sect: SectData) -> String:
+	# 이야기 중심 시나리오는 문파 살림으로 이야기가 끝나지 않는다
+	if not ScenarioRules.sect_game_over():
+		return ""
 	# 무소속(낭인)은 제자가 없어도 이야기가 이어진다.
 	if sect.disciple_count <= 0 and sect.id != "none":
 		return "sect_disbanded"
