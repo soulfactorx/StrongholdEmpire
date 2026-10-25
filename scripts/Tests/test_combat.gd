@@ -1386,7 +1386,19 @@ func _test_martial_art_screen_actions() -> void:
 	hub.disciple_popup.art_choice._on_option_pressed("preset_soul_chase_sword")
 	_check(target.martial_art != null and hub.log_label.text.contains("전수"), "제자 명단에서 무공 전수")
 	_check(hub.disciple_popup.notice_label.text.contains("전수했습니다"), "전수 성공도 팝업 안에 알림")
+	# 일괄 수련: 방식 고르기 팝업에 방식마다 인원·금화가 보이고, 고르면 수련한다
+	gm.player_sect.gold = 10000
+	hub.disciple_popup.refresh()
+	_check(not hub.disciple_popup.batch_button.disabled, "일괄 수련 버튼")
+	hub.disciple_popup._on_batch_pressed()
+	_check(hub.disciple_popup.batch_choice.visible and hub.disciple_popup.batch_choice.get_option_count() == DiscipleRoster.BATCH_MODES.size(), "일괄 수련: 방식 고르기")
+	var preview_setting: bool = GameSettings.action_preview
+	GameSettings.action_preview = false
+	hub.disciple_popup.batch_choice._on_option_pressed("all")
+	GameSettings.action_preview = preview_setting
+	_check(hub.disciple_popup.notice_label.text.begins_with("일괄 수련") and hub.disciple_popup.batch_button.disabled, "일괄 수련 실행 뒤 버튼이 잠김 (%s)" % hub.disciple_popup.notice_label.text)
 	hub.disciple_popup.visible = false
+	hub.event_popup.visible = false
 	var tip: String = hub.tips["arts"].provider.call()
 	_check(tip.contains("보유 무공") and tip.contains("[유혼쾌영검]") and tip.contains("피해"), "경영 화면: 무공 줄을 길게 누르면 보유 무공 자세히")
 	gm.start_new_game("정리", "young_disciple")

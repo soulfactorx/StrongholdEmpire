@@ -18,6 +18,9 @@ var _rows: VBoxContainer
 var art_choice: Control
 ## 전수받을 제자 id
 var _transmit_target: String = ""
+## 일괄 수련 버튼과 방식을 고르는 팝업
+var batch_button: Button
+var batch_choice: Control
 
 
 func _ready() -> void:
@@ -51,6 +54,10 @@ func _ready() -> void:
 	box.add_child(_summary)
 	notice_label = _UiTheme.make_notice()
 	box.add_child(notice_label)
+	batch_button = Button.new()
+	batch_button.custom_minimum_size = Vector2(0, 52)
+	batch_button.pressed.connect(_on_batch_pressed)
+	box.add_child(batch_button)
 
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(0, 440)
@@ -70,6 +77,9 @@ func _ready() -> void:
 	art_choice = _ChoicePopup.new()
 	add_child(art_choice)
 	art_choice.chosen.connect(_on_art_chosen)
+	batch_choice = _ChoicePopup.new()
+	add_child(batch_choice)
+	batch_choice.chosen.connect(_on_batch_chosen)
 
 
 func open() -> void:
@@ -97,6 +107,10 @@ func refresh() -> void:
 		" / ".join(DiscipleRoster.ASSIGNMENTS.values().map(func(a: Dictionary) -> String: return "%s: %s" % [a["name"], a["effect"]])),
 		_Balance.DISCIPLE_TRAIN_GOLD, _Balance.DISCIPLE_TRAIN_EXP,
 	]
+	var trainable: int = DiscipleRoster.get_trainable(sect, GameManager._get_turn_index()).size()
+	batch_button.text = "일괄 수련 (이번 계절 수련 가능 %d명)" % trainable
+	batch_button.disabled = trainable == 0
+	_UiTheme.style_button(batch_button)
 	for child in _rows.get_children():
 		_rows.remove_child(child)
 		child.queue_free()
@@ -214,6 +228,35 @@ func _on_art_chosen(art_id: String) -> void:
 	var transmit := func() -> Dictionary: return DiscipleRoster.transmit(GameManager.player_sect, target, chosen)
 	var name: String = DiscipleRoster.get_disciple(GameManager.player_sect, target).display_name
 	ActionPreview.confirm(self, "무공 전수", transmit, func() -> void: _apply(transmit.call(), "transmit", name, chosen.display_name))
+
+
+## 일괄 수련: 방식마다 이번에 수련할 제자 수·금화·경지 상승을 미리 보여 주고 고르게 한다
+func _on_batch_pressed() -> void:
+	var sect: SectData = GameManager.player_sect
+	var turn: int = GameManager._get_turn_index()
+	var options: Array[Dictionary] = []
+	for mode in DiscipleRoster.BATCH_MODES:
+		var info: Dictionary = DiscipleRoster.BATCH_MODES[mode]
+		var plan: Array[DiscipleData] = DiscipleRoster.plan_batch_train(sect, turn, mode)
+		var ups: int = plan.filter(func(d: DiscipleData) -> bool: return DiscipleRoster._levels_up(d)).size()
+		var reserve: int = DiscipleRoster.get_batch_reserve(sect, mode)
+		var line: String = "%d명 · 금화 %d" % [plan.size(), plan.size() * _Balance.DISCIPLE_TRAIN_GOLD]
+		if ups > 0:
+			line += " · 경지 상승 %d명" % ups
+		if reserve > 0:
+			line += " · 금화 %d 남김" % reserve
+		options.append({
+			"id": mode, "title": "%s — %s" % [info["title"], line if not plan.is_empty() else "수련할 제자 없음"],
+			"description": info["desc"], "disabled": plan.is_empty(),
+		})
+	batch_choice.open("일괄 수련", "수련할 방식을 고르세요. 제자마다 계절에 한 번, 한 명에 금화 %d로 경험치 +%d입니다. (지금 금화 %d)" % [
+		_Balance.DISCIPLE_TRAIN_GOLD, _Balance.DISCIPLE_TRAIN_EXP, sect.gold], options)
+
+
+func _on_batch_chosen(mode: String) -> void:
+	var batch := func() -> Dictionary:
+		return DiscipleRoster.batch_train(GameManager.player_sect, GameManager._get_turn_index(), mode)
+	ActionPreview.confirm(self, "제자 일괄 수련", batch, func() -> void: _apply(batch.call(), "disciple_train", "제자들"))
 
 
 ## 결과를 알린다. scene_action이 있으면 경영 화면이 그 행동의 대화 장면을 띄운다 (제자 이름·무공 이름과 함께)
