@@ -1,4 +1,5 @@
 # 내보내기: Android(디버그 APK)·웹·윈도우·리눅스 빌드를 만들어 아티팩트로 올린다.
+# v로 시작하는 태그(예: v1.0.0)를 푸시하면 그 버전으로 내보내 GitHub 릴리스를 만들고 네 플랫폼 파일을 붙인다 (docs/릴리스_안내.md).
 # 리눅스 빌드로 자체 점검(--self-check)을 돌려 데이터·그림·소리가 패키지에 들어갔는지 확인한다.
 # Android SDK는 GitHub의 ubuntu 러너에 미리 깔려 있다. 디버그 키는 실행마다 새로 만든다(개인 시험용).
 # main에 푸시되면 웹 빌드를 GitHub Pages에 배포한다. (저장소 Settings → Pages → Source를 "GitHub Actions"로 둬야 한다)
@@ -6,12 +7,17 @@ name: 내보내기
 
 on:
   push:
+  # 웹(Releases → Draft a new release)에서 새 태그로 릴리스를 발행해도 파일을 붙인다
+  release:
+    types: [published]
   workflow_dispatch:
 
 jobs:
   export:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write
     env:
       # project.godot의 config/features, smoke_test.yml과 맞춘다
       GODOT_VERSION: "4.7.1"
@@ -80,11 +86,51 @@ jobs:
           export/android/debug_keystore_pass = "android"
           EOF
 
+      - name: 버전 정하기 (태그면 태그의 버전)
+        id: version
+        run: |
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION=$(sed -n 's/^config\/version="\(.*\)"/\1/p' project.godot)
+          fi
+          # 1.2.3(-beta) → 숫자 부분 1.2.3, Android 버전 코드 10203
+          BASE="${VERSION%%-*}"
+          IFS=. read -r MAJOR MINOR PATCH <<< "$BASE"
+          CODE=$(( ${MAJOR:-0} * 10000 + ${MINOR:-0} * 100 + ${PATCH:-0} ))
+          if [ "$CODE" -lt 1 ]; then CODE=1; fi
+          sed -i "s/^config\/version=.*/config\/version=\"$VERSION\"/" project.godot
+          sed -i "s/^version\/name=.*/version\/name=\"$VERSION\"/; s/^version\/code=.*/version\/code=$CODE/" export_presets.cfg
+          sed -i "s/^application\/file_version=.*/application\/file_version=\"$BASE.0\"/; s/^application\/product_version=.*/application\/product_version=\"$BASE.0\"/" export_presets.cfg
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "버전 $VERSION (Android 버전 코드 $CODE)"
+
+      - name: Android 릴리스 키 (태그이고 저장소 비밀값이 있을 때)
+        if: github.ref_type == 'tag'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_USER: ${{ secrets.ANDROID_KEYSTORE_USER }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::warning::ANDROID_KEYSTORE_BASE64 비밀값이 없어 APK를 디버그 키로 서명합니다 (docs/릴리스_안내.md)."
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$HOME/release.keystore"
+          {
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_PATH=$HOME/release.keystore"
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_USER=$KEYSTORE_USER"
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=$KEYSTORE_PASSWORD"
+            echo "ANDROID_RELEASE=1"
+          } >> "$GITHUB_ENV"
+
       - name: 내보내기
         run: |
           set -o pipefail
           mkdir -p build/android build/web build/windows build/linux
-          ~/godot/godot --headless --path . --export-debug "Android" build/android/StrongholdEmpire.apk 2>&1 | grep -v "Storing File" | tee export.log
+          ANDROID_MODE="--export-debug"
+          if [ "$ANDROID_RELEASE" = "1" ]; then ANDROID_MODE="--export-release"; fi
+          ~/godot/godot --headless --path . $ANDROID_MODE "Android" build/android/StrongholdEmpire.apk 2>&1 | grep -v "Storing File" | tee export.log
           ~/godot/godot --headless --path . --export-release "Web" build/web/index.html 2>&1 | grep -v "Storing File" | tee -a export.log
           ~/godot/godot --headless --path . --export-release "Windows" build/windows/StrongholdEmpire.exe 2>&1 | grep -v "Storing File" | tee -a export.log
           ~/godot/godot --headless --path . --export-release "Linux" build/linux/StrongholdEmpire.x86_64 2>&1 | grep -v "Storing File" | tee -a export.log
@@ -126,6 +172,48 @@ jobs:
           name: windows
           path: build/windows
           retention-days: 14
+
+      - name: 릴리스 파일 묶기 (태그만)
+        if: github.ref_type == 'tag'
+        run: |
+          V="${{ steps.version.outputs.version }}"
+          mkdir -p dist
+          cp build/android/StrongholdEmpire.apk "dist/StrongholdEmpire-$V-android.apk"
+          (cd build/web && zip -qr "$GITHUB_WORKSPACE/dist/StrongholdEmpire-$V-web.zip" . -x "*.import")
+          (cd build/windows && zip -qr "$GITHUB_WORKSPACE/dist/StrongholdEmpire-$V-windows.zip" . -x "*.import")
+          (cd build/linux && zip -qr "$GITHUB_WORKSPACE/dist/StrongholdEmpire-$V-linux.zip" . -x "*.import")
+          (cd dist && sha256sum * > SHA256SUMS.txt)
+          ls -la dist
+
+      - name: GitHub 릴리스 (태그만)
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V="${{ steps.version.outputs.version }}"
+          TAG="$GITHUB_REF_NAME"
+          SIGNED="디버그 키로 서명한 시험판입니다. 앞 버전을 지우고 설치해야 할 수 있습니다."
+          if [ "$ANDROID_RELEASE" = "1" ]; then SIGNED="릴리스 키로 서명했습니다. 앞 버전 위에 그대로 덮어 설치됩니다."; fi
+          cat > notes.md <<EOF
+          ## 강호제패 $V
+
+          | 플랫폼 | 파일 | 하는 법 |
+          |---|---|---|
+          | Android (arm64) | \`StrongholdEmpire-$V-android.apk\` | 폰에서 받아 설치 ("출처를 알 수 없는 앱" 허용). $SIGNED |
+          | 웹 | \`StrongholdEmpire-$V-web.zip\` | 풀어서 웹 서버에 올립니다. 바로 하려면 https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/ |
+          | Windows (64비트) | \`StrongholdEmpire-$V-windows.zip\` | 풀고 \`StrongholdEmpire.exe\` 실행. SmartScreen 경고가 나오면 "추가 정보 → 실행" |
+          | Linux (x86_64) | \`StrongholdEmpire-$V-linux.zip\` | 풀고 \`./StrongholdEmpire.x86_64\` 실행 |
+
+          파일 검증: \`SHA256SUMS.txt\`
+          EOF
+          PRE=""
+          case "$V" in *-*) PRE="--prerelease";; esac
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            # 웹에서 먼저 만든 릴리스: 파일만 붙인다
+            gh release upload "$TAG" dist/* --clobber
+          else
+            gh release create "$TAG" dist/* --title "강호제패 $V" --notes-file notes.md --generate-notes $PRE
+          fi
 
       - uses: actions/upload-artifact@v4
         if: always()

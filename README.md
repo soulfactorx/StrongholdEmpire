@@ -15,6 +15,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/soulfactorx/StrongholdEmpire/releases/latest"><img src="https://img.shields.io/github/v/release/soulfactorx/StrongholdEmpire?include_prereleases&label=릴리스" alt="최신 릴리스"></a>
   <a href="https://github.com/soulfactorx/StrongholdEmpire/actions/workflows/smoke_test.yml"><img src="https://github.com/soulfactorx/StrongholdEmpire/actions/workflows/smoke_test.yml/badge.svg" alt="스모크 테스트"></a>
   <a href="https://github.com/soulfactorx/StrongholdEmpire/actions/workflows/export.yml"><img src="https://github.com/soulfactorx/StrongholdEmpire/actions/workflows/export.yml/badge.svg" alt="내보내기"></a>
   <img src="https://img.shields.io/badge/Godot-4.7.1-478cbf?logo=godotengine&logoColor=white" alt="Godot 4.7.1">
@@ -71,11 +72,13 @@
 
 ## 하는 법
 
+[**최신 릴리스**](https://github.com/soulfactorx/StrongholdEmpire/releases/latest)에서 Android APK·Windows·Linux·웹 파일을 받을 수 있습니다.
+
 | 플랫폼 | 방법 |
 |---|---|
 | 웹 (휴대폰·PC) | **https://soulfactorx.github.io/StrongholdEmpire/** — 홈 화면에 추가하면 앱처럼 쓸 수 있습니다. 소리는 화면을 한 번 누른 뒤에 납니다. |
-| Android | Actions → **내보내기** → 최근 실행의 `android-apk` 아티팩트 (arm64, 개인 시험용 디버그 서명) |
-| Windows / Linux | 같은 곳의 `windows` / `linux` 아티팩트 |
+| Android | 릴리스의 `…-android.apk` (arm64). 개발 중 빌드는 Actions → **내보내기** → `android-apk` 아티팩트 |
+| Windows / Linux | 릴리스의 `…-windows.zip` / `…-linux.zip` |
 
 자세한 설치와 기기 시험은 [기기 테스트 안내](docs/기기_테스트_안내.md)를 보세요.
 휴대폰이 먼저입니다. 모든 기능을 터치만으로 쓸 수 있고, 휴대폰에서는 세로 화면으로 열립니다 ([설정]에서 가로로 바꿀 수 있음).
@@ -100,6 +103,7 @@ godot --headless --path . -s res://scripts/Tools/balance_sim.gd -- combat runs=3
 
 새 스크립트를 더했다면 먼저 `godot --headless --editor --quit`로 클래스 캐시를 갱신합니다.
 내보내기 프리셋은 `export_presets.cfg`(Android·웹·Windows·Linux)에 있고, GitHub Actions가 푸시마다 네 플랫폼을 내보내며 `main`은 웹 빌드를 Pages에 배포합니다.
+`v1.0.0` 같은 태그를 올리면 그 버전으로 릴리스를 만들어 파일을 붙입니다 — [릴리스 내기](docs/릴리스_안내.md).
 
 ## 만들기 쉽게 — 데이터로 짓는 강호
 
