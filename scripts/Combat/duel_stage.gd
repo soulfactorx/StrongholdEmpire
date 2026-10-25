@@ -9,7 +9,6 @@ extends Control
 ## 전투 화면(duel_controller)이 만든다. speed는 1이 보통, 클수록 느리다.
 
 const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
-const TOKEN_SIZE := Vector2(96, 162)
 const PORTRAIT_SIZE := Vector2(72, 84)
 
 ## 연출이 끝나면 (다음 칸·다음 합으로)
@@ -31,7 +30,7 @@ var hurry: bool = false
 
 func _init() -> void:
 	clip_contents = true
-	custom_minimum_size = Vector2(0, 215)
+	custom_minimum_size = Vector2(0, 180)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
@@ -101,35 +100,44 @@ func refresh() -> void:
 
 
 func _make_token(unit: CombatUnit, foe: bool) -> Dictionary:
+	# 말 = 머리 위 초식 이름 줄 + 몸통(초상화·체력 막대·이름). 몸통은 세로 상자라 글자 크기 설정이 바뀌어도 겹치지 않는다
 	var root := Control.new()
-	root.custom_minimum_size = TOKEN_SIZE
-	root.size = TOKEN_SIZE
-	root.pivot_offset = TOKEN_SIZE / 2
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_world.add_child(root)
-	var frame := Panel.new()
-	frame.position = Vector2((TOKEN_SIZE.x - PORTRAIT_SIZE.x) / 2 - 3, 21)
-	frame.size = PORTRAIT_SIZE + Vector2(6, 6)
+	var card := Label.new()
+	card.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.visible = false
+	_UiTheme.set_font_size(card, 15)
+	card.add_theme_color_override("font_outline_color", Color(0.98, 0.95, 0.88))
+	card.add_theme_constant_override("outline_size", 6)
+	root.add_child(card)
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 3)
+	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(body)
+	var frame := PanelContainer.new()
+	frame.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.95, 0.92, 0.85)
 	style.border_color = _UiTheme.COLORS["accent_red"] if foe else _UiTheme.COLORS["accent_jade"]
 	style.set_border_width_all(3)
 	style.set_corner_radius_all(6)
+	style.set_content_margin_all(3)
 	frame.add_theme_stylebox_override("panel", style)
 	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(frame)
+	body.add_child(frame)
 	var portrait := TextureRect.new()
-	portrait.position = frame.position + Vector2(3, 3)
-	portrait.size = PORTRAIT_SIZE
+	portrait.custom_minimum_size = PORTRAIT_SIZE
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	portrait.texture = _portrait_of.call(unit) if _portrait_of.is_valid() else null
 	portrait.flip_h = foe
 	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(portrait)
+	frame.add_child(portrait)
 	var bar := ProgressBar.new()
-	bar.position = Vector2(4, 21 + PORTRAIT_SIZE.y + 8)
-	bar.size = Vector2(TOKEN_SIZE.x - 8, 8)
+	bar.custom_minimum_size = Vector2(PORTRAIT_SIZE.x + 6, 8)
+	bar.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	bar.show_percentage = false
 	var fill := StyleBoxFlat.new()
 	fill.bg_color = _UiTheme.COLORS["accent_red"] if foe else _UiTheme.COLORS["accent_jade"]
@@ -138,52 +146,65 @@ func _make_token(unit: CombatUnit, foe: bool) -> Dictionary:
 	bg.bg_color = Color(0, 0, 0, 0.18)
 	bar.add_theme_stylebox_override("background", bg)
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(bar)
+	body.add_child(bar)
 	var name := Label.new()
-	name.position = Vector2(-20, 21 + PORTRAIT_SIZE.y + 16)
-	name.size = Vector2(TOKEN_SIZE.x + 40, 34)
 	name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_UiTheme.set_font_size(name, 14)
 	name.add_theme_color_override("font_color", _UiTheme.COLORS["text_primary"])
-	root.add_child(name)
-	# 머리 위에 뜨는 초식 이름
-	var card := Label.new()
-	card.position = Vector2(-40, -2)
-	card.size = Vector2(TOKEN_SIZE.x + 80, 22)
-	card.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name.text = "%s\n%d/%d" % [unit.display_name, unit.max_hp, unit.max_hp]
+	body.add_child(name)
+	return {"root": root, "body": body, "portrait": portrait, "name": name, "bar": bar, "card": card, "home": Vector2.ZERO}
+
+
+## 글자 크기에 맞춘 말의 크기를 잰다: 몸통은 최소 크기, 머리 위에는 초식 이름 한 줄
+func _measure(token: Dictionary) -> Vector2:
+	var body: VBoxContainer = token["body"]
+	var card: Label = token["card"]
+	var card_h: float = card.get_theme_font("font").get_height(card.get_theme_font_size("font_size")) + 4.0
+	var body_size: Vector2 = body.get_combined_minimum_size()
+	var width: float = maxf(body_size.x, PORTRAIT_SIZE.x + 6)
+	body.position = Vector2(0, card_h)
+	body.size = Vector2(width, body_size.y)
+	card.position = Vector2(-50, 0)
+	card.size = Vector2(width + 100, card_h)
 	card.pivot_offset = card.size / 2
-	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.visible = false
-	_UiTheme.set_font_size(card, 15)
-	card.add_theme_color_override("font_outline_color", Color(0.98, 0.95, 0.88))
-	card.add_theme_constant_override("outline_size", 6)
-	root.add_child(card)
-	return {"root": root, "portrait": portrait, "name": name, "bar": bar, "card": card, "home": Vector2.ZERO}
+	var root: Control = token["root"]
+	root.size = Vector2(width, card_h + body_size.y)
+	return root.size
 
 
 ## 우리 편은 왼쪽, 상대는 오른쪽에 세운다. 여럿이면 앞뒤로 비껴 세운다
 func _place_tokens() -> void:
-	var height: float = maxf(size.y, custom_minimum_size.y)
+	if _tokens.is_empty():
+		return
+	var token_size := Vector2.ZERO
+	for unit in _tokens:
+		var measured: Vector2 = _measure(_tokens[unit])
+		token_size = Vector2(maxf(token_size.x, measured.x), maxf(token_size.y, measured.y))
 	var width: float = maxf(size.x, 320.0)
 	# 한쪽 편이 쓰는 폭: 가운데를 비워 달려드는 길을 남긴다
 	var region: float = width * 0.42
 	var most: int = maxi(1, maxi(_friends.size(), _foes.size()))
-	var scale_down: float = clampf(region / (TOKEN_SIZE.x * most * 1.04), 0.6, 1.0)
-	scale_down = minf(scale_down, (height - 8.0) / TOKEN_SIZE.y)
+	var scale_down: float = clampf(region / (token_size.x * most * 1.04), 0.6, 1.0)
+	# 무대 높이는 말 키에 맞춘다 (위에는 솟아오르는 글자 자리)
+	var wanted: float = ceilf(token_size.y * scale_down + 40.0)
+	if not is_equal_approx(custom_minimum_size.y, wanted):
+		custom_minimum_size.y = wanted
+	var height: float = maxf(size.y, wanted)
 	for side in 2:
 		var units: Array = _friends if side == 0 else _foes
-		var step: float = TOKEN_SIZE.x * scale_down * 1.04
+		var step: float = token_size.x * scale_down * 1.04
 		if units.size() > 1:
-			step = minf(step, (region - TOKEN_SIZE.x * scale_down) / (units.size() - 1))
+			step = minf(step, (region - token_size.x * scale_down) / (units.size() - 1))
 		for i in units.size():
 			var token: Dictionary = _tokens[units[i]]
 			var root: Control = token["root"]
+			root.pivot_offset = Vector2.ZERO
 			root.scale = Vector2.ONE * scale_down
 			# 앞사람(번호가 작은 사람)이 가운데 쪽에 선다
-			var x: float = width * 0.04 + region - TOKEN_SIZE.x * scale_down - i * step if side == 0 else width * 0.54 + i * step
-			var y: float = height - TOKEN_SIZE.y * scale_down - 4.0 - (i % 2) * 6.0
-			root.pivot_offset = Vector2.ZERO
+			var x: float = width * 0.04 + region - token_size.x * scale_down - i * step if side == 0 else width * 0.54 + i * step
+			var y: float = height - root.size.y * scale_down - 6.0 - (i % 2) * 6.0
 			root.position = Vector2(x, y)
 			token["home"] = root.position
 			# 앞사람(번호가 작은 사람)이 위에 그려지게

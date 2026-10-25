@@ -1532,6 +1532,23 @@ func _test_duel_stage() -> void:
 	var stage: DuelStage = c.stage
 	_check(c.stage_panel.visible and stage.has_token(c.engine.controlled()) and stage.has_token(c.engine.current_foe()), "합 무대: 겨루는 두 사람의 말")
 	_check(not c.friend_portrait.visible, "무대가 있으면 작은 초상화는 접음")
+	# 글자 크기를 키워도 이름·체력이 막대·초상화와 겹치지 않고 무대 안에 들어간다
+	for text_scale in [1.0, 1.3]:
+		_UiTheme.text_scale = text_scale
+		gm.start_combat(CombatManager.create_night_bandits(gm.player_character, gm.player_sect))
+		await process_frame
+		await process_frame
+		await process_frame
+		c = current_scene
+		stage = c.stage
+		for unit in stage._tokens:
+			var token: Dictionary = stage._tokens[unit]
+			var name_rect: Rect2 = token["name"].get_global_rect()
+			var bar_rect: Rect2 = token["bar"].get_global_rect()
+			var portrait_rect: Rect2 = token["portrait"].get_global_rect()
+			_check(name_rect.position.y >= bar_rect.end.y - 0.5 and bar_rect.position.y >= portrait_rect.end.y - 0.5, "글자 크기 %.2f: %s 이름이 막대·초상화 아래 (이름 %s, 막대 %s)" % [text_scale, unit.display_name, name_rect, bar_rect])
+			_check(stage.get_global_rect().grow(1).encloses(token["root"].get_global_rect()), "글자 크기 %.2f: %s 말이 무대 안" % [text_scale, unit.display_name])
+	_UiTheme.text_scale = 1.0
 	c.auto_fill()
 	var floats_seen: bool = false
 	var playing_seen: bool = false

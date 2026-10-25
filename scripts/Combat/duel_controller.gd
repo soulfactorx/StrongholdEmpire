@@ -119,7 +119,6 @@ func _build_ui() -> void:
 	stage_panel = stage_box.get_parent()
 	stage = DuelStage.new()
 	stage.name = "DuelStage"
-	stage.custom_minimum_size.y = 215
 	stage_box.add_child(stage)
 	stage_panel.visible = GameSettings.combat_effects
 
