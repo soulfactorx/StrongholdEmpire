@@ -233,8 +233,10 @@ jobs:
         run: |
           V="${{ steps.version.outputs.version }}"
           TAG="${{ steps.version.outputs.tag }}"
-          SIGNED="디버그 키로 서명한 시험판입니다. 앞 버전을 지우고 설치해야 할 수 있습니다."
-          if [ "$ANDROID_RELEASE" = "1" ]; then SIGNED="릴리스 키로 서명했습니다. 앞 버전 위에 그대로 덮어 설치됩니다."; fi
+          DEBUG_SIGNED="디버그 키로 서명한 시험판입니다. 앞 버전을 지우고 설치해야 할 수 있습니다."
+          RELEASE_SIGNED="릴리스 키로 서명했습니다. 앞 버전 위에 그대로 덮어 설치됩니다."
+          SIGNED="$DEBUG_SIGNED"
+          if [ "$ANDROID_RELEASE" = "1" ]; then SIGNED="$RELEASE_SIGNED"; fi
           cat > notes.md <<EOF
           ## 강호제패 $V
 
@@ -252,6 +254,15 @@ jobs:
           if gh release view "$TAG" > /dev/null 2>&1; then
             # 웹에서 먼저 만든 릴리스: 파일만 붙인다
             gh release upload "$TAG" dist/* --clobber
+            # 다시 돌려 서명 방식이 바뀌었으면 설명의 서명 문구도 맞춘다 (문구가 없으면 그대로 둔다)
+            BODY=$(gh release view "$TAG" --json body -q .body)
+            NEW_BODY="${BODY//"$DEBUG_SIGNED"/$SIGNED}"
+            NEW_BODY="${NEW_BODY//"$RELEASE_SIGNED"/$SIGNED}"
+            if [ "$NEW_BODY" != "$BODY" ]; then
+              printf '%s\n' "$NEW_BODY" > body.md
+              gh release edit "$TAG" --notes-file body.md
+              echo "릴리스 설명의 서명 문구를 고쳤습니다."
+            fi
           else
             # main 릴리스는 태그가 아직 없으므로 이 커밋에 태그를 만든다 (태그 푸시면 있는 태그를 쓴다)
             gh release create "$TAG" dist/* --target "$GITHUB_SHA" --title "강호제패 $V" --notes-file notes.md --generate-notes $PRE
