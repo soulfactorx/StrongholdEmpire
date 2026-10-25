@@ -44,5 +44,16 @@
         }
       ]
     }
+  ],
+  "npc": "npc_shadow_blade",
+  "scene": [
+    {
+      "speaker": "npc_shadow_blade",
+      "text": "누이는 봄을 넘겼다. 네가 살려 준 목숨으로 산 봄이다."
+    },
+    {
+      "speaker": "npc_shadow_blade",
+      "text": "이 칼은 이제 네 문파의 담장을 지킨다. 싫다면 지금 베어라."
+    }
   ]
 }

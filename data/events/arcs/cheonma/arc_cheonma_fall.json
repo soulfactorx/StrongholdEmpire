@@ -55,5 +55,12 @@
         }
       ]
     }
+  ],
+  "npc": "npc_disciple",
+  "scene": [
+    {
+      "speaker": "npc_disciple",
+      "text": "사형… 산문이 다 탔습니다. 그래도 저희는 살았어요. 사형이 살아 있으니까요."
+    }
   ]
 }

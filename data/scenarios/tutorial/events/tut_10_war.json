@@ -39,6 +39,10 @@
           "type": "flag",
           "flag": "tut_10",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "[역할 전환]·[엔딩 / 레거시]·저장 둘러보기"
         }
       ]
     }

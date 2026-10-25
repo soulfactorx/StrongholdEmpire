@@ -27,6 +27,10 @@
           "type": "flag",
           "flag": "tut_02",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "[제자 명단]에서 제자를 살피고 시설에 배치하기"
         }
       ]
     }

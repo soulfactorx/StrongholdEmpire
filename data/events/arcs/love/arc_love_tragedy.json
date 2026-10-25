@@ -44,5 +44,16 @@
         }
       ]
     }
+  ],
+  "npc": "npc_namgung_lady",
+  "scene": [
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "(가마 안에서) 울지 마세요. 저 매화, 당신 주려고 꺾은 거예요."
+    },
+    {
+      "speaker": "npc_rival",
+      "text": "…미안해. 나도 아무것도 못 했어."
+    }
   ]
 }

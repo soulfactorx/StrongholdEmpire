@@ -110,7 +110,8 @@
           "flag": "playing_s3_cheongha",
           "value": true
         }
-      ]
+      ],
+      "next": "s3_ch_dawn_bell"
     },
     {
       "label": "처형장의 사람들을 떠올리며 검을 닦는다",
@@ -133,7 +134,8 @@
           "flag": "playing_s3_cheongha",
           "value": true
         }
-      ]
+      ],
+      "next": "s3_ch_dawn_bell"
     },
     {
       "label": "아버지께 남궁의 검을 다시 들자고 말한다",
@@ -156,7 +158,8 @@
           "flag": "playing_s3_namgung_yeon",
           "value": true
         }
-      ]
+      ],
+      "next": "s3_ny_plum_dawn"
     },
     {
       "label": "몰래 개봉의 처형장을 보러 간다",
@@ -176,6 +179,11 @@
           "type": "character",
           "field": "wisdom",
           "add": 1
+        },
+        {
+          "type": "flag",
+          "flag": "s3_ny_saw_kaifeng",
+          "value": true
         }
       ],
       "conditions": [
@@ -184,7 +192,8 @@
           "flag": "playing_s3_namgung_yeon",
           "value": true
         }
-      ]
+      ],
+      "next": "s3_ny_plum_dawn"
     },
     {
       "label": "법을 어긴 자들을 직접 벤다",
@@ -212,7 +221,8 @@
           "flag": "playing_s3_dokgo_gyeol",
           "value": true
         }
-      ]
+      ],
+      "next": "s3_dg_scaffold"
     },
     {
       "label": "처형을 미루라고 명한다",
@@ -240,7 +250,8 @@
           "flag": "playing_s3_dokgo_gyeol",
           "value": true
         }
-      ]
+      ],
+      "next": "s3_dg_scaffold"
     },
     {
       "label": "천산의 제단에서 피 없는 맹세를 올린다",
@@ -263,7 +274,8 @@
           "flag": "playing_s3_wi_seola",
           "value": true
         }
-      ]
+      ],
+      "next": "s3_sa_snow_altar"
     },
     {
       "label": "할아버지의 원수 흑련을 향해 맹세한다",
@@ -291,7 +303,8 @@
           "flag": "playing_s3_wi_seola",
           "value": true
         }
-      ]
+      ],
+      "next": "s3_sa_snow_altar"
     },
     {
       "label": "소식을 듣는다",

@@ -38,6 +38,10 @@
           "sect": "namgung",
           "field": "attitude",
           "add": -10
+        },
+        {
+          "type": "goal",
+          "text": "가주의 시험을 이겨 혼인을 허락받기"
         }
       ]
     },
@@ -60,6 +64,10 @@
           "type": "bond",
           "target": "npc_namgung_lady",
           "add": 10
+        },
+        {
+          "type": "goal",
+          "text": "추격을 따돌리고 남궁설과 함께 살아남기"
         }
       ]
     },
@@ -83,6 +91,21 @@
           "add": 1
         }
       ]
+    }
+  ],
+  "npc": "npc_namgung_lord",
+  "scene": [
+    {
+      "speaker": "npc_namgung_lord",
+      "text": "내 딸은 남궁의 딸이다. 떠돌이 검객의 아내가 될 아이가 아니야."
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "아버지, 저는 남궁의 딸이기 전에 그냥 설이에요."
+    },
+    {
+      "speaker": "npc_rival",
+      "text": "(작게) …아버지 저렇게 화내시는 거 처음 봐."
     }
   ]
 }

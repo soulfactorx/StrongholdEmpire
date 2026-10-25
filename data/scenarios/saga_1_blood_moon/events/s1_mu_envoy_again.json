@@ -54,6 +54,10 @@
           "type": "flag",
           "flag": "s1_mu_wavering",
           "value": false
+        },
+        {
+          "type": "goal",
+          "text": "혈월의 밤 — 서문을 열고 중원의 총관이 되기"
         }
       ]
     },

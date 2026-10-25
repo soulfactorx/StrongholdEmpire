@@ -32,6 +32,10 @@
           "type": "flag",
           "flag": "arc_revenge_closed",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "흑풍채주 마진이 쓰러졌다는 소식이 관도를 따라 퍼진다."
         }
       ]
     },
@@ -59,8 +63,23 @@
           "type": "flag",
           "flag": "arc_revenge_closed",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "흑풍채주 마진이 쓰러졌다는 소식이 관도를 따라 퍼진다."
         }
       ]
+    }
+  ],
+  "npc": "npc_bandit",
+  "scene": [
+    {
+      "speaker": "npc_bandit",
+      "text": "채주가 죽었으니 우린 어디로 가야 합니까요… 산 아래 마을에선 우릴 다 죽이려 들 겁니다."
+    },
+    {
+      "speaker": "player",
+      "text": "훔친 것은 돌려주고, 칼은 내려놓아라."
     }
   ]
 }

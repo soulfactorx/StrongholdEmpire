@@ -54,6 +54,10 @@
           "type": "flag",
           "flag": "s3_sa_allied",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "무림맹과 함께 흑련을 치고 화친을 맺기"
         }
       ]
     },
@@ -70,6 +74,10 @@
           "type": "flag",
           "flag": "s3_sa_alone",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "신교 홀로 천산을 지키기"
         }
       ]
     }

@@ -37,6 +37,10 @@
           "type": "flag",
           "flag": "tut_04",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "남궁휘와 연습 비무로 초식 배치 대결 익히기"
         }
       ],
       "branches": [
@@ -81,6 +85,10 @@
           "type": "flag",
           "flag": "tut_04",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "남궁휘와 연습 비무로 초식 배치 대결 익히기"
         }
       ]
     }

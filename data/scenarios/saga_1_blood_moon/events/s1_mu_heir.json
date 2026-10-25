@@ -41,6 +41,17 @@
     {
       "speaker": "npc_healer",
       "text": "(문밖에서) 사형…"
+    },
+    {
+      "speaker": "npc_master",
+      "text": "새벽에 사제들을 깨워 가르치더구나. 그건 잘했다.",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s1_mu_trained_juniors",
+          "value": true
+        }
+      ]
     }
   ],
   "choices": [
@@ -67,6 +78,14 @@
           "type": "flag",
           "flag": "s1_mu_loyal",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
+        },
+        {
+          "type": "goal",
+          "text": "청운을 지키고 사부의 뜻을 잇기"
         }
       ]
     },
@@ -93,6 +112,18 @@
           "type": "flag",
           "flag": "s1_mu_resent",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
+        },
+        {
+          "type": "goal",
+          "text": "사부가 틀렸음을 증명하기"
+        },
+        {
+          "type": "rumor",
+          "text": "청운의 대사형이 장문인 자리를 두고 사부와 다퉜다는 말이 산 아래까지 퍼졌다."
         }
       ]
     },
@@ -109,6 +140,10 @@
           "type": "bond",
           "target": "npc_healer",
           "add": 10
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
         }
       ]
     }

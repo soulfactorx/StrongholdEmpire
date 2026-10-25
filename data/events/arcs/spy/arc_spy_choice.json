@@ -42,6 +42,10 @@
           "type": "sect",
           "field": "reputation",
           "add": 15
+        },
+        {
+          "type": "goal",
+          "text": "청운검파로 돌아가 충성을 증명하기"
         }
       ]
     },
@@ -64,6 +68,10 @@
           "type": "character",
           "field": "morality",
           "add": -10
+        },
+        {
+          "type": "goal",
+          "text": "남궁세가의 사람으로 새 삶을 시작하기"
         }
       ]
     },
@@ -85,8 +93,22 @@
           "type": "role_state",
           "field": "exposure",
           "add": 20
+        },
+        {
+          "type": "goal",
+          "text": "두 문파의 기밀을 모두 쥔 거미줄의 주인이 되기"
         }
       ]
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_master",
+      "text": "(청운에서 온 밀서) 그동안 수고했다. 돌아오면 네 자리를 마련해 두마."
+    },
+    {
+      "speaker": "npc_namgung_enforcer",
+      "text": "남궁은 쓸모 있는 사람을 버리지 않는다. 생각해 보아라."
     }
   ]
 }

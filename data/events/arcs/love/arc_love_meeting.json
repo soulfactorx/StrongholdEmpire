@@ -38,8 +38,13 @@
           "target": "npc_namgung_lady",
           "bond_type": "ROMANCE",
           "strength": 25
+        },
+        {
+          "type": "goal",
+          "text": "남궁설과의 인연을 이어 가기"
         }
-      ]
+      ],
+      "next": "arc_love_plum_talk"
     },
     {
       "label": "고개를 숙이고 지나친다",
@@ -51,6 +56,17 @@
           "value": true
         }
       ]
+    }
+  ],
+  "npc": "npc_namgung_lady",
+  "scene": [
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "검무를 훔쳐보는 건 실례인 거 아세요? …그래도 끝까지 보셨으니 한마디는 해 주셔야죠."
+    },
+    {
+      "speaker": "npc_rival",
+      "text": "(멀리서) 누이! 아버지가 찾으셔!"
     }
   ]
 }

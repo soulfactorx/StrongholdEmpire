@@ -405,8 +405,23 @@ func _test_story_arcs() -> void:
 
 	# 아크 기연은 data/events/arcs/의 하위 폴더에서 읽는다.
 	for arc in ["revenge", "succession", "love", "spy", "cheonma"]:
+		# 이어지는 대화(follow_up)는 아크의 마디가 아니라 세지 않는다
 		var files: PackedStringArray = EventManager.collect_json_files(EventManager.EVENTS_DIR.path_join("arcs").path_join(arc))
-		_check(files.size() >= 4 and files.size() <= 8, "아크 %s: 기연 %d개 (4~8)" % [arc, files.size()])
+		var beats: Array = Array(files).filter(func(path: String) -> bool: return JSON.parse_string(FileAccess.get_file_as_string(path)).get("follow_up", false) != true)
+		_check(beats.size() >= 4 and beats.size() <= 8, "아크 %s: 기연 %d개 (4~8)" % [arc, beats.size()])
+	# 자유 시나리오의 아크도 대화 장면·이어지는 대화·일지를 쓴다
+	_new_quiet_game(gm, "young_disciple")
+	_check(gm.journal_goal == "스승께 인정받아 청운의 검을 잇기", "시나리오 목표: 역할별 첫 목표 (%s)" % gm.journal_goal)
+	gm.start_new_game("역할", "leader", "gangho_100", {"event_rate": 0.0})
+	_check(gm.journal_goal.contains("천마신교"), "시나리오 목표: default")
+	_new_quiet_game(gm, "young_disciple")
+	_check(not gm.get_timeline().any(func(t: Dictionary) -> bool: return t["id"].begins_with("arc_cheonma")), "아크: 밀서를 거절하기 전에는 천마 사건이 연표에 없음")
+	var meeting: EventData = EventManager.get_event("arc_love_meeting")
+	_check(not meeting.scene.is_empty() and str(meeting.choices[0].get("next", "")) == "arc_love_plum_talk" and EventManager.get_event("arc_love_plum_talk").follow_up, "아크: 매화 아래의 만남 → 매화 아래 한 수")
+	var omen: EventData = EventManager.get_event("arc_cheonma_omen")
+	_check(not omen.timeline.is_empty(), "아크: 천마의 그림자는 강호 연표에 오름")
+	gm.story_flags["cheonma_letter_refused"] = true
+	_check(gm.get_timeline().any(func(t: Dictionary) -> bool: return t["id"] == "arc_cheonma_omen"), "아크: 밀서를 거절하면 연표에 검은 깃발")
 	var manual_endings: Array = ["mercy_blade", "usurper", "marriage_alliance", "hidden_valley", "fallen_blossom", "web_of_shadows", "demon_slayer", "fallen_sect"]
 	for ending_id in manual_endings:
 		_check(EndingManager.has_ending(ending_id), "아크 엔딩 존재: %s" % ending_id)
@@ -660,7 +675,7 @@ func _play_saga(scenario_id: String, npc_id: String, plan: Dictionary, outcomes:
 	if start_level > 0:
 		gm().player_character.level = start_level
 	var seen: Array = []
-	for i in 40:
+	for i in 60:
 		if gm().is_game_over():
 			break
 		if gm().pending_event.is_empty():
@@ -792,9 +807,15 @@ func _test_main_saga_paths() -> void:
 	# 이야기 모드는 문파 살림으로 끝나지 않는다
 	gm().player_sect.disciple_count = 0
 	_check(EndingManager.check_game_over(gm().player_sect).is_empty(), "이야기 모드: 문파 게임오버 없음")
-	# 다른 등장인물은 단계 개방 없이 모두 열림
+	# 메인 시나리오의 모든 등장인물은 단계 개방: 시작 기능과 일지 목표가 있다
+	for saga_id in SAGA_IDS:
+		var saga: Dictionary = ScenarioManager.get_scenario(saga_id)
+		_check(saga.get("progressive", false) == true, "기능 개방: %s는 단계 개방" % saga_id)
+		for entry in ScenarioManager.get_playables(saga):
+			_check(entry.has("features") and not str(entry.get("goal", "")).is_empty(), "기능 개방: %s 시작 기능·목표" % entry["npc"])
+	# 낭인 연소화: 역할 기능(지도)은 처음부터, 문파 경영은 잠김
 	_start_saga(sid, "npc_swallow")
-	_check(not gm().progressive_features and FeatureGate.is_open("sect_war"), "기능 개방: 시작 기능이 없는 등장인물은 모두 열림")
+	_check(gm().progressive_features and FeatureGate.is_open("travel") and not FeatureGate.is_open("sect_war") and not FeatureGate.is_open("spar"), "기능 개방: 낭인은 지도만 먼저 열림")
 	_start_saga(sid, "npc_rival")
 	_check(not FeatureGate.is_open("spar") and not RoleDashboard.is_button_visible(gm().player_character.role, "CombatButton"), "기능 개방: 잠긴 버튼은 숨김")
 	_check(gm().pending_role_transitions.is_empty(), "기능 개방: 역할 전환 전에는 전환 알림 없음")
@@ -809,12 +830,16 @@ func _test_main_saga_paths() -> void:
 	_play_saga(sid, "npc_swallow", {"s1_so_majin_deal": "금화를", "s1_so_trap_springs": "끝까지"})
 	_check(gm().current_ending_id == "s1_bad_black_wind_trap", "1장 연소화: 흑풍의 덫 (배드)")
 	# 연소화: 피난민을 이끌어 강남으로
-	_play_saga(sid, "npc_swallow", {
+	seen = _play_saga(sid, "npc_swallow", {
 		"s1_red_moon": "피난 보따리", "s1_so_orphan": "소년을 데려간다", "s1_so_majin_deal": "거절하고",
 		"s1_so_haomun": "거절한다", "s1_blood_night": "부상자와", "s1_so_exodus": "행렬의 맨 앞",
 		"s1_demon_reign": "저항한다", "s1_crossroads": "지켜야 할", "s1_finale_so": "피난민들의",
 	})
 	_check(gm().current_ending_id == "s1_lantern_refugees", "1장 연소화: 피난길의 등불")
+	_check(seen.find("s1_so_inn_night") == seen.find("s1_red_moon") + 1, "1장 연소화: 붉은 달 → 객잔의 밤 (%s)" % [seen])
+	var so_mid: Array = _saga_log["s1_so_orphan"]["features"]
+	_check(so_mid.has("spar") and not so_mid.has("martial") and _saga_log["s1_so_exodus"]["features"].has("martial"), "1장 연소화: 객잔에서 비무, 석두를 만나 무공이 열림 (%s)" % [so_mid])
+	_check(gm().journal_goal.contains("강남"), "1장 연소화: 일지 목표 (%s)" % gm().journal_goal)
 	_check(_rel(gm(), "npc_orphan") != null and _rel(gm(), "npc_orphan").bond_type == RelationshipData.BondType.PUPIL, "1장 연소화: 석두를 제자로")
 	# 진무겸: 마교와 손잡고 서문을 연다 → 마교의 총관
 	_play_saga(sid, "npc_senior_brother", {
@@ -890,11 +915,15 @@ func _test_main_saga_paths() -> void:
 	_check(gm().current_ending_id == "s2_heaven_heir", "2장 혈영: 천마의 계승")
 	_play_saga(sid, "s2_hyeolyeong", {"s2_mugyeom_revolt": "반역자"}, {"s2_mugyeom_revolt": D})
 	_check(gm().current_ending_id == "s2_bad_civil_war", "2장 혈영: 내전에서 지면 내전의 제물 (배드)")
-	_play_saga(sid, "s2_seokun", {
+	seen = _play_saga(sid, "s2_seokun", {
+		"s2_lotus_rises": "누나에게", "s2_su_little_disciple": "사부님의 검을",
 		"s2_mugyeom_revolt": "사부의 원수를", "s2_su_revenge_done": "목숨만은", "s2_black_lotus_pact": "흑련 아래",
 		"s2_luoyang_battle": "무너지는 성벽", "s2_lotus_reign": "흑련의 법을 따르지", "s2_finale_su": "조용히",
 	})
 	_check(gm().current_ending_id == "s2_qingyun_rebuilt" and gm().story_flags.get("s2_su_spared", false), "2장 석운: 청운재건")
+	_check(seen.find("s2_su_little_disciple") == seen.find("s2_lotus_rises") + 1, "2장 석운: 검은 연꽃 → 가장 어린 제자")
+	_check(_saga_log["s2_lotus_rises"]["features"].has("sect") and not _saga_log["s2_lotus_rises"]["features"].has("martial"), "2장 석운: 장문인은 문파 경영부터, 무공은 제자를 가르치며")
+	_check(_saga_log["s2_su_empty_gate"]["text"].contains("사조님 검법"), "2장 석운: 고른 일을 기억하는 대사")
 	_play_saga(sid, "s2_seokun", {"s2_black_lotus_pact": "흑련의 사자를", "s2_su_gate_test": "산문을 걸고"}, {"s2_su_gate_test": D})
 	_check(gm().current_ending_id == "s2_bad_fallen_gate", "2장 석운: 산문이 다시 불타다 (배드)")
 
@@ -933,11 +962,13 @@ func _test_main_saga_paths() -> void:
 		"s3_kaifeng_battle": "마지막 성루", "s3_finale_dg": "끝까지",
 	})
 	_check(gm().current_ending_id == "s3_blood_heir" and gm().story_flags.get("s3_hwarin_dead", false), "3장 독고결: 피의 계승자 (%s %s)" % [gm().current_ending_id, gm().game_over_id])
-	_play_saga(sid, "s3_wi_seola", {
-		"s3_sa_story": "그 여인의", "s3_sa_zealots": "피의 맹세를 거부", "s3_sa_alliance_offer": "받아들인다",
+	seen = _play_saga(sid, "s3_wi_seola", {
+		"s3_tyranny": "천산의 제단에서", "s3_sa_snow_altar": "할아버지 혈영에게", "s3_sa_story": "그 여인의", "s3_sa_zealots": "피의 맹세를 거부", "s3_sa_alliance_offer": "받아들인다",
 		"s3_kaifeng_battle": "교도들을 이끌고", "s3_sa_peace_mission": "혈영과 함께", "s3_finale_sa": "무림맹과",
 	})
 	_check(gm().current_ending_id == "s3_saintess_peace", "3장 위설아: 성녀의 화친")
+	_check(seen.find("s3_sa_snow_altar") == seen.find("s3_tyranny") + 1 and _saga_log["s3_sa_story"]["text"].contains("막는 법은"), "3장 위설아: 눈 덮인 제단과 그 일을 기억하는 대사")
+	_check(_saga_log["s3_sa_story"]["features"].has("spar") and gm().unlocked_features.has("martial") and not _saga_log["s3_sa_snow_altar"]["features"].has("spar"), "3장 위설아: 이야기를 따라 열린 기능 (%s)" % [gm().unlocked_features])
 	_play_saga(sid, "s3_wi_seola", {
 		"s3_tyranny": "할아버지의 원수", "s3_sa_story": "할아버지 위무량의", "s3_sa_zealots": "피의 맹세를 받아들",
 		"s3_cult_reborn_ev": "교도들에게", "s3_kaifeng_battle": "싸움이 끝나기를", "s3_new_dawn": "빈자리를", "s3_finale_sa": "천마의 자리에",

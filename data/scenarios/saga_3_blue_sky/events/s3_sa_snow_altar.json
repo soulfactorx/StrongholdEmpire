@@ -1,0 +1,107 @@
+{
+  "id": "s3_sa_snow_altar",
+  "title": "눈 덮인 제단",
+  "description": "맹세가 끝난 밤, 천산의 제단에 눈이 내렸습니다. 늙은 혈영이 지팡이를 짚고 올라와 성녀의 어깨에 두꺼운 장포를 걸쳐 주었습니다.",
+  "can_repeat": false,
+  "priority": false,
+  "weight": 10,
+  "follow_up": true,
+  "npc": "s3_hyeolyeong",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s3_wi_seola",
+      "value": true
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_hyeolyeong",
+      "text": "피 없는 맹세라. 교도들이 수군거리더구나. 네 할아버지가 들었으면 웃었을 게다.",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s3_sa_vengeful",
+          "value": false
+        }
+      ]
+    },
+    {
+      "speaker": "s3_hyeolyeong",
+      "text": "흑련을 향한 맹세라. 교도들 눈이 붉어지더구나. 네 할아버지 젊을 때 눈이다.",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s3_sa_vengeful",
+          "value": true
+        }
+      ]
+    },
+    {
+      "speaker": "player",
+      "text": "할아버지는… 아니, 혈영 할아버지는 제가 어떤 성녀가 됐으면 좋겠어요?"
+    },
+    {
+      "speaker": "s3_hyeolyeong",
+      "text": "살아 있는 성녀. 그거면 된다. 나는 지킬 사람을 둘이나 묻었다. 셋은 싫다."
+    }
+  ],
+  "choices": [
+    {
+      "label": "할아버지 혈영에게 칼 쓰는 법을 청한다",
+      "message": "\"…칼 말고 막는 법부터 가르치마.\" 늙은 칼이 지팡이를 들었습니다. 혈영 유대 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_sa_snow_altar",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s3_hyeolyeong",
+          "add": 8
+        },
+        {
+          "type": "unlock",
+          "feature": "spar"
+        },
+        {
+          "type": "flag",
+          "flag": "s3_sa_asked_blade",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "제단의 불을 함께 지킨다",
+      "message": "새벽까지 둘이서 장작을 넣었습니다. 혈영이 바다 이야기를 했습니다. 혈영 유대 +5, 도덕 +2",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_sa_snow_altar",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s3_hyeolyeong",
+          "add": 5
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 2
+        },
+        {
+          "type": "unlock",
+          "feature": "spar"
+        }
+      ]
+    }
+  ]
+}

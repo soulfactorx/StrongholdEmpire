@@ -294,6 +294,10 @@ func _initialize_new_game(
 			if not unlocked_features.has(feature_id):
 				unlocked_features.append(feature_id)
 	journal_goal = str(playable.get("goal", ""))
+	# 등장인물이 없는 시나리오는 시나리오의 역할별 첫 목표 (goals: {역할 id 또는 "default": 목표})
+	var scenario_goals: Variant = ScenarioManager.current.get("goals", {})
+	if journal_goal.is_empty() and scenario_goals is Dictionary:
+		journal_goal = str(scenario_goals.get(role_id, scenario_goals.get("default", "")))
 	journal_rumors.clear()
 	role_history.clear()
 	_record_role(player_character.role)

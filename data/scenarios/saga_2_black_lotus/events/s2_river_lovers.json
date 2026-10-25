@@ -87,6 +87,14 @@
           "type": "flag",
           "flag": "s2_hr_loves_un",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "남궁운과 함께 갈 길을 찾기"
+        },
+        {
+          "type": "rumor",
+          "text": "흑련의 나루에서 남궁의 아들이 사라졌다고 한다."
         }
       ],
       "conditions": [
@@ -120,6 +128,10 @@
           "type": "flag",
           "flag": "s2_un_captured",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "맹주의 신임을 얻어 흑련의 윗자리에 오르기"
         }
       ],
       "conditions": [

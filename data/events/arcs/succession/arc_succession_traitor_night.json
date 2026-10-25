@@ -49,5 +49,16 @@
         }
       ]
     }
+  ],
+  "npc": "npc_senior_brother",
+  "scene": [
+    {
+      "speaker": "npc_senior_brother",
+      "text": "열어라. 한 번만 열면 끝난다. 그 뒤는 내가 다 짊어지마."
+    },
+    {
+      "speaker": "npc_master",
+      "text": "(문 너머에서 기침) …거기 누구냐. 무겸이냐?"
+    }
   ]
 }

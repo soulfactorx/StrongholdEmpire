@@ -17,6 +17,7 @@ extends RefCounted
 ##   hidden_npcs   이 시나리오에 나오지 않는 공용 인물 id (다른 시대의 인물). 인연·기연 대상과 직책에서 빠진다
 ##   sect_overrides에는 수치 말고 sect_name(이름), leader_id(문주 인물 id)도 줄 수 있다
 ##   progressive   true면 기능 단계 개방: 등장인물의 features만 열고 시작해 이야기·역할로 하나씩 연다 (FeatureGate)
+##   goals         (선택) 강호 일지의 첫 목표 { 시작 역할 id 또는 "default": 목표 }. 등장인물의 goal이 있으면 그쪽이 먼저
 ##   common_endings false면 공용 엔딩(data/endings/)을 읽지 않고 이 시나리오의 엔딩만 쓴다 (기본 true)
 
 const SCENARIO_DIR := "res://data/scenarios/"
@@ -196,6 +197,13 @@ static func validate_scenario_dict(data: Dictionary) -> PackedStringArray:
 			errors.append("알 수 없는 시작 역할: %s" % role_id)
 	for entry in data.get("playables", []):
 		errors.append_array(_validate_playable(entry, role_ids))
+	var goals: Variant = data.get("goals", {})
+	if not goals is Dictionary:
+		errors.append("goals는 { 역할 id: 목표 } 객체여야 함")
+	else:
+		for role_id in goals:
+			if role_id != "default" and not role_ids.has(role_id):
+				errors.append("goals: 알 수 없는 시작 역할 %s" % role_id)
 	var common_files: PackedStringArray = EventManager.collect_json_files(EventManager.EVENTS_DIR)
 	for folder in data.get("common_events", []):
 		if not Array(common_files).any(func(path: String) -> bool: return EventManager._in_folders(path, EventManager.EVENTS_DIR, [folder])):

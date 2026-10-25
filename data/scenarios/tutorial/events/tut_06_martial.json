@@ -36,6 +36,10 @@
           "type": "flag",
           "flag": "tut_06",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "[인연 돌보기]로 사람과의 인연 쌓기"
         }
       ]
     }

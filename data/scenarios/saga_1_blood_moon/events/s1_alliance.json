@@ -178,6 +178,10 @@
         {
           "type": "rumor",
           "text": "정도맹이 낙양에 맹부를 열었다. 서쪽 문은 청운검파가 지킨다고 한다."
+        },
+        {
+          "type": "unlock",
+          "feature": "diplomacy"
         }
       ],
       "conditions": [
@@ -218,6 +222,10 @@
         {
           "type": "rumor",
           "text": "정도맹이 낙양에 맹부를 열었다. 서쪽 문은 청운검파가 지킨다고 한다."
+        },
+        {
+          "type": "unlock",
+          "feature": "diplomacy"
         }
       ],
       "conditions": [
@@ -253,6 +261,14 @@
         {
           "type": "rumor",
           "text": "정도맹이 낙양에 맹부를 열었다. 서쪽 문은 청운검파가 지킨다고 한다."
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
+        },
+        {
+          "type": "goal",
+          "text": "정도맹 안에 문을 열어 줄 사람을 찾기"
         }
       ],
       "conditions": [

@@ -66,5 +66,16 @@
         }
       ]
     }
+  ],
+  "npc": "npc_namgung_guard",
+  "scene": [
+    {
+      "speaker": "npc_namgung_guard",
+      "text": "멈춰라. 품에 든 게 뭐냐. 요즘 산문을 드나드는 쥐가 많다더군."
+    },
+    {
+      "speaker": "player",
+      "text": "(밀서가 가슴팍에서 바스락거렸다.)"
+    }
   ]
 }

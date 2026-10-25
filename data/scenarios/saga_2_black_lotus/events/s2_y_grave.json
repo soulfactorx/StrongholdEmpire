@@ -57,6 +57,10 @@
           "type": "flag",
           "flag": "s2_y_told_hwi",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
         }
       ]
     },
@@ -73,6 +77,10 @@
           "type": "character",
           "field": "wisdom",
           "add": 1
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
         }
       ]
     }

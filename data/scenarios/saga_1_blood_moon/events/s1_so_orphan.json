@@ -41,6 +41,17 @@
     {
       "speaker": "npc_innkeeper",
       "text": "소화야, 너 또 떠돌이 하나 주웠구나."
+    },
+    {
+      "speaker": "npc_iron_blade",
+      "text": "(멀리서) 비연검, 가르칠 거면 제대로 가르쳐. 무공서 한 권 빌려주지.",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s1_so_iron_taught",
+          "value": true
+        }
+      ]
     }
   ],
   "choices": [
@@ -63,6 +74,14 @@
           "target": "npc_orphan",
           "bond_type": "PUPIL",
           "strength": 40
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
+        },
+        {
+          "type": "goal",
+          "text": "피난민과 석두를 지키며 난세를 건너기"
         }
       ]
     },
@@ -85,6 +104,14 @@
           "target": "npc_orphan",
           "bond_type": "ACQUAINTANCE",
           "strength": 20
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
+        },
+        {
+          "type": "goal",
+          "text": "피난민과 석두를 지키며 난세를 건너기"
         }
       ]
     },
@@ -101,6 +128,14 @@
           "type": "character",
           "field": "morality",
           "add": -3
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
+        },
+        {
+          "type": "goal",
+          "text": "난리 통에서 혼자 살아남기"
         }
       ]
     }

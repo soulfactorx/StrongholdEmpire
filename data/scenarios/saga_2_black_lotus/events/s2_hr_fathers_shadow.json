@@ -37,6 +37,17 @@
     {
       "speaker": "s2_ma_jin",
       "text": "…네가 남았지. 살아 있는 딸 하나."
+    },
+    {
+      "speaker": "s2_ma_jin",
+      "text": "줄 위에서 칼을 맞대 봤으니 알겠지. 넌 누구의 아내로 묶어 두기엔 아까운 칼이다.",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s2_hr_sparred_father",
+          "value": true
+        }
+      ]
     }
   ],
   "choices": [
@@ -63,6 +74,14 @@
           "type": "flag",
           "flag": "s2_hr_free",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
+        },
+        {
+          "type": "goal",
+          "text": "흑련 안에서 흑풍의 자리와 내 이름을 지키기"
         }
       ]
     },
@@ -84,6 +103,14 @@
           "type": "flag",
           "flag": "s2_hr_betrothed",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
+        },
+        {
+          "type": "goal",
+          "text": "흑련 안에서 흑풍의 자리와 내 이름을 지키기"
         }
       ]
     },
@@ -105,6 +132,14 @@
           "type": "character",
           "field": "charisma",
           "add": 2
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
+        },
+        {
+          "type": "goal",
+          "text": "흑련 안에서 흑풍의 자리와 내 이름을 지키기"
         }
       ]
     }

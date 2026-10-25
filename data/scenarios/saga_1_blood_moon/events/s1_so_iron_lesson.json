@@ -1,0 +1,98 @@
+{
+  "id": "s1_so_iron_lesson",
+  "title": "철검객의 세 합",
+  "description": "객잔 뒷마당. 고무진이 녹슨 철검을 뽑았습니다. \"세 합. 그 뒤에도 서 있으면 내가 술을 사지.\"",
+  "can_repeat": false,
+  "priority": false,
+  "weight": 10,
+  "follow_up": true,
+  "npc": "npc_iron_blade",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_1_blood_moon"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_npc_swallow",
+      "value": true
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_iron_blade",
+      "text": "피난민을 이끌 생각이지? 얼굴에 다 쓰여 있어."
+    },
+    {
+      "speaker": "player",
+      "text": "누가 그래요. 난 그냥 길을 아는 것뿐이에요."
+    },
+    {
+      "speaker": "npc_iron_blade",
+      "text": "길을 아는 사람 뒤에는 사람이 줄을 서게 돼 있어. 그러니 칼이 버텨야 한다. 앞으로 시간 날 때마다 겨루자."
+    }
+  ],
+  "choices": [
+    {
+      "label": "빠르기로 맞선다",
+      "message": "두 합째에 손목이 저렸고, 세 합째에 검이 날아갔습니다. 고무진이 웃었습니다. \"빠르긴 하군.\" 신법 +1",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_so_iron_lesson",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "agility",
+          "add": 1
+        },
+        {
+          "type": "bond",
+          "target": "npc_iron_blade",
+          "add": 5
+        },
+        {
+          "type": "unlock",
+          "feature": "spar"
+        },
+        {
+          "type": "flag",
+          "flag": "s1_so_iron_taught",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "물러서며 그의 무게를 흘린다",
+      "message": "세 합을 버텼습니다. 고무진이 약속대로 술을 샀습니다. 고무진 유대 +10",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s1_so_iron_lesson",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "npc_iron_blade",
+          "add": 10
+        },
+        {
+          "type": "experience",
+          "amount": 15
+        },
+        {
+          "type": "unlock",
+          "feature": "spar"
+        },
+        {
+          "type": "flag",
+          "flag": "s1_so_iron_taught",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

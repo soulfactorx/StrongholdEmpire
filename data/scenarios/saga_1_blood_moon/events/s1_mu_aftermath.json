@@ -54,6 +54,10 @@
           "type": "flag",
           "flag": "s1_mu_steward",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "마교의 중원 총관으로 낙양을 다스리기"
         }
       ],
       "conditions": [
@@ -109,6 +113,10 @@
           "type": "flag",
           "flag": "s1_mu_found_sword",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "사부의 검을 들고 청운의 빈자리를 지키기"
         }
       ],
       "conditions": [
@@ -137,6 +145,10 @@
           "type": "flag",
           "flag": "s1_mu_led_disciples",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "남은 사제들을 이끌고 청운을 잇기"
         }
       ],
       "conditions": [

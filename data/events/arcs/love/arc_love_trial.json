@@ -39,5 +39,20 @@
         }
       ]
     }
+  ],
+  "npc": "npc_rival",
+  "scene": [
+    {
+      "speaker": "npc_rival",
+      "text": "누이를 데려가려면 나를 넘어야 해. 봐주는 거 없다."
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "휘야, 다치게 하지 마. …둘 다."
+    },
+    {
+      "speaker": "npc_namgung_lord",
+      "text": "검으로 말해라. 남궁은 검으로 사람을 안다."
+    }
   ]
 }

@@ -133,7 +133,8 @@
           "flag": "playing_s2_ma_hwarin",
           "value": true
         }
-      ]
+      ],
+      "next": "s2_hr_rope_night"
     },
     {
       "label": "아버지와 함께 산채에 남는다",
@@ -156,7 +157,8 @@
           "flag": "playing_s2_ma_hwarin",
           "value": true
         }
-      ]
+      ],
+      "next": "s2_hr_rope_night"
     },
     {
       "label": "방을 찢는다 — 사파의 천하는 오지 않는다",
@@ -184,7 +186,8 @@
           "flag": "playing_s2_namgung_hwi",
           "value": true
         }
-      ]
+      ],
+      "next": "s2_hw_plum_court"
     },
     {
       "label": "흑련의 사자를 맞아 속을 떠본다",
@@ -212,7 +215,8 @@
           "flag": "playing_s2_namgung_hwi",
           "value": true
         }
-      ]
+      ],
+      "next": "s2_hw_plum_court"
     },
     {
       "label": "교주의 병상을 지킨다",
@@ -235,7 +239,8 @@
           "flag": "playing_s2_hyeolyeong",
           "value": true
         }
-      ]
+      ],
+      "next": "s2_y_two_shadows"
     },
     {
       "label": "흑련의 사자를 베어 답한다",
@@ -264,7 +269,8 @@
           "flag": "playing_s2_hyeolyeong",
           "value": true
         }
-      ]
+      ],
+      "next": "s2_y_two_shadows"
     },
     {
       "label": "산문을 닫고 제자들에게 검을 더 가르친다",
@@ -286,7 +292,8 @@
           "flag": "playing_s2_seokun",
           "value": true
         }
-      ]
+      ],
+      "next": "s2_su_little_disciple"
     },
     {
       "label": "누나에게 서신을 보낸다",
@@ -309,7 +316,8 @@
           "flag": "playing_s2_seokun",
           "value": true
         }
-      ]
+      ],
+      "next": "s2_su_little_disciple"
     },
     {
       "label": "방을 바라본다",

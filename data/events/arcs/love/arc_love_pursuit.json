@@ -45,5 +45,16 @@
         }
       ]
     }
+  ],
+  "npc": "npc_namgung_lady",
+  "scene": [
+    {
+      "speaker": "npc_namgung_enforcer",
+      "text": "아가씨, 돌아가시지요. 가주께서 다치게 하지는 말라 하셨습니다. 그 사내는 빼고."
+    },
+    {
+      "speaker": "npc_namgung_lady",
+      "text": "철 아저씨, 저 어릴 때 업어 주셨잖아요. 오늘만 못 본 척해 주세요."
+    }
   ]
 }

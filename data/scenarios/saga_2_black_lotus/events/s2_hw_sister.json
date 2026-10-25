@@ -37,6 +37,10 @@
     {
       "speaker": "s2_biyeon",
       "text": "데려간 게 아니라 같이 간 거예요. 그리고 그 사람, 언니를 묻고 나서 다시 칼을 들었어요. 더 이상 지킬 게 없어서."
+    },
+    {
+      "speaker": "s2_biyeon",
+      "text": "남궁 가주, 하오문 약방의 영약 길을 열어 두죠. 설 언니가 가주 건강을 늘 걱정했대요."
     }
   ],
   "choices": [
@@ -68,6 +72,10 @@
           "type": "flag",
           "flag": "s2_hw_forgave",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
         }
       ]
     },
@@ -89,6 +97,10 @@
           "type": "bond",
           "target": "s2_hyeolyeong",
           "add": -20
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
         }
       ]
     },
@@ -110,6 +122,10 @@
           "type": "flag",
           "flag": "s2_hw_visited_grave",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
         }
       ]
     }

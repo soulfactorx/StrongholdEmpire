@@ -86,6 +86,10 @@
           "target": "s3_ma_hwarin",
           "bond_type": "ACQUAINTANCE",
           "strength": 30
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
         }
       ],
       "conditions": [
@@ -109,6 +113,10 @@
           "type": "flag",
           "flag": "s3_hwarin_rejected",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
         }
       ],
       "conditions": [
@@ -131,6 +139,10 @@
         {
           "type": "combat",
           "combat": "s3_hunt_hwarin"
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
         }
       ],
       "conditions": [
@@ -159,6 +171,10 @@
           "type": "flag",
           "flag": "s3_dg_let_hwarin_go",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
         }
       ],
       "conditions": [
@@ -181,6 +197,10 @@
         {
           "type": "experience",
           "amount": 10
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
         }
       ]
     }

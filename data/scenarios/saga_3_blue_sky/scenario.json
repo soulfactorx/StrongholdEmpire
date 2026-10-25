@@ -90,7 +90,12 @@
       "bonds": {
         "s3_seokun": "MASTER_DISCIPLE",
         "s3_namgung_yeon": "FRIEND"
-      }
+      },
+      "features": [
+        "role_action",
+        "bond"
+      ],
+      "goal": "흑련의 폭정 — 사부께 산을 내려갈 허락을 받기"
     },
     {
       "npc": "s3_namgung_yeon",
@@ -100,7 +105,12 @@
       "bonds": {
         "s3_namgung_un": "MASTER_DISCIPLE",
         "s3_cheongha": "FRIEND"
-      }
+      },
+      "features": [
+        "role_action",
+        "bond"
+      ],
+      "goal": "흑련의 폭정 — 기다리기만 하는 남궁을 움직이기"
     },
     {
       "npc": "s3_dokgo_gyeol",
@@ -110,7 +120,13 @@
       "bonds": {
         "s3_dokgo_cheon": "MASTER_DISCIPLE",
         "s3_ma_hwarin": "BENEFACTOR"
-      }
+      },
+      "features": [
+        "role_action",
+        "bond",
+        "spar"
+      ],
+      "goal": "흑련의 폭정 — 아버지의 법을 지켜 흑련의 후계로 인정받기"
     },
     {
       "npc": "s3_wi_seola",
@@ -119,7 +135,13 @@
       "summary": "천마 위무량의 손녀, 천마신교의 성녀. 늙은 혈영의 손에 자랐다.\n신교를 되살리되 피를 흘리지 않을 수 있을까. 아니면 천마가 다시 올 것인가.",
       "bonds": {
         "s3_hyeolyeong": "BENEFACTOR"
-      }
+      },
+      "features": [
+        "role_action",
+        "bond"
+      ],
+      "goal": "흑련의 폭정 — 천산에서 신교를 다시 일으키기"
     }
-  ]
+  ],
+  "progressive": true
 }

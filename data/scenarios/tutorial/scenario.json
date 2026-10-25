@@ -23,5 +23,8 @@
   },
   "victory_endings": [
     "tutorial_complete"
-  ]
+  ],
+  "goals": {
+    "default": "길잡이를 따라 문주의 하루를 익히기"
+  }
 }

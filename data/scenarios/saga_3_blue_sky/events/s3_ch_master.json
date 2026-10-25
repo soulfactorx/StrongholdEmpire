@@ -37,6 +37,17 @@
     {
       "speaker": "s3_seokun",
       "text": "하오문의 비연. 강호의 비밀을 다 아는 분이지. 아마 지금도 우리를 보고 계실 게다."
+    },
+    {
+      "speaker": "s3_seokun",
+      "text": "새벽에 남궁의 아이와 겨루는 걸 봤다. 매화검법 앞에서 물러서지 않더구나.",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s3_ch_sparred_yeon",
+          "value": true
+        }
+      ]
     }
   ],
   "choices": [
@@ -57,6 +68,14 @@
         {
           "type": "experience",
           "amount": 20
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
+        },
+        {
+          "type": "goal",
+          "text": "사부의 검을 이어 흑련의 폭정을 끝내기"
         }
       ]
     },
@@ -78,6 +97,14 @@
           "type": "bond",
           "target": "s3_seokun",
           "add": 5
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
+        },
+        {
+          "type": "goal",
+          "text": "사부의 검을 이어 흑련의 폭정을 끝내기"
         }
       ]
     }

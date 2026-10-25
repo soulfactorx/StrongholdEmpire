@@ -67,6 +67,18 @@
           "type": "flag",
           "flag": "s3_ch_leader",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "role_change"
+        },
+        {
+          "type": "unlock",
+          "feature": "diplomacy"
+        },
+        {
+          "type": "goal",
+          "text": "무림맹을 이끌고 개봉의 흑련을 무너뜨리기"
         }
       ],
       "conditions": [
@@ -101,6 +113,14 @@
           "type": "flag",
           "flag": "s3_ch_yielded",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "role_change"
+        },
+        {
+          "type": "goal",
+          "text": "무림맹의 검이 되어 개봉으로 가기"
         }
       ],
       "conditions": [
@@ -129,6 +149,18 @@
           "type": "flag",
           "flag": "s3_ny_leader",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "role_change"
+        },
+        {
+          "type": "unlock",
+          "feature": "diplomacy"
+        },
+        {
+          "type": "goal",
+          "text": "무림맹을 이끌고 개봉의 흑련을 무너뜨리기"
         }
       ],
       "conditions": [
@@ -163,6 +195,14 @@
           "type": "flag",
           "flag": "s3_ny_backed_ch",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "role_change"
+        },
+        {
+          "type": "goal",
+          "text": "청하를 맹주로 세우고 남궁의 검으로 개봉에 들어가기"
         }
       ],
       "conditions": [

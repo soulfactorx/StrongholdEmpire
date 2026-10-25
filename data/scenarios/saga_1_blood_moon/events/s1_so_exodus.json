@@ -37,6 +37,17 @@
     {
       "speaker": "npc_innkeeper",
       "text": "소화야, 객잔은 버렸다. 나도 따라가마. 밥은 누가 해 먹이니."
+    },
+    {
+      "speaker": "npc_iron_blade",
+      "text": "앞은 네가 열어라. 뒤는 내가 막는다. 세 합으로 끝나는 싸움은 없다고 했지?",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s1_so_iron_taught",
+          "value": true
+        }
+      ]
     }
   ],
   "choices": [
@@ -63,6 +74,10 @@
           "type": "flag",
           "flag": "s1_so_led",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "피난민을 이끌고 강남에 새 터전 잡기"
         }
       ]
     },

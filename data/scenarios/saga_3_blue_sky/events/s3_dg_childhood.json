@@ -37,6 +37,17 @@
     {
       "speaker": "s3_ma_hwarin",
       "text": "네가 누구인지 네가 정해. 아버지가 아니라."
+    },
+    {
+      "speaker": "s3_ma_hwarin",
+      "text": "처형대 계단에서 같이 앉아 있던 밤, 넌 어릴 때처럼 내 소매를 잡고 있었어.",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s3_dg_sat_with_hwarin",
+          "value": true
+        }
+      ]
     }
   ],
   "choices": [
@@ -58,6 +69,14 @@
           "type": "character",
           "field": "morality",
           "add": 3
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
+        },
+        {
+          "type": "goal",
+          "text": "아버지가 아닌 내가 누구인지 정하기"
         }
       ]
     },
@@ -74,6 +93,14 @@
           "type": "bond",
           "target": "s3_ma_hwarin",
           "add": -10
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
+        },
+        {
+          "type": "goal",
+          "text": "아버지의 인정을 받아 흑련의 후계가 되기"
         }
       ]
     }

@@ -60,5 +60,16 @@
         }
       ]
     }
+  ],
+  "npc": "npc_disciple",
+  "scene": [
+    {
+      "speaker": "npc_disciple",
+      "text": "사, 사형… 저게 다 마교 놈들입니까? 산 아래가 안 보입니다."
+    },
+    {
+      "speaker": "player",
+      "text": "문을 걸어라. 오늘 밤만 버티면 된다."
+    }
   ]
 }

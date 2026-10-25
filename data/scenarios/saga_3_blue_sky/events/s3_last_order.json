@@ -103,6 +103,10 @@
           "type": "flag",
           "flag": "s3_dg_obeyed",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "아버지의 명대로 개봉을 지키기"
         }
       ],
       "conditions": [
@@ -125,6 +129,10 @@
         {
           "type": "combat",
           "combat": "s3_father_duel"
+        },
+        {
+          "type": "goal",
+          "text": "아버지를 꺾고 흑련을 손에 넣기"
         }
       ],
       "conditions": [
@@ -159,6 +167,10 @@
           "type": "flag",
           "flag": "s3_dg_left",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "흑련을 떠나 아버지가 짓밟은 것을 되돌리기"
         }
       ],
       "conditions": [

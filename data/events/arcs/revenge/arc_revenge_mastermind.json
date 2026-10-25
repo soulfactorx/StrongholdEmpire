@@ -50,5 +50,16 @@
         }
       ]
     }
+  ],
+  "npc": "npc_heukpung_chief",
+  "scene": [
+    {
+      "speaker": "npc_heukpung_chief",
+      "text": "청운검선이 눕자 산 아래 관도가 다 내 것이 됐지. 늙은이 하나 값으로는 싸게 먹혔어!"
+    },
+    {
+      "speaker": "npc_shadow_blade",
+      "text": "(작게) 뒷문은 열어 두었다. 이게 내가 갚는 첫 번째 빚이다."
+    }
   ]
 }

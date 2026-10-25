@@ -32,6 +32,10 @@
           "type": "role_state",
           "field": "exposure",
           "add": 10
+        },
+        {
+          "type": "goal",
+          "text": "두 주인 사이에서 들키지 않고 살아남기"
         }
       ]
     },
@@ -48,8 +52,27 @@
           "type": "role_state",
           "field": "exposure",
           "add": 25
+        },
+        {
+          "type": "goal",
+          "text": "남궁철의 손아귀에서 정체를 지키기"
         }
       ]
+    }
+  ],
+  "npc": "npc_namgung_enforcer",
+  "scene": [
+    {
+      "speaker": "npc_namgung_enforcer",
+      "text": "청운검파가 너에게 무엇을 주더냐. 남궁은 두 배를 주마. 그리고 목숨도."
+    },
+    {
+      "speaker": "player",
+      "text": "…거절하면요?"
+    },
+    {
+      "speaker": "npc_namgung_enforcer",
+      "text": "거절할 사람은 이 방에 부르지 않는다."
     }
   ]
 }

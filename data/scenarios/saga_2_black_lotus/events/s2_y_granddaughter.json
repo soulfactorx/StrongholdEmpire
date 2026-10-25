@@ -58,6 +58,10 @@
           "type": "flag",
           "flag": "s2_y_guardian",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "설아가 칼이 아닌 사람으로 자라게 지키기"
         }
       ]
     },

@@ -32,6 +32,14 @@
           "sect": "heukpung",
           "field": "attitude",
           "add": -5
+        },
+        {
+          "type": "goal",
+          "text": "폐사찰에 숨은 자객 귀영을 찾아내기"
+        },
+        {
+          "type": "rumor",
+          "text": "흑풍채 졸개들이 '귀영'이라는 이름을 입에 올리기 시작했다."
         }
       ]
     },
@@ -52,8 +60,26 @@
         {
           "type": "experience",
           "amount": 10
+        },
+        {
+          "type": "goal",
+          "text": "폐사찰에 숨은 자객 귀영을 찾아내기"
+        },
+        {
+          "type": "rumor",
+          "text": "흑풍채 졸개들이 '귀영'이라는 이름을 입에 올리기 시작했다."
         }
       ]
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "npc_innkeeper",
+      "text": "흑풍채 놈들이 요즘 금화를 물 쓰듯 하더라고. 누가 큰일 한 건 해 준 모양이야."
+    },
+    {
+      "speaker": "npc_bandit",
+      "text": "(겁에 질려) 귀, 귀영 형님 일은 나도 몰라! 채주님이 직접 부른 사람이라고!"
     }
   ]
 }

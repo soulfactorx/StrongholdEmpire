@@ -64,6 +64,10 @@
           "target": "npc_senior_brother",
           "bond_type": "ACQUAINTANCE",
           "strength": 25
+        },
+        {
+          "type": "rumor",
+          "text": "청운의 대사형이 밤마다 산을 내려간다는 말이 있다."
         }
       ]
     },

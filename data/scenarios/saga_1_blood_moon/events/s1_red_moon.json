@@ -232,6 +232,10 @@
         {
           "type": "rumor",
           "text": "천산 아래 마을들이 통째로 비었다고 한다. 북쪽에서 피난민이 내려오기 시작했다."
+        },
+        {
+          "type": "goal",
+          "text": "북쪽에서 내려올 피난민의 길을 미리 살펴 두기"
         }
       ],
       "conditions": [
@@ -240,7 +244,8 @@
           "flag": "playing_npc_swallow",
           "value": true
         }
-      ]
+      ],
+      "next": "s1_so_inn_night"
     },
     {
       "label": "술값부터 챙겨 길을 뜬다",
@@ -264,6 +269,10 @@
         {
           "type": "rumor",
           "text": "천산 아래 마을들이 통째로 비었다고 한다. 북쪽에서 피난민이 내려오기 시작했다."
+        },
+        {
+          "type": "goal",
+          "text": "북쪽에서 내려올 피난민의 길을 미리 살펴 두기"
         }
       ],
       "conditions": [
@@ -272,7 +281,8 @@
           "flag": "playing_npc_swallow",
           "value": true
         }
-      ]
+      ],
+      "next": "s1_so_inn_night"
     },
     {
       "label": "사부께 맹주로 나서시라 간한다",
@@ -291,6 +301,10 @@
         {
           "type": "rumor",
           "text": "천산 아래 마을들이 통째로 비었다고 한다. 북쪽에서 피난민이 내려오기 시작했다."
+        },
+        {
+          "type": "goal",
+          "text": "사부의 뒤를 이을 자격을 증명하기"
         }
       ],
       "conditions": [
@@ -299,7 +313,8 @@
           "flag": "playing_npc_senior_brother",
           "value": true
         }
-      ]
+      ],
+      "next": "s1_mu_dawn"
     },
     {
       "label": "서신을 다시 접어 품에 넣는다",
@@ -323,6 +338,10 @@
         {
           "type": "rumor",
           "text": "천산 아래 마을들이 통째로 비었다고 한다. 북쪽에서 피난민이 내려오기 시작했다."
+        },
+        {
+          "type": "goal",
+          "text": "사부의 뒤를 이을 자격을 증명하기"
         }
       ],
       "conditions": [
@@ -331,7 +350,8 @@
           "flag": "playing_npc_senior_brother",
           "value": true
         }
-      ]
+      ],
+      "next": "s1_mu_dawn"
     },
     {
       "label": "교주의 명을 받든다",
@@ -350,6 +370,10 @@
         {
           "type": "rumor",
           "text": "천산 아래 마을들이 통째로 비었다고 한다. 북쪽에서 피난민이 내려오기 시작했다."
+        },
+        {
+          "type": "goal",
+          "text": "천마의 칼이 되어 중원 침공의 길을 열기"
         }
       ],
       "conditions": [
@@ -358,7 +382,8 @@
           "flag": "playing_npc_cheonma_envoy",
           "value": true
         }
-      ]
+      ],
+      "next": "s1_hy_blood_hall"
     },
     {
       "label": "붉은 달을 오래 올려다본다",
@@ -377,6 +402,10 @@
         {
           "type": "rumor",
           "text": "천산 아래 마을들이 통째로 비었다고 한다. 북쪽에서 피난민이 내려오기 시작했다."
+        },
+        {
+          "type": "goal",
+          "text": "천마의 칼이 되어 중원 침공의 길을 열기"
         }
       ],
       "conditions": [
@@ -385,7 +414,8 @@
           "flag": "playing_npc_cheonma_envoy",
           "value": true
         }
-      ]
+      ],
+      "next": "s1_hy_blood_hall"
     },
     {
       "label": "붉은 달을 바라본다",

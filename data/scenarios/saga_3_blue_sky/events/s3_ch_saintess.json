@@ -37,6 +37,10 @@
     {
       "speaker": "s3_wi_seola",
       "text": "저도요. 백 년 동안 다들 그 이유를 너무 쉽게 찾았죠."
+    },
+    {
+      "speaker": "s3_wi_seola",
+      "text": "이 약초, 내공이 상한 데 잘 들어요. 신교 의원들이 쓰는 거예요."
     }
   ],
   "choices": [
@@ -64,6 +68,10 @@
           "type": "flag",
           "flag": "s3_ch_sa_friends",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
         }
       ]
     },
@@ -81,6 +89,10 @@
           "target": "s3_wi_seola",
           "bond_type": "ACQUAINTANCE",
           "strength": 20
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
         }
       ]
     }

@@ -33,6 +33,10 @@
           "type": "flag",
           "flag": "tut_07",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "[제자 명단]에서 방어전에 함께 싸울 제자 지정하기"
         }
       ]
     }

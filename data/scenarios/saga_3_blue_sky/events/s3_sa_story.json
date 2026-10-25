@@ -37,6 +37,17 @@
     {
       "speaker": "s3_hyeolyeong",
       "text": "네 할아버지가 지었다. 내가 그 사람 이야기를 한 번 했을 뿐인데. …그 늙은이도 사람이었던 게지."
+    },
+    {
+      "speaker": "s3_hyeolyeong",
+      "text": "막는 법은 다 익혔느냐. 그 사람도 막는 건 잘했지. 나를 막았으니까.",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s3_sa_asked_blade",
+          "value": true
+        }
+      ]
     }
   ],
   "choices": [
@@ -58,6 +69,14 @@
           "type": "bond",
           "target": "s3_hyeolyeong",
           "add": 10
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
+        },
+        {
+          "type": "goal",
+          "text": "피 흘리지 않고 신교를 다시 일으키기"
         }
       ]
     },
@@ -79,6 +98,14 @@
           "type": "character",
           "field": "morality",
           "add": -3
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
+        },
+        {
+          "type": "goal",
+          "text": "천마의 칼로 할아버지의 원수 흑련을 갚기"
         }
       ]
     }

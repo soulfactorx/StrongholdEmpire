@@ -59,5 +59,16 @@
         }
       ]
     }
+  ],
+  "npc": "npc_disciple",
+  "scene": [
+    {
+      "speaker": "npc_disciple",
+      "text": "사형, 진무겸이 사부님 처소를 자기 방으로 쓴답니다. 저희는 사형만 기다렸어요."
+    },
+    {
+      "speaker": "npc_senior_brother",
+      "text": "(멀리 산문 위에서) 흩어진 개들이 다시 모였구나. 올라와 봐라. 청운의 문은 이제 내 것이다."
+    }
   ]
 }

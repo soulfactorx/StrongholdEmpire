@@ -1,0 +1,97 @@
+{
+  "id": "s3_ch_dawn_bell",
+  "title": "새벽 종",
+  "description": "청운산의 새벽 종이 울렸습니다. 종루 아래에서 남궁세가의 벗 남궁연이 숨을 몰아쉬며 서 있었습니다. 밤새 산길을 달려왔다고 합니다.",
+  "can_repeat": false,
+  "priority": false,
+  "weight": 10,
+  "follow_up": true,
+  "npc": "s3_namgung_yeon",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_3_blue_sky"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s3_cheongha",
+      "value": true
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s3_namgung_yeon",
+      "text": "청하야! 아버지 몰래 나왔어. 개봉에서 흑련이 또 사람들을 매달았대."
+    },
+    {
+      "speaker": "player",
+      "text": "사부님은 아직 때가 아니라고 하셔."
+    },
+    {
+      "speaker": "s3_namgung_yeon",
+      "text": "우리 아버지도 똑같은 말 해. 스무 해째. 어른들은 다 기다리는 것만 배웠나 봐."
+    },
+    {
+      "speaker": "s3_seokun",
+      "text": "(종루 위에서) 둘 다 들린다. 기다리는 것도 배워야 하는 검이다."
+    }
+  ],
+  "choices": [
+    {
+      "label": "연과 검을 맞대 본다",
+      "message": "매화검법과 청운검법이 새벽 안개를 갈랐습니다. 열 합 끝에 둘이 동시에 웃었습니다. 남궁연 유대 +8",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_ch_dawn_bell",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s3_namgung_yeon",
+          "add": 8
+        },
+        {
+          "type": "unlock",
+          "feature": "spar"
+        },
+        {
+          "type": "flag",
+          "flag": "s3_ch_sparred_yeon",
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "개봉 소식부터 묻는다",
+      "message": "\"처형대가 하루도 쉬지 않아. 오늘은 열두 명이었어.\" 도덕 +2",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s3_ch_dawn_bell",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "morality",
+          "add": 2
+        },
+        {
+          "type": "bond",
+          "target": "s3_namgung_yeon",
+          "add": 4
+        },
+        {
+          "type": "unlock",
+          "feature": "spar"
+        },
+        {
+          "type": "rumor",
+          "text": "개봉의 처형대가 하루도 마르지 않는다고 한다."
+        }
+      ]
+    }
+  ]
+}

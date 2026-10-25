@@ -79,8 +79,27 @@
           "sect": "heukpung",
           "field": "attitude",
           "add": -20
+        },
+        {
+          "type": "goal",
+          "text": "배후의 흑풍채주 마진을 처단하기"
         }
       ]
+    }
+  ],
+  "npc": "npc_shadow_blade",
+  "scene": [
+    {
+      "speaker": "npc_shadow_blade",
+      "text": "누이는 기침을 하다 피를 토한다. 의원은 금화 백 냥이면 살릴 수 있다고 했다."
+    },
+    {
+      "speaker": "player",
+      "text": "그래서 사람의 등에 칼을 꽂았나."
+    },
+    {
+      "speaker": "npc_shadow_blade",
+      "text": "…베라. 다만 누이에게는 내가 먼 길을 떠났다고 해 다오."
     }
   ]
 }

@@ -72,6 +72,10 @@
         {
           "type": "combat",
           "combat": "s2_civil_war"
+        },
+        {
+          "type": "rumor",
+          "text": "천산의 혈영대가 총관의 반역을 진압하러 나섰다고 한다."
         }
       ],
       "conditions": [
@@ -132,6 +136,14 @@
         {
           "type": "combat",
           "combat": "s2_master_avenged"
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "goal",
+          "text": "낙양으로 가 사부의 원수 진무겸을 베기"
         }
       ],
       "conditions": [
@@ -160,6 +172,14 @@
           "type": "flag",
           "flag": "s2_su_forgave",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "goal",
+          "text": "원수는 하늘에 맡기고 청운의 산문을 지키기"
         }
       ],
       "conditions": [
@@ -221,6 +241,10 @@
           "type": "bond",
           "target": "s2_dokgo_cheon",
           "add": 5
+        },
+        {
+          "type": "rumor",
+          "text": "천마신교가 둘로 갈라져 서로의 목을 노린다."
         }
       ],
       "conditions": [

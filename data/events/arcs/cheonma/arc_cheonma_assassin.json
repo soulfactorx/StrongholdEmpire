@@ -50,5 +50,16 @@
         }
       ]
     }
+  ],
+  "npc": "npc_cheonma_envoy",
+  "scene": [
+    {
+      "speaker": "npc_cheonma_envoy",
+      "text": "교주께서 전하라 하셨다. 거절한 대가는 이 칼이 받으러 왔다고."
+    },
+    {
+      "speaker": "player",
+      "text": "밀서를 불태운 건 나다. 칼도 나에게 겨눠라."
+    }
   ]
 }

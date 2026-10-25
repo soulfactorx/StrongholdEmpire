@@ -74,6 +74,10 @@
           "type": "flag",
           "flag": "s2_hw_lotus_pact",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "흑련과 함께 마교를 몰아내되 등을 보이지 않기"
         }
       ],
       "conditions": [
@@ -102,6 +106,14 @@
           "type": "flag",
           "flag": "s2_hw_refused_lotus",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "흑련의 천하에서 남궁의 다음 대를 지키기"
+        },
+        {
+          "type": "rumor",
+          "text": "남궁세가가 흑련의 손을 뿌리쳤다고 한다."
         }
       ],
       "conditions": [
@@ -158,6 +170,10 @@
           "type": "flag",
           "flag": "s2_su_defied",
           "value": true
+        },
+        {
+          "type": "rumor",
+          "text": "청운산이 흑련의 사자를 쫓아냈다고 한다. 흑련이 가만있지 않을 것이다."
         }
       ],
       "conditions": [
@@ -214,6 +230,10 @@
           "type": "flag",
           "flag": "s2_y_retreat_plan",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "남은 교도들을 이끌고 천산으로 물러나기"
         }
       ],
       "conditions": [
@@ -242,6 +262,14 @@
           "type": "flag",
           "flag": "s2_hr_loyal",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "diplomacy"
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
         }
       ],
       "conditions": [
@@ -270,6 +298,18 @@
           "type": "flag",
           "flag": "s2_hr_scheming",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "diplomacy"
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "goal",
+          "text": "맹주의 빈틈을 보고 때를 기다리기"
         }
       ],
       "conditions": [

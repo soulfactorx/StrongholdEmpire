@@ -26,6 +26,11 @@
       "type": "flag",
       "flag": "arc_cheonma_held",
       "value": false
+    },
+    {
+      "type": "flag",
+      "flag": "arc_cheonma_start",
+      "value": true
     }
   ],
   "choices": [
@@ -61,5 +66,24 @@
         }
       ]
     }
-  ]
+  ],
+  "npc": "npc_cheonma",
+  "scene": [
+    {
+      "speaker": "npc_cheonma",
+      "text": "산문 하나에 내 대군이 막혔다. 재미있구나. 이름을 대라. 기억해 두마."
+    }
+  ],
+  "timeline": {
+    "title": "천마와의 결전",
+    "hint": "산문을 지켜 내면 퇴각하는 마교 진영 한가운데서 위무량이 기다린다",
+    "branches": [
+      {
+        "text": "위무량에게 도전해 이기면 천마를 꺾은 협객이 된다"
+      },
+      {
+        "text": "연합군에 맡기고 물러설 수도 있다"
+      }
+    ]
+  }
 }

@@ -31,6 +31,10 @@
           "type": "set_bond_type",
           "target": "npc_senior_brother",
           "bond_type": "RIVALRY"
+        },
+        {
+          "type": "goal",
+          "text": "반역의 밤에 스승과 산문을 지키기"
         }
       ]
     },
@@ -57,6 +61,10 @@
           "type": "bond",
           "target": "npc_senior_brother",
           "add": 20
+        },
+        {
+          "type": "goal",
+          "text": "진무겸과 함께 청운의 자리를 빼앗기"
         }
       ]
     },
@@ -75,6 +83,21 @@
           "add": -3
         }
       ]
+    }
+  ],
+  "npc": "npc_senior_brother",
+  "scene": [
+    {
+      "speaker": "npc_senior_brother",
+      "text": "(속삭임) 장문인이 쓰러지는 날, 동쪽 쪽문이오. 흑풍의 칼이 열 자루면 충분하오."
+    },
+    {
+      "speaker": "",
+      "text": "(흑풍채 무사) 대가는 약속대로 청운산 아래 관도 전부요. 잊지 마시오."
+    },
+    {
+      "speaker": "player",
+      "text": "……(숨을 죽였다. 대사형의 목소리가 맞았다.)"
     }
   ]
 }

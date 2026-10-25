@@ -54,6 +54,10 @@
           "type": "flag",
           "flag": "s2_hw_waits",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "세가의 문을 닫고 다음 봄을 기다리기"
         }
       ]
     },

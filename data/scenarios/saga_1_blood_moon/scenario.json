@@ -87,7 +87,12 @@
       },
       "arts": [
         "preset_soul_chase_sword"
-      ]
+      ],
+      "features": [
+        "role_action",
+        "bond"
+      ],
+      "goal": "붉은 달이 뜬 밤 — 낙양 객잔에서 난리의 기척을 살피기"
     },
     {
       "npc": "npc_senior_brother",
@@ -103,7 +108,12 @@
       },
       "arts": [
         "manual_qingyun_cloud_sword"
-      ]
+      ],
+      "features": [
+        "role_action",
+        "bond"
+      ],
+      "goal": "붉은 달이 뜬 밤 — 사부가 천마의 서신에 어떻게 답할지 지켜보기"
     },
     {
       "npc": "npc_cheonma_envoy",
@@ -118,7 +128,12 @@
       },
       "arts": [
         "manual_cheonma_blood_palm"
-      ]
+      ],
+      "features": [
+        "role_action",
+        "bond"
+      ],
+      "goal": "붉은 달이 뜬 밤 — 천마의 서신을 중원에 전하기"
     }
   ]
 }

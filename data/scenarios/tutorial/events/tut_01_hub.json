@@ -31,6 +31,10 @@
           "type": "flag",
           "flag": "tut_01",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "[시설 관리]에서 서고를 한 단계 넓히기"
         }
       ]
     }

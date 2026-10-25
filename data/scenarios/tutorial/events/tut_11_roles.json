@@ -27,6 +27,10 @@
           "type": "flag",
           "flag": "tut_11",
           "value": true
+        },
+        {
+          "type": "goal",
+          "text": "장문인께 수료 인사 드리기"
         }
       ]
     }

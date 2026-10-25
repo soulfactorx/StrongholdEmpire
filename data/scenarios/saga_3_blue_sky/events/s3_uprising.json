@@ -67,6 +67,14 @@
         {
           "type": "combat",
           "combat": "s3_rescue"
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
+        },
+        {
+          "type": "goal",
+          "text": "봉기의 불씨를 지키고 흑련에 맞설 동료를 모으기"
         }
       ],
       "conditions": [
@@ -100,6 +108,14 @@
           "type": "flag",
           "flag": "s3_ny_sent_aid",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
+        },
+        {
+          "type": "rumor",
+          "text": "남궁세가의 무사들이 봉기한 마을을 지키고 있다고 한다."
         }
       ],
       "conditions": [
@@ -128,6 +144,10 @@
           "type": "flag",
           "flag": "s3_dg_burned",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
         }
       ],
       "conditions": [
@@ -156,6 +176,14 @@
           "type": "flag",
           "flag": "s3_dg_released",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
+        },
+        {
+          "type": "rumor",
+          "text": "흑련의 소맹주가 봉기의 주모자를 놓아줬다는 소문이 맹부 안에 돈다."
         }
       ],
       "conditions": [
@@ -184,6 +212,18 @@
           "type": "flag",
           "flag": "s3_sa_healers",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "travel"
+        },
+        {
+          "type": "unlock",
+          "feature": "elixir"
+        },
+        {
+          "type": "rumor",
+          "text": "마교의 의원들이 흑련에 짓밟힌 마을을 돌본다고 한다."
         }
       ],
       "conditions": [

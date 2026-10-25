@@ -1,0 +1,88 @@
+{
+  "id": "s2_y_two_shadows",
+  "title": "두 개의 그림자",
+  "description": "천산 신교 대전 회랑. 총관 진무겸이 당신을 기다리고 있었습니다. 스물다섯 해 전 청운산 아래 주막에서 처음 만난 그 얼굴이, 이제는 희게 셌습니다.",
+  "can_repeat": false,
+  "priority": false,
+  "weight": 10,
+  "follow_up": true,
+  "npc": "s2_jin_mugyeom",
+  "conditions": [
+    {
+      "type": "scenario",
+      "in": [
+        "saga_2_black_lotus"
+      ]
+    },
+    {
+      "type": "flag",
+      "flag": "playing_s2_hyeolyeong",
+      "value": true
+    }
+  ],
+  "scene": [
+    {
+      "speaker": "s2_jin_mugyeom",
+      "text": "혈영대주. 교주의 기침 소리가 날로 깊어지는군."
+    },
+    {
+      "speaker": "player",
+      "text": "교주께서는 아직 살아 계시오."
+    },
+    {
+      "speaker": "s2_jin_mugyeom",
+      "text": "살아 있는 것과 다스리는 것은 다르지. 교주께서 늘 하시던 말씀 아닌가."
+    },
+    {
+      "speaker": "s2_jin_mugyeom",
+      "text": "자네와 나, 둘 다 교주가 주운 사람이지. 누가 그 자리를 이어야 할지는 교도들이 정할 걸세."
+    }
+  ],
+  "choices": [
+    {
+      "label": "진무겸의 눈을 똑바로 본다",
+      "message": "\"…교주께서 숨이 붙어 계시는 동안은, 총관.\" 진무겸이 먼저 눈을 돌렸습니다. 진무겸 유대 -5",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_y_two_shadows",
+          "value": true
+        },
+        {
+          "type": "bond",
+          "target": "s2_jin_mugyeom",
+          "add": -5
+        },
+        {
+          "type": "flag",
+          "flag": "s2_y_warned_mg",
+          "value": true
+        },
+        {
+          "type": "goal",
+          "text": "병든 천마 대신 신교를 지키고, 진무겸을 경계하기"
+        }
+      ]
+    },
+    {
+      "label": "고개를 숙이고 지나친다",
+      "message": "등 뒤에서 진무겸의 웃음소리가 들렸습니다. 지혜 +1",
+      "effects": [
+        {
+          "type": "flag",
+          "flag": "s2_y_two_shadows",
+          "value": true
+        },
+        {
+          "type": "character",
+          "field": "wisdom",
+          "add": 1
+        },
+        {
+          "type": "goal",
+          "text": "병든 천마 대신 신교를 지키기"
+        }
+      ]
+    }
+  ]
+}

@@ -31,6 +31,10 @@
         {
           "type": "combat",
           "combat": "martial_tournament"
+        },
+        {
+          "type": "rumor",
+          "text": "낙양에서 천하 무림대회가 열린다는 방이 붙었다."
         }
       ]
     },
@@ -42,8 +46,19 @@
           "type": "character",
           "field": "wisdom",
           "add": 1
+        },
+        {
+          "type": "rumor",
+          "text": "낙양에서 천하 무림대회가 열린다는 방이 붙었다."
         }
       ]
+    }
+  ],
+  "npc": "npc_rival",
+  "scene": [
+    {
+      "speaker": "npc_rival",
+      "text": "너도 왔구나! 이번 대회 우승은 남궁이 가져간다. 각오해!"
     }
   ]
 }

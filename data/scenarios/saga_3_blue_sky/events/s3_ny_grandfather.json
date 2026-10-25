@@ -37,6 +37,17 @@
     {
       "speaker": "s3_namgung_un",
       "text": "…강 건너에 두고 온 사람."
+    },
+    {
+      "speaker": "s3_namgung_un",
+      "text": "어깨에 힘 빼는 거, 오늘 목검으로 보니 조금은 알겠더구나.",
+      "if": [
+        {
+          "type": "flag",
+          "flag": "s3_ny_sparred_father",
+          "value": true
+        }
+      ]
     }
   ],
   "choices": [
@@ -58,6 +69,14 @@
           "type": "flag",
           "flag": "s3_ny_sword",
           "value": true
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
+        },
+        {
+          "type": "goal",
+          "text": "할아버지의 검으로 남궁의 깃발을 다시 올리기"
         }
       ]
     },
@@ -74,6 +93,14 @@
           "type": "character",
           "field": "wisdom",
           "add": 2
+        },
+        {
+          "type": "unlock",
+          "feature": "martial"
+        },
+        {
+          "type": "goal",
+          "text": "할아버지의 검으로 남궁의 깃발을 다시 올리기"
         }
       ]
     }
