@@ -103,7 +103,7 @@ godot --headless --path . -s res://scripts/Tools/balance_sim.gd -- combat runs=3
 
 새 스크립트를 더했다면 먼저 `godot --headless --editor --quit`로 클래스 캐시를 갱신합니다.
 내보내기 프리셋은 `export_presets.cfg`(Android·웹·Windows·Linux)에 있고, GitHub Actions가 푸시마다 네 플랫폼을 내보내며 `main`은 웹 빌드를 Pages에 배포합니다.
-`v1.0.0` 같은 태그를 올리면 그 버전으로 릴리스를 만들어 파일을 붙입니다 — [릴리스 내기](docs/릴리스_안내.md).
+`main`에 머지될 때마다 자동으로 릴리스를 만들어 파일을 붙입니다 (태그로 직접 낼 수도 있음) — [릴리스 내기](docs/릴리스_안내.md).
 
 ## 만들기 쉽게 — 데이터로 짓는 강호
 

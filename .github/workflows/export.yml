@@ -1,5 +1,7 @@
 # 내보내기: Android(디버그 APK)·웹·윈도우·리눅스 빌드를 만들어 아티팩트로 올린다.
-# v로 시작하는 태그(예: v1.0.0)를 푸시하면 그 버전으로 내보내 GitHub 릴리스를 만들고 네 플랫폼 파일을 붙인다 (docs/릴리스_안내.md).
+# main에 머지(푸시)되면 스모크 테스트를 거쳐 자동으로 GitHub 릴리스를 만들고 네 플랫폼 파일을 붙인다 (docs/릴리스_안내.md).
+#   버전은 project.godot의 config/version이고, 그 버전이 이미 나갔으면 끝자리(patch)를 하나씩 올린다.
+# v로 시작하는 태그(예: v1.0.0)를 푸시해도 그 버전으로 릴리스를 만든다.
 # 리눅스 빌드로 자체 점검(--self-check)을 돌려 데이터·그림·소리가 패키지에 들어갔는지 확인한다.
 # Android SDK는 GitHub의 ubuntu 러너에 미리 깔려 있다. 디버그 키는 실행마다 새로 만든다(개인 시험용).
 # main에 푸시되면 웹 빌드를 GitHub Pages에 배포한다. (저장소 Settings → Pages → Source를 "GitHub Actions"로 둬야 한다)
@@ -18,6 +20,10 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: write
+    # 같은 브랜치의 실행은 하나씩 돌린다 (연달아 머지해도 릴리스 버전이 겹치지 않게)
+    concurrency:
+      group: export-${{ github.ref }}
+      cancel-in-progress: false
     env:
       # project.godot의 config/features, smoke_test.yml과 맞춘다
       GODOT_VERSION: "4.7.1"
@@ -86,27 +92,62 @@ jobs:
           export/android/debug_keystore_pass = "android"
           EOF
 
-      - name: 버전 정하기 (태그면 태그의 버전)
+      - name: 버전 정하기 (태그면 태그의 버전, main이면 다음 릴리스 버전)
         id: version
         run: |
+          RELEASE=0
+          TAG=""
+          VERSION=$(sed -n 's/^config\/version="\(.*\)"/\1/p' project.godot)
           if [ "$GITHUB_REF_TYPE" = "tag" ]; then
-            VERSION="${GITHUB_REF_NAME#v}"
-          else
-            VERSION=$(sed -n 's/^config\/version="\(.*\)"/\1/p' project.godot)
+            TAG="$GITHUB_REF_NAME"
+            VERSION="${TAG#v}"
+            RELEASE=1
+          elif [ "$GITHUB_REF" = "refs/heads/main" ] && [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            RELEASE=1
+            # 원격의 릴리스 태그 목록 (얕은 체크아웃이라 기록을 받지 않고 이름만 본다)
+            TAGS=$(git ls-remote --tags origin 'v*' | sed 's/\^{}$//')
+            # 이 커밋에 이미 붙은 릴리스 태그가 있으면(실행을 다시 돌린 경우) 그 버전을 쓴다
+            TAG=$(echo "$TAGS" | awk -v sha="$GITHUB_SHA" '$1 == sha { sub("refs/tags/", "", $2); print $2 }' | sort -V | tail -1)
+            if [ -n "$TAG" ]; then
+              VERSION="${TAG#v}"
+            else
+              # project.godot 버전이 이미 나갔으면 끝자리를 올려 아직 없는 버전을 찾는다
+              IFS=. read -r MAJOR MINOR PATCH <<< "${VERSION%%-*}"
+              MAJOR=${MAJOR:-0}; MINOR=${MINOR:-0}; PATCH=${PATCH:-0}
+              while echo "$TAGS" | awk -v t="refs/tags/v$MAJOR.$MINOR.$PATCH" '$2 == t { f = 1 } END { exit !f }'; do
+                PATCH=$((PATCH + 1))
+              done
+              VERSION="$MAJOR.$MINOR.$PATCH"
+              TAG="v$VERSION"
+            fi
           fi
-          # 1.2.3(-beta) → 숫자 부분 1.2.3, Android 버전 코드 10203
+          # 1.2.3(-beta) → 숫자 부분 1.2.3, Android 버전 코드 1002003 (끝자리가 100을 넘어도 겹치지 않게)
           BASE="${VERSION%%-*}"
           IFS=. read -r MAJOR MINOR PATCH <<< "$BASE"
-          CODE=$(( ${MAJOR:-0} * 10000 + ${MINOR:-0} * 100 + ${PATCH:-0} ))
+          CODE=$(( ${MAJOR:-0} * 1000000 + ${MINOR:-0} * 1000 + ${PATCH:-0} ))
           if [ "$CODE" -lt 1 ]; then CODE=1; fi
           sed -i "s/^config\/version=.*/config\/version=\"$VERSION\"/" project.godot
           sed -i "s/^version\/name=.*/version\/name=\"$VERSION\"/; s/^version\/code=.*/version\/code=$CODE/" export_presets.cfg
           sed -i "s/^application\/file_version=.*/application\/file_version=\"$BASE.0\"/; s/^application\/product_version=.*/application\/product_version=\"$BASE.0\"/" export_presets.cfg
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "버전 $VERSION (Android 버전 코드 $CODE)"
+          {
+            echo "version=$VERSION"
+            echo "tag=$TAG"
+            echo "release=$RELEASE"
+          } >> "$GITHUB_OUTPUT"
+          echo "버전 $VERSION (Android 버전 코드 $CODE), 릴리스: $RELEASE $TAG"
 
-      - name: Android 릴리스 키 (태그이고 저장소 비밀값이 있을 때)
-        if: github.ref_type == 'tag'
+      - name: 릴리스 전 스모크 테스트
+        if: steps.version.outputs.release == '1'
+        run: |
+          set -o pipefail
+          timeout 900 ~/godot/godot --headless --path . -s res://scripts/Tests/smoke_test.gd 2>&1 | tee smoke.log
+          if grep -E "정의 오류|파싱 실패|SCRIPT ERROR" smoke.log | grep -v "user://"; then
+            echo "::error::데이터 정의 오류나 스크립트 오류가 있어 릴리스하지 않습니다."
+            exit 1
+          fi
+
+      - name: Android 릴리스 키 (릴리스이고 저장소 비밀값이 있을 때)
+        if: steps.version.outputs.release == '1'
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KEYSTORE_USER: ${{ secrets.ANDROID_KEYSTORE_USER }}
@@ -173,8 +214,8 @@ jobs:
           path: build/windows
           retention-days: 14
 
-      - name: 릴리스 파일 묶기 (태그만)
-        if: github.ref_type == 'tag'
+      - name: 릴리스 파일 묶기 (릴리스만)
+        if: steps.version.outputs.release == '1'
         run: |
           V="${{ steps.version.outputs.version }}"
           mkdir -p dist
@@ -185,13 +226,13 @@ jobs:
           (cd dist && sha256sum * > SHA256SUMS.txt)
           ls -la dist
 
-      - name: GitHub 릴리스 (태그만)
-        if: github.ref_type == 'tag'
+      - name: GitHub 릴리스 (릴리스만)
+        if: steps.version.outputs.release == '1'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           V="${{ steps.version.outputs.version }}"
-          TAG="$GITHUB_REF_NAME"
+          TAG="${{ steps.version.outputs.tag }}"
           SIGNED="디버그 키로 서명한 시험판입니다. 앞 버전을 지우고 설치해야 할 수 있습니다."
           if [ "$ANDROID_RELEASE" = "1" ]; then SIGNED="릴리스 키로 서명했습니다. 앞 버전 위에 그대로 덮어 설치됩니다."; fi
           cat > notes.md <<EOF
@@ -212,7 +253,8 @@ jobs:
             # 웹에서 먼저 만든 릴리스: 파일만 붙인다
             gh release upload "$TAG" dist/* --clobber
           else
-            gh release create "$TAG" dist/* --title "강호제패 $V" --notes-file notes.md --generate-notes $PRE
+            # main 릴리스는 태그가 아직 없으므로 이 커밋에 태그를 만든다 (태그 푸시면 있는 태그를 쓴다)
+            gh release create "$TAG" dist/* --target "$GITHUB_SHA" --title "강호제패 $V" --notes-file notes.md --generate-notes $PRE
           fi
 
       - uses: actions/upload-artifact@v4
