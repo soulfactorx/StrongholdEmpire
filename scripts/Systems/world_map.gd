@@ -4,7 +4,7 @@ extends RefCounted
 ## 강호 지도: 지역과 이웃 관계, 지역 주인(세력 id, 비면 주인 없는 땅).
 ## 지역 정의는 data/map/regions.json (형식은 docs/지도_데이터_형식.md),
 ## 판마다 바뀌는 주인·본거지는 GameManager.map_state({owners, homes})에 담는다.
-## 세력마다 본거지(home)가 하나 있고, 본거지는 빼앗기지 않는다. 본거지 밖 지역은 계절마다 금화·식량을 더 낸다.
+## 세력마다 본거지(home)가 하나 있고, 본거지는 빼앗기지 않는다. 본거지 밖 지역은 계절마다 은자·식량을 더 낸다.
 
 const MAP_PATH := "res://data/map/regions.json"
 const _Balance = preload("res://scripts/Systems/game_balance.gd")

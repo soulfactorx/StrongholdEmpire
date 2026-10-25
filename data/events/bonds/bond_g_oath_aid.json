@@ -13,7 +13,7 @@
   "choices": [
     {
       "label": "함께 수련한다",
-      "message": "{name}와(과) 등을 맞대고 수련했습니다. 경험치 +20, 유대 +4",
+      "message": "{name}와(과) 등을 맞대고 수련했습니다. 수련 +20, 유대 +4",
       "effects": [
         {
           "type": "experience",
@@ -28,7 +28,7 @@
     },
     {
       "label": "살림을 도와 달라고 한다",
-      "message": "{name}이(가) 금화를 놓고 갑니다. 금화 +50",
+      "message": "{name}이(가) 은자를 놓고 갑니다. 은자 +50",
       "effects": [
         {
           "type": "sect",

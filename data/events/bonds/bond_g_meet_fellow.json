@@ -12,7 +12,7 @@
   "choices": [
     {
       "label": "함께 수련하자고 한다",
-      "message": "{name}와(과) 동문의 정을 나누었습니다. 동문이 되었습니다. 경험치 +10",
+      "message": "{name}와(과) 동문의 정을 나누었습니다. 동문이 되었습니다. 수련 +10",
       "effects": [
         {
           "type": "add_relationship",

@@ -15,7 +15,7 @@
       "choices": [
         {
           "label": "방값을 넉넉히 치른다",
-          "message": "금화 -5, 유대 +1",
+          "message": "은자 -5, 유대 +1",
           "effects": [
             {
               "type": "sect",

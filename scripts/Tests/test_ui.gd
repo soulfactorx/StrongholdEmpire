@@ -1,29 +1,29 @@
 extends "res://scripts/Tests/test_base.gd"
 
-## 스모크 테스트 — 저장 슬롯, 설정·연간 보고서·길잡이, 확인 대화상자, 단축키·설명 말풍선
+## 스모크 테스트 — 저장 칸, 설정·연간 보고서·길잡이, 확인 대화상자, 단축키·설명 말풍선
 ## 실행 순서는 smoke_test.gd의 INIT_SEQUENCE·RUNTIME_SEQUENCE가 정한다.
 
 
 func _test_save_slots() -> void:
 	var gm: Node = root.get_node("GameManager")
 	_clear_test_saves()
-	_check(not gm.has_save_file(), "테스트 세이브 폴더는 비어서 시작")
+	_check(not gm.has_save_file(), "테스트 저장본 폴더는 비어서 시작")
 
-	# 슬롯마다 따로 저장·불러오기
+	# 칸마다 따로 저장·불러오기
 	gm.start_new_game("하나", "leader", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
 	gm.player_sect.gold = 111
-	_check(gm.save_game(1)["success"] and gm.has_save_file(1) and not gm.has_save_file(2), "슬롯 1 저장")
+	_check(gm.save_game(1)["success"] and gm.has_save_file(1) and not gm.has_save_file(2), "칸 1 저장")
 	gm.start_new_game("둘", "wanderer", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
 	gm.player_sect.gold = 222
 	gm.save_game(2)
-	_check(not gm.save_game(9)["success"], "없는 슬롯 거부")
-	_check(gm.load_game(1)["success"] and gm.player_character.display_name == "하나" and gm.player_sect.gold == 111, "슬롯 1 불러오기")
-	_check(gm.load_game(2)["success"] and gm.player_character.display_name == "둘" and gm.player_sect.gold == 222, "슬롯 2 불러오기")
-	_check(not gm.load_game(3)["success"], "빈 슬롯은 불러올 수 없음")
+	_check(not gm.save_game(9)["success"], "없는 칸 거부")
+	_check(gm.load_game(1)["success"] and gm.player_character.display_name == "하나" and gm.player_sect.gold == 111, "칸 1 불러오기")
+	_check(gm.load_game(2)["success"] and gm.player_character.display_name == "둘" and gm.player_sect.gold == 222, "칸 2 불러오기")
+	_check(not gm.load_game(3)["success"], "빈 칸은 불러올 수 없음")
 	var summary: Dictionary = SaveManager.get_slot_summary(2)
-	_check(summary["exists"] and summary["detail"].contains("둘") and summary["detail"].contains("낭인") and summary["title"].contains("천하대란"), "슬롯 요약: 날짜·인물·역할·시나리오")
-	_check(not SaveManager.get_slot_summary(3)["exists"], "빈 슬롯 요약")
-	_check(summary["detail"].begins_with("오늘 ") and summary["detail"].contains("저장"), "슬롯 요약: 저장한 시각 (%s)" % summary["detail"])
+	_check(summary["exists"] and summary["detail"].contains("둘") and summary["detail"].contains("낭인") and summary["title"].contains("천하대란"), "칸 요약: 날짜·인물·신분·시나리오")
+	_check(not SaveManager.get_slot_summary(3)["exists"], "빈 칸 요약")
+	_check(summary["detail"].begins_with("오늘 ") and summary["detail"].contains("저장"), "칸 요약: 저장한 시각 (%s)" % summary["detail"])
 	var now: int = int(Time.get_unix_time_from_system())
 	_check(SaveManager.format_saved_time(now - 400 * 86400, now).contains("년") and not SaveManager.format_saved_time(now, now).contains("년"), "저장 시각: 해가 다르면 연도까지")
 
@@ -44,10 +44,10 @@ func _test_save_slots() -> void:
 	gm.start_new_game("다른 판", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
 	_check(not gm.ironman, "새 게임 기본은 철인 모드 아님")
 	gm.load_game(SaveManager.AUTO_SLOT)
-	_check(gm.ironman and gm.player_character.display_name == "철인", "철인 모드는 세이브에 남음")
-	_check(SaveManager.get_slot_summary(SaveManager.AUTO_SLOT)["detail"].contains("철인"), "슬롯 요약에 철인 모드 표시")
+	_check(gm.ironman and gm.player_character.display_name == "철인", "철인 모드는 저장본에 남음")
+	_check(SaveManager.get_slot_summary(SaveManager.AUTO_SLOT)["detail"].contains("철인"), "칸 요약에 철인 모드 표시")
 
-	# 마이그레이션: 오래된 세이브는 버전마다 생긴 항목을 기본값으로 채운다
+	# 마이그레이션: 오래된 저장본은 버전마다 생긴 항목을 기본값으로 채운다
 	var old: Dictionary = {"version": 3, "current_year": 2, "character": {"display_name": "옛사람"}, "sect": {"gold": 300}}
 	var migrated: Dictionary = SaveManager.migrate(old.duplicate(true))
 	_check(migrated["version"] == SaveManager.SAVE_VERSION, "마이그레이션: 현재 버전으로")
@@ -61,16 +61,16 @@ func _test_save_slots() -> void:
 	var file := FileAccess.open(SaveManager.get_slot_path(3), FileAccess.WRITE)
 	file.store_string(JSON.stringify(old))
 	file = null
-	_check(gm.load_game(3)["success"] and gm.player_character.display_name == "옛사람" and gm.current_year == 2, "버전 3 세이브 불러오기")
-	_check(gm.player_sect.use_roster and gm.player_sect.disciples.size() == gm.player_sect.disciple_count, "옛 세이브도 제자 명단을 갖춤")
+	_check(gm.load_game(3)["success"] and gm.player_character.display_name == "옛사람" and gm.current_year == 2, "버전 3 저장본 불러오기")
+	_check(gm.player_sect.use_roster and gm.player_sect.disciples.size() == gm.player_sect.disciple_count, "옛 저장본도 제자 명단을 갖춤")
 	file = FileAccess.open(SaveManager.get_slot_path(3), FileAccess.WRITE)
 	file.store_string(JSON.stringify({"version": SaveManager.SAVE_VERSION + 1}))
 	file = null
-	_check(not gm.load_game(3)["success"], "더 새 버전의 세이브는 거부")
+	_check(not gm.load_game(3)["success"], "더 새 버전의 저장본은 거부")
 	file = FileAccess.open(SaveManager.get_slot_path(3), FileAccess.WRITE)
 	file.store_string("{망가진")
 	file = null
-	_check(not gm.load_game(3)["success"] and SaveManager.get_slot_summary(3)["detail"].contains("손상"), "손상된 세이브 처리")
+	_check(not gm.load_game(3)["success"] and SaveManager.get_slot_summary(3)["detail"].contains("손상"), "손상된 저장본 처리")
 	_clear_test_saves()
 	_completed["_test_save_slots"] = true
 
@@ -84,22 +84,22 @@ func _test_save_screens() -> void:
 	await process_frame
 	var hub: Node = current_scene
 	hub._on_save_pressed()
-	_check(hub.save_popup.visible and hub.save_popup.get_option_count() == SaveManager.SLOT_COUNT, "저장 팝업: 슬롯 %d개" % SaveManager.SLOT_COUNT)
+	_check(hub.save_popup.visible and hub.save_popup.get_option_count() == SaveManager.SLOT_COUNT, "저장 창: 칸 %d개" % SaveManager.SLOT_COUNT)
 	hub.save_popup._on_option_pressed("2")
-	_check(gm.has_save_file(2) and hub.log_label.text.contains("슬롯 2"), "화면에서 슬롯 2에 저장")
+	_check(gm.has_save_file(2) and hub.log_label.text.contains("칸 2"), "화면에서 칸 2에 저장")
 	hub.go_main_menu()
 	await process_frame
 	await process_frame
-	_check(gm.has_save_file(SaveManager.AUTO_SLOT), "메인 메뉴로 나갈 때 자동 저장")
+	_check(gm.has_save_file(SaveManager.AUTO_SLOT), "첫 화면으로 나갈 때 자동 저장")
 	var menu: Node = current_scene
 	menu._on_load_pressed()
 	var rows: Array = menu.load_popup._rows.get_children()
-	_check(rows.size() == SaveManager.SLOT_COUNT + 1 and rows[3].disabled and not rows[2].disabled, "불러오기 팝업: 자동 + 슬롯, 빈 슬롯은 비활성")
+	_check(rows.size() == SaveManager.SLOT_COUNT + 1 and rows[3].disabled and not rows[2].disabled, "불러오기 창: 자동 + 칸, 빈 칸은 비활성")
 	gm.start_new_game("다른", "young_disciple")
 	menu.load_popup._on_option_pressed("2")
 	await process_frame
 	await process_frame
-	_check(current_scene.scene_file_path == SceneRouter.HUB and gm.player_character.display_name == "화면", "메인 메뉴에서 슬롯 2 불러오기")
+	_check(current_scene.scene_file_path == SceneRouter.HUB and gm.player_character.display_name == "화면", "첫 화면에서 칸 2 불러오기")
 	SceneRouter.goto(tree, SceneRouter.NEW_GAME)
 	await process_frame
 	await process_frame
@@ -190,7 +190,7 @@ func _test_settings_and_reports() -> void:
 	gm.advance_turn()
 	var report: Dictionary = gm.pending_year_report
 	_check(report.get("title", "").contains("1년 결산"), "해가 바뀌면 지난해 결산")
-	_check(report["lines"][0] == "금화: %d → %d (%+d)" % [gold, gm.player_sect.gold, gm.player_sect.gold - gold], "결산: 금화 변화")
+	_check(report["lines"][0] == "은자: %d → %d (%+d)" % [gold, gm.player_sect.gold, gm.player_sect.gold - gold], "결산: 은자 변화")
 	_check(gm.year_start["year"] == 2, "결산 뒤 새해 기준 기록")
 
 	# 길잡이: 첫 단계는 바로, 나머지는 계절마다 (기연 빈도와 관계없이)
@@ -203,7 +203,7 @@ func _test_settings_and_reports() -> void:
 			gm.resolve_pending_event(1 if gm.pending_event["id"] == "tutorial_3_combat" else 0)
 		gm.advance_turn()
 	_check(steps == PackedStringArray(["tutorial_1_hub", "tutorial_2_events", "tutorial_3_combat", "tutorial_4_martial_art"]), "길잡이 4단계가 차례로 %s" % steps)
-	_check(gm.story_flags.get("tutorial_done", false) and gm.player_sect.research_points >= research + 20, "길잡이 끝: 연구점 선물")
+	_check(gm.story_flags.get("tutorial_done", false) and gm.player_sect.research_points >= research + 20, "길잡이 끝: 깨달음 선물")
 	_new_quiet_game(gm, "young_disciple")
 	_check(gm.pending_event.is_empty(), "길잡이를 끄면 안내 기연 없음")
 	_completed["_test_settings_and_reports"] = true
@@ -218,9 +218,9 @@ func _test_ui_flows() -> void:
 	await process_frame
 	var hub: Node = current_scene
 
-	# 설정 팝업
+	# 설정 창
 	hub._on_options_pressed()
-	_check(hub.options_popup.visible, "경영 화면: 설정 팝업")
+	_check(hub.options_popup.visible, "경영 화면: 설정 창")
 	hub.options_popup.volume_slider.value = 40
 	_check(is_equal_approx(GameSettings.sfx_volume, 0.4), "설정: 음량 조절")
 	hub.options_popup.volume_slider.value = 80
@@ -229,24 +229,24 @@ func _test_ui_flows() -> void:
 	hub.options_popup.music_slider.value = 60
 	hub.options_popup.visible = false
 
-	# 연간 보고서 팝업
+	# 연간 보고서 창
 	for i in 4:
 		hub._on_advance_turn_pressed()
 	await process_frame
-	_check(hub.report_popup.visible and gm.pending_year_report.is_empty(), "해가 바뀌면 연간 보고서 팝업")
+	_check(hub.report_popup.visible and gm.pending_year_report.is_empty(), "해가 바뀌면 연간 보고서 창")
 	hub.report_popup._answer(true)
 
-	# 메인 메뉴로: 확인 후 이동
+	# 첫 화면으로: 확인 후 이동
 	hub._on_main_menu_pressed()
 	await process_frame
-	_check(hub.confirm_popup.visible and current_scene == hub, "메인 메뉴로 나가기 전 확인")
+	_check(hub.confirm_popup.visible and current_scene == hub, "첫 화면으로 나가기 전 확인")
 	hub.confirm_popup._answer(false)
 	_check(not hub.confirm_popup.visible and current_scene == hub, "아니오: 머무름")
 	hub._on_main_menu_pressed()
 	hub.confirm_popup._answer(true)
 	await process_frame
 	await process_frame
-	_check(current_scene.scene_file_path == SceneRouter.MAIN_MENU and gm.has_save_file(SaveManager.AUTO_SLOT), "예: 자동 저장 후 메인 메뉴")
+	_check(current_scene.scene_file_path == SceneRouter.MAIN_MENU and gm.has_save_file(SaveManager.AUTO_SLOT), "예: 자동 저장 후 첫 화면")
 
 	# 진행 중인 판이 있으면 새 게임 전에 확인
 	var menu: Node = current_scene
@@ -297,20 +297,20 @@ func _test_action_preview() -> void:
 	_check(gm.player_sect.gold == 500 and character.strength == strength and gm.player_sect.disciple_count == disciples, "미리보기: 돌려 본 뒤 상태 되돌림")
 	_check(gm.player_sect.disciples.size() == disciples, "미리보기: 제자 명단도 되돌림")
 	var text: String = ActionPreview.format(preview)
-	_check(text.contains("금화  500 → %d (-%d)" % [500 - GameBalance.TRAIN_GOLD, GameBalance.TRAIN_GOLD]), "미리보기: 금화 변화량")
-	_check(text.contains("무력") and text.contains("제자 수") and not text.contains("운에 따라"), "미리보기: 능력치·제자 수, 운 없음")
+	_check(text.contains("은자  500 → %d (-%d)" % [500 - GameBalance.TRAIN_GOLD, GameBalance.TRAIN_GOLD]), "미리보기: 은자 변화량")
+	_check(text.contains("무력") and text.contains("제자 수") and not text.contains("운에 따라"), "미리보기: 자질·제자 수, 운 없음")
 	_check(not preview["random"] and gm.player_sect.disciples.size() == disciples, "운이 끼지 않는 행동: 결과 하나")
 
-	# 운이 끼는 역할 행동 (막내 제자의 외출: 금화 또는 경험치) — 범위·확률
+	# 운이 끼는 신분 행동 (막내 제자의 외출: 은자 또는 수련) — 범위·확률
 	_new_quiet_game(gm, "young_disciple")
 	var gold: int = gm.player_sect.gold
-	# 기연이 걸려 있으면 외출에서 새 기연을 찾지 않는다 (금화·경험치 둘 중 하나만)
+	# 기연이 걸려 있으면 외출에서 새 기연을 찾지 않는다 (은자·수련 둘 중 하나만)
 	gm.pending_event = {"id": "dummy"}
 	var outing := func() -> Dictionary: return RoleActions.perform(gm, "outing", "")
 	preview = ActionPreview.simulate_action(gm, outing)
 	text = ActionPreview.format(preview)
-	_check(gm.player_sect.gold == gold and RoleActions.can_act(gm.role_state, gm._get_turn_index()), "역할 행동 미리보기 뒤 금화·행동 횟수 그대로")
-	_check(preview["random"] and text.contains("운에 따라") and text.contains("금화") and text.contains("경험치"), "운이 끼는 행동: 범위와 결과별 확률")
+	_check(gm.player_sect.gold == gold and RoleActions.can_act(gm.role_state, gm._get_turn_index()), "신분 행동 미리보기 뒤 은자·행동 횟수 그대로")
+	_check(preview["random"] and text.contains("운에 따라") and text.contains("은자") and text.contains("수련"), "운이 끼는 행동: 범위와 결과별 확률")
 	gm.pending_event = {}
 
 	# 경영 화면: 켜 두면 확인창, 취소하면 그대로, 실행하면 적용
@@ -338,7 +338,7 @@ func _test_action_preview() -> void:
 	_check(not popup.visible, "할 수 없는 행동은 미리보기 없이 안내")
 	var date: String = gm.get_date_text()
 	hub._on_advance_turn_pressed()
-	_check(popup.visible and popup._message.text.contains("금화") and gm.get_date_text() == date, "계절 넘기기 미리보기: 예상 수입·유지비")
+	_check(popup.visible and popup._message.text.contains("은자") and gm.get_date_text() == date, "계절 넘기기 미리보기: 예상 수입·씀씀이")
 	popup._answer(false)
 	_check(gm.get_date_text() == date and gm.world_news.size() >= news, "계절 넘기기 취소")
 	# 웹: 새 버전이 배포되면 알림 창 (설치형 앱의 옛 파일 보관 때문에 안 바뀌는 문제)
@@ -351,7 +351,7 @@ func _test_action_preview() -> void:
 	_completed["_test_action_preview"] = true
 
 
-## 강호 연대기와 인물 대사: 기연 선택·대화·외교·역할 행동이 기록되고, 저장·불러오기 뒤에도 남는다.
+## 강호 연대기와 인물 대사: 기연 선택·대화·외교·신분 행동이 기록되고, 저장·불러오기 뒤에도 남는다.
 func _test_chronicle_and_dialogue() -> void:
 	var gm: Node = root.get_node("GameManager")
 	_clear_test_saves()
@@ -405,9 +405,9 @@ func _test_chronicle_and_dialogue() -> void:
 	result = gm.do_diplomacy("namgung", "envoy")
 	_check(result["success"] and result["dialogue"].size() == 2 and gm.chronicle[-1]["kind"] == "외교", "외교: 사절·문주 대사와 연대기")
 
-	# 역할 행동: 문파 회의
+	# 신분 행동: 문파 회의
 	result = gm.do_role_action("council")
-	_check(result["dialogue"].size() == 2 and gm.chronicle[-1]["kind"] == "행동", "역할 행동: 대사와 연대기")
+	_check(result["dialogue"].size() == 2 and gm.chronicle[-1]["kind"] == "행동", "신분 행동: 대사와 연대기")
 
 	# 기연: 상황·선택·결과
 	var event: EventData = EventManager.get_definitions()[0]
@@ -447,11 +447,11 @@ func _test_chronicle_and_dialogue() -> void:
 	_completed["_test_chronicle_and_dialogue"] = true
 
 
-## 역할별 경영 화면: 시작 역할이 7가지이고, 역할마다 보이는 버튼·칸·안내가 다르다.
+## 신분별 경영 화면: 시작 신분이 7가지이고, 신분마다 보이는 버튼·칸·안내가 다르다.
 func _test_role_dashboard() -> void:
 	var gm: Node = root.get_node("GameManager")
-	_check(StartingRoles.ROLES.size() >= 7, "시작 역할 7가지")
-	# 계절 넘기기 안내의 "아직 하지 않은 일"은 역할에 맞게
+	_check(StartingRoles.ROLES.size() >= 7, "시작 신분 7가지")
+	# 계절 넘기기 안내의 "아직 하지 않은 일"은 신분에 맞게
 	_new_quiet_game(gm, "young_disciple")
 	var unused: String = ", ".join(RoleDashboard.get_unused_actions(gm))
 	_check(unused.contains("고유 행동(스승에게 가르침·외출)") and unused.contains("영약") and not unused.contains("연회") and not unused.contains("문파전") and not unused.contains("평정"), "막내 제자의 남은 일: %s" % unused)
@@ -470,27 +470,27 @@ func _test_role_dashboard() -> void:
 	var hub: Node = current_scene
 	var grid: Node = hub.action_grid
 	_check(not grid.get_node("TrainButton").visible and not grid.get_node("SectWarButton").visible and grid.get_node("ElixirButton").visible, "자객: 문파 운영 버튼 숨김")
-	_check(not hub.get_node("Margin/RootHBox/LeftPanel/FacilityPanel").visible and hub.sect_name_label.text.contains("내 재산") and hub.gold_label.text.begins_with("내 금화"), "자객: 시설 칸 숨김, 개인 재산")
-	_check(hub.role_resource_label.text.contains("표적") and hub.role_action_box.get_child_count() == 2, "자객: 역할 안내와 고유 행동")
+	_check(not hub.get_node("Margin/RootHBox/LeftPanel/FacilityPanel").visible and hub.sect_name_label.text.contains("내 재산") and hub.gold_label.text.begins_with("내 은자"), "자객: 전각 칸 숨김, 개인 재산")
+	_check(hub.role_resource_label.text.contains("표적") and hub.role_action_box.get_child_count() == 2, "자객: 신분 안내와 고유 행동")
 	var key := InputEventKey.new()
 	key.keycode = KEY_F
 	key.pressed = true
 	hub._unhandled_key_input(key)
 	_check(not hub.facility_popup.visible, "숨긴 버튼은 단축키로도 열리지 않음")
-	# 역할이 바뀌면 화면도 바뀐다
+	# 신분이 바뀌면 화면도 바뀐다
 	gm.apply_role_transition(CharacterData.Role.LEADER)
 	await process_frame
 	_check(grid.get_node("TrainButton").visible and grid.get_node("SectWarButton").visible and hub.get_node("Margin/RootHBox/LeftPanel/FacilityPanel").visible, "문주가 되면 모든 버튼")
 	hub._unhandled_key_input(key)
-	_check(hub.facility_popup.visible, "문주: 시설 단축키")
+	_check(hub.facility_popup.visible, "문주: 전각 단축키")
 	hub.facility_popup.visible = false
-	_check(RoleDashboard.describe_role(CharacterData.Role.MANAGER).contains("문주에게 건의"), "새 게임 화면 역할 소개: 고유 행동")
+	_check(RoleDashboard.describe_role(CharacterData.Role.MANAGER).contains("문주에게 건의"), "새 게임 화면 신분 소개: 고유 행동")
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
 	await process_frame
 	_completed["_test_role_dashboard"] = true
 
 
-## 세로(휴대폰) 배치: 경영 화면은 탭과 할 일 목록, 두 칸 화면은 위아래로, 팝업 줄은 버튼을 아래로, 전투는 격자를 줄여 위에
+## 세로(휴대폰) 배치: 경영 화면은 탭과 할 일 목록, 두 칸 화면은 위아래로, 창 줄은 버튼을 아래로, 전투는 격자를 줄여 위에
 func _test_portrait_layout() -> void:
 	var gm: Node = root.get_node("GameManager")
 	_check(not LayoutMode.decide(LayoutMode.Mode.AUTO) and LayoutMode.decide(LayoutMode.Mode.PORTRAIT) and not LayoutMode.decide(LayoutMode.Mode.LANDSCAPE), "화면 배치: PC 자동은 가로, 세로 지정")
@@ -504,17 +504,17 @@ func _test_portrait_layout() -> void:
 	var hub: Node = current_scene
 	_check(hub.pages.size() == 5 and hub.get_current_page() == "todo" and not hub.get_node("Margin/RootHBox").visible, "세로 경영 화면: 쪽 5개, 처음은 할 일")
 	var steps: Array = hub.todo_box.get_children().filter(func(c: Node) -> bool: return c is Button)
-	_check(steps.size() == RoleDashboard.get_season_steps(gm).size() - 1, "할 일 목록: 단계마다 버튼 (고유 행동은 역할 칸)")
+	_check(steps.size() == RoleDashboard.get_season_steps(gm).size() - 1, "할 일 목록: 단계마다 버튼 (고유 행동은 신분 칸)")
 	var elixir_step: Button = hub.todo_box.get_node("Step_elixir")
 	var energy: int = gm.player_character.internal_energy_max
 	elixir_step.pressed.emit()
 	await process_frame
 	_check(gm.player_character.internal_energy_max > energy and not hub.todo_box.has_node("Step_elixir"), "할 일 버튼으로 바로 실행, 한 일은 목록에서 빠짐")
-	_check(hub.status_label.text.contains("금화") and hub.status_label.text.contains("제자"), "맨 위 자원 한 줄")
-	# 인물 쪽: 긴 능력치 줄·큰 글자에도 화면 폭을 넘지 않는다 (줄바꿈)
+	_check(hub.status_label.text.contains("은자") and hub.status_label.text.contains("제자"), "맨 위 자원 한 줄")
+	# 인물 쪽: 긴 자질 줄·큰 글자에도 화면 폭을 넘지 않는다 (줄바꿈)
 	hub.show_page("hero")
-	hub.character_stats_label.text = "내공 1440/1440 | 전투력 333 | 도력 72 선(협객) | Lv.13 (경험 13600/14300) | 아주 긴 줄 시험"
-	hub.character_role_label.text = "막내 제자 · 지역: 합비 · 우리 본거지 · 소속 남궁세가 · 아주 긴 역할 줄 시험"
+	hub.character_stats_label.text = "내공 1440/1440 | 전투력 333 | 도력 72 선(협객) | 경지 13 (수련 13600/14300) | 아주 긴 줄 시험"
+	hub.character_role_label.text = "막내 제자 · 지역: 합비 · 우리 본거지 · 소속 남궁세가 · 아주 긴 신분 줄 시험"
 	await process_frame
 	await process_frame
 	# 시험 창은 가로 크기라 실제 폭 대신 최소 폭이 휴대폰 폭(여백 빼고) 안인지 본다
@@ -535,14 +535,14 @@ func _test_portrait_layout() -> void:
 	hub.event_popup.show_event(EventManager.get_definitions()[0].to_popup_dict())
 	_check(hub.event_popup.title_label.get_parent().get_parent() is VBoxContainer and hub.event_popup.portrait.custom_minimum_size.x < 192, "세로 기연 창: 초상화 위, 글 아래")
 	hub.event_popup.visible = false
-	# 역할에 따라 버튼 숨김은 세로에서도 그대로
+	# 신분에 따라 버튼 숨김은 세로에서도 그대로
 	gm.apply_role_transition(CharacterData.Role.WANDERER)
 	await process_frame
-	_check(not hub._action_buttons["TrainButton"].visible and not hub.facility_panel.visible, "세로에서도 역할별 버튼 숨김")
-	# 팝업: 화면 폭에 맞고, 줄은 이름표 아래에 버튼
+	_check(not hub._action_buttons["TrainButton"].visible and not hub.facility_panel.visible, "세로에서도 신분별 버튼 숨김")
+	# 창: 화면 폭에 맞고, 줄은 이름표 아래에 버튼
 	hub._on_bond_pressed()
 	var row: Node = hub.bond_popup._rows.get_child(0)
-	_check(row is VBoxContainer and row.get_child(1) is HFlowContainer, "세로 팝업 줄: 이름표 아래에 버튼 줄바꿈")
+	_check(row is VBoxContainer and row.get_child(1) is HFlowContainer, "세로 창 줄: 이름표 아래에 버튼 줄바꿈")
 	hub.bond_popup.visible = false
 	# 두 칸 화면은 위아래로
 	SceneRouter.goto(tree, SceneRouter.WORLD)
@@ -556,9 +556,9 @@ func _test_portrait_layout() -> void:
 	SceneRouter.goto(tree, SceneRouter.MARTIAL_ART)
 	await process_frame
 	await process_frame
-	_check(current_scene.get_node("Margin/RootHBoxScroll/RootHBox") is VBoxContainer and current_scene.known_arts_label != null, "무공 연구소: 위아래로 쌓고 스크롤")
+	_check(current_scene.get_node("Margin/RootHBoxScroll/RootHBox") is VBoxContainer and current_scene.known_arts_label != null, "장경각: 위아래로 쌓고 스크롤")
 	current_scene._on_save_blueprint_pressed()
-	_check(not Toast.get_text(current_scene).is_empty(), "무공 연구소: 결과가 토스트로 보임")
+	_check(not Toast.get_text(current_scene).is_empty(), "장경각: 결과가 토스트로 보임")
 	# 전투: 손패는 두 줄, 화면 폭을 넘지 않는다
 	gm.start_combat(CombatManager.create_sparring(gm.player_character))
 	await process_frame
@@ -596,7 +596,7 @@ func _test_input_and_tips() -> void:
 	await create_timer(LongPressTip.HOLD_TIME + 0.15).timeout
 	_check(LongPressTip.is_bubble_visible(hub.gold_label), "길게 누르면 설명")
 	var bubble_text: String = hub.get_node("TipLayer/Bubble").get_child(0).text
-	_check(bubble_text.contains("유지비") and bubble_text.contains("제자 12명"), "금화 설명: 수입·유지비 계산 근거")
+	_check(bubble_text.contains("씀씀이") and bubble_text.contains("제자 12명"), "은자 설명: 수입·씀씀이 계산 근거")
 	gold_tip._input(_mouse(true))
 	_check(not LongPressTip.is_bubble_visible(hub.gold_label), "다시 누르면 설명이 닫힘")
 	for key in ["food", "reputation", "research", "stats", "facilities"]:
@@ -623,11 +623,11 @@ func _test_input_and_tips() -> void:
 
 	# 단축키
 	hub._unhandled_key_input(_key(KEY_F))
-	_check(hub.facility_popup.visible, "F: 시설 관리")
+	_check(hub.facility_popup.visible, "F: 전각 관리")
 	hub._unhandled_key_input(_key(KEY_D))
-	_check(not hub.disciple_popup.visible, "팝업이 열려 있으면 다른 단축키는 무시")
+	_check(not hub.disciple_popup.visible, "창이 열려 있으면 다른 단축키는 무시")
 	hub._unhandled_key_input(_key(KEY_ESCAPE))
-	_check(not hub.facility_popup.visible, "Esc: 팝업 닫기")
+	_check(not hub.facility_popup.visible, "Esc: 창 닫기")
 	var date: String = gm.get_date_text()
 	hub._unhandled_key_input(_key(KEY_SPACE))
 	_check(gm.get_date_text() != date, "Space: 계절 진행")
@@ -635,12 +635,12 @@ func _test_input_and_tips() -> void:
 	_check(hub.options_popup.visible and hub.options_popup.speed_option.item_count == GameSettings.COMBAT_DELAYS.size(), "O: 설정 (전투 속도 포함)")
 	hub._unhandled_key_input(_key(KEY_ESCAPE))
 	hub._unhandled_key_input(_key(KEY_ESCAPE))
-	_check(hub.confirm_popup.visible, "팝업이 없을 때 Esc: 메인 메뉴로(확인)")
+	_check(hub.confirm_popup.visible, "창이 없을 때 Esc: 첫 화면으로(확인)")
 	hub.confirm_popup._answer(false)
 
 	# 키보드·게임패드 포커스
 	hub._on_save_pressed()
-	_check(hub.save_popup._rows.get_child(0).has_focus(), "선택 팝업: 첫 항목에 포커스")
+	_check(hub.save_popup._rows.get_child(0).has_focus(), "선택 창: 첫 항목에 포커스")
 	hub.save_popup.visible = false
 
 	# 전투: 단축키와 진행 속도
@@ -739,7 +739,7 @@ func _test_art_assets() -> void:
 	_check(missing_chars.is_empty(), "본문 글꼴에 없는 문자 없음 %s" % [missing_chars])
 	var brush: Font = ArtAssets.brush_font()
 	_check(brush.fallbacks.has(ArtAssets.body_font()) and brush.has_char("—".unicode_at(0)), "붓글씨 제목의 문장부호는 본문 글꼴로 (대체 글꼴)")
-	# 초상화·문장: 명부의 모든 인물, 모든 주인공 역할, 모든 문파
+	# 초상화·문장: 명부의 모든 인물, 모든 주인공 신분, 모든 문파
 	var missing: PackedStringArray = []
 	for npc in NpcRoster.get_all():
 		if ArtAssets.portrait(npc["id"]) == null:
@@ -769,11 +769,11 @@ func _test_art_assets() -> void:
 	var art: TextureRect = current_scene.get_node_or_null("Background/Art") as TextureRect
 	_check(art != null and art.texture == ArtAssets.background("hub"), "문파 경영 화면에 배경 그림")
 	var hub: Node = current_scene
-	_check(hub.character_portrait != null and hub.character_portrait.texture == ArtAssets.role_portrait(gm.player_character.role), "경영 화면: 주인공 역할 초상화")
+	_check(hub.character_portrait != null and hub.character_portrait.texture == ArtAssets.role_portrait(gm.player_character.role), "경영 화면: 주인공 신분 초상화")
 	hub.event_popup.show_event(EventManager.get_event("rival_duel").to_popup_dict())
-	_check(hub.event_popup.portrait.visible and hub.event_popup.portrait.texture == ArtAssets.portrait("npc_rival"), "기연 팝업: 얽힌 인물 초상화")
+	_check(hub.event_popup.portrait.visible and hub.event_popup.portrait.texture == ArtAssets.portrait("npc_rival"), "기연 창: 얽힌 인물 초상화")
 	hub.event_popup.show_event({"title": "x", "description": "x", "choices": ["확인"]})
-	_check(not hub.event_popup.portrait.visible, "기연 팝업: 인물이 없으면 초상화 숨김")
+	_check(not hub.event_popup.portrait.visible, "기연 창: 인물이 없으면 초상화 숨김")
 	hub.event_popup.visible = false
 	SceneRouter.goto(tree, SceneRouter.WORLD)
 	await process_frame
@@ -851,7 +851,7 @@ func _test_audio() -> void:
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
 	await process_frame
 	await process_frame
-	_check(audio.current_music == "main", "메인 메뉴: 메인 곡")
+	_check(audio.current_music == "main", "첫 화면: 메인 곡")
 	audio.play_music("main")
 	_check(audio.current_music == "main", "같은 곡이면 다시 시작하지 않음")
 	_clear_test_saves()
@@ -883,13 +883,13 @@ func _test_role_guide() -> void:
 	# 조건 안내: 막내 제자는 승진·간자·배신·떠나기 길이 있고, 조건마다 채웠는지 표시
 	var paths: Array[Dictionary] = RoleManager.get_transition_guide(gm)
 	var titles: Array = paths.map(func(p: Dictionary) -> String: return p["title"])
-	_check(titles.has("총관(중간관리자) 승진") and titles.has("간자(스파이) 임무") and titles.has("문파를 떠나 무소속으로"), "막내 제자의 길: 승진·간자·떠나기")
-	var promote: Dictionary = paths[titles.find("총관(중간관리자) 승진")]
+	_check(titles.has("총관 승진") and titles.has("간자 임무") and titles.has("문파를 떠나 무소속으로"), "막내 제자의 길: 승진·간자·떠나기")
+	var promote: Dictionary = paths[titles.find("총관 승진")]
 	_check(not promote["available"] and promote["conditions"].any(func(r: Dictionary) -> bool: return not r["ok"] and r["text"].contains("경지")), "승진: 경지 조건 미충족 표시")
 	_new_quiet_game(gm, "wanderer")
 	paths = RoleManager.get_transition_guide(gm)
 	titles = paths.map(func(p: Dictionary) -> String: return p["title"])
-	_check(titles.has("문파에 입문 (막내 제자)") and titles.has("의뢰인이 된다") and not titles.has("문파를 떠나 무소속으로"), "무소속 낭인의 길: 입문·의뢰인")
+	_check(titles.has("문파에 입문 (막내 제자)") and titles.has("청부객이 된다") and not titles.has("문파를 떠나 무소속으로"), "무소속 낭인의 길: 입문·청부객")
 	# 신용이 하나도 없으면 특정 세력을 들지 않고, 지금 지역(주인 없는 땅)에서는 신용이 오르지 않는다고 안내
 	var join_texts: Array = paths[titles.find("문파에 입문 (막내 제자)")]["conditions"].map(func(r: Dictionary) -> String: return r["text"])
 	_check(join_texts.any(func(t: String) -> bool: return t.contains("지금 최고: 아직 없음")) and not ", ".join(join_texts).contains("청운검파"), "입문 안내: 신용이 없으면 세력 이름 없이")
@@ -901,14 +901,14 @@ func _test_role_guide() -> void:
 	RoleActions.change_credit(gm.role_state, "namgung", _Balance.JOIN_CREDIT_REQ)
 	paths = RoleManager.get_transition_guide(gm)
 	_check(paths[titles.find("문파에 입문 (막내 제자)")]["available"], "신용을 채우면 입문 가능 표시")
-	# 역할 전환 버튼: 고를 전환이 없어도 창이 열려 안내를 보인다
+	# 신분 전환 버튼: 고를 전환이 없어도 창이 열려 안내를 보인다
 	_new_quiet_game(gm, "young_disciple")
 	SceneRouter.goto(tree, SceneRouter.HUB)
 	await process_frame
 	await process_frame
 	var hub: Node = current_scene
 	hub._on_role_pressed()
-	_check(hub.role_popup.visible and hub.role_popup.confirm_button.disabled and hub.role_popup.get_guide_line_count() > 5, "역할 전환 창: 전환이 없어도 조건 안내")
+	_check(hub.role_popup.visible and hub.role_popup.confirm_button.disabled and hub.role_popup.get_guide_line_count() > 5, "신분 전환 창: 전환이 없어도 조건 안내")
 	hub.role_popup.visible = false
 	# 지도에서 골라 이동: 낭인의 [이동 (지도)]는 지도를 열고, 지역을 고르면 [이곳으로 이동]
 	_new_quiet_game(gm, "wanderer")
@@ -1048,7 +1048,7 @@ func _test_list_drag_scroll() -> void:
 	if visible_button:
 		await _drag(to_window, visible_button.get_global_rect().get_center(), Vector2.ZERO)
 		_check(visible_button.text.begins_with("▶"), "스크롤 칸 끌기: 그대로 누르면 버튼이 눌림")
-	# 팝업 안의 스크롤 칸(인연 돌보기): 뒤의 경영 화면이 아니라 팝업 목록이 움직인다.
+	# 창 안의 스크롤 칸(인연 돌보기): 뒤의 경영 화면이 아니라 창 목록이 움직인다.
 	# 휴대폰처럼 마우스 올림 없이 바로 누르고 끈다 (Viewport의 올려 둔 컨트롤은 엉뚱한 곳에 머문 채)
 	var gm_node: Node = root.get_node("GameManager")
 	for npc_id in ["npc_swallow", "npc_healer", "npc_iron_blade", "npc_innkeeper", "npc_scholar", "npc_musician", "npc_merchant", "npc_old_drunk"]:
@@ -1074,12 +1074,12 @@ func _test_list_drag_scroll() -> void:
 			row_button = candidate
 	var bond_start: Vector2 = row_button.get_global_rect().get_center() if row_button else bond_scroll.get_global_rect().get_center()
 	await _drag(to_window, bond_scroll.get_global_rect().get_center() if row_button == null else bond_start, Vector2(0, -100))
-	_check(bond_scroll.scroll_vertical > 0, "인연 돌보기 팝업: 버튼 위에서 끌어도 목록이 스크롤 (%d)" % bond_scroll.scroll_vertical)
-	_check(RelationshipManager.get_interactions_left(gm_node.story_flags, gm_node._get_turn_index()) == interactions, "인연 돌보기 팝업: 끄는 동안 버튼은 안 눌림")
-	# 팝업이 덮고 있으면 뒤의 경영 화면 스크롤 칸은 그 자리를 자기 몫으로 보지 않는다
+	_check(bond_scroll.scroll_vertical > 0, "인연 돌보기 창: 버튼 위에서 끌어도 목록이 스크롤 (%d)" % bond_scroll.scroll_vertical)
+	_check(RelationshipManager.get_interactions_left(gm_node.story_flags, gm_node._get_turn_index()) == interactions, "인연 돌보기 창: 끄는 동안 버튼은 안 눌림")
+	# 창이 덮고 있으면 뒤의 경영 화면 스크롤 칸은 그 자리를 자기 몫으로 보지 않는다
 	for behind in hub.find_children("TouchScroll", "", true, false):
 		if behind.get_parent() != bond_scroll and behind.get_parent().is_visible_in_tree() and behind.get_parent().get_global_rect().has_point(bond_start):
-			_check(not behind.owns_point(bond_start), "팝업 뒤의 스크롤 칸은 움직이지 않음 (%s)" % behind.get_parent().name)
+			_check(not behind.owns_point(bond_start), "창 뒤의 스크롤 칸은 움직이지 않음 (%s)" % behind.get_parent().name)
 	hub.bond_popup.visible = false
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
 	await process_frame

@@ -18,7 +18,7 @@ func _ready() -> void:
 func _display_ending() -> void:
 	var game_over: bool = GameManager.is_game_over()
 	succession_button.visible = not game_over
-	back_button.text = "메인 메뉴로" if game_over else "문파로 돌아가기"
+	back_button.text = "첫 화면으로" if game_over else "문파로 돌아가기"
 	var ending_id: String = GameManager.current_ending_id
 	var victory: bool = ScenarioManager.is_victory_ending(ending_id)
 	if game_over:
@@ -27,7 +27,7 @@ func _display_ending() -> void:
 		var text: String = info["description"]
 		if not ending_id.is_empty():
 			var ending: Dictionary = EndingManager.get_ending(ending_id)
-			text += "\n\n엔딩 「%s」%s\n%s" % [
+			text += "\n\n결말 「%s」%s\n%s" % [
 				ending["title"], " — 시나리오 승리" if victory else "", ending.get("description", ""),
 			]
 		text += "\n\n%s의 이야기는 %s에 막을 내렸습니다." % [
@@ -35,15 +35,15 @@ func _display_ending() -> void:
 		]
 		desc_label.text = text
 	elif ending_id.is_empty():
-		title_label.text = "아직 엔딩에 도달하지 않았습니다"
+		title_label.text = "아직 결말에 도달하지 않았습니다"
 		desc_label.text = (
 			"문주가 되어 정파를 통일하거나,\n"
-			+ "스파이/암살자의 길을 걷거나,\n"
+			+ "간자·자객의 길을 걷거나,\n"
 			+ "낭인으로 전설을 쌓아보세요."
 		)
 	else:
 		var ending: Dictionary = EndingManager.get_ending(ending_id)
-		title_label.text = "엔딩: %s%s" % [ending["title"], " (시나리오 승리)" if victory else ""]
+		title_label.text = "결말: %s%s" % [ending["title"], " (시나리오 승리)" if victory else ""]
 		desc_label.text = ending.get("description", "")
 		if GameManager.story_flags.get("life_ended", false):
 			desc_label.text += "\n\n%s의 생이 끝났습니다. [세대 전승]으로 후계자를 정해 이야기를 이어 가세요." % (
@@ -59,15 +59,15 @@ func _display_ending() -> void:
 		lines.append("평가: %s (%d점)" % [evaluation["grade"], evaluation["score"]])
 		lines.append("  " + "\n  ".join(evaluation["lines"]))
 	if GameManager.legacy_records.is_empty():
-		lines.append("레거시 기록 없음")
+		lines.append("후대 기록 없음")
 	else:
-		lines.append("레거시:")
+		lines.append("후대:")
 		for legacy in GameManager.legacy_records:
 			lines.append("  " + legacy.summary)
 	legacy_label.text = "\n".join(lines)
 
 
-## 엔딩 분위기에 맞춰 제목 색을 바꾼다.
+## 결말 분위기에 맞춰 제목 색을 바꾼다.
 func _apply_tone(tone: String) -> void:
 	var colors: Dictionary = {
 		"victory": _UiTheme.COLORS["accent_gold"],

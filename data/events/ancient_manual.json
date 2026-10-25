@@ -13,8 +13,8 @@
   ],
   "choices": [
     {
-      "label": "즉시 연구한다",
-      "message": "고서 연구로 연구점 +20.",
+      "label": "즉시 참오한다",
+      "message": "고서 참오로 깨달음 +20.",
       "effects": [
         {
           "type": "sect",

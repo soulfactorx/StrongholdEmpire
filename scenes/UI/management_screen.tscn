@@ -81,7 +81,7 @@ text = "청운검파"
 [node name="GoldLabel" type="Label" parent="Margin/RootHBox/LeftPanel/SectPanel/SectVBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "금화: 0"
+text = "은자: 0"
 
 [node name="FoodLabel" type="Label" parent="Margin/RootHBox/LeftPanel/SectPanel/SectVBox"]
 unique_name_in_owner = true
@@ -96,7 +96,7 @@ text = "명성: 0"
 [node name="ResearchLabel" type="Label" parent="Margin/RootHBox/LeftPanel/SectPanel/SectVBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "연구점: 0"
+text = "깨달음: 0"
 
 [node name="DiscipleLabel" type="Label" parent="Margin/RootHBox/LeftPanel/SectPanel/SectVBox"]
 unique_name_in_owner = true
@@ -112,7 +112,7 @@ layout_mode = 2
 [node name="FacilitiesLabel" type="Label" parent="Margin/RootHBox/LeftPanel/FacilityPanel/FacilityVBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "시설"
+text = "전각"
 
 [node name="SystemPanel" type="PanelContainer" parent="Margin/RootHBox/LeftPanel"]
 layout_mode = 2
@@ -145,7 +145,7 @@ text = "설정"
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "메인 메뉴"
+text = "첫 화면"
 
 [node name="ChronicleButton" type="Button" parent="Margin/RootHBox/LeftPanel/SystemPanel/SystemVBox"]
 custom_minimum_size = Vector2(0, 48)
@@ -157,7 +157,7 @@ text = "연대기"
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "엔딩 / 레거시"
+text = "결말 / 후대"
 
 [node name="RightPanel" type="VBoxContainer" parent="Margin/RootHBox"]
 layout_mode = 2
@@ -184,7 +184,7 @@ text = "막내 제자"
 [node name="CharacterStatsLabel" type="Label" parent="Margin/RootHBox/RightPanel/CharacterPanel/CharacterVBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "스탯"
+text = "자질"
 
 [node name="MartialArtsLabel" type="Label" parent="Margin/RootHBox/RightPanel/CharacterPanel/CharacterVBox"]
 unique_name_in_owner = true
@@ -225,7 +225,7 @@ theme_override_constants/separation = 6
 [node name="RoleResourceLabel" type="Label" parent="Margin/RootHBox/RightPanel/RolePanel/RoleVBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "역할 행동"
+text = "신분 행동"
 autowrap_mode = 3
 
 [node name="RoleActionBox" type="HBoxContainer" parent="Margin/RootHBox/RightPanel/RolePanel/RoleVBox"]
@@ -255,7 +255,7 @@ text = "제자 훈련"
 [node name="FacilityButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
 custom_minimum_size = Vector2(170, 48)
 layout_mode = 2
-text = "시설 관리"
+text = "전각 관리"
 
 [node name="ElixirButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
 custom_minimum_size = Vector2(170, 48)
@@ -270,12 +270,12 @@ text = "문파 연회"
 [node name="MartialArtButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
 custom_minimum_size = Vector2(170, 48)
 layout_mode = 2
-text = "무공 연구소"
+text = "장경각"
 
 [node name="RoleButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
 custom_minimum_size = Vector2(170, 48)
 layout_mode = 2
-text = "역할 전환"
+text = "신분 전환"
 
 [node name="CombatButton" type="Button" parent="Margin/RootHBox/RightPanel/ActionPanel/ActionGrid"]
 custom_minimum_size = Vector2(170, 48)
@@ -424,12 +424,12 @@ theme_override_constants/separation = 12
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "역할 전환"
+text = "신분 전환"
 
 [node name="RoleDescLabel" type="Label" parent="RolePopup/Center/Panel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "새로운 역할을 선택하세요."
+text = "새로운 신분을 선택하세요."
 autowrap_mode = 3
 
 [node name="RoleOptionList" type="ItemList" parent="RolePopup/Center/Panel/VBox"]

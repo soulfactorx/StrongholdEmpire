@@ -40,7 +40,7 @@ enum Alignment { RIGHTEOUS, UNORTHODOX, DEMONIC }
 
 @export_group("문파 규모")
 ## 제자 수. 명단을 쓰는 문파(플레이어 문파)는 값이 바뀌면 명단을 같은 수로 맞춘다.
-## 그래서 기연·유지비·문파전처럼 제자 수만 바꾸는 코드도 명단과 어긋나지 않는다.
+## 그래서 기연·씀씀이·문파전처럼 제자 수만 바꾸는 코드도 명단과 어긋나지 않는다.
 @export var disciple_count: int = 12:
 	set(value):
 		disciple_count = maxi(0, value)
@@ -48,7 +48,7 @@ enum Alignment { RIGHTEOUS, UNORTHODOX, DEMONIC }
 			DiscipleRoster.sync(self)
 @export var max_disciples: int = 30
 
-## 유지비를 다 내지 못한 계절이 연속으로 몇 번인지
+## 씀씀이를 다 내지 못한 계절이 연속으로 몇 번인지
 @export var shortage_seasons: int = 0
 
 ## 제자 명단 (use_roster일 때만 쓴다). 강호 세력은 제자 수만 쓴다.
@@ -59,13 +59,13 @@ var next_disciple_id: int = 1
 ## 문파 비전: 세대 전승 때 후계자가 물려받는 무공 (없으면 null)
 var secret_art: MartialArtData = null
 
-@export_group("시설")
+@export_group("전각")
 @export var library_level: int = 1
 @export var training_ground_level: int = 1
 @export var treasury_level: int = 1
 ## 약방: 계절마다 주인공의 내공 회복 (0이면 없음)
 @export var apothecary_level: int = 0
-## 연공실: 계절마다 주인공 수련 경험치 (0이면 없음)
+## 연공실: 계절마다 주인공 수련 (0이면 없음)
 @export var meditation_hall_level: int = 0
 
 
@@ -81,12 +81,12 @@ func spend_resources(gold_cost: int, food_cost: int = 0) -> bool:
 	return true
 
 
-## 계절 식량 유지비 (시나리오 유지비 배율 반영)
+## 계절 식량 씀씀이 (시나리오 씀씀이 배율 반영)
 func get_food_upkeep() -> int:
 	return roundi(disciple_count * _Balance.FOOD_PER_DISCIPLE * ScenarioRules.upkeep_scale())
 
 
-## 시설이 시작 레벨을 넘은 단계 수의 합 (유지비 계산용)
+## 전각이 시작 단계를 넘은 단계 수의 합 (씀씀이 계산용)
 func get_facility_steps() -> int:
 	var steps: int = 0
 	for facility in _Balance.FACILITIES:

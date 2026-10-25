@@ -1,6 +1,6 @@
 {
   "id": "spy_mission",
-  "title": "스파이 임무",
+  "title": "간자 임무",
   "description": "적 문파 내부에서 기밀 문서를 빼내야 합니다.",
   "can_repeat": false,
   "conditions": [

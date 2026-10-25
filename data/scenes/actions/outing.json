@@ -54,7 +54,7 @@
       "choices": [
         {
           "label": "술을 사 준다",
-          "message": "노인이 젓가락으로 기막힌 초식을 그어 보입니다. 지혜 +1, 금화 -5",
+          "message": "노인이 젓가락으로 기막힌 초식을 그어 보입니다. 지혜 +1, 은자 -5",
           "effects": [
             {
               "type": "character",
@@ -87,7 +87,7 @@
       "choices": [
         {
           "label": "만두값을 대신 치른다",
-          "message": "도덕 +2, 금화 -3",
+          "message": "도덕 +2, 은자 -3",
           "effects": [
             {
               "type": "character",

@@ -41,7 +41,7 @@
         },
         {
           "label": "몰래 은자를 두고 간다",
-          "message": "도덕 +1, 금화 -5",
+          "message": "도덕 +1, 은자 -5",
           "effects": [
             {
               "type": "character",

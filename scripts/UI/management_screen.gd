@@ -45,25 +45,25 @@ var facility_popup: Control
 var chronicle_popup: Control
 ## 계절마다 강호 세력 동향
 var faction_popup: Control
-## 역할 행동의 대상을 고르는 팝업
+## 신분 행동의 대상을 고르는 창
 var choice_popup: Control
-## 제자 명단 팝업
+## 제자 명단 창
 var disciple_popup: Control
-## 인연 팝업
+## 인연 창
 var bond_popup: Control
-## 침공 대응 팝업
+## 침공 대응 창
 var invasion_popup: Control
-## 저장 슬롯 팝업
+## 저장 칸 창
 var save_popup: Control
 ## 확인 대화상자, 설정, 연간 보고서
 var confirm_popup: Control
 var options_popup: Control
 var report_popup: Control
-## 대상을 고르는 중인 역할 행동 id
+## 대상을 고르는 중인 신분 행동 id
 var _pending_role_action: String = ""
-## 화면에 마지막으로 보여 준 주인공 레벨 (오르면 효과음)
+## 화면에 마지막으로 보여 준 주인공 경지 (오르면 효과음)
 var _shown_level: int = -1
-## 주인공 초상화 (역할에 따라 바뀐다)
+## 주인공 초상화 (신분에 따라 바뀐다)
 var character_portrait: TextureRect
 
 
@@ -138,16 +138,16 @@ func _attach_tips() -> void:
 	tips["gold"] = LongPressTip.attach(gold_label, _gold_tip)
 	tips["food"] = LongPressTip.attach(food_label, _food_tip)
 	tips["reputation"] = LongPressTip.attach(reputation_label, func() -> String:
-		return "명성: 해마다 제자 %d명마다 +1. 연회·문파전·기연으로도 오릅니다.\n0이 되면 이야기가 끝납니다(게임오버)." % _Balance.DISCIPLES_PER_YEARLY_REPUTATION
+		return "명성: 해마다 제자 %d명마다 +1. 연회·문파전·기연으로도 오릅니다.\n0이 되면 이야기가 끝납니다(몰락)." % _Balance.DISCIPLES_PER_YEARLY_REPUTATION
 	)
 	tips["research"] = LongPressTip.attach(research_label, func() -> String:
 		var sect: SectData = GameManager.player_sect
-		return "연구점 수입 = 서고 Lv.%d × %d + 지혜 %d × %.1f (역할·시나리오 보정)\n무공 창조·비급 연구·강화·전수·상대 무공 분석에 씁니다." % [
+		return "깨달음 수입 = 서고 %d단계 × %d + 지혜 %d × %.1f (신분·시나리오 보정)\n무공 창안·비급 참오·강화·전수·상대 무공 분석에 씁니다." % [
 			sect.library_level, _Balance.LIBRARY_RESEARCH_PER_LEVEL, GameManager.player_character.wisdom, _Balance.WISDOM_RESEARCH_RATIO,
 		]
 	)
 	tips["stats"] = LongPressTip.attach(character_stats_label, func() -> String:
-		return "전투력 = 무력 + 신법 + 현재 내공 ÷ 10\n무력: 공격·무공 피해 / 신법: 전투력 / 지혜: 연구 성공률·연구점 / 매력: 대화 유대·리더십\n경험치가 차면 경지(레벨)가 오르고 능력치·최대 내공이 오릅니다."
+		return "전투력 = 무력 + 신법 + 현재 내공 ÷ 10\n무력: 공격·무공 피해 / 신법: 전투력 / 지혜: 참오 성공률·깨달음 / 매력: 대화 유대·통솔\n수련이 차면 경지가 오르고 자질·최대 내공이 오릅니다."
 	)
 	tips["arts"] = LongPressTip.attach(martial_arts_label, func() -> String:
 		return "보유 무공\n" + GameManager.player_character.get_martial_arts_detail()
@@ -156,7 +156,7 @@ func _attach_tips() -> void:
 		var lines: PackedStringArray = []
 		for facility in SectManager.get_facility_ids():
 			lines.append("%s: %s" % [SectManager.FACILITY_INFO[facility]["name"], SectManager.FACILITY_INFO[facility]["effect"]])
-		return "\n".join(lines) + "\n시작 수준을 넘는 단계마다 계절 유지비 금화 %d" % _Balance.FACILITY_UPKEEP_GOLD
+		return "\n".join(lines) + "\n시작 수준을 넘는 단계마다 계절 씀씀이 은자 %d" % _Balance.FACILITY_UPKEEP_GOLD
 	)
 
 
@@ -165,7 +165,7 @@ func _gold_tip() -> String:
 	var forecast: Dictionary = GameManager.estimate_next_season()
 	if GameManager.uses_purse():
 		return _purse_tip()
-	return "다음 계절 금화 %+d\n수입: 기본 %d + 금고 Lv.%d × %d (역할·계절·시나리오 보정, 금고 담당 제자·공물 포함)\n유지비 %d: 제자 %d명 × %d + 확장한 시설 %d단계 × %d\n금화가 모자라면 명성이 떨어지고, 3계절 연속이면 이야기가 끝납니다.\n해마다 %d을 넘는 몫의 %d%%를 잃습니다." % [
+	return "다음 계절 은자 %+d\n수입: 기본 %d + 금고 %d단계 × %d (신분·계절·시나리오 보정, 금고 담당 제자·공물 포함)\n씀씀이 %d: 제자 %d명 × %d + 확장한 전각 %d단계 × %d\n은자가 모자라면 명성이 떨어지고, 3계절 연속이면 이야기가 끝납니다.\n해마다 %d을 넘는 몫의 %d%%를 잃습니다." % [
 		forecast["gold"], _Balance.BASE_GOLD_INCOME, sect.treasury_level, _Balance.TREASURY_GOLD_PER_LEVEL,
 		sect.get_gold_upkeep(), sect.disciple_count, _Balance.GOLD_PER_DISCIPLE, sect.get_facility_steps(), _Balance.FACILITY_UPKEEP_GOLD,
 		_Balance.GOLD_SAFE_AMOUNT, int(_Balance.GOLD_LOSS_RATE * 100),
@@ -177,31 +177,31 @@ func _food_tip() -> String:
 	var forecast: Dictionary = GameManager.estimate_next_season()
 	if GameManager.uses_purse():
 		return _purse_tip()
-	return "다음 계절 식량 %+d\n수입: 기본 %d + 무술장 Lv.%d × %d (역할·계절·시나리오 보정)\n유지비 %d: 제자 %d명 × %d\n식량이 모자라면 제자가 떠납니다. 해마다 %d을 넘는 몫의 %d%%가 상합니다." % [
+	return "다음 계절 식량 %+d\n수입: 기본 %d + 연무장 %d단계 × %d (신분·계절·시나리오 보정)\n씀씀이 %d: 제자 %d명 × %d\n식량이 모자라면 제자가 떠납니다. 해마다 %d을 넘는 몫의 %d%%가 상합니다." % [
 		forecast["food"], _Balance.BASE_FOOD_INCOME, sect.training_ground_level, _Balance.TRAINING_FOOD_PER_LEVEL,
 		sect.get_food_upkeep(), sect.disciple_count, _Balance.FOOD_PER_DISCIPLE,
 		_Balance.FOOD_SAFE_AMOUNT, int(_Balance.FOOD_SPOIL_RATE * 100),
 	]
 
 
-## 개인 재산 설명: 문파 수입이 없고 생활비만 나간다. 버는 길은 역할마다 다르다.
+## 개인 재산 설명: 문파 수입이 없고 생활비만 나간다. 버는 길은 신분마다 다르다.
 func _purse_tip() -> String:
 	var ways: String = {
 		CharacterData.Role.WANDERER: "의뢰 게시판(토벌·호위, 타지는 보상 %d%%)" % roundi(_Balance.JOB_AWAY_REWARD_SCALE * 100),
 		CharacterData.Role.MERCENARY: "세력의 계약(선금·잔금)",
-		CharacterData.Role.SPY: "활동비(계절마다 금화 %d)" % _Balance.SPY_STIPEND_GOLD,
-		CharacterData.Role.ASSASSIN: "표적 의뢰(금화 %d)" % _Balance.ASSASSINATION_GOLD,
-	}.get(GameManager.player_character.role, "역할 행동")
-	var sect_line: String = "\n몸담은 %s의 금고(금화 %d, 식량 %d)는 문주가 꾸립니다." % [
+		CharacterData.Role.SPY: "활동비(계절마다 은자 %d)" % _Balance.SPY_STIPEND_GOLD,
+		CharacterData.Role.ASSASSIN: "표적 의뢰(은자 %d)" % _Balance.ASSASSINATION_GOLD,
+	}.get(GameManager.player_character.role, "신분 행동")
+	var sect_line: String = "\n몸담은 %s의 금고(은자 %d, 식량 %d)는 문주가 꾸립니다." % [
 		GameManager.player_sect.sect_name, GameManager.player_sect.gold, GameManager.player_sect.food,
 	] if GameManager.has_sect() else ""
-	return "내 재산 — 문파 수입은 없습니다.\n생활비: 계절마다 식량 %d·금화 %d (식량이 모자라면 식량 1당 금화 %d로 사 먹음)\n금화도 떨어지면 굶주려 내공 -%d\n버는 길: %s, 외출·기연·전투 보상%s" % [
+	return "내 재산 — 문파 수입은 없습니다.\n생활비: 계절마다 식량 %d·은자 %d (식량이 모자라면 식량 1당 은자 %d로 사 먹음)\n은자도 떨어지면 굶주려 내공 -%d\n버는 길: %s, 외출·기연·전투 보상%s" % [
 		_Balance.LIVING_FOOD, _Balance.LIVING_GOLD, _Balance.LIVING_FOOD_PRICE, _Balance.STARVE_INTERNAL_LOSS, ways, sect_line,
 	]
 
 
-## 키보드 단축키: Space 계절 진행, F 시설, M 무공 연구소, W 강호 정세, D 제자 명단, B 인연,
-## R 역할 전환, C 연대기, G 강호 지도, S 저장, O 설정, Esc 팝업 닫기(없으면 메인 메뉴로)
+## 키보드 단축키: Space 계절 진행, F 전각, M 장경각, W 강호 정세, D 제자 명단, B 인연,
+## R 신분 전환, C 연대기, G 강호 지도, S 저장, O 설정, Esc 창 닫기(없으면 첫 화면으로)
 const HUB_SHORTCUTS: Dictionary = {
 	KEY_SPACE: "_on_advance_turn_pressed",
 	KEY_F: "_on_facility_pressed",
@@ -275,7 +275,7 @@ func _refresh_all() -> void:
 	_update_role_actions()
 
 
-## 강호 일지: 지금의 목표와 최근 소문 (역할 칸 맨 위). 비어 있으면 숨긴다.
+## 강호 일지: 지금의 목표와 최근 소문 (신분 칸 맨 위). 비어 있으면 숨긴다.
 var journal_label: Label
 var bond_button: Button
 var timeline_button: Button
@@ -327,7 +327,7 @@ func _update_journal() -> void:
 	journal_label.visible = not lines.is_empty()
 
 
-## 역할마다 할 일이 없는 버튼과 칸을 숨긴다 (RoleDashboard)
+## 신분마다 할 일이 없는 버튼과 칸을 숨긴다 (RoleDashboard)
 func _apply_role_layout() -> void:
 	var role: CharacterData.Role = GameManager.player_character.role
 	for button_name in RoleDashboard.ACTION_BUTTONS:
@@ -359,7 +359,7 @@ func _shortcut_allowed(method: String) -> bool:
 	return true
 
 
-## 역할별 고유 행동 버튼과 역할 자원 표시
+## 신분별 고유 행동 버튼과 신분 자원 표시
 func _update_role_actions() -> void:
 	var character: CharacterData = GameManager.player_character
 	role_resource_label.text = "%s\n[%s 고유 행동] %s" % [
@@ -375,7 +375,7 @@ func _update_role_actions() -> void:
 		var button := Button.new()
 		button.text = action["title"]
 		button.custom_minimum_size = Vector2(170, 48)
-		# 이동은 역할 행동 횟수와 따로 계절에 한 번
+		# 이동은 신분 행동 횟수와 따로 계절에 한 번
 		button.disabled = not GameManager.can_do_seasonal("last_travel_turn") if action["id"] == "travel" else not can_act
 		button.pressed.connect(_on_role_action_pressed.bind(action["id"]))
 		_UiTheme.style_button(button)
@@ -448,27 +448,27 @@ func _update_time_display() -> void:
 
 func _update_sect_display(sect: SectData) -> void:
 	sect_name_label.text = RoleDashboard.get_sect_title(GameManager.player_character.role, sect)
-	# 다음 계절 예상 수지 (수입 - 유지비)
+	# 다음 계절 예상 수지 (수입 - 씀씀이)
 	var forecast: Dictionary = GameManager.estimate_next_season()
 	var wallet: SectData = GameManager.get_wallet()
 	if GameManager.uses_purse():
 		# 개인 재산: 수입 없이 생활비만 나간다. 의뢰·계약·기연으로 번다.
-		gold_label.text = "내 금화: %d (다음 계절 %+d, 생활비)" % [wallet.gold, forecast["gold"]]
+		gold_label.text = "내 은자: %d (다음 계절 %+d, 생활비)" % [wallet.gold, forecast["gold"]]
 		food_label.text = "내 식량: %d (다음 계절 %+d, 생활비)" % [wallet.food, forecast["food"]]
 	else:
-		gold_label.text = "금화: %d (다음 계절 %+d, 유지비 %d)" % [sect.gold, forecast["gold"], sect.get_gold_upkeep()]
-		food_label.text = "식량: %d (다음 계절 %+d, 유지비 %d)" % [sect.food, forecast["food"], sect.get_food_upkeep()]
+		gold_label.text = "은자: %d (다음 계절 %+d, 씀씀이 %d)" % [sect.gold, forecast["gold"], sect.get_gold_upkeep()]
+		food_label.text = "식량: %d (다음 계절 %+d, 씀씀이 %d)" % [sect.food, forecast["food"], sect.get_food_upkeep()]
 	# 다음 계절을 넘기지 못할 것 같으면 경고 색으로 표시한다.
 	_set_warning(gold_label, wallet.gold + forecast["gold"] < 0)
 	_set_warning(food_label, wallet.food + forecast["food"] < 0)
 	reputation_label.text = "명성: %d" % sect.reputation
-	research_label.text = "연구점: %d" % sect.research_points
+	research_label.text = "깨달음: %d" % sect.research_points
 	disciple_label.text = "제자: %d / %d" % [sect.disciple_count, sect.max_disciples]
 	var facility_texts: PackedStringArray = []
 	for facility in SectManager.get_facility_ids():
 		var level: int = SectManager.get_facility_level(sect, facility)
 		var name: String = SectManager.FACILITY_INFO[facility]["name"]
-		facility_texts.append("%s Lv.%d" % [name, level] if level > 0 else "%s 없음" % name)
+		facility_texts.append("%s %d단계" % [name, level] if level > 0 else "%s 없음" % name)
 	facilities_label.text = "  ".join(facility_texts.slice(0, 3)) + "\n" + "  ".join(facility_texts.slice(3))
 
 
@@ -513,7 +513,7 @@ func _update_character_display(character: CharacterData) -> void:
 	character_role_label.text = "%s · 지역: %s" % [character.get_role_name(), GameManager.get_location_text()]
 	ArtAssets.set_background(self, ArtAssets.region_background(GameManager.player_region))
 	character_stats_label.text = (
-		"무력 %d | 신법 %d | 지혜 %d | 매력 %d\n내공 %d/%d | 전투력 %d | 도덕 %d %s | Lv.%d (경험 %d/%d)"
+		"무력 %d | 신법 %d | 지혜 %d | 매력 %d\n내공 %d/%d | 전투력 %d | 도덕 %d %s | 경지 %d (수련 %d/%d)"
 		% [
 			character.strength,
 			character.agility,
@@ -590,7 +590,7 @@ func _show_invasion() -> void:
 	var bribe_gold: int = _Balance.INVASION_BRIBE_GOLD
 	var options: Array[Dictionary] = [
 			{"id": "fight", "title": "맞서 싸운다", "description": "방어전: 제자와 인연이 함께 싸웁니다. 막아 내면 %s이(가) 제자를 잃습니다." % invader.sect_name},
-			{"id": "bribe", "title": "금화로 물린다 (금화 %d)" % bribe_gold, "description": "싸우지 않고 돌려보냅니다.",
+			{"id": "bribe", "title": "은자로 물린다 (은자 %d)" % bribe_gold, "description": "싸우지 않고 돌려보냅니다.",
 				"disabled": GameManager.player_sect.gold < bribe_gold},
 			{"id": "yield", "title": "산문을 내준다", "description": "제자 -%d, 명성 -%d" % [
 				_Balance.INVASION_YIELD_DISCIPLES, _Balance.INVASION_YIELD_REPUTATION,
@@ -646,7 +646,7 @@ func _on_event_triggered(event_data: Dictionary) -> void:
 
 func _on_role_transitions_available(options: Array[Dictionary]) -> void:
 	if not options.is_empty():
-		_on_action_message("새로운 역할 전환 기회가 있습니다. [역할 전환] 버튼을 누르세요.")
+		_on_action_message("새로운 신분 전환 기회가 있습니다. [신분 전환] 버튼을 누르세요.")
 
 
 func _on_role_changed(_new_role: CharacterData.Role) -> void:
@@ -655,7 +655,7 @@ func _on_role_changed(_new_role: CharacterData.Role) -> void:
 
 func _on_ending_reached(ending_id: String) -> void:
 	var ending: Dictionary = EndingManager.get_ending(ending_id)
-	_on_action_message("엔딩 도달: %s — [엔딩/레거시] 메뉴에서 확인하세요." % ending["title"])
+	_on_action_message("결말 도달: %s — [결말/후대] 메뉴에서 확인하세요." % ending["title"])
 
 
 func _on_game_over(_game_over_id: String) -> void:
@@ -674,12 +674,12 @@ func _execute_action(result: Dictionary, action_id: String = "", context: Dictio
 		EventBus.character_updated.emit(GameManager.player_character)
 
 
-## 역할 행동의 장면 id: 의뢰 게시판은 의뢰마다(호위·수색), 그 밖에는 행동 id
+## 신분 행동의 장면 id: 의뢰 게시판은 의뢰마다(호위·수색), 그 밖에는 행동 id
 func _role_scene_id(action_id: String, target_id: String) -> String:
 	return "job_%s" % target_id if action_id == "job_board" else action_id
 
 
-## 역할 행동 장면의 인물·대상: 상대 세력과 그 문주, 부서·의뢰 이름, 스승·문주
+## 신분 행동 장면의 인물·대상: 상대 세력과 그 문주, 부서·의뢰 이름, 스승·문주
 func _role_scene_context(action_id: String, target_id: String) -> Dictionary:
 	var context: Dictionary = {"title": RoleActions.ACTIONS[action_id]["title"]}
 	var sect: SectData = GameManager.get_world_sect(target_id) if not target_id.is_empty() else null
@@ -713,18 +713,18 @@ func _on_advance_turn_pressed() -> void:
 	ActionPreview.get_popup(self).open("계절 넘기기 — 미리보기", _advance_preview_text(), GameManager.advance_turn, "넘기기", "취소")
 
 
-## 계절을 넘기면 확실히 바뀌는 것(수입·유지비)과 넘긴 뒤에야 알 수 있는 것을 알려 준다.
+## 계절을 넘기면 확실히 바뀌는 것(수입·씀씀이)과 넘긴 뒤에야 알 수 있는 것을 알려 준다.
 func _advance_preview_text() -> String:
 	var sect: SectData = GameManager.get_wallet()
 	var estimate: Dictionary = GameManager.estimate_next_season()
-	var lines: PackedStringArray = ["예상 변화 (생활비)" if GameManager.uses_purse() else "예상 변화 (수입 - 유지비)"]
-	lines.append("금화  %d → %d (%+d)" % [sect.gold, maxi(0, sect.gold + estimate["gold"]), estimate["gold"]])
+	var lines: PackedStringArray = ["예상 변화 (생활비)" if GameManager.uses_purse() else "예상 변화 (수입 - 씀씀이)"]
+	lines.append("은자  %d → %d (%+d)" % [sect.gold, maxi(0, sect.gold + estimate["gold"]), estimate["gold"]])
 	lines.append("식량  %d → %d (%+d)" % [sect.food, maxi(0, sect.food + estimate["food"]), estimate["food"]])
 	if sect.food + estimate["food"] < 0 or sect.gold + estimate["gold"] < 0:
-		lines.append("노자가 떨어지면 굶주려 내공이 줍니다." if GameManager.uses_purse() else "자원이 모자라 유지비를 다 내지 못하면 제자가 떠납니다.")
+		lines.append("노자가 떨어지면 굶주려 내공이 줍니다." if GameManager.uses_purse() else "자원이 모자라 씀씀이를 다 내지 못하면 제자가 떠납니다.")
 	lines.append("")
-	lines.append("나이·시설 효과·역할 자원도 계절에 맞춰 바뀌고, 기연·강호 세력의 움직임·침공은 넘긴 뒤에 알 수 있습니다.")
-	# 지금 역할로 할 수 있는 일만 (막내 제자에게 연회를 권하지 않는다)
+	lines.append("나이·전각 효과·신분 자원도 계절에 맞춰 바뀌고, 기연·강호 세력의 움직임·침공은 넘긴 뒤에 알 수 있습니다.")
+	# 지금 신분으로 할 수 있는 일만 (막내 제자에게 연회를 권하지 않는다)
 	var left: PackedStringArray = RoleDashboard.get_unused_actions(GameManager)
 	if not left.is_empty():
 		lines.append("이번 계절에 아직 하지 않은 일 (%s): %s" % [GameManager.player_character.get_role_name(), ", ".join(left)])
@@ -773,7 +773,7 @@ func _on_martial_art_pressed() -> void:
 	SceneRouter.goto(get_tree(), SceneRouter.MARTIAL_ART)
 
 
-## 역할 전환 창: 고를 전환이 없어도 열어 갈 수 있는 길과 조건을 보인다.
+## 신분 전환 창: 고를 전환이 없어도 열어 갈 수 있는 길과 조건을 보인다.
 func _on_role_pressed() -> void:
 	GameManager.refresh_role_transitions(false)
 	role_popup.show_options(GameManager.pending_role_transitions)
@@ -814,7 +814,7 @@ func _on_save_pressed() -> void:
 			"title": summary["title"],
 			"description": ("덮어쓰기 — " if summary["exists"] else "") + summary["detail"],
 		})
-	save_popup.open("저장", "저장할 슬롯을 고르세요. 계절이 바뀔 때마다 자동 저장도 따로 됩니다.", options)
+	save_popup.open("저장", "저장할 칸을 고르세요. 계절이 바뀔 때마다 자동 저장도 따로 됩니다.", options)
 
 
 func _on_save_slot_chosen(slot: String) -> void:
@@ -843,10 +843,10 @@ func _on_help_pressed() -> void:
 
 func _on_main_menu_pressed() -> void:
 	AudioManager.play_click()
-	confirm_popup.open("메인 메뉴로", "자동 저장한 뒤 메인 메뉴로 나갑니다.\n[계속하기]나 [불러오기]로 이어서 할 수 있습니다.", go_main_menu, "나가기", "머무르기")
+	confirm_popup.open("첫 화면으로", "자동 저장한 뒤 첫 화면으로 나갑니다.\n[계속하기]나 [불러오기]로 이어서 할 수 있습니다.", go_main_menu, "나가기", "머무르기")
 
 
-## 자동 저장하고 메인 메뉴로 나간다.
+## 자동 저장하고 첫 화면으로 나간다.
 func go_main_menu() -> void:
 	if GameManager.is_game_active:
 		GameManager.autosave()
@@ -914,7 +914,7 @@ func _build_portrait_layout() -> void:
 		holder.add_child(scroll)
 		pages[entry[0]] = scroll
 
-	# 할 일: 역할 칸(고유 행동), 이 계절 할 일 목록, 최근 소식
+	# 할 일: 신분 칸(고유 행동), 이 계절 할 일 목록, 최근 소식
 	var todo: VBoxContainer = _page_box("todo")
 	$Margin/RootHBox/RightPanel/RolePanel.reparent(todo)
 	var todo_panel := PanelContainer.new()
@@ -925,7 +925,7 @@ func _build_portrait_layout() -> void:
 	todo_panel.add_child(todo_box)
 	$Margin/RootHBox/LeftPanel/LogPanel.reparent(todo)
 
-	# 문파: 자원·시설 칸, 문파 운영 버튼
+	# 문파: 자원·전각 칸, 문파 운영 버튼
 	var sect_page: VBoxContainer = _page_box("sect")
 	$Margin/RootHBox/LeftPanel/SectPanel.reparent(sect_page)
 	facility_panel.reparent(sect_page)
@@ -937,7 +937,7 @@ func _build_portrait_layout() -> void:
 	_add_button_grid(hero, ["MartialArtButton", "ElixirButton", "CombatButton", "RoleButton"])
 	$Margin/RootHBox/RightPanel/RelationshipPanel.reparent(hero)
 
-	# 강호: 지도·정세·연대기·엔딩, 지난 계절 동향
+	# 강호: 지도·정세·연대기·결말, 지난 계절 동향
 	var world: VBoxContainer = _page_box("world")
 	var world_grid: GridContainer = _add_button_grid(world, ["MapButton", "WorldButton"])
 	for node_name in ["ChronicleButton", "EndingButton"]:
@@ -952,7 +952,7 @@ func _build_portrait_layout() -> void:
 	_UiTheme.set_font_size(world_report_label, 14)
 	report_panel.add_child(world_report_label)
 
-	# 메뉴: 저장·도움말·설정·메인 메뉴
+	# 메뉴: 저장·도움말·설정·첫 화면
 	$Margin/RootHBox/LeftPanel/SystemPanel.reparent(_page_box("menu"))
 
 	# 아래: 계절 넘기기(크게)와 탭
@@ -984,7 +984,7 @@ func _build_portrait_layout() -> void:
 
 
 ## 세로 쪽 안의 글줄은 모두 화면 폭에서 줄바꿈한다. 줄바꿈 없는 글줄은 글자 크기를 키우거나
-## 글이 길어지면(역할·능력치 줄) 최소 폭을 넓혀 쪽을 화면 밖으로 밀어낸다.
+## 글이 길어지면(신분·자질 줄) 최소 폭을 넓혀 쪽을 화면 밖으로 밀어낸다.
 ## 가로로 늘어선 칸(HBox) 안의 글줄은 남는 폭을 받아야 한 글자씩 꺾이지 않는다.
 func _wrap_labels(page: Control) -> void:
 	for label: Label in page.find_children("*", "Label", true, false):
@@ -1040,8 +1040,8 @@ func _update_portrait() -> void:
 	var sect: SectData = GameManager.player_sect
 	var wallet: SectData = GameManager.get_wallet()
 	var forecast: Dictionary = GameManager.estimate_next_season()
-	status_label.text = "%s %d (%+d) · 식량 %d (%+d) · 명성 %d · 연구점 %d%s · %s" % [
-		"내 금화" if GameManager.uses_purse() else "금화", wallet.gold, forecast["gold"], wallet.food, forecast["food"],
+	status_label.text = "%s %d (%+d) · 식량 %d (%+d) · 명성 %d · 깨달음 %d%s · %s" % [
+		"내 은자" if GameManager.uses_purse() else "은자", wallet.gold, forecast["gold"], wallet.food, forecast["food"],
 		sect.reputation, sect.research_points,
 		" · 제자 %d/%d" % [sect.disciple_count, sect.max_disciples] if GameManager.has_sect() else "",
 		GameManager.get_region_name(),
@@ -1060,7 +1060,7 @@ func _update_portrait() -> void:
 		if step["id"] == "role_action":
 			var note := Label.new()
 			note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			note.text = "· %s — 위 역할 칸의 버튼으로" % step["title"]
+			note.text = "· %s — 위 신분 칸의 버튼으로" % step["title"]
 			todo_box.add_child(note)
 			continue
 		var button := Button.new()

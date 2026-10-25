@@ -95,7 +95,7 @@ func _apply(setup: CombatSetup, outcome: CombatManager.Outcome, st: Dictionary) 
 
 ## 새 게임을 이벤트 없이 시작한다.
 func _new_quiet_game(gm: Node, role_id: String) -> void:
-	gm.start_new_game("역할", role_id, ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
+	gm.start_new_game("신분", role_id, ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
 
 
 func _rel(gm: Node, target_id: String) -> RelationshipData:

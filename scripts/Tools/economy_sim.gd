@@ -5,18 +5,18 @@ extends SceneTree
 ## 기연·전투는 끄고(event_rate 0) 순수 경제만 본다.
 
 const YEARS := 10
-const STRATEGIES: Array[String] = ["무행동", "제자 18명까지", "제자 최대 훈련", "시설 확장", "적극 투자"]
+const STRATEGIES: Array[String] = ["무행동", "제자 18명까지", "제자 최대 훈련", "전각 확장", "적극 투자"]
 
 
 func _initialize() -> void:
-	# 시뮬레이션의 자동 저장이 실제 세이브를 덮어쓰지 않게 한다.
+	# 시뮬레이션의 자동 저장이 실제 저장본을 덮어쓰지 않게 한다.
 	SaveManager.save_dir = "user://_sim_saves/"
 	process_frame.connect(_run, CONNECT_ONE_SHOT)
 
 
 func _run() -> void:
 	var gm: Node = root.get_node("GameManager")
-	print("전략 | 금화 / 식량 / 제자 / 명성 (5년 후, 10년 후). 시작: 금화 500, 식량 300")
+	print("전략 | 은자 / 식량 / 제자 / 명성 (5년 후, 10년 후). 시작: 은자 500, 식량 300")
 	for strategy in STRATEGIES:
 		for role in ["young_disciple", "leader"]:
 			seed(1)
@@ -48,7 +48,7 @@ static func run_strategy(gm: Node, strategy: String) -> void:
 				SectManager.train_disciples(sect, gm.player_character)
 		"제자 최대 훈련":
 			SectManager.train_disciples(sect, gm.player_character)
-		"시설 확장":
+		"전각 확장":
 			for facility in SectManager.get_facility_ids():
 				SectManager.upgrade_facility(sect, facility)
 		"적극 투자":

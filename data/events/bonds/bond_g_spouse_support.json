@@ -14,7 +14,7 @@
   "choices": [
     {
       "label": "고맙게 받는다",
-      "message": "금화 +60, 유대 +3",
+      "message": "은자 +60, 유대 +3",
       "effects": [
         {
           "type": "sect",

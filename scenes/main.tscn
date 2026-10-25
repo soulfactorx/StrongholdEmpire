@@ -82,7 +82,7 @@ text = "설정"
 [node name="HelpButton" type="Button" parent="CenterContainer/VBox"]
 custom_minimum_size = Vector2(320, 48)
 layout_mode = 2
-text = "플레이 가이드"
+text = "강호 입문서"
 
 [node name="QuitButton" type="Button" parent="CenterContainer/VBox"]
 custom_minimum_size = Vector2(320, 48)
@@ -114,7 +114,7 @@ text = "문파 경영"
 [node name="DevMartialArtButton" type="Button" parent="CenterContainer/VBox/DevPanel/DevVBox"]
 custom_minimum_size = Vector2(150, 32)
 layout_mode = 2
-text = "무공 연구"
+text = "무공 참오"
 
 [node name="DevCombatButton" type="Button" parent="CenterContainer/VBox/DevPanel/DevVBox"]
 custom_minimum_size = Vector2(150, 32)
@@ -129,7 +129,7 @@ text = "문파전 지휘"
 [node name="DevEndingButton" type="Button" parent="CenterContainer/VBox/DevPanel/DevVBox"]
 custom_minimum_size = Vector2(150, 32)
 layout_mode = 2
-text = "엔딩 / 레거시"
+text = "결말 / 후대"
 
 [connection signal="pressed" from="CenterContainer/VBox/ContinueButton" to="." method="_on_continue_pressed"]
 [connection signal="pressed" from="CenterContainer/VBox/NewGameButton" to="." method="_on_new_game_pressed"]

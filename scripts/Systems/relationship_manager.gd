@@ -6,7 +6,7 @@ const _Balance = preload("res://scripts/Systems/game_balance.gd")
 ## 인물과의 상호작용 (계절마다 INTERACTIONS_PER_SEASON번, 서로 공유)
 const INTERACTIONS: Dictionary = {
 	"talk": "대화",
-	"gift": "선물 (금화 %d)" % _Balance.GIFT_GOLD,
+	"gift": "선물 (은자 %d)" % _Balance.GIFT_GOLD,
 	"spar": "비무 신청",
 }
 ## 방어전에 아군으로 합류하고, 함께 싸울 때 서로를 지켜 주는 관계
@@ -18,7 +18,7 @@ const PROTECTIVE_BONDS: Array = [
 	RelationshipData.BondType.PUPIL,
 	RelationshipData.BondType.FRIEND,
 ]
-## 청혼 (인연 팝업의 따로 된 버튼. 상호작용 한 번을 쓴다)
+## 청혼 (인연 창의 따로 된 버튼. 상호작용 한 번을 쓴다)
 const PROPOSE := "propose"
 ## 새 게임에서 직접 정한 관계의 시작 유대 (관계 유형 키 → 유대)
 const START_STRENGTH: Dictionary = {
@@ -124,7 +124,7 @@ static func format_relationships(relationships: Array[RelationshipData]) -> Stri
 	var lines: PackedStringArray = []
 	for rel in relationships:
 		lines.append(
-			"%s (%s Lv.%d, %d)" % [
+			"%s (%s %d단계 · 유대 %d)" % [
 				rel.target_name,
 				rel.get_bond_name(),
 				rel.stage,
@@ -150,7 +150,7 @@ static func _use_interaction(story_flags: Dictionary, turn: int) -> void:
 
 
 ## 인물과 대화·선물·비무를 한다. 비무면 결과에 combat(CombatSetup)이 담긴다 (GameManager가 전투를 시작한다).
-## sect: 금화를 내는 곳 (개인 재산을 쓰는 역할이면 주머니). 청혼의 명성은 GameManager가 문파에 더한다.
+## sect: 은자를 내는 곳 (개인 재산을 쓰는 신분이면 주머니). 청혼의 명성은 GameManager가 문파에 더한다.
 static func interact(
 	relationships: Array[RelationshipData],
 	target_id: String,
@@ -170,11 +170,11 @@ static func interact(
 		if not reason.is_empty():
 			return {"success": false, "message": reason}
 		if not sect.spend_resources(_Balance.WEDDING_GOLD):
-			return {"success": false, "message": "혼례 비용이 모자랍니다. (금화 %d 필요)" % _Balance.WEDDING_GOLD}
+			return {"success": false, "message": "혼례 비용이 모자랍니다. (은자 %d 필요)" % _Balance.WEDDING_GOLD}
 		_use_interaction(story_flags, turn)
 		var wedding: String = marry(relationships, rel, EventManager.world_sects)
 		EventManager.set_flag(story_flags, "married")
-		return {"success": true, "married": target_id, "message": "%s에게 청혼해 혼례를 올렸습니다. (금화 -%d, 명성 +%d) %s" % [
+		return {"success": true, "married": target_id, "message": "%s에게 청혼해 혼례를 올렸습니다. (은자 -%d, 명성 +%d) %s" % [
 			rel.target_name, _Balance.WEDDING_GOLD, _Balance.WEDDING_REPUTATION, wedding,
 		]}
 	var hatred: bool = rel.bond_type == RelationshipData.BondType.HATRED
@@ -186,8 +186,8 @@ static func interact(
 			message = _change(rel, amount, hatred, "%s와(과) 이야기를 나누었습니다.%s" % [rel.target_name, _like_text(target_id, kind)])
 		"gift":
 			if not sect.spend_resources(_Balance.GIFT_GOLD):
-				return {"success": false, "message": "금화가 부족합니다. (%d 필요)" % _Balance.GIFT_GOLD}
-			message = _change(rel, _like_bonus(target_id, kind, _Balance.GIFT_BOND), hatred, "%s에게 선물을 보냈습니다. (금화 -%d)%s" % [
+				return {"success": false, "message": "은자가 부족합니다. (%d 필요)" % _Balance.GIFT_GOLD}
+			message = _change(rel, _like_bonus(target_id, kind, _Balance.GIFT_BOND), hatred, "%s에게 선물을 보냈습니다. (은자 -%d)%s" % [
 				rel.target_name, _Balance.GIFT_GOLD, _like_text(target_id, kind),
 			])
 		"spar":

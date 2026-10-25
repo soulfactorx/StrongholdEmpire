@@ -16,28 +16,28 @@ extends RefCounted
 ##   character  field, op, value   — CHARACTER_FIELDS (martial_arts_count는 습득 무공 수)
 ##   sect       field, op, value   — SECT_FIELDS
 ##   bond       target, op, value  — 관계 대상의 유대 수치. 관계가 없으면 거짓
-##   role       in: [역할 이름]     — CharacterData.Role 이름 (예: "SPY")
+##   role       in: [신분 이름]     — CharacterData.Role 이름 (예: "SPY")
 ##   season     in: [계절]          — "봄" "여름" "가을" "겨울"
 ##   flag       flag, value        — 스토리 플래그 값 비교 (없으면 false로 간주)
 ##   world_sect sect, field, op, value — 강호 세력 수치 비교 (WORLD_SECT_FIELDS)
 ##   year       op, value          — 현재 연차 비교
 ##   turns_since_flag flag, op, value — 플래그가 켜진 뒤 지난 계절 수 비교 (켜진 적 없으면 거짓)
 ##   relationship_type target, bond_type — 해당 인물과의 관계 유형이 일치
-##   role_history role, value       — 그 역할을 거쳐 왔는지 (value 생략 시 true)
+##   role_history role, value       — 그 신분을 거쳐 왔는지 (value 생략 시 true)
 ##   scenario   in: [시나리오 id]   — 현재 시나리오가 목록에 있음
 ##   years_left op, value          — 시나리오 제한까지 남은 연수 (제한 없으면 9999)
 ##   subjugated_count op, value    — 굴복시킨 강호 세력 수
 ##   regions_owned op, value       — 강호 지도에서 우리 문파가 가진 땅 수 (본거지 포함)
 ##   generation op, value          — 현재 세대 (1세대부터)
 ##   alignment  in: ["good","neutral","evil"] — 주인공의 성향 (도덕 65 이상 선, 35 이하 악, 그 사이 중립)
-##   role_state field, op, value   — 역할 자원 비교 (RoleActions.NUMERIC_FIELDS: discontent, trust, exposure, bounty ...)
+##   role_state field, op, value   — 신분 자원 비교 (RoleActions.NUMERIC_FIELDS: discontent, trust, exposure, bounty ...)
 ##   (world_sect의 field에는 subjugated(0/1)도 쓸 수 있다)
 ##   op: ">=" "<=" ">" "<" "==" "!="
 ##
 ## ■ 효과 (type별 필드)
-##   character   field, add        — 능력치 증감. 내공은 0~최대치로 제한
+##   character   field, add        — 자질 증감. 내공은 0~최대치로 제한
 ##   sect        field, add        — 문파 자원 증감. 0 미만으로 내려가지 않음
-##   experience  amount            — 경험치 (레벨업 포함)
+##   experience  amount            — 수련 (경지업 포함)
 ##   bond        target, add       — 유대 증감
 ##   flag        flag, value       — 스토리 플래그 설정
 ##   combat      combat            — 전투 시작 (CombatManager.create_by_id, 방어전이면 제자 합류)
@@ -45,8 +45,8 @@ extends RefCounted
 ##   set_bond_type target, bond_type — 기존 관계의 유형을 바꾼다
 ##   add_relationship target, bond_type, strength — 명부 인물과 새 관계를 맺는다 (이미 있으면 무시)
 ##   learn_art   art               — 무공 습득 (MartialArtLibrary id)
-##   end_game    ending            — 지정한 엔딩 또는 게임오버로 이야기를 끝낸다
-##   role_state  field, add        — 역할 자원 증감 (0~100으로 제한)
+##   end_game    ending            — 지정한 결말 또는 게임오버로 이야기를 끝낸다
+##   role_state  field, add        — 신분 자원 증감 (0~100으로 제한)
 ##
 ## ■ 관계 대상 기연 (subject)
 ##   최상위 "subject"가 있으면 기연이 일어날 때 조건에 맞는 인물 하나를 고른다.
@@ -60,7 +60,7 @@ extends RefCounted
 ##   end_relationship target         — 관계를 끝낸다 (이별·사별, 효과)
 ##
 ## ■ 비급
-##   gain_manual art — 비급을 얻는다 (무공 연구소에서 연구할 수 있게 됨). art가 "random"이면 아직 연구할 수 없고
+##   gain_manual art — 비급을 얻는다 (장경각에서 참오할 수 있게 됨). art가 "random"이면 아직 참오할 수 없고
 ##                     익히지도 않은 비급 중 하나 (효과)
 ##
 ## ■ 선택지 조건과 장면 대사
@@ -74,7 +74,7 @@ extends RefCounted
 ##   최상위 "follow_up": true — 다른 기연의 next로만 일어나는 기연 (계절마다 뽑는 후보에 들지 않는다)
 ##   scene 줄의 "if": [조건] — 조건을 채울 때만 그 대사가 보인다 (지난 선택을 기억하는 대사)
 ##   효과 unlock feature — 기능을 연다 (FeatureGate, 기능 단계 개방)
-##   효과 set_role role — 역할을 바꾼다 (CharacterData.Role 이름. 예: 아버지를 잃고 가주가 됨)
+##   효과 set_role role — 신분을 바꾼다 (CharacterData.Role 이름. 예: 아버지를 잃고 가주가 됨)
 ##   효과 goal text — 강호 일지의 목표를 바꾼다 / rumor text — 강호 일지에 소문을 더한다
 ##
 ## ■ 강호 연표 (메인 시나리오)
@@ -86,7 +86,7 @@ extends RefCounted
 ##   최상위 "priority"(기본 false): true면 조건을 채운 계절에 기연 발생 확률과 관계없이 먼저 일어난다.
 ##
 ## ■ 초상화
-##   최상위 "npc"(선택): 팝업에 초상화를 보일 인물 id. 없으면 조건·효과에서 처음 나오는 명부 인물(target)을 쓴다.
+##   최상위 "npc"(선택): 창에 초상화를 보일 인물 id. 없으면 조건·효과에서 처음 나오는 명부 인물(target)을 쓴다.
 
 const EVENTS_DIR := "res://data/events/"
 
@@ -116,11 +116,11 @@ static var current_year: int = 1
 ## 연차 × 4 + 계절 순번
 static var current_turn: int = 0
 static var current_generation: int = 1
-## 거쳐 온 역할 이름 (CharacterData.Role 키)
+## 거쳐 온 신분 이름 (CharacterData.Role 키)
 static var role_history: Array[String] = []
 ## 플래그 이름 → 켜진 계절(current_turn)
 static var flag_turns: Dictionary = {}
-## 역할 자원 (GameManager.role_state와 같은 객체)
+## 신분 자원 (GameManager.role_state와 같은 객체)
 static var role_state: Dictionary = {}
 ## 강호 지도 상태 (GameManager.map_state)와 플레이어 문파 id — regions_owned 조건
 static var map_state: Dictionary = {}
@@ -128,7 +128,7 @@ static var player_sect_id: String = ""
 ## 주인공 이름 ({player}) · 주인공이 된 명부 인물 (등장인물 선택 플레이. 새 인연 후보에서 뺀다)
 static var player_name: String = ""
 static var player_npc_id: String = ""
-## 금화·식량을 내고 받는 곳 (GameManager.get_wallet). 개인 재산을 쓰는 역할이면 주머니다.
+## 은자·식량을 내고 받는 곳 (GameManager.get_wallet). 개인 재산을 쓰는 신분이면 주머니다.
 ## sect 조건·효과의 gold·food는 여기를 본다. null이면 문파.
 static var wallet: SectData = null
 ## 가진 비급 (GameManager.owned_manuals와 같은 배열) — gain_manual 효과
@@ -252,7 +252,7 @@ static func check_turn_events(
 	return make_popup(chosen, character, sect, relationships, season, story_flags, subject_id)
 
 
-## 팝업에 띄울 기연: 조건을 채운 선택지와 대사 줄만 보인다.
+## 창에 띄울 기연: 조건을 채운 선택지와 대사 줄만 보인다.
 static func make_popup(
 	event: EventData, character: CharacterData, sect: SectData, relationships: Array[RelationshipData],
 	season: String, story_flags: Dictionary, subject_id: String = ""
@@ -588,7 +588,7 @@ static func _validate_condition(condition: Variant, errors: PackedStringArray) -
 		"role":
 			for role_name in c.get("in", []):
 				if not CharacterData.Role.has(role_name):
-					errors.append("알 수 없는 역할: %s" % role_name)
+					errors.append("알 수 없는 신분: %s" % role_name)
 		"season":
 			for season in c.get("in", []):
 				if not season in SEASON_NAMES:
@@ -614,7 +614,7 @@ static func _validate_condition(condition: Variant, errors: PackedStringArray) -
 			_validate_compare(c, errors)
 		"role_history":
 			if not CharacterData.Role.has(c.get("role", "")):
-				errors.append("알 수 없는 역할: %s" % c.get("role"))
+				errors.append("알 수 없는 신분: %s" % c.get("role"))
 		"scenario":
 			if not c.get("in") is Array or (c.get("in") as Array).is_empty():
 				errors.append("scenario 조건에 in 목록 필요")
@@ -622,7 +622,7 @@ static func _validate_condition(condition: Variant, errors: PackedStringArray) -
 			_validate_compare(c, errors)
 		"role_state":
 			if not c.get("field") in RoleActions.NUMERIC_FIELDS:
-				errors.append("알 수 없는 역할 자원: %s" % c.get("field"))
+				errors.append("알 수 없는 신분 자원: %s" % c.get("field"))
 			_validate_compare(c, errors)
 		"alignment":
 			if not c.get("in") is Array or (c["in"] as Array).any(func(a: Variant) -> bool: return not str(a) in ["good", "neutral", "evil"]):
@@ -684,17 +684,17 @@ static func _validate_effect(effect: Variant, errors: PackedStringArray) -> void
 				errors.append("알 수 없는 무공: %s" % e.get("art"))
 		"role_state":
 			if not e.get("field") in RoleActions.NUMERIC_FIELDS:
-				errors.append("알 수 없는 역할 자원: %s" % e.get("field"))
+				errors.append("알 수 없는 신분 자원: %s" % e.get("field"))
 		"end_game":
 			var ending: String = str(e.get("ending", ""))
 			if not (EndingManager.has_ending(ending) or EndingManager.GAME_OVERS.has(ending)):
-				errors.append("알 수 없는 엔딩: %s" % ending)
+				errors.append("알 수 없는 결말: %s" % ending)
 		"unlock":
 			if not FeatureGate.has_feature(str(e.get("feature", ""))):
 				errors.append("알 수 없는 기능: %s" % e.get("feature"))
 		"set_role":
 			if not CharacterData.Role.has(str(e.get("role", ""))):
-				errors.append("알 수 없는 역할: %s" % e.get("role"))
+				errors.append("알 수 없는 신분: %s" % e.get("role"))
 		"goal", "rumor":
 			if not e.get("text") is String or String(e.get("text")).is_empty():
 				errors.append("%s 효과에 text 필요" % e.get("type"))
@@ -780,7 +780,7 @@ static func _conditions_met(
 	return conditions_met(event.conditions, character, sect, relationships, season, story_flags)
 
 
-## 조건 목록을 모두 만족하는지. 기연 외에 엔딩 판정에서도 쓴다.
+## 조건 목록을 모두 만족하는지. 기연 외에 결말 판정에서도 쓴다.
 static func conditions_met(
 	conditions: Array,
 	character: CharacterData,
@@ -795,7 +795,7 @@ static func conditions_met(
 	return true
 
 
-## 조건 목록을 검사해 오류를 errors에 더한다. 기연 외에 엔딩 정의 검증에서도 쓴다.
+## 조건 목록을 검사해 오류를 errors에 더한다. 기연 외에 결말 정의 검증에서도 쓴다.
 static func validate_conditions(conditions: Variant, errors: PackedStringArray) -> void:
 	if not conditions is Array:
 		errors.append("conditions는 배열이어야 함")
@@ -868,16 +868,16 @@ static func _condition_met(
 	return false
 
 
-## 금화·식량은 지갑(개인 재산이면 주머니), 그 밖의 문파 수치는 문파
+## 은자·식량은 지갑(개인 재산이면 주머니), 그 밖의 문파 수치는 문파
 static func _money_target(sect: SectData, field: String) -> SectData:
 	return wallet if wallet != null and field in ["gold", "food"] else sect
 
 
-## 얻을 비급이 남지 않았을 때 대신 주는 연구점
+## 얻을 비급이 남지 않았을 때 대신 주는 깨달음
 const NO_MANUAL_RESEARCH := 20
 
 
-## 비급을 owned에 더한다. "random"이면 available(이미 연구할 수 있는 것)·owned·익힌 무공이 아닌 것 중 하나.
+## 비급을 owned에 더한다. "random"이면 available(이미 참오할 수 있는 것)·owned·익힌 무공이 아닌 것 중 하나.
 ## 얻은 비급 이름을 돌려준다 (이미 있거나 남은 것이 없으면 "").
 static func gain_manual(art_id: String, owned: Array[String], character: CharacterData, available: Array = []) -> String:
 	if art_id == "random":
@@ -981,8 +981,8 @@ static func _apply_effect(
 		"gain_manual":
 			var library: Array = SectRegistry.get_sect_info(sect.id).get("manuals", []) if SectRegistry.has_sect(sect.id) else []
 			var gained: String = gain_manual(str(e["art"]), owned_manuals, character, library)
-			var note: String = "비급 [%s]을(를) 얻었습니다. 무공 연구소에서 연구할 수 있습니다." % gained if not gained.is_empty() \
-				else "새로 얻을 비급이 없었습니다. 대신 연구점 +%d" % NO_MANUAL_RESEARCH
+			var note: String = "비급 [%s]을(를) 얻었습니다. 장경각에서 참오할 수 있습니다." % gained if not gained.is_empty() \
+				else "새로 얻을 비급이 없었습니다. 대신 깨달음 +%d" % NO_MANUAL_RESEARCH
 			if gained.is_empty():
 				sect.research_points += NO_MANUAL_RESEARCH
 			result["message"] = (str(result.get("message", "")) + " " + note).strip_edges()

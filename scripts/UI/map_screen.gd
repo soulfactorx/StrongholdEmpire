@@ -204,7 +204,7 @@ func refresh() -> void:
 	var income: Dictionary = WorldMap.income(state, player_id)
 	summary_label.text = "지금 위치: %s (▶ 표시)\n%s\n지역을 눌러 정보를 봅니다. %s" % [
 		GameManager.get_location_text(),
-		"%s의 땅 %d / %d · 땅에서 나는 계절 수입 금화 +%d, 식량 +%d" % [
+		"%s의 땅 %d / %d · 땅에서 나는 계절 수입 은자 +%d, 식량 +%d" % [
 			GameManager.player_sect.sect_name, WorldMap.count(state, player_id), WorldMap.get_regions().size(), income["gold"], income["food"],
 		] if GameManager.has_sect() else "무소속이라 가진 땅이 없습니다.",
 		"다른 지역을 골라 [이곳으로 이동]하면 옮겨 갑니다 (계절에 한 번, 여비)." if GameManager.can_travel()
@@ -283,17 +283,17 @@ func select_region(region_id: String) -> void:
 	var neighbors: PackedStringArray = []
 	for other in region["neighbors"]:
 		neighbors.append(WorldMap.get_region(other)["name"])
-	info_label.text = "%s%s%s\n주인: %s · 주둔 병력 %d\n땅의 수입: 계절마다 금화 +%d, 식량 +%d%s\n%s\n이웃: %s" % [
+	info_label.text = "%s%s%s\n주인: %s · 주둔 병력 %d\n땅의 수입: 계절마다 은자 +%d, 식량 +%d%s\n%s\n이웃: %s" % [
 		region["name"], " (본거지)" if home else "", " — 지금 여기 있습니다" if region_id == GameManager.player_region else "",
 		_sect_name(owner), region["defense"],
 		region["gold"], region["food"], " (본거지는 수입 없음)" if home else "",
 		region["description"], ", ".join(neighbors),
 	]
-	# 옮겨 다니는 역할(낭인·의뢰인·간자·자객)은 다른 지역으로 이동
+	# 옮겨 다니는 신분(낭인·청부객·간자·자객)은 다른 지역으로 이동
 	if GameManager.can_travel() and region_id != GameManager.player_region:
 		var block: String = GameManager.get_travel_block(region_id)
 		action_button.visible = true
-		action_button.text = "이곳으로 이동 (여비 금화 %d)" % GameManager.get_travel_cost(region_id)
+		action_button.text = "이곳으로 이동 (여비 은자 %d)" % GameManager.get_travel_cost(region_id)
 		action_button.disabled = not block.is_empty()
 		log_label.text = block
 		return
@@ -301,11 +301,11 @@ func select_region(region_id: String) -> void:
 	match action["kind"]:
 		"pacify":
 			action_button.visible = true
-			action_button.text = "평정 (금화 %d · 식량 %d)" % [action["cost"]["gold"], action["cost"]["food"]]
+			action_button.text = "평정 (은자 %d · 식량 %d)" % [action["cost"]["gold"], action["cost"]["food"]]
 			action_button.disabled = not action["reason"].is_empty()
 		"annex":
 			action_button.visible = true
-			action_button.text = "편입 — 굴복한 %s (금화 %d · 식량 %d)" % [_sect_name(action["owner"]), action["cost"]["gold"], action["cost"]["food"]]
+			action_button.text = "편입 — 굴복한 %s (은자 %d · 식량 %d)" % [_sect_name(action["owner"]), action["cost"]["gold"], action["cost"]["food"]]
 			action_button.disabled = not action["reason"].is_empty()
 		"attack":
 			action_button.visible = true

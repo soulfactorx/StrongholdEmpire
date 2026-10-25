@@ -20,7 +20,7 @@ const DEFAULTS: Dictionary = {
 	"enemy_strength_scale": 1.0,
 	## 세력 AI의 호전성: 세력끼리의 공격과 플레이어 침공 가중치에 곱한다. 0이면 싸우지 않는다
 	"ai_aggression": 1.0,
-	## 승리 엔딩에 도달하면 시나리오를 끝낸다 (단기 시나리오용)
+	## 승리 결말에 도달하면 시나리오를 끝낸다 (단기 시나리오용)
 	"end_on_victory": false,
 	## 문파 살림이 무너지면(해산·곳간·명성) 게임이 끝나는지. 이야기 중심 시나리오는 끈다
 	"sect_game_over": true,

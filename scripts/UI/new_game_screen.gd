@@ -17,7 +17,7 @@ var _scenarios: Array[Dictionary] = []
 var _role_ids: Array = []
 var _selected_scenario: Dictionary = {}
 var _selected_role_id: String = StartingRoles.DEFAULT_ID
-## 등장인물(playables)이 있는 시나리오: 목록 항목은 역할 대신 인물이다. 고른 인물 항목 ({}: 역할 선택)
+## 등장인물(playables)이 있는 시나리오: 목록 항목은 신분 대신 인물이다. 고른 인물 항목 ({}: 신분 선택)
 var _playables: Array = []
 var _selected_playable: Dictionary = {}
 ## 파라미터 이름 → OptionButton (첫 항목은 "시나리오 기본")
@@ -73,7 +73,7 @@ func _build_settings() -> void:
 		_setting_options[entry["param"]] = option
 
 
-## 소속 문파: 역할 소개 아래에 고르는 칸을 둔다.
+## 소속 문파: 신분 소개 아래에 고르는 칸을 둔다.
 func _build_sect_choice() -> void:
 	var parent: Node = role_desc_label.get_parent()
 	var index: int = role_desc_label.get_index() + 1
@@ -105,7 +105,7 @@ func _default_sect_id() -> String:
 	return sect_id if not sect_id.is_empty() else SectRegistry.get_player_sect_id()
 
 
-## 시나리오·역할에 맞게 소속 문파 목록을 채운다. 입문 수련처럼 문파가 정해진 시나리오와 낭인은 고를 수 없다.
+## 시나리오·신분에 맞게 소속 문파 목록을 채운다. 입문 수련처럼 문파가 정해진 시나리오와 낭인은 고를 수 없다.
 func _fill_sects() -> void:
 	sect_option.clear()
 	_sect_ids.clear()
@@ -154,7 +154,7 @@ func _update_sect_note() -> void:
 		sect_note.text = "이 인물의 소속은 이야기에서 정해져 있습니다."
 		return
 	if sect_id.is_empty():
-		sect_note.text = "제자·시설 없이 금화·식량을 개인 재산으로 씁니다. 신용을 쌓은 세력에 객경으로 들어갈 수 있습니다."
+		sect_note.text = "제자·전각 없이 은자·식량을 개인 재산으로 씁니다. 신용을 쌓은 세력에 객경으로 들어갈 수 있습니다."
 		return
 	var info: Dictionary = SectRegistry.get_sect_info(sect_id)
 	sect_note.text = "%s\n제자 %d명 · 명성 %d%s" % [
@@ -473,9 +473,9 @@ func _on_scenario_selected(index: int) -> void:
 	tutorial_check.visible = _selected_scenario.get("guided", false) != true
 	_update_length_text()
 
-	# 등장인물이 있는 시나리오는 역할 대신 인물을 고른다. (둘러보기만 하므로 시나리오를 켜지 않는다)
+	# 등장인물이 있는 시나리오는 신분 대신 인물을 고른다. (둘러보기만 하므로 시나리오를 켜지 않는다)
 	_playables = ScenarioManager.get_playables(_selected_scenario)
-	role_list.get_parent().get_node("RoleLabel").text = "등장인물" if not _playables.is_empty() else "시작 역할"
+	role_list.get_parent().get_node("RoleLabel").text = "등장인물" if not _playables.is_empty() else "시작 신분"
 	if not _playables.is_empty():
 		role_list.clear()
 		for entry in _playables:
@@ -488,7 +488,7 @@ func _on_scenario_selected(index: int) -> void:
 		name_edit.text = ""
 	_selected_playable = {}
 	name_edit.editable = true
-	# 시나리오마다 고를 수 있는 시작 역할이 다르다.
+	# 시나리오마다 고를 수 있는 시작 신분이 다르다.
 	var previous_role: String = _selected_role_id
 	_role_ids = ScenarioManager.get_start_role_ids(_selected_scenario)
 	role_list.clear()
@@ -508,7 +508,7 @@ func _on_role_selected(index: int) -> void:
 		_on_playable_selected(index)
 		return
 	var entry: Dictionary = StartingRoles.get_by_id(_role_ids[index])
-	# 이름을 직접 입력하지 않았다면 역할별 기본 이름을 보여준다.
+	# 이름을 직접 입력하지 않았다면 신분별 기본 이름을 보여준다.
 	var previous: Dictionary = StartingRoles.get_by_id(_selected_role_id)
 	if name_edit.text.is_empty() or name_edit.text == previous["default_name"]:
 		name_edit.text = entry["default_name"]
@@ -530,7 +530,7 @@ func _on_playable_selected(index: int) -> void:
 	name_edit.text = str(npc.get("display_name", _selected_playable["npc"]))
 	name_edit.editable = false
 	var role_entry: Dictionary = StartingRoles.get_by_id(_selected_role_id)
-	role_desc_label.text = "%s\n\n%s · %d세 · Lv.%d · 성향 %s\n%s\n\n%s" % [
+	role_desc_label.text = "%s\n\n%s · %d세 · 경지 %d · 성향 %s\n%s\n\n%s" % [
 		_selected_playable.get("summary", ""), role_entry["title"],
 		int(_selected_playable.get("age", stats.get("age", 20))), int(_selected_playable.get("level", npc.get("level", 1))),
 		preview.get_alignment_name(), npc.get("description", ""), RoleDashboard.describe_role(role_entry["role"]),
@@ -540,7 +540,7 @@ func _on_playable_selected(index: int) -> void:
 	_fill_bonds()
 
 
-## 지금 고른 등장인물 id ("": 역할로 시작, 테스트용)
+## 지금 고른 등장인물 id ("": 신분으로 시작, 테스트용)
 func get_selected_playable_id() -> String:
 	return str(_selected_playable.get("npc", ""))
 

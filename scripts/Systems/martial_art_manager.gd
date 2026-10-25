@@ -30,7 +30,7 @@ static func create_from_blueprint(
 	if sect.research_points < research_cost:
 		return {
 			"success": false,
-			"message": "연구점이 부족합니다. (%d 필요)" % research_cost,
+			"message": "깨달음이 부족합니다. (%d 필요)" % research_cost,
 		}
 
 	var success_rate: int = mini(
@@ -49,7 +49,7 @@ static func create_from_blueprint(
 		return {
 			"success": false,
 			"message": (
-				"연구 실패! 내공 반동으로 %d 피해. (성공률 %d%%, 주사위 %d)"
+				"참오 실패! 내공 반동으로 %d 피해. (성공률 %d%%, 주사위 %d)"
 				% [backlash, success_rate, roll]
 			),
 		}
@@ -70,7 +70,7 @@ static func create_from_blueprint(
 	character.learn_martial_art(art)
 	return {
 		"success": true,
-		"message": "무공 창조 성공! [%s] 완성 (성공률 %d%%)" % [name, success_rate],
+		"message": "무공 창안 성공! [%s] 완성 (성공률 %d%%)" % [name, success_rate],
 		"martial_art": art,
 	}
 
@@ -86,7 +86,7 @@ static func research_existing(
 	if sect.research_points < art.research_cost:
 		return {
 			"success": false,
-			"message": "연구점이 부족합니다. (%d 필요)" % art.research_cost,
+			"message": "깨달음이 부족합니다. (%d 필요)" % art.research_cost,
 		}
 
 	var success_rate := calculate_success_rate(sect, character, art.complexity)
@@ -101,13 +101,13 @@ static func research_existing(
 		)
 		return {
 			"success": false,
-			"message": "비급 연구 실패! 내공 반동 %d. (%d%% / %d)" % [backlash, success_rate, roll],
+			"message": "비급 참오 실패! 내공 반동 %d. (%d%% / %d)" % [backlash, success_rate, roll],
 		}
 
 	character.learn_martial_art(art)
 	return {
 		"success": true,
-		"message": "[%s] 연구 완료!" % art.display_name,
+		"message": "[%s] 참오 완료!" % art.display_name,
 		"martial_art": art,
 	}
 
@@ -124,7 +124,7 @@ static func calculate_success_rate(
 	return clampi(rate, _Balance.MIN_SUCCESS_RATE, _Balance.MAX_SUCCESS_RATE)
 
 
-## 분석한 속성을 이기는(상극) 속성이면 성공률 보너스
+## 분석한 속성을 이기는(상극) 속성이면 성공률 가산
 static func get_counter_bonus(element: MartialArtData.FiveElement, analyzed_elements: Array) -> int:
 	var countered: Variant = CombatRules.ELEMENT_OVERCOMES.get(element)
 	if countered != null and analyzed_elements.has(int(countered)):
@@ -144,13 +144,13 @@ static func get_enhance_cost(art: MartialArtData) -> int:
 	return _Balance.ENHANCE_RESEARCH_BASE + art.enhance_level * _Balance.ENHANCE_RESEARCH_STEP
 
 
-## 문파 공동 연구로 무공을 강화한다. 위력(또는 회복량)이 오르고 내공 소모가 준다. 반드시 성공한다.
+## 문파 공동 참오로 무공을 강화한다. 위력(또는 회복량)이 오르고 내공 소모가 준다. 반드시 성공한다.
 static func enhance(art: MartialArtData, sect: SectData) -> Dictionary:
 	if art.enhance_level >= _Balance.ENHANCE_MAX_LEVEL:
 		return {"success": false, "message": "[%s]은(는) 이미 극에 달했습니다." % art.display_name}
 	var cost: int = get_enhance_cost(art)
 	if sect.research_points < cost:
-		return {"success": false, "message": "연구점이 부족합니다. (%d 필요)" % cost}
+		return {"success": false, "message": "깨달음이 부족합니다. (%d 필요)" % cost}
 	sect.research_points -= cost
 	art.enhance_level += 1
 	if art.heal_amount > 0:
@@ -161,7 +161,7 @@ static func enhance(art: MartialArtData, sect: SectData) -> Dictionary:
 	# 비전으로 지정한 무공이면 비전도 함께 강해진다.
 	if sect.secret_art and sect.secret_art.id == art.id:
 		sect.secret_art = art.duplicate(true)
-	return {"success": true, "message": "[%s] 강화 %d단계! (연구점 -%d)" % [art.display_name, art.enhance_level, cost]}
+	return {"success": true, "message": "[%s] 강화 %d단계! (깨달음 -%d)" % [art.display_name, art.enhance_level, cost]}
 
 
 ## 강화한 무공을 문파 비전으로 지정한다. 세대 전승 때 후계자가 물려받고, 제자에게 싸게 전수한다.
@@ -182,14 +182,14 @@ static func analyze(observed: Dictionary, sect: SectData, analyzed_elements: Arr
 	if analyzed_elements.has(element):
 		return {"success": false, "message": "이미 분석한 속성입니다."}
 	if sect.research_points < _Balance.ANALYZE_RESEARCH:
-		return {"success": false, "message": "연구점이 부족합니다. (%d 필요)" % _Balance.ANALYZE_RESEARCH}
+		return {"success": false, "message": "깨달음이 부족합니다. (%d 필요)" % _Balance.ANALYZE_RESEARCH}
 	sect.research_points -= _Balance.ANALYZE_RESEARCH
 	analyzed_elements.append(element)
 	var counter := MartialArtData.new()
 	counter.element = get_counter_element(element)
 	var target := MartialArtData.new()
 	target.element = element
-	return {"success": true, "message": "[%s] 분석 완료: %s 속성의 약점을 알았습니다. %s 속성 무공 창조 성공률 +%d%% (연구점 -%d)" % [
+	return {"success": true, "message": "[%s] 분석 완료: %s 속성의 약점을 알았습니다. %s 속성 무공 창안 성공률 +%d%% (깨달음 -%d)" % [
 		observed.get("name", "?"), target.get_element_name(), counter.get_element_name(),
 		_Balance.COUNTER_SUCCESS_BONUS, _Balance.ANALYZE_RESEARCH,
 	]}

@@ -1,17 +1,17 @@
 class_name SaveManager
 extends RefCounted
 
-## 세이브 파일: 자동 저장 슬롯(0)과 수동 슬롯 1~SLOT_COUNT. 슬롯 1은 예전 단일 슬롯 파일과 같은 이름이다.
+## 저장본 파일: 자동 저장 칸(0)과 수동 칸 1~SLOT_COUNT. 칸 1은 예전 단일 칸 파일과 같은 이름이다.
 ## 불러올 때 migrate()가 버전을 순서대로 올린다.
 
 const SAVE_VERSION := 12
 const SLOT_COUNT := 3
 const AUTO_SLOT := 0
 
-## 세이브 폴더. 테스트는 다른 폴더를 써서 실제 세이브를 건드리지 않는다.
+## 저장본 폴더. 테스트는 다른 폴더를 써서 실제 저장본을 건드리지 않는다.
 static var save_dir: String = "user://"
 
-## 버전별로 새로 생긴 항목과 기본값. 그 버전보다 오래된 세이브에 없으면 채운다.
+## 버전별로 새로 생긴 항목과 기본값. 그 버전보다 오래된 저장본에 없으면 채운다.
 ## (캐릭터·문파 안의 새 필드는 deserialize_* 함수가 기본값을 넣는다)
 const MIGRATIONS: Dictionary = {
 	4: {"flag_turns": {}, "role_history": []},
@@ -35,15 +35,15 @@ static func is_valid_slot(slot: int) -> bool:
 
 static func save_game(state: Dictionary, slot: int = 1) -> Dictionary:
 	if not is_valid_slot(slot):
-		return {"success": false, "message": "없는 저장 슬롯입니다."}
+		return {"success": false, "message": "없는 저장 칸입니다."}
 	DirAccess.make_dir_recursive_absolute(save_dir)
 	var file := FileAccess.open(get_slot_path(slot), FileAccess.WRITE)
 	if file == null:
-		return {"success": false, "message": "세이브 파일을 쓸 수 없습니다."}
-	# 저장한 때 (슬롯 목록에 보인다)
+		return {"success": false, "message": "저장본 파일을 쓸 수 없습니다."}
+	# 저장한 때 (칸 목록에 보인다)
 	state["saved_at"] = int(Time.get_unix_time_from_system())
 	file.store_string(JSON.stringify(state, "\t"))
-	var where: String = "자동 저장" if slot == AUTO_SLOT else "슬롯 %d" % slot
+	var where: String = "자동 저장" if slot == AUTO_SLOT else "칸 %d" % slot
 	return {"success": true, "message": "게임을 저장했습니다. (%s)" % where}
 
 
@@ -52,9 +52,9 @@ static func load_game(slot: int = 1) -> Dictionary:
 		return {"success": false, "message": "저장된 게임이 없습니다."}
 	var data: Variant = _read(slot)
 	if not data is Dictionary:
-		return {"success": false, "message": "세이브 파일이 손상되었습니다."}
+		return {"success": false, "message": "저장본 파일이 손상되었습니다."}
 	if int(data.get("version", 1)) > SAVE_VERSION:
-		return {"success": false, "message": "더 새로운 버전의 게임에서 만든 세이브입니다."}
+		return {"success": false, "message": "더 새로운 버전의 게임에서 만든 저장본입니다."}
 	return {"success": true, "message": "게임을 불러왔습니다.", "data": migrate(data)}
 
 
@@ -65,7 +65,7 @@ static func _read(slot: int) -> Variant:
 	return JSON.parse_string(file.get_as_text())
 
 
-## 슬롯을 하나도 쓰지 않았으면 false. slot을 주면 그 슬롯만 본다.
+## 칸을 하나도 쓰지 않았으면 false. slot을 주면 그 칸만 본다.
 static func has_save(slot: int = -1) -> bool:
 	if slot >= 0:
 		return FileAccess.file_exists(get_slot_path(slot))
@@ -80,16 +80,16 @@ static func delete_save(slot: int) -> void:
 		DirAccess.remove_absolute(get_slot_path(slot))
 
 
-## 슬롯 목록에 보여 줄 요약: {exists, title, detail}. 세이브의 summary 항목을 읽는다.
+## 칸 목록에 보여 줄 요약: {exists, title, detail}. 저장본의 summary 항목을 읽는다.
 static func get_slot_summary(slot: int) -> Dictionary:
-	var label: String = "자동 저장" if slot == AUTO_SLOT else "슬롯 %d" % slot
+	var label: String = "자동 저장" if slot == AUTO_SLOT else "칸 %d" % slot
 	if not has_save(slot):
 		return {"exists": false, "title": label, "detail": "비어 있음"}
 	var data: Variant = _read(slot)
 	if not data is Dictionary:
-		return {"exists": true, "title": label, "detail": "손상된 세이브"}
+		return {"exists": true, "title": label, "detail": "손상된 저장본"}
 	var summary: Dictionary = data.get("summary", {})
-	# 예전 세이브는 저장 시각이 없으므로 파일을 고친 시각을 쓴다
+	# 예전 저장본은 저장 시각이 없으므로 파일을 고친 시각을 쓴다
 	var saved_at: int = int(data.get("saved_at", FileAccess.get_modified_time(get_slot_path(slot))))
 	var detail: String = "%s 저장\n%s · %s (%s) · 제%d세대" % [
 		format_saved_time(saved_at), summary.get("date", "?"), summary.get("name", "?"), summary.get("role", "?"), int(summary.get("generation", 1)),
@@ -118,7 +118,7 @@ static func format_saved_time(unix_time: int, now: int = -1) -> String:
 	return "%d년 %d월 %d일 %s" % [t["year"], t["month"], t["day"], clock]
 
 
-## 오래된 세이브를 현재 버전으로 올린다. 버전마다 새로 생긴 항목에 기본값을 채운다.
+## 오래된 저장본을 현재 버전으로 올린다. 버전마다 새로 생긴 항목에 기본값을 채운다.
 static func migrate(data: Dictionary) -> Dictionary:
 	var version: int = int(data.get("version", 1))
 	var steps: Array = MIGRATIONS.keys()

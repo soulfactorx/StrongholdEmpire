@@ -23,15 +23,15 @@ var _recent_action_scenes: Dictionary = {}
 var story_flags: Dictionary = {}
 ## 플래그 이름 → 켜진 계절. 기연의 turns_since_flag 조건에 쓴다.
 var flag_turns: Dictionary = {}
-## 이번 인물이 거쳐 온 역할 이름 (CharacterData.Role 키)
+## 이번 인물이 거쳐 온 신분 이름 (CharacterData.Role 키)
 var role_history: Array[String] = []
-## 역할 자원과 역할 행동 기록 (RoleActions.create_state)
+## 신분 자원과 신분 행동 기록 (RoleActions.create_state)
 var role_state: Dictionary = RoleActions.create_state()
 var legacy_records: Array[LegacyData] = []
-## 전투에서 본 상대 무공 {무공 id: {id, name, element}} — 무공 연구소에서 분석한다. 세대를 넘어 남는다.
+## 전투에서 본 상대 무공 {무공 id: {id, name, element}} — 장경각에서 분석한다. 세대를 넘어 남는다.
 var observed_arts: Dictionary = {}
-## 개인 재산: 문파에 몸담아 살림을 맡지 않는 역할(낭인·의뢰인·간자·자객)의 금화·식량. 문파 금고와 따로다.
-## 금화·식량만 쓴다. 문주·총관·막내 제자는 문파 금고(player_sect)를 쓴다 → get_wallet()
+## 개인 재산: 문파에 몸담아 살림을 맡지 않는 신분(낭인·청부객·간자·자객)의 은자·식량. 문파 금고와 따로다.
+## 은자·식량만 쓴다. 문주·총관·막내 제자는 문파 금고(player_sect)를 쓴다 → get_wallet()
 var purse: SectData = create_purse()
 ## 등장인물 선택 플레이: 주인공이 된 명부 인물 id (시나리오 playables). 일반 시작이면 ""
 var player_npc_id: String = ""
@@ -46,9 +46,9 @@ var duel_memory: Dictionary = {}
 var art_mastery: Dictionary = {}
 var journal_rumors: Array[String] = []
 const JOURNAL_RUMOR_LIMIT := 6
-## 지금 있는 지역 (강호 지도의 지역 id). 문파 일을 하는 역할은 본거지에 있고, 개인 재산을 쓰는 역할은 지도에서 옮겨 다닌다.
+## 지금 있는 지역 (강호 지도의 지역 id). 문파 일을 하는 신분은 본거지에 있고, 개인 재산을 쓰는 신분은 지도에서 옮겨 다닌다.
 var player_region: String = ""
-## 가진 비급 (무공 id). 소속 문파 서고의 비급과 함께 무공 연구소에서 연구할 수 있다. 기연·사부에게서 얻는다.
+## 가진 비급 (무공 id). 소속 문파 서고의 비급과 함께 장경각에서 참오할 수 있다. 기연·사부에게서 얻는다.
 var owned_manuals: Array[String] = []
 ## 해가 시작될 때의 기록 (연간 보고서 비교용)
 var year_start: Dictionary = {}
@@ -62,16 +62,16 @@ var pending_invasion: String = ""
 var world_news: Array[String] = []
 ## 도전장을 보낸 세력 id (문파전 승패에 명성이 더 걸린다). 없으면 ""
 var challenge_target: String = ""
-## 분석을 마친 오행 속성 (MartialArtData.FiveElement). 상극 무공 창조 성공률이 오른다.
+## 분석을 마친 오행 속성 (MartialArtData.FiveElement). 상극 무공 창안 성공률이 오른다.
 var analyzed_elements: Array = []
 var current_ending_id: String = ""
 ## 게임오버 id. 비어 있지 않으면 이야기가 끝난 상태다.
 var game_over_id: String = ""
-## 직전 계절 진행의 수입·유지비 요약
+## 직전 계절 진행의 수입·씀씀이 요약
 var last_turn_report: String = ""
 var pending_role_transitions: Array[Dictionary] = []
 var mod_martial_arts: Array[MartialArtData] = []
-## 새 게임을 시작했거나 세이브를 불러와 진행 중인 게임이 있는지 여부
+## 새 게임을 시작했거나 저장본을 불러와 진행 중인 게임이 있는지 여부
 var is_game_active: bool = false
 ## 문파전 적 작전 계획 (SectWarManager.plan_battle). 계절이 바뀌거나 문파전을 치르면 비운다.
 var pending_war_plan: Dictionary = {}
@@ -79,13 +79,13 @@ var pending_war_plan: Dictionary = {}
 var pending_combat: CombatSetup = null
 ## 마지막 전투의 기록 (전투 화면의 전투 기록). 연대기에서도 본다
 var last_combat_history: PackedStringArray = []
-## 연대기: 이야기에서 일어난 일(기연 선택, 오간 대사, 전투, 역할 변화, 엔딩 등)을 순서대로 남긴다.
+## 연대기: 이야기에서 일어난 일(기연 선택, 오간 대사, 전투, 신분 변화, 결말 등)을 순서대로 남긴다.
 ## 항목: {date, turn, generation, kind, text, lines}. 오래된 것부터 지운다.
 var chronicle: Array[Dictionary] = []
 const CHRONICLE_LIMIT := 1000
-## 무공 창조 화면에서 고르던 설정 (다시 열면 이어서): {name, category, element, yin_yang, effects}
+## 무공 창안 화면에서 고르던 설정 (다시 열면 이어서): {name, category, element, yin_yang, effects}
 var art_draft: Dictionary = {}
-## 저장해 둔 무공 창조 설정: [{title, name, category, element, yin_yang, effects}]
+## 저장해 둔 무공 창안 설정: [{title, name, category, element, yin_yang, effects}]
 var art_blueprints: Array[Dictionary] = []
 const ART_BLUEPRINT_LIMIT := 10
 ## 강호 지도 상태 {owners: {지역: 세력 id}, homes: {세력 id: 본거지}} (WorldMap)
@@ -192,7 +192,7 @@ func add_chronicle(kind: String, text: String, lines: PackedStringArray = Packed
 		chronicle = chronicle.slice(chronicle.size() - CHRONICLE_LIMIT)
 
 
-## 무공 창조 설정을 저장 형식으로 정리한다 (JSON을 거치면 숫자가 실수가 되므로 정수로)
+## 무공 창안 설정을 저장 형식으로 정리한다 (JSON을 거치면 숫자가 실수가 되므로 정수로)
 static func _clean_blueprint(data: Dictionary) -> Dictionary:
 	var effects: Array = []
 	for effect in data.get("effects", []):
@@ -204,7 +204,7 @@ static func _clean_blueprint(data: Dictionary) -> Dictionary:
 	}
 
 
-## 무공 창조 설정을 저장한다. 같은 이름이면 덮어쓰고, 가득 차면 가장 오래된 것을 지운다.
+## 무공 창안 설정을 저장한다. 같은 이름이면 덮어쓰고, 가득 차면 가장 오래된 것을 지운다.
 func save_art_blueprint(blueprint: Dictionary) -> Dictionary:
 	var clean: Dictionary = _clean_blueprint(blueprint)
 	if clean["title"].is_empty():
@@ -223,13 +223,13 @@ func save_art_blueprint(blueprint: Dictionary) -> Dictionary:
 
 ## factions: 새 게임 화면의 세력 설정
 ##   {player_sect: 소속 문파 id(비면 시나리오 기본), extra: [더할 세력 id], strategies: {세력 id: 전략 id 또는 "random"}}
-## 낭인은 소속 문파가 없다 (무소속: player_sect.id == NO_SECT, 제자·시설 없이 금화·식량만 개인 재산으로 쓴다).
+## 낭인은 소속 문파가 없다 (무소속: player_sect.id == NO_SECT, 제자·전각 없이 은자·식량만 개인 재산으로 쓴다).
 func _initialize_new_game(
 	role_id: String = StartingRoles.DEFAULT_ID,
 	display_name: String = "",
 	factions: Dictionary = {}
 ) -> void:
-	# 등장인물로 시작: 역할·소속·인연·플래그를 시나리오의 등장인물 항목이 정한다.
+	# 등장인물로 시작: 신분·소속·인연·플래그를 시나리오의 등장인물 항목이 정한다.
 	var playable: Dictionary = ScenarioManager.get_playable(str(factions.get("playable", "")))
 	player_npc_id = str(playable.get("npc", ""))
 	EventManager.player_npc_id = player_npc_id
@@ -276,7 +276,7 @@ func _initialize_new_game(
 	pending_event.clear()
 	story_flags.clear()
 	flag_turns.clear()
-	# 시작 역할이 이미 걸어온 길 (간자 포섭, 자객의 길 등)
+	# 시작 신분이 이미 걸어온 길 (간자 포섭, 자객의 길 등)
 	for flag in StartingRoles.get_by_id(role_id).get("flags", []):
 		EventManager.set_flag(story_flags, flag)
 	if not playable.is_empty():
@@ -294,7 +294,7 @@ func _initialize_new_game(
 			if not unlocked_features.has(feature_id):
 				unlocked_features.append(feature_id)
 	journal_goal = str(playable.get("goal", ""))
-	# 등장인물이 없는 시나리오는 시나리오의 역할별 첫 목표 (goals: {역할 id 또는 "default": 목표})
+	# 등장인물이 없는 시나리오는 시나리오의 신분별 첫 목표 (goals: {신분 id 또는 "default": 목표})
 	var scenario_goals: Variant = ScenarioManager.current.get("goals", {})
 	if journal_goal.is_empty() and scenario_goals is Dictionary:
 		journal_goal = str(scenario_goals.get(role_id, scenario_goals.get("default", "")))
@@ -331,7 +331,7 @@ func _initialize_new_game(
 	_sync_event_context()
 
 
-## 시나리오 등장인물로 주인공을 만든다: 인물의 능력치·무공·나이·도덕·초상화에 시작 역할을 입힌다.
+## 시나리오 등장인물로 주인공을 만든다: 인물의 자질·무공·나이·도덕·초상화에 시작 신분을 입힌다.
 static func create_playable_character(playable: Dictionary) -> CharacterData:
 	var npc_id: String = str(playable["npc"])
 	var character: CharacterData = NpcRoster.create_character(npc_id)
@@ -343,7 +343,7 @@ static func create_playable_character(playable: Dictionary) -> CharacterData:
 	for key in ["morality", "age"]:
 		if playable.has(key):
 			character.set(key, int(playable[key]))
-	# 인물 데이터의 무공은 레벨 조건을 따르므로, 정한 레벨에 맞게 다시 익힌다.
+	# 인물 데이터의 무공은 경지 조건을 따르므로, 정한 경지에 맞게 다시 익힌다.
 	for entry in NpcRoster.get_npc(npc_id).get("martial_arts", []):
 		if character.level >= int(entry.get("min_level", 1)):
 			var art: MartialArtData = MartialArtLibrary.create_art(str(entry["id"]))
@@ -369,7 +369,7 @@ func _apply_faction_setup(factions: Dictionary) -> void:
 			sect.strategy = chosen
 
 
-## 무소속 (낭인): 제자·시설·땅이 없고 금화·식량은 개인 재산
+## 무소속 (낭인): 제자·전각·땅이 없고 은자·식량은 개인 재산
 const NO_SECT := "none"
 
 
@@ -392,7 +392,7 @@ static func create_unaffiliated_sect() -> SectData:
 	return sect
 
 
-## 개인 재산 주머니 (금화·식량만 쓴다)
+## 개인 재산 주머니 (은자·식량만 쓴다)
 static func create_purse() -> SectData:
 	var purse_data: SectData = create_unaffiliated_sect()
 	purse_data.id = "purse"
@@ -400,12 +400,12 @@ static func create_purse() -> SectData:
 	return purse_data
 
 
-## 지금 역할이 개인 재산을 쓰는지 (RoleDashboard 구성에서 문파 일에 몸담지 않는 역할)
+## 지금 신분이 개인 재산을 쓰는지 (RoleDashboard 구성에서 문파 일에 몸담지 않는 신분)
 func uses_purse() -> bool:
 	return not RoleDashboard.get_layout(player_character.role)["sect"]
 
 
-## 금화·식량을 내고 받는 곳: 개인 재산을 쓰는 역할이면 주머니, 아니면 문파 금고
+## 은자·식량을 내고 받는 곳: 개인 재산을 쓰는 신분이면 주머니, 아니면 문파 금고
 func get_wallet() -> SectData:
 	return purse if uses_purse() else player_sect
 
@@ -452,7 +452,7 @@ func _set_player_character(character: CharacterData) -> void:
 
 func _on_player_leveled_up(new_level: int) -> void:
 	EventBus.action_message.emit(
-		"%s의 경지가 올랐습니다! Lv.%d" % [player_character.display_name, new_level]
+		"%s의 경지가 올랐습니다! 경지 %d" % [player_character.display_name, new_level]
 	)
 	EventBus.character_updated.emit(player_character)
 
@@ -469,9 +469,9 @@ func get_date_text() -> String:
 func advance_turn() -> void:
 	if is_game_over():
 		return
-	# 생을 마치는 엔딩에 도달했으면 후계자를 정하기 전까지 시간이 흐르지 않는다.
+	# 생을 마치는 결말에 도달했으면 후계자를 정하기 전까지 시간이 흐르지 않는다.
 	if story_flags.get("life_ended", false):
-		EventBus.action_message.emit("이번 생의 이야기가 끝났습니다. [엔딩 / 레거시]에서 후계자를 정하세요.")
+		EventBus.action_message.emit("이번 생의 이야기가 끝났습니다. [결말 / 후대]에서 후계자를 정하세요.")
 		return
 	# 제한 연수의 마지막 겨울이 끝나면 시대가 끝난다.
 	if (
@@ -580,7 +580,7 @@ func build_year_report() -> Dictionary:
 	var now: Dictionary = _take_year_snapshot()
 	var before: Dictionary = year_start if not year_start.is_empty() else now
 	var rows: Array = [
-		["금화", "gold"], ["식량", "food"], ["명성", "reputation"], ["제자", "disciples"],
+		["은자", "gold"], ["식량", "food"], ["명성", "reputation"], ["제자", "disciples"],
 		["경지", "level"], ["무공", "arts"], ["굴복시킨 세력", "subjugated"],
 	]
 	var lines: PackedStringArray = []
@@ -603,7 +603,7 @@ func add_world_news(line: String) -> void:
 		world_news.remove_at(0)
 
 
-## 침공 대응. choice: "fight"(방어전), "bribe"(금화로 물리기), "yield"(산문을 내주기)
+## 침공 대응. choice: "fight"(방어전), "bribe"(은자로 물리기), "yield"(산문을 내주기)
 func resolve_invasion(choice: String) -> Dictionary:
 	var invader: SectData = get_world_sect(pending_invasion)
 	if invader == null:
@@ -617,9 +617,9 @@ func resolve_invasion(choice: String) -> Dictionary:
 			return {"success": true, "message": "%s의 침공에 맞섭니다!" % invader.sect_name}
 		"bribe":
 			if not player_sect.spend_resources(_Balance.INVASION_BRIBE_GOLD):
-				return {"success": false, "message": "금화가 부족합니다. (%d 필요)" % _Balance.INVASION_BRIBE_GOLD}
+				return {"success": false, "message": "은자가 부족합니다. (%d 필요)" % _Balance.INVASION_BRIBE_GOLD}
 			invader.attitude = mini(100, invader.attitude + _Balance.AI_DIPLOMACY_ATTITUDE)
-			message = "금화 %d를 내주고 %s을(를) 물렸습니다." % [_Balance.INVASION_BRIBE_GOLD, invader.sect_name]
+			message = "은자 %d를 내주고 %s을(를) 물렸습니다." % [_Balance.INVASION_BRIBE_GOLD, invader.sect_name]
 		_:
 			var lost: int = mini(_Balance.INVASION_YIELD_DISCIPLES, maxi(0, player_sect.disciple_count - 1))
 			player_sect.disciple_count -= lost
@@ -635,7 +635,7 @@ func resolve_invasion(choice: String) -> Dictionary:
 	return {"success": true, "message": message}
 
 
-## 개인 재산의 생활비: 식량을 먹고(모자라면 금화로 사 먹는다) 금화를 쓴다. 둘 다 바닥나면 굶주려 내공이 준다.
+## 개인 재산의 생활비: 식량을 먹고(모자라면 은자로 사 먹는다) 은자를 쓴다. 둘 다 바닥나면 굶주려 내공이 준다.
 func _pay_living_costs() -> String:
 	if not uses_purse():
 		return ""
@@ -647,7 +647,7 @@ func _pay_living_costs() -> String:
 	var gold_need: int = _Balance.LIVING_GOLD + food_need * _Balance.LIVING_FOOD_PRICE
 	var paid: int = mini(purse.gold, gold_need)
 	purse.gold -= paid
-	parts.append("생활비: 식량 -%d, 금화 -%d%s" % [eaten, paid, " (모자란 식량을 사 먹음)" if food_need > 0 else ""])
+	parts.append("생활비: 식량 -%d, 은자 -%d%s" % [eaten, paid, " (모자란 식량을 사 먹음)" if food_need > 0 else ""])
 	if paid < gold_need:
 		var loss: int = mini(player_character.internal_energy_current, _Balance.STARVE_INTERNAL_LOSS)
 		player_character.internal_energy_current -= loss
@@ -657,11 +657,11 @@ func _pay_living_costs() -> String:
 
 
 func _process_seasonal_income() -> String:
-	# 무소속은 문파 수입이 없다. 홀로 수련하며 깨닫는 연구점만 남는다.
+	# 무소속은 문파 수입이 없다. 홀로 수련하며 깨닫는 깨달음만 남는다.
 	if not has_sect():
 		var research: int = roundi(int(player_character.wisdom * _Balance.WISDOM_RESEARCH_RATIO) * ScenarioRules.income_scale())
 		player_sect.research_points += research
-		return "홀로 수련: 연구점 +%d" % research
+		return "홀로 수련: 깨달음 +%d" % research
 	var income: Dictionary = SectManager.compute_seasonal_income(player_sect, player_character, get_current_season())
 	income["gold"] += RoleActions.get_income_gold_bonus(role_state, player_character.role, income["gold"])
 	var lands: Dictionary = WorldMap.income(map_state, player_sect.id)
@@ -670,11 +670,11 @@ func _process_seasonal_income() -> String:
 	player_sect.gold += income["gold"]
 	player_sect.food += income["food"]
 	player_sect.research_points += income["research"]
-	return "수입: 금화 +%d, 식량 +%d, 연구점 +%d" % [income["gold"], income["food"], income["research"]]
+	return "수입: 은자 +%d, 식량 +%d, 깨달음 +%d" % [income["gold"], income["food"], income["research"]]
 
 
 ## 다음 계절 예상 수지 (경영 화면 표시용). 계절 보정은 다음 계절 기준.
-## 개인 재산을 쓰는 역할이면 내 주머니의 생활비 (문파 금고 수지는 estimate_sect_season)
+## 개인 재산을 쓰는 신분이면 내 주머니의 생활비 (문파 금고 수지는 estimate_sect_season)
 func estimate_next_season() -> Dictionary:
 	if uses_purse():
 		var food_short: int = maxi(0, _Balance.LIVING_FOOD - purse.food)
@@ -719,7 +719,7 @@ func _apply_facility_effects() -> String:
 	if player_sect.meditation_hall_level > 0:
 		var exp_gain: int = _Balance.MEDITATION_EXP_PER_LEVEL * player_sect.meditation_hall_level
 		player_character.gain_experience(exp_gain)
-		parts.append("연공실 수련 경험치 +%d" % exp_gain)
+		parts.append("연공실 수련 +%d" % exp_gain)
 	return ", ".join(parts)
 
 
@@ -740,9 +740,9 @@ func _process_yearly_events() -> String:
 	return "새해 정산: " + ", ".join(parts) if not parts.is_empty() else ""
 
 
-## announce: 새 전환이 있으면 알린다 (역할 전환 창을 열 때는 조용히 다시 계산만)
+## announce: 새 전환이 있으면 알린다 (신분 전환 창을 열 때는 조용히 다시 계산만)
 func refresh_role_transitions(announce: bool = true) -> void:
-	# 역할 전환이 아직 열리지 않았으면 (기능 단계 개방) 알리지 않는다
+	# 신분 전환이 아직 열리지 않았으면 (기능 단계 개방) 알리지 않는다
 	if not FeatureGate.is_open("role_change"):
 		pending_role_transitions = []
 		return
@@ -788,7 +788,7 @@ func is_game_over() -> bool:
 	return not game_over_id.is_empty()
 
 
-## 게임오버를 먼저 확인하고, 아니면 엔딩을 확인한다.
+## 게임오버를 먼저 확인하고, 아니면 결말을 확인한다.
 func _check_end_states() -> void:
 	if is_game_over():
 		return
@@ -815,20 +815,20 @@ func _check_ending() -> void:
 
 func _reach_ending(ending: String) -> void:
 	current_ending_id = ending
-	add_chronicle("엔딩", "엔딩 「%s」에 이르렀습니다." % EndingManager.get_ending(ending).get("title", ending))
+	add_chronicle("결말", "결말 「%s」에 이르렀습니다." % EndingManager.get_ending(ending).get("title", ending))
 	EventManager.set_flag(story_flags, "ending_reached", ending)
 	EventBus.ending_reached.emit(ending)
 	if ScenarioRules.end_on_victory() and ScenarioManager.is_victory_ending(ending):
 		_force_end("scenario_complete")
 	elif EndingManager.is_final(ending):
-		# 생을 마치는 엔딩: 전승할 수 있으면 후계자를 기다리고, 없으면 이야기가 끝난다.
+		# 생을 마치는 결말: 전승할 수 있으면 후계자를 기다리고, 없으면 이야기가 끝난다.
 		if can_continue_lineage():
 			EventManager.set_flag(story_flags, "life_ended")
 		else:
 			_force_end("story_end")
 
 
-## 시나리오 규칙상 다음 세대로 이어 갈 수 있는지 (나이·레벨 조건은 따로 본다)
+## 시나리오 규칙상 다음 세대로 이어 갈 수 있는지 (나이·경지 조건은 따로 본다)
 func can_continue_lineage() -> bool:
 	if not ScenarioRules.legacy_enabled():
 		return false
@@ -836,7 +836,7 @@ func can_continue_lineage() -> bool:
 	return max_generations <= 0 or generation < max_generations
 
 
-## 엔딩 화면에 보여 줄 이번 판의 요약
+## 결말 화면에 보여 줄 이번 판의 요약
 func get_run_summary() -> PackedStringArray:
 	var lines: PackedStringArray = []
 	lines.append("시나리오: 「%s」 %s 1년 ~ %s" % [
@@ -845,7 +845,7 @@ func get_run_summary() -> PackedStringArray:
 	var role_names: PackedStringArray = []
 	for role_key in role_history:
 		role_names.append(CharacterData.get_role_display_name(CharacterData.Role.get(role_key)))
-	lines.append("역할 변천: %s" % " → ".join(role_names))
+	lines.append("신분 변천: %s" % " → ".join(role_names))
 	var subjugated: PackedStringArray = []
 	for world_sect in world_sects:
 		if world_sect.subjugated:
@@ -863,7 +863,7 @@ func get_run_summary() -> PackedStringArray:
 	return lines
 
 
-## 그 판의 평가 (엔딩 화면용)
+## 그 판의 평가 (결말 화면용)
 func get_evaluation() -> Dictionary:
 	return EndingManager.evaluate(
 		player_character,
@@ -875,7 +875,7 @@ func get_evaluation() -> Dictionary:
 	)
 
 
-## 기연의 end_game 효과: 엔딩이면 엔딩에 도달하고, 게임오버면 이야기를 끝낸다.
+## 기연의 end_game 효과: 결말이면 결말에 도달하고, 게임오버면 이야기를 끝낸다.
 func _force_end(end_id: String) -> void:
 	if EndingManager.GAME_OVERS.has(end_id):
 		if not is_game_over():
@@ -927,7 +927,7 @@ func _chronicle_event(event: Dictionary, choice_index: int, result: Dictionary) 
 	add_chronicle("기연", "「%s」" % event.get("title", "기연"), lines)
 
 
-## 역할을 전환한다. option은 RoleManager가 준 선택지로, sect_id가 있으면 그 세력으로 옮겨 간다(이적·배신).
+## 신분을 전환한다. option은 RoleManager가 준 선택지로, sect_id가 있으면 그 세력으로 옮겨 간다(이적·배신).
 func apply_role_transition(role: CharacterData.Role, option: Dictionary = {}) -> Dictionary:
 	var prefix: String = ""
 	if option.get("kind", "") == "leave":
@@ -951,9 +951,9 @@ func _change_role(role: CharacterData.Role) -> Dictionary:
 	if not transfer.is_empty():
 		result["message"] = str(result.get("message", "")) + " " + transfer
 	_sync_event_context()
-	add_chronicle("역할", str(result.get("message", "")))
+	add_chronicle("신분", str(result.get("message", "")))
 	_record_role(player_character.role)
-	# 새 역할의 기능이 열린다 (기능 단계 개방)
+	# 새 신분의 기능이 열린다 (기능 단계 개방)
 	for feature_id in FeatureGate.ROLE_FEATURES.get(CharacterData.Role.keys()[player_character.role], []):
 		unlock_feature(feature_id)
 	EventBus.character_updated.emit(player_character)
@@ -972,7 +972,7 @@ func unlock_feature(feature_id: String) -> bool:
 	return true
 
 
-## 기연 결과 중 이야기 진행에 관한 것: 기능 개방·역할 변화·강호 일지, 그리고 이어지는 장면(next)이나 기능 소개를 띄운다.
+## 기연 결과 중 이야기 진행에 관한 것: 기능 개방·신분 변화·강호 일지, 그리고 이어지는 장면(next)이나 기능 소개를 띄운다.
 func _apply_story_result(result: Dictionary) -> void:
 	for feature_id in result.get("unlock", []):
 		unlock_feature(feature_id)
@@ -1047,7 +1047,7 @@ func add_rumor(text: String) -> void:
 	add_chronicle("소문", text)
 
 
-## 개인 재산을 쓰는 역할과 문파 금고를 쓰는 역할 사이를 오갈 때 재산을 옮긴다.
+## 개인 재산을 쓰는 신분과 문파 금고를 쓰는 신분 사이를 오갈 때 재산을 옮긴다.
 ## 문파 일을 맡게 되면 모은 재산을 문파에 보태고, 문파를 떠나 떠돌게 되면 노자를 챙긴다.
 func _transfer_purse(had_purse: bool) -> String:
 	var has_purse: bool = uses_purse()
@@ -1062,7 +1062,7 @@ func _transfer_purse(had_purse: bool) -> String:
 		player_sect.food += food
 		purse.gold = 0
 		purse.food = 0
-		return "모아 둔 재산(금화 %d, 식량 %d)을 %s에 보탰습니다." % [gold, food, player_sect.sect_name] if gold + food > 0 else ""
+		return "모아 둔 재산(은자 %d, 식량 %d)을 %s에 보탰습니다." % [gold, food, player_sect.sect_name] if gold + food > 0 else ""
 	# 무소속이 되며 떠난 경우 노자는 _leave_player_sect가 이미 챙겼다.
 	if not has_sect():
 		return ""
@@ -1072,10 +1072,10 @@ func _transfer_purse(had_purse: bool) -> String:
 	player_sect.food -= take_food
 	purse.gold += take_gold
 	purse.food += take_food
-	return "노자로 금화 %d, 식량 %d를 챙겼습니다. 이제 금화·식량은 내 몫입니다." % [take_gold, take_food]
+	return "노자로 은자 %d, 식량 %d를 챙겼습니다. 이제 은자·식량은 내 몫입니다." % [take_gold, take_food]
 
 
-## 역할 자원이 한계에 이르렀을 때 축출·강등을 적용하고 알림 문구를 돌려준다.
+## 신분 자원이 한계에 이르렀을 때 축출·강등을 적용하고 알림 문구를 돌려준다.
 func _apply_role_consequences() -> String:
 	var consequence: Dictionary = RoleActions.check_consequences(self)
 	if consequence.is_empty():
@@ -1189,7 +1189,7 @@ func _leave_player_sect(mode: String) -> String:
 		old_sect.food -= take_food
 		purse.gold += take_gold
 		purse.food += take_food
-		parts.append("%s을(를) 떠났습니다. 노자로 금화 %d, 식량 %d를 챙겼습니다." % [old_sect.sect_name, take_gold, take_food])
+		parts.append("%s을(를) 떠났습니다. 노자로 은자 %d, 식량 %d를 챙겼습니다." % [old_sect.sect_name, take_gold, take_food])
 	elif mode == "desert":
 		for rel in player_relationships:
 			if rel.bond_type in [RelationshipData.BondType.MASTER_DISCIPLE, RelationshipData.BondType.FELLOW] \
@@ -1245,7 +1245,7 @@ func interact_with(target_id: String, kind: String) -> Dictionary:
 	return result
 
 
-## 역할 고유 행동 (경영 화면의 역할 버튼). 전투·기연으로 이어지면 바로 시작한다.
+## 신분 고유 행동 (경영 화면의 신분 버튼). 전투·기연으로 이어지면 바로 시작한다.
 func do_role_action(action_id: String, target: String = "") -> Dictionary:
 	if is_game_over():
 		return {"success": false, "message": "이야기가 끝났습니다."}
@@ -1274,7 +1274,7 @@ func do_role_action(action_id: String, target: String = "") -> Dictionary:
 	return result
 
 
-## 역할 행동의 상대 이름 (사부·문주는 실제 인물 이름으로)
+## 신분 행동의 상대 이름 (사부·문주는 실제 인물 이름으로)
 func _role_counterpart(action_id: String) -> String:
 	match action_id:
 		"teaching":
@@ -1294,11 +1294,11 @@ func start_legacy_succession() -> Dictionary:
 	var max_generations: int = ScenarioRules.max_generations()
 	if max_generations > 0 and generation >= max_generations:
 		return {"success": false, "message": "이 시나리오의 마지막 세대입니다. (최대 %d세대)" % max_generations}
-	# 생을 마치는 엔딩에 도달했다면 나이·레벨과 관계없이 전승한다.
+	# 생을 마치는 결말에 도달했다면 나이·경지와 관계없이 전승한다.
 	if not story_flags.get("life_ended", false) and not LegacyManager.can_retire(player_character):
 		return {
 			"success": false,
-			"message": "아직 전승할 수 없습니다. (55세 이상 또는 레벨 10)",
+			"message": "아직 전승할 수 없습니다. (55세 이상 또는 경지 10)",
 		}
 
 	var legacy: LegacyData = LegacyManager.create_legacy_record(
@@ -1379,7 +1379,7 @@ func get_war_targets() -> Array[SectData]:
 var pending_region_target: String = ""
 
 
-## 땅을 넓힐 수 있는 역할 (문주)
+## 땅을 넓힐 수 있는 신분 (문주)
 func can_command_conquest() -> bool:
 	return player_character.role == CharacterData.Role.LEADER
 
@@ -1410,7 +1410,7 @@ func get_region_action(region_id: String) -> Dictionary:
 		elif power < defense:
 			reason = "전력이 모자랍니다. (우리 %d / 주둔 %d)" % [power, defense]
 		elif player_sect.gold < cost["gold"] or player_sect.food < cost["food"]:
-			reason = "자원이 모자랍니다. (금화 %d, 식량 %d 필요)" % [cost["gold"], cost["food"]]
+			reason = "자원이 모자랍니다. (은자 %d, 식량 %d 필요)" % [cost["gold"], cost["food"]]
 		return {"kind": "pacify", "reason": reason, "cost": cost, "power": power, "defense": defense}
 	var sect: SectData = get_world_sect(owner)
 	var reason: String = ""
@@ -1419,7 +1419,7 @@ func get_region_action(region_id: String) -> Dictionary:
 		if not can_do_seasonal("last_pacify_turn"):
 			reason = "이번 계절에는 이미 땅을 평정·편입했습니다."
 		elif player_sect.gold < annex_cost["gold"] or player_sect.food < annex_cost["food"]:
-			reason = "자원이 모자랍니다. (금화 %d, 식량 %d 필요)" % [annex_cost["gold"], annex_cost["food"]]
+			reason = "자원이 모자랍니다. (은자 %d, 식량 %d 필요)" % [annex_cost["gold"], annex_cost["food"]]
 		return {"kind": "annex", "reason": reason, "cost": annex_cost, "owner": owner}
 	if sect == null:
 		reason = "알 수 없는 세력의 땅입니다."
@@ -1432,7 +1432,7 @@ func get_region_action(region_id: String) -> Dictionary:
 	return {"kind": "attack", "reason": reason, "owner": owner}
 
 
-## 주인 없는 땅 평정: 금화·식량을 들여 차지한다. 계절에 한 번, 전력이 주둔 병력 이상이어야 한다.
+## 주인 없는 땅 평정: 은자·식량을 들여 차지한다. 계절에 한 번, 전력이 주둔 병력 이상이어야 한다.
 func pacify_region(region_id: String) -> Dictionary:
 	var action: Dictionary = get_region_action(region_id)
 	if action["kind"] != "pacify":
@@ -1443,7 +1443,7 @@ func pacify_region(region_id: String) -> Dictionary:
 	_mark_seasonal("last_pacify_turn")
 	WorldMap.transfer(map_state, region_id, player_sect.id, [player_sect])
 	var region: Dictionary = WorldMap.get_region(region_id)
-	var message: String = "%s을(를) 평정했습니다. 계절마다 금화 +%d, 식량 +%d, 제자 정원 +%d (금화 -%d, 식량 -%d)" % [
+	var message: String = "%s을(를) 평정했습니다. 계절마다 은자 +%d, 식량 +%d, 제자 정원 +%d (은자 -%d, 식량 -%d)" % [
 		region["name"], region["gold"], region["food"], _Balance.REGION_MAX_DISCIPLES, action["cost"]["gold"], action["cost"]["food"],
 	]
 	add_chronicle("영토", message)
@@ -1453,7 +1453,7 @@ func pacify_region(region_id: String) -> Dictionary:
 	return {"success": true, "message": message}
 
 
-## 굴복한 세력의 땅 편입: 문파전 없이 금화·식량을 들여 차지한다. 본거지도 편입할 수 있다.
+## 굴복한 세력의 땅 편입: 문파전 없이 은자·식량을 들여 차지한다. 본거지도 편입할 수 있다.
 func annex_region(region_id: String) -> Dictionary:
 	var action: Dictionary = get_region_action(region_id)
 	if action["kind"] != "annex":
@@ -1468,7 +1468,7 @@ func annex_region(region_id: String) -> Dictionary:
 	if was_home:
 		map_state["homes"].erase(sect.id)
 	var region: Dictionary = WorldMap.get_region(region_id)
-	var message: String = "굴복한 %s의 %s%s을(를) 편입했습니다. 계절마다 금화 +%d, 식량 +%d (금화 -%d, 식량 -%d)" % [
+	var message: String = "굴복한 %s의 %s%s을(를) 편입했습니다. 계절마다 은자 +%d, 식량 +%d (은자 -%d, 식량 -%d)" % [
 		sect.sect_name, "본거지 " if was_home else "", region["name"], region["gold"], region["food"], action["cost"]["gold"], action["cost"]["food"],
 	]
 	add_chronicle("영토", message)
@@ -1538,7 +1538,7 @@ func prepare_war(target_id: String) -> Dictionary:
 	return pending_war_plan
 
 
-## 정찰: 금화를 내고 적 계획을 한 라운드 공개한다.
+## 정찰: 은자를 내고 적 계획을 한 라운드 공개한다.
 func scout_war(target_id: String) -> Dictionary:
 	var plan: Dictionary = prepare_war(target_id)
 	if plan.is_empty():
@@ -1549,14 +1549,14 @@ func scout_war(target_id: String) -> Dictionary:
 		SectWarManager.get_scout_cost(plan, player_character) * RoleActions.get_scout_scale(role_state, player_character.role)
 	)
 	if not player_sect.spend_resources(cost):
-		return {"success": false, "message": "금화가 부족합니다. (%d 필요)" % cost}
+		return {"success": false, "message": "은자가 부족합니다. (%d 필요)" % cost}
 	var round_index: int = SectWarManager.reveal_next(plan)
 	var command: SectWarManager.Command = plan["enemy_commands"][round_index]
 	EventBus.resources_changed.emit(player_sect)
 	return {
 		"success": true,
 		"round": round_index,
-		"message": "정찰 성공 (금화 -%d): 적은 %d합에 [%s]을(를) 준비하고 있습니다." % [
+		"message": "정찰 성공 (은자 -%d): 적은 %d합에 [%s]을(를) 준비하고 있습니다." % [
 			cost, round_index + 1, SectWarManager.COMMAND_NAMES[command],
 		],
 	}
@@ -1666,13 +1666,13 @@ func buy_elixir() -> Dictionary:
 	if not can_do_seasonal("last_elixir_turn"):
 		return {"success": false, "message": "이번 계절에는 이미 영약을 구했습니다."}
 	if not get_wallet().spend_resources(_Balance.ELIXIR_GOLD):
-		return {"success": false, "message": "금화가 부족합니다. (%d 필요)" % _Balance.ELIXIR_GOLD}
+		return {"success": false, "message": "은자가 부족합니다. (%d 필요)" % _Balance.ELIXIR_GOLD}
 	_mark_seasonal("last_elixir_turn")
 	player_character.internal_energy_max += _Balance.ELIXIR_INTERNAL_GAIN
 	player_character.internal_energy_current += _Balance.ELIXIR_INTERNAL_GAIN
 	EventBus.character_updated.emit(player_character)
 	EventBus.resources_changed.emit(player_sect)
-	return {"success": true, "message": "영약을 복용해 최대 내공 +%d (금화 -%d)" % [
+	return {"success": true, "message": "영약을 복용해 최대 내공 +%d (은자 -%d)" % [
 		_Balance.ELIXIR_INTERNAL_GAIN, _Balance.ELIXIR_GOLD,
 	]}
 
@@ -1682,12 +1682,12 @@ func hold_feast() -> Dictionary:
 	if not can_do_seasonal("last_feast_turn"):
 		return {"success": false, "message": "이번 계절에는 이미 연회를 열었습니다."}
 	if not player_sect.spend_resources(_Balance.FEAST_GOLD, _Balance.FEAST_FOOD):
-		return {"success": false, "message": "자원이 부족합니다. (금화 %d, 식량 %d 필요)" % [
+		return {"success": false, "message": "자원이 부족합니다. (은자 %d, 식량 %d 필요)" % [
 			_Balance.FEAST_GOLD, _Balance.FEAST_FOOD,
 		]}
 	_mark_seasonal("last_feast_turn")
 	player_sect.reputation += _Balance.FEAST_REPUTATION
-	var message: String = "문파 연회를 열었습니다. 명성 +%d (금화 -%d, 식량 -%d)" % [
+	var message: String = "문파 연회를 열었습니다. 명성 +%d (은자 -%d, 식량 -%d)" % [
 		_Balance.FEAST_REPUTATION, _Balance.FEAST_GOLD, _Balance.FEAST_FOOD,
 	]
 	# 문주가 여는 연회는 문파 안의 불만도 달랜다.
@@ -1699,14 +1699,14 @@ func hold_feast() -> Dictionary:
 	return {"success": true, "message": message}
 
 
-## 시설 확장. 막내 제자는 시설을 확장할 권한이 없다.
+## 전각 확장. 막내 제자는 전각을 확장할 권한이 없다.
 func upgrade_facility(facility: String) -> Dictionary:
 	if player_character.role == CharacterData.Role.YOUNG_DISCIPLE:
-		return {"success": false, "message": "막내 제자는 시설을 확장할 수 없습니다."}
+		return {"success": false, "message": "막내 제자는 전각을 확장할 수 없습니다."}
 	return SectManager.upgrade_facility(player_sect, facility)
 
 
-## 무공 연구소에서 연구할 수 있는 비급: 소속 문파 서고의 비급과 가진 비급. [{art: MartialArtData, source: "문파 서고"|"소장"}]
+## 장경각에서 참오할 수 있는 비급: 소속 문파 서고의 비급과 가진 비급. [{art: MartialArtData, source: "문파 서고"|"소장"}]
 ## 무소속(낭인)은 가진 비급뿐이다.
 func get_research_manuals() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
@@ -1721,7 +1721,7 @@ func get_research_manuals() -> Array[Dictionary]:
 	return result
 
 
-## 비급을 얻는다. art_id가 "random"이면 아직 연구할 수 없고 익히지도 않은 비급 중 하나. 얻은 비급 이름(못 얻으면 "")
+## 비급을 얻는다. art_id가 "random"이면 아직 참오할 수 없고 익히지도 않은 비급 중 하나. 얻은 비급 이름(못 얻으면 "")
 func gain_manual(art_id: String) -> String:
 	var gained: String = EventManager.gain_manual(art_id, owned_manuals, player_character, _available_manual_ids())
 	EventBus.character_updated.emit(player_character)
@@ -1767,13 +1767,13 @@ func get_location_text() -> String:
 	return "%s · %s" % [get_region_name(), note]
 
 
-## 타지에 있으면 그 땅 주인 세력 id를 역할 자원 location에 둔다 (의뢰 보상·위험·신용이 그 세력 기준)
+## 타지에 있으면 그 땅 주인 세력 id를 신분 자원 location에 둔다 (의뢰 보상·위험·신용이 그 세력 기준)
 func _sync_location() -> void:
 	var owner: String = WorldMap.get_owner(map_state, player_region)
 	role_state["location"] = owner if not owner.is_empty() and owner != player_sect.id and get_world_sect(owner) != null else ""
 
 
-## 지도에서 옮겨 갈 수 있는 역할인지 (문파 일을 하는 역할은 본거지에 머문다)
+## 지도에서 옮겨 갈 수 있는 신분인지 (문파 일을 하는 신분은 본거지에 머문다)
 func can_travel() -> bool:
 	return uses_purse()
 
@@ -1789,13 +1789,13 @@ func get_travel_block(region_id: String) -> String:
 	if region_id == player_region:
 		return "지금 머무는 곳입니다."
 	if not can_travel():
-		return "문파 일을 하는 동안에는 본거지를 떠날 수 없습니다. (낭인·의뢰인·간자·자객만 옮겨 다닙니다)"
+		return "문파 일을 하는 동안에는 본거지를 떠날 수 없습니다. (낭인·청부객·간자·자객만 옮겨 다닙니다)"
 	if not can_do_seasonal("last_travel_turn"):
 		return "이번 계절에는 이미 길을 떠났습니다."
 	if WorldMap.distance(player_region, region_id) < 0:
 		return "그곳으로 가는 길이 없습니다."
 	if get_wallet().gold < get_travel_cost(region_id):
-		return "여비가 모자랍니다. (금화 %d 필요)" % get_travel_cost(region_id)
+		return "여비가 모자랍니다. (은자 %d 필요)" % get_travel_cost(region_id)
 	return ""
 
 
@@ -1809,7 +1809,7 @@ func travel_to(region_id: String) -> Dictionary:
 	_mark_seasonal("last_travel_turn")
 	player_region = region_id
 	_sync_location()
-	var message: String = "%s(으)로 옮겼습니다. (여비 금화 -%d) — %s" % [get_region_name(), cost, get_location_text()]
+	var message: String = "%s(으)로 옮겼습니다. (여비 은자 -%d) — %s" % [get_region_name(), cost, get_location_text()]
 	if not str(role_state["location"]).is_empty():
 		message += ". 타지라 의뢰 보상이 크고 위험도 큽니다."
 	add_chronicle("행동", message)
@@ -1937,7 +1937,7 @@ func resolve_action_scene(index: int) -> void:
 	EventBus.relationships_changed.emit(player_relationships)
 
 
-## 대결 요약을 반영하고 결과 문장 조각을 돌려준다: 평가, 도전 보상, 받아 낸 절초(연구점), 사건 선택 효과, 비무대회 성적 플래그
+## 대결 요약을 반영하고 결과 문장 조각을 돌려준다: 평가, 도전 보상, 받아 낸 절초(깨달음), 사건 선택 효과, 비무대회 성적 플래그
 func _apply_combat_summary(summary: Dictionary) -> PackedStringArray:
 	var parts: PackedStringArray = []
 	if summary.is_empty():
@@ -1948,13 +1948,13 @@ func _apply_combat_summary(summary: Dictionary) -> PackedStringArray:
 		if summary.get("challenge_met", false):
 			player_sect.reputation += _Balance.DUEL_CHALLENGE_REPUTATION
 			player_sect.research_points += _Balance.DUEL_CHALLENGE_RESEARCH
-			parts.append("도전 달성 「%s」 명성 +%d, 연구점 +%d" % [challenge, _Balance.DUEL_CHALLENGE_REPUTATION, _Balance.DUEL_CHALLENGE_RESEARCH])
+			parts.append("도전 달성 「%s」 명성 +%d, 깨달음 +%d" % [challenge, _Balance.DUEL_CHALLENGE_REPUTATION, _Balance.DUEL_CHALLENGE_RESEARCH])
 		else:
 			parts.append("도전 실패 「%s」" % challenge)
 	var studied: Array = summary.get("studied_arts", [])
 	if not studied.is_empty():
 		player_sect.research_points += _Balance.STUDY_RESEARCH * studied.size()
-		parts.append("상대 절초를 받아 내며 깨달음 (연구점 +%d)" % (_Balance.STUDY_RESEARCH * studied.size()))
+		parts.append("상대 절초를 받아 내며 깨달음 (깨달음 +%d)" % (_Balance.STUDY_RESEARCH * studied.size()))
 	var effects: Array = summary.get("effects", [])
 	if not effects.is_empty():
 		EventManager.apply_effects(effects, player_character, player_sect, player_relationships, story_flags)
@@ -1989,7 +1989,7 @@ func save_game(slot: int = 1) -> Dictionary:
 	return _SaveManager.save_game(_build_save_state(), slot)
 
 
-## 계절이 바뀔 때마다 자동 저장 슬롯에 저장한다.
+## 계절이 바뀔 때마다 자동 저장 칸에 저장한다.
 func autosave() -> Dictionary:
 	return _SaveManager.save_game(_build_save_state(), _SaveManager.AUTO_SLOT)
 
@@ -2000,7 +2000,7 @@ func _notification(what: int) -> void:
 		save_on_suspend()
 
 
-## 진행 중인 게임이 있으면 자동 저장 슬롯에 저장한다. 저장했으면 true.
+## 진행 중인 게임이 있으면 자동 저장 칸에 저장한다. 저장했으면 true.
 func save_on_suspend() -> bool:
 	if not is_game_active:
 		return false
@@ -2078,7 +2078,7 @@ func load_game(slot: int = 1) -> Dictionary:
 
 func _apply_save_data(data: Dictionary) -> void:
 	pending_action_scene = {}
-	# 시나리오를 먼저 켜야 전용 인물·문파·기연이 준비된다. 구버전 세이브는 기본 시나리오.
+	# 시나리오를 먼저 켜야 전용 인물·문파·기연이 준비된다. 구버전 저장본은 기본 시나리오.
 	ScenarioManager.activate(
 		data.get("scenario_id", ScenarioManager.DEFAULT_ID),
 		data.get("scenario_overrides", {})
@@ -2093,7 +2093,7 @@ func _apply_save_data(data: Dictionary) -> void:
 	role_history.clear()
 	for role_name in data.get("role_history", []):
 		role_history.append(str(role_name))
-	# 역할 자원이 없는 구버전 세이브는 기본값으로 시작한다.
+	# 신분 자원이 없는 구버전 저장본은 기본값으로 시작한다.
 	role_state = RoleActions.restore_state(data.get("role_state", {}))
 	ironman = data.get("ironman", false) == true
 	challenge_target = str(data.get("challenge_target", ""))
@@ -2121,7 +2121,7 @@ func _apply_save_data(data: Dictionary) -> void:
 		purse.gold = int(data["purse"].get("gold", 0))
 		purse.food = int(data["purse"].get("food", 0))
 	elif uses_purse():
-		# 개인 재산이 생기기 전 세이브: 무소속이면 그 재산을, 아니면 시작 노자를 준다.
+		# 개인 재산이 생기기 전 저장본: 무소속이면 그 재산을, 아니면 시작 노자를 준다.
 		purse.gold = player_sect.gold if not has_sect() else _Balance.PURSE_START_GOLD
 		purse.food = player_sect.food if not has_sect() else _Balance.PURSE_START_FOOD
 	if not has_sect():
@@ -2151,20 +2151,20 @@ func _apply_save_data(data: Dictionary) -> void:
 	pending_war_plan = {}
 	_set_player_character(_SaveManager.deserialize_character(data.get("character", {})))
 	player_sect = _SaveManager.deserialize_sect(data.get("sect", {}))
-	# 명단이 없는 구버전 세이브는 제자 수만큼 무작위 제자로 채운다.
+	# 명단이 없는 구버전 저장본은 제자 수만큼 무작위 제자로 채운다.
 	if not player_sect.use_roster:
 		DiscipleRoster.enable(player_sect)
-	# 강호 세력이 없는 구버전 세이브는 데이터 초기값으로 채운다.
+	# 강호 세력이 없는 구버전 저장본은 데이터 초기값으로 채운다.
 	if data.has("world_sects"):
 		world_sects = _SaveManager.deserialize_sects(data["world_sects"])
 	else:
 		world_sects = SectRegistry.create_rival_sects()
-	# 역할 기록이 없는 구버전 세이브는 현재 역할만 기록한다.
+	# 신분 기록이 없는 구버전 저장본은 현재 신분만 기록한다.
 	_record_role(player_character.role)
 	_sync_event_context()
 	player_relationships = _SaveManager.deserialize_relationships(data.get("relationships", []))
 	legacy_records = _SaveManager.deserialize_legacy(data.get("legacy_records", []))
-	# 지도가 없는 구버전 세이브는 지금 세력으로 새 지도를 만든다.
+	# 지도가 없는 구버전 저장본은 지금 세력으로 새 지도를 만든다.
 	if data.get("map_state", {}) is Dictionary and not data.get("map_state", {}).is_empty():
 		map_state = WorldMap.restore_state(data["map_state"])
 	else:

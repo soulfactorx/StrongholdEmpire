@@ -2,7 +2,7 @@ class_name MartialArtLibrary
 extends RefCounted
 
 ## id로 무공을 찾는 목록. resources/MartialArts/의 프리셋과 data/martial_arts/의 데이터 무공을 모은다.
-## 강호에 있는 비급 전체다. 플레이어가 연구할 수 있는 것은 가진 비급과 소속 문파 서고의 비급뿐이다 (GameManager.get_research_manuals).
+## 강호에 있는 비급 전체다. 플레이어가 참오할 수 있는 것은 가진 비급과 소속 문파 서고의 비급뿐이다 (GameManager.get_research_manuals).
 
 const PRESET_DIR := "res://resources/MartialArts/"
 

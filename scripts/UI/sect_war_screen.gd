@@ -446,7 +446,7 @@ func _update_display() -> void:
 		]
 		var all_known: bool = not plan["revealed"].has(false)
 		scout_button.disabled = all_known or not GameManager.can_wage_war()
-		scout_button.text = "정찰 완료" if all_known else "정찰 (금화 %d)" % roundi(
+		scout_button.text = "정찰 완료" if all_known else "정찰 (은자 %d)" % roundi(
 			SectWarManager.get_scout_cost(plan, hero) * RoleActions.get_scout_scale(GameManager.role_state, hero.role)
 		)
 
@@ -498,7 +498,7 @@ func _formation_text(formation: SectWarManager.Formation) -> String:
 func _stakes_text(target: SectData) -> String:
 	var win: PackedStringArray = [
 		"명성 +%d~%d" % [_Balance.WAR_WIN_REPUTATION + 2 * _Balance.WAR_WIN_REPUTATION_PER_ROUND, _Balance.WAR_WIN_REPUTATION + 3 * _Balance.WAR_WIN_REPUTATION_PER_ROUND],
-		"금화 +%d~" % (_Balance.WAR_WIN_GOLD + 2 * _Balance.WAR_WIN_GOLD_PER_ROUND),
+		"은자 +%d~" % (_Balance.WAR_WIN_GOLD + 2 * _Balance.WAR_WIN_GOLD_PER_ROUND),
 		"적 제자 -%d~" % (_Balance.WAR_ENEMY_DISCIPLE_LOSS + 2),
 	]
 	if target.disciple_count - (_Balance.WAR_ENEMY_DISCIPLE_LOSS + 2) <= _Balance.SUBJUGATE_DISCIPLE_THRESHOLD:

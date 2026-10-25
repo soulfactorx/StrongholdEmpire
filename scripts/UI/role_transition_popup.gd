@@ -1,6 +1,6 @@
 extends Control
 
-## 역할 전환 창: 지금 고를 수 있는 전환(위 목록)과, 지금 역할에서 갈 수 있는 모든 길의 조건 안내(아래).
+## 신분 전환 창: 지금 고를 수 있는 전환(위 목록)과, 지금 신분에서 갈 수 있는 모든 길의 조건 안내(아래).
 ## 조건마다 채웠는지를 색으로 보인다 (채움: 옥색, 못 채움: 붉은색). 고를 전환이 없어도 안내를 보려고 열 수 있다.
 
 const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
@@ -34,7 +34,7 @@ func _ready() -> void:
 	option_list.get_parent().move_child(option_desc_label, option_list.get_index() + 1)
 	option_list.item_selected.connect(_show_option_desc)
 	var guide_title := Label.new()
-	guide_title.text = "역할 전환 안내 — 갈 수 있는 길과 조건"
+	guide_title.text = "신분 전환 안내 — 갈 수 있는 길과 조건"
 	_UiTheme.style_label_title(guide_title, 18)
 	var scroll := ScrollContainer.new()
 	scroll.name = "GuideScroll"
@@ -53,9 +53,9 @@ func _ready() -> void:
 
 func show_options(options: Array[Dictionary]) -> void:
 	var character: CharacterData = GameManager.player_character
-	title_label.text = "역할 전환 — 지금: %s" % character.get_role_name()
+	title_label.text = "신분 전환 — 지금: %s" % character.get_role_name()
 	desc_label.text = (
-		"조건을 채운 새 역할이 있습니다. 하나를 골라 [전환 확정]을 누르세요." if not options.is_empty()
+		"조건을 채운 새 신분이 있습니다. 하나를 골라 [전환 확정]을 누르세요." if not options.is_empty()
 		else "아직 조건을 채운 전환이 없습니다. 아래 안내에서 필요한 조건을 확인하세요."
 	)
 	option_list.clear()
@@ -71,14 +71,14 @@ func show_options(options: Array[Dictionary]) -> void:
 	visible = true
 
 
-## 지금 역할에서 갈 수 있는 길마다 조건을 한 줄씩. 채운 조건은 옥색, 못 채운 조건은 붉은색.
+## 지금 신분에서 갈 수 있는 길마다 조건을 한 줄씩. 채운 조건은 옥색, 못 채운 조건은 붉은색.
 func _fill_guide() -> void:
 	for child in guide_box.get_children():
 		guide_box.remove_child(child)
 		child.queue_free()
 	var paths: Array[Dictionary] = RoleManager.get_transition_guide(GameManager)
 	if paths.is_empty():
-		_add_line("이 역할에서 갈 수 있는 길이 없습니다.", _UiTheme.COLORS["text_muted"], 15)
+		_add_line("이 신분에서 갈 수 있는 길이 없습니다.", _UiTheme.COLORS["text_muted"], 15)
 	for path in paths:
 		var head: String = "%s — %s" % [path["title"], "지금 가능" if path["available"] else "조건 부족"]
 		_add_line(head, _UiTheme.COLORS["accent_gold"] if path["available"] else _UiTheme.COLORS["text_primary"], 16)

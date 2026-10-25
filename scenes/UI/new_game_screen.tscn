@@ -103,7 +103,7 @@ max_length = 12
 
 [node name="RoleLabel" type="Label" parent="Margin/VBox/Columns/CharacterPanel/Scroll/CharacterVBox"]
 layout_mode = 2
-text = "시작 역할"
+text = "시작 신분"
 
 [node name="RoleList" type="ItemList" parent="Margin/VBox/Columns/CharacterPanel/Scroll/CharacterVBox"]
 unique_name_in_owner = true
@@ -115,7 +115,7 @@ theme_override_constants/v_separation = 14
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 66)
 layout_mode = 2
-text = "역할 설명"
+text = "신분 설명"
 autowrap_mode = 3
 
 [node name="TutorialCheck" type="CheckButton" parent="Margin/VBox/Columns/CharacterPanel/Scroll/CharacterVBox"]

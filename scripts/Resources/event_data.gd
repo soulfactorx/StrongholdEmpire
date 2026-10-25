@@ -16,7 +16,7 @@ extends Resource
 @export var follow_up: bool = false
 ## 강호 연표에 보일 큰 사건: {title, hint, branches: [{text, if}]} (비면 연표에 없음)
 @export var timeline: Dictionary = {}
-## 팝업에 초상화를 보일 인물 id (없으면 "")
+## 창에 초상화를 보일 인물 id (없으면 "")
 @export var npc: String = ""
 ## 관계 대상 기연이면 대상을 고르는 기준 (EventManager 상단 설명). 아니면 비어 있다.
 @export var subject: Dictionary = {}
@@ -35,7 +35,7 @@ func get_choice_labels() -> PackedStringArray:
 	return labels
 
 
-## 팝업과 GameManager.pending_event가 쓰는 형식. 관계 대상 기연이면 subject_id 인물로 글({name}·{title})을 채운다.
+## 창과 GameManager.pending_event가 쓰는 형식. 관계 대상 기연이면 subject_id 인물로 글({name}·{title})을 채운다.
 ## visible: 보일 선택지 번호 (선택지 조건). 비우면 모두. choice_map은 보이는 순번 → 원래 선택지 번호
 ## scene_lines: 보일 대사 줄 번호 (줄의 if 조건). 비우면(기본) 조건을 따지지 않고 모두.
 func to_popup_dict(subject_id: String = "", visible: Array = [], scene_lines: Array = [-1]) -> Dictionary:

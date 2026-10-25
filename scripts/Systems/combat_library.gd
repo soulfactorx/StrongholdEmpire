@@ -176,7 +176,7 @@ static func _validate_variety(data: Dictionary, errors: PackedStringArray) -> vo
 			if not choice is Dictionary or str(choice.get("label", "")).is_empty() or not str(choice.get("action", "fight")) in Battlefield.CHOICE_ACTIONS:
 				errors.append("사건 선택지는 label과 action(%s)이 필요: %s" % [", ".join(Battlefield.CHOICE_ACTIONS), choice])
 			elif choice.has("check") and not str(choice["check"].get("stat", "")) in STAT_KEYS:
-				errors.append("선택지 판정 능력치: %s" % choice["check"])
+				errors.append("선택지 판정 자질: %s" % choice["check"])
 			if choice is Dictionary:
 				for effect in choice.get("effects", []):
 					EventManager._validate_effect(effect, errors)
@@ -231,7 +231,7 @@ static func _validate_units(units: Variant, label: String, errors: PackedStringA
 			_validate_pos(unit.get("position"), label, errors)
 		for key in unit.get("stats", {}):
 			if not key in STAT_KEYS:
-				errors.append("알 수 없는 능력치: %s" % key)
+				errors.append("알 수 없는 자질: %s" % key)
 
 
 static func _validate_pos(pos: Variant, label: String, errors: PackedStringArray) -> void:

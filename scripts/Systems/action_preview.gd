@@ -24,7 +24,7 @@ const ROLE_FIELD_NAMES: Dictionary = {
 	"failures": "건의 실패", "intel_count": "정보 수집",
 }
 const FACILITY_NAMES: Dictionary = {
-	"library_level": "서고", "training_ground_level": "무술장", "treasury_level": "금고",
+	"library_level": "서고", "training_ground_level": "연무장", "treasury_level": "금고",
 	"apothecary_level": "약방", "meditation_hall_level": "연공실",
 }
 
@@ -114,7 +114,7 @@ static func _same_values(after: Dictionary) -> bool:
 	return true
 
 
-## 미리보기 문장: 바뀌는 수치마다 "금화 500 → 470 (-30)"
+## 미리보기 문장: 바뀌는 수치마다 "은자 500 → 470 (-30)"
 static func format(preview: Dictionary) -> String:
 	var lines: PackedStringArray = []
 	var before: Dictionary = preview["before"]
@@ -166,18 +166,18 @@ static func read_values(gm: Node) -> Dictionary:
 	var values: Dictionary = {}
 	var sect: SectData = gm.player_sect
 	var character: CharacterData = gm.player_character
-	values["금화"] = gm.get_wallet().gold
+	values["은자"] = gm.get_wallet().gold
 	values["식량"] = gm.get_wallet().food
 	if gm.uses_purse() and gm.has_sect():
-		values["문파 금화"] = sect.gold
+		values["문파 은자"] = sect.gold
 		values["문파 식량"] = sect.food
 	values["명성"] = sect.reputation
-	values["연구점"] = sect.research_points
+	values["깨달음"] = sect.research_points
 	values["제자 수"] = sect.disciple_count
 	for field in FACILITY_NAMES:
 		values["%s 단계" % FACILITY_NAMES[field]] = sect.get(field)
-	values["레벨"] = character.level
-	values["경험치"] = character.experience
+	values["경지"] = character.level
+	values["수련"] = character.experience
 	for field in STAT_NAMES:
 		values[STAT_NAMES[field]] = character.get(field)
 	values["최대 내공"] = character.internal_energy_max
@@ -192,10 +192,10 @@ static func read_values(gm: Node) -> Dictionary:
 	for other in gm.world_sects:
 		values["%s 태도" % other.sect_name] = other.attitude
 		values["%s 제자" % other.sect_name] = other.disciple_count
-		values["%s 금화" % other.sect_name] = other.gold
+		values["%s 은자" % other.sect_name] = other.gold
 	for disciple in sect.disciples:
-		values["%s 레벨" % disciple.display_name] = disciple.level
-		values["%s 경험치" % disciple.display_name] = disciple.experience
+		values["%s 경지" % disciple.display_name] = disciple.level
+		values["%s 수련" % disciple.display_name] = disciple.experience
 	return values
 
 

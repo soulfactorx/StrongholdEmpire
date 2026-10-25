@@ -1,7 +1,7 @@
 {
   "id": "manual_book_peddler",
   "title": "떠돌이 책장수",
-  "description": "장터 구석의 책장수가 소매를 끌어당깁니다. 「손님, 이건 진짜 비급이오. 금화 60이면 넘기리다.」",
+  "description": "장터 구석의 책장수가 소매를 끌어당깁니다. 「손님, 이건 진짜 비급이오. 은자 60이면 넘기리다.」",
   "can_repeat": true,
   "weight": 0.8,
   "conditions": [
@@ -14,7 +14,7 @@
   ],
   "choices": [
     {
-      "label": "사 본다 (금화 60)",
+      "label": "사 본다 (은자 60)",
       "message": "값을 치렀습니다.",
       "effects": [
         {

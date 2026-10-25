@@ -12,7 +12,7 @@ const _OptionsPopup = preload("res://scripts/UI/options_popup.gd")
 @onready var load_button: Button = %LoadButton
 @onready var dev_toggle_button: Button = %DevToggleButton
 @onready var dev_panel: Control = %DevPanel
-## 불러올 슬롯을 고르는 팝업
+## 불러올 칸을 고르는 창
 var load_popup: Control
 var confirm_popup: Control
 var options_popup: Control
@@ -41,7 +41,7 @@ func _ready() -> void:
 func _build_status_text() -> String:
 	var mod_count: int = GameManager.mod_martial_arts.size()
 	var save_text: String = "저장됨" if GameManager.has_save_file() else "저장 없음"
-	return "모드 무공 %d개 로드 | %s" % [mod_count, save_text]
+	return "모드 무공 %d개 읽음 | %s" % [mod_count, save_text]
 
 
 func _on_continue_pressed() -> void:
@@ -77,7 +77,7 @@ func _on_load_pressed() -> void:
 		options.append({
 			"id": str(slot), "title": summary["title"], "description": summary["detail"], "disabled": not summary["exists"],
 		})
-	load_popup.open("불러오기", "불러올 세이브를 고르세요.", options)
+	load_popup.open("불러오기", "불러올 저장본을 고르세요.", options)
 
 
 func _on_load_slot_chosen(slot: String) -> void:

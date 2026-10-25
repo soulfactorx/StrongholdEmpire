@@ -10,7 +10,7 @@ extends RefCounted
 ##       — 없으면 성향별 기본값(GameBalance.WAR_TACTICS, WAR_FORMATIONS)
 ##       officers(선택) [{npc, post}] 직책 인물 (NpcAgent.POST_NAMES: leader·instructor·healer·elder·steward·heir)
 ##       strategy(선택) 세력 AI 전략 (FactionStrategy), optional(선택) true면 새 게임에서 골라야 등장하는 세력
-##       manuals(선택) [무공 id] 문파 서고의 비급 — 이 문파에 몸담으면 무공 연구소에서 연구할 수 있다
+##       manuals(선택) [무공 id] 문파 서고의 비급 — 이 문파에 몸담으면 장경각에서 참오할 수 있다
 ##       initial_bonds(선택) [{target, type, strength}] 이 문파에 몸담고 시작할 때의 인연 (없으면 문주를 사부로)
 
 const SECT_DIR := "res://data/sects/"

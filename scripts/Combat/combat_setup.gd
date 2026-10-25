@@ -16,7 +16,7 @@ var player_position: Vector2i = Vector2i(2, 5)
 var blocked_tiles: Array[Vector2i] = []
 ## 칸 → CombatRules.Terrain. 없는 칸은 평지.
 var terrain: Dictionary = {}
-## 관계 보정(원한·라이벌 피해 보너스)과 전투 후 유대 변화에 쓰는 관계 대상 id
+## 관계 보정(원한·라이벌 피해 가산)과 전투 후 유대 변화에 쓰는 관계 대상 id
 var relationship_target_id: String = ""
 ## 다수의 약한 적(도적 등)을 만들 때 쓰는 적 체력·피해 배율
 var enemy_hp_scale: float = 1.0

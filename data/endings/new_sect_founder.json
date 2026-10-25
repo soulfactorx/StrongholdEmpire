@@ -1,7 +1,7 @@
 {
   "id": "new_sect_founder",
   "title": "신파 창설",
-  "description": "이중 스파이로 살아남아 새로운 문파를 세웠습니다.\n강호에 또 하나의 세력이 탄생했습니다.",
+  "description": "이중 간자로 살아남아 새로운 문파를 세웠습니다.\n강호에 또 하나의 세력이 탄생했습니다.",
   "priority": 50,
   "tone": "victory",
   "final": false,

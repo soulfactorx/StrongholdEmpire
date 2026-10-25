@@ -2,14 +2,14 @@ class_name SectAI
 extends RefCounted
 
 ## 세력 AI: 강호 세력이 계절마다 행동 하나를 고른다 — 성장, 다른 세력 공격, 플레이어 침공, 외교,
-## 지도의 빈 땅 차지(확장), 무술장 확장(내실).
+## 지도의 빈 땅 차지(확장), 연무장 확장(내실).
 ## 성향별 가중치(GameBalance.AI_WEIGHTS)에 세력 전략(FactionStrategy) 배율을 곱하고, 플레이어에 대한 태도를 본다.
 ## 굴복한 세력은 움직이지 않는다. 계절마다 세력별로 무엇을 했는지 보고(reports)를 남긴다.
 
 const _Balance = preload("res://scripts/Systems/game_balance.gd")
 
 enum Action { GROW, ATTACK, INVADE, DIPLOMACY, EXPAND, FORTIFY }
-const ACTION_TITLES: Array[String] = ["세력 키우기", "다른 세력 공격", "우리 문파 침공", "외교 사절", "영토 확장", "무술장 확장"]
+const ACTION_TITLES: Array[String] = ["세력 키우기", "다른 세력 공격", "우리 문파 침공", "외교 사절", "영토 확장", "연무장 확장"]
 
 ## false면 계절 진행에서 세력 AI가 움직이지 않는다. 다른 시스템을 시험할 때 강호 세력 수치를 고정하려고 쓴다.
 static var active: bool = true
@@ -92,7 +92,7 @@ static func _pick(weights: Array[float]) -> int:
 
 
 ## 한 계절의 세력 행동. invasion_scale이 0이면 침공하지 않는다 (기연 빈도 0인 시험·시뮬레이션).
-## map_state가 있으면 땅에서 나는 금화를 거두고, 확장·영토 쟁탈을 한다.
+## map_state가 있으면 땅에서 나는 은자를 거두고, 확장·영토 쟁탈을 한다.
 ## 결과: {news: 강호 소식 목록, invader: 플레이어를 침공한 세력 id 또는 "",
 ##        reports: [{sect_id, sect_name, strategy, action, detail}] — 세력마다 이번 계절에 한 일}. 침공은 계절에 한 세력만.
 static func run_season(
@@ -155,7 +155,7 @@ static func run_season(
 			Action.FORTIFY:
 				sect.gold -= _Balance.AI_FORTIFY_GOLD
 				sect.training_ground_level += 1
-				report["detail"] = "금화 %d을 들여 무술장을 %d단계로 넓혔습니다." % [_Balance.AI_FORTIFY_GOLD, sect.training_ground_level]
+				report["detail"] = "은자 %d을 들여 연무장을 %d단계로 넓혔습니다." % [_Balance.AI_FORTIFY_GOLD, sect.training_ground_level]
 	return {"news": news, "invader": invader, "reports": reports}
 
 

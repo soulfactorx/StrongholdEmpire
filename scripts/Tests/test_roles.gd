@@ -1,16 +1,16 @@
 extends "res://scripts/Tests/test_base.gd"
 
-## 스모크 테스트 — 역할 고유 행동·전환, 제자 명단, 인연
+## 스모크 테스트 — 신분 고유 행동·전환, 제자 명단, 인연
 ## 실행 순서는 smoke_test.gd의 INIT_SEQUENCE·RUNTIME_SEQUENCE가 정한다.
 
 
 func _test_role_actions() -> void:
 	var gm: Node = root.get_node("GameManager")
 
-	# 모든 역할에 고유 행동이 1개 이상
+	# 모든 신분에 고유 행동이 1개 이상
 	for role_name in CharacterData.Role.keys():
 		var actions: Array[Dictionary] = RoleActions.get_actions(CharacterData.Role[role_name])
-		_check(not actions.is_empty(), "역할 고유 행동 있음: %s" % role_name)
+		_check(not actions.is_empty(), "신분 고유 행동 있음: %s" % role_name)
 
 	# ── 문주: 회의·사절·불만도·축출 ──
 	_new_quiet_game(gm, "leader")
@@ -20,9 +20,9 @@ func _test_role_actions() -> void:
 	_check(
 		result["success"] and gm.role_state["discontent"] == 30 - _Balance.COUNCIL_DISCONTENT_RELIEF
 		and gm.player_sect.gold == gold_before - _Balance.COUNCIL_GOLD,
-		"문주 회의: 불만도 감소, 금화 소모"
+		"문주 회의: 불만도 감소, 은자 소모"
 	)
-	_check(not gm.do_role_action("council")["success"], "역할 행동은 계절마다 한 번")
+	_check(not gm.do_role_action("council")["success"], "신분 행동은 계절마다 한 번")
 	var discontent: int = gm.role_state["discontent"]
 	gm.advance_turn()
 	_check(gm.role_state["discontent"] == discontent + _Balance.DISCONTENT_PER_SEASON, "계절마다 불만도 상승")
@@ -35,7 +35,7 @@ func _test_role_actions() -> void:
 	discontent = gm.role_state["discontent"]
 	gm.hold_feast()
 	_check(gm.role_state["discontent"] == maxi(0, discontent - _Balance.FEAST_DISCONTENT_RELIEF), "문주의 연회는 불만도도 낮춤")
-	_check(not gm.do_role_action("teaching")["success"], "다른 역할의 행동은 거부")
+	_check(not gm.do_role_action("teaching")["success"], "다른 신분의 행동은 거부")
 	gm.role_state["discontent"] = 75
 	_check(
 		EventManager.conditions_met(EventManager.get_event("leader_rebellion").conditions, gm.player_character, gm.player_sect, gm.player_relationships, "봄", gm.story_flags),
@@ -51,13 +51,13 @@ func _test_role_actions() -> void:
 	_check(gm.player_sect.leader_name != gm.player_character.display_name, "축출 후 문파를 다른 사람이 맡음")
 	_check(gm.last_turn_report.contains("내쳤습니다"), "축출이 계절 보고에 표시")
 
-	# ── 중간관리자: 부서·건의·강등 ──
+	# ── 총관: 부서·건의·강등 ──
 	_new_quiet_game(gm, "young_disciple")
 	gm.apply_role_transition(CharacterData.Role.MANAGER)
-	_check(gm.role_state["trust"] == _Balance.MANAGER_START_TRUST, "중간관리자 시작 신임도")
+	_check(gm.role_state["trust"] == _Balance.MANAGER_START_TRUST, "총관 시작 신임도")
 	var plain_forecast: int = gm.estimate_next_season()["gold"]
 	_check(gm.do_role_action("department", "finance")["success"] and gm.role_state["department"] == "finance", "부서 지정: 재정")
-	_check(gm.estimate_next_season()["gold"] > plain_forecast, "재정 부서: 예상 금화 수입 증가")
+	_check(gm.estimate_next_season()["gold"] > plain_forecast, "재정 부서: 예상 은자 수입 증가")
 	gm.advance_turn()
 	_check(gm.role_state["trust"] == _Balance.MANAGER_START_TRUST + _Balance.DEPT_TRUST_PER_SEASON, "부서를 맡으면 계절마다 신임도 상승")
 	_check(not gm.do_role_action("department", "finance")["success"], "같은 부서 재지정 거부")
@@ -80,21 +80,21 @@ func _test_role_actions() -> void:
 	gm.role_state["failures"] = _Balance.DEMOTION_FAILURES
 	gm.advance_turn()
 	_check(gm.player_character.role == CharacterData.Role.YOUNG_DISCIPLE and gm.story_flags.get("demoted", false), "실책 누적: 막내 제자로 강등")
-	_check(gm.role_history.has("MANAGER") and gm.role_state["failures"] == 0, "강등 후 역할 기록 유지, 실책 초기화")
+	_check(gm.role_history.has("MANAGER") and gm.role_state["failures"] == 0, "강등 후 신분 기록 유지, 실책 초기화")
 
-	# ── 막내 제자: 가르침·외출·시설 제한 ──
+	# ── 막내 제자: 가르침·외출·전각 제한 ──
 	_new_quiet_game(gm, "young_disciple")
 	var master: RelationshipData = RelationshipManager.get_bond_with(gm.player_relationships, "npc_master")
 	var bond_before: int = master.bond_strength
 	var exp_before: int = gm.player_character.experience
 	_check(gm.do_role_action("teaching")["success"], "가르침 청하기")
-	_check(master.bond_strength == bond_before + _Balance.TEACH_BOND and gm.player_character.experience >= exp_before + _Balance.TEACH_EXP, "가르침: 유대·경험치 상승")
+	_check(master.bond_strength == bond_before + _Balance.TEACH_BOND and gm.player_character.experience >= exp_before + _Balance.TEACH_EXP, "가르침: 유대·수련 상승")
 	gm.advance_turn()
 	result = gm.do_role_action("outing")
 	_check(result["success"] and (result.has("event") == (not gm.pending_event.is_empty())), "외출: 기연 또는 소득")
 	gm.pending_event.clear()
 	gm.player_sect.gold = 1000
-	_check(not gm.upgrade_facility("library")["success"] and gm.player_sect.library_level == 1, "막내 제자는 시설 확장 불가")
+	_check(not gm.upgrade_facility("library")["success"] and gm.player_sect.library_level == 1, "막내 제자는 전각 확장 불가")
 
 	# ── 낭인: 의뢰 게시판·이동·신용 ──
 	_new_quiet_game(gm, "wanderer")
@@ -120,18 +120,18 @@ func _test_role_actions() -> void:
 	else:
 		_check(gm.role_state["failures"] == 1, "호위 실패: 실책 누적")
 
-	# ── 스파이: 정보 수집·사보타주·노출도 ──
+	# ── 간자: 정보 수집·사보타주·노출도 ──
 	_new_quiet_game(gm, "young_disciple")
 	gm.apply_role_transition(CharacterData.Role.SPY)
 	var research_before: int = gm.player_sect.research_points
 	result = gm.do_role_action("intel", "heukpung")
 	plan = gm.prepare_war("heukpung")
 	_check(result["success"] and not plan["revealed"].has(false), "정보 수집: 적 작전 모두 공개")
-	_check(gm.role_state["exposure"] == _Balance.EXPOSURE_INTEL and gm.player_sect.research_points == research_before + _Balance.INTEL_RESEARCH, "정보 수집: 노출도·연구점")
+	_check(gm.role_state["exposure"] == _Balance.EXPOSURE_INTEL and gm.player_sect.research_points == research_before + _Balance.INTEL_RESEARCH, "정보 수집: 노출도·깨달음")
 	for i in _Balance.SPY_MISSION_INTEL - 1:
 		gm.advance_turn()
 		gm.do_role_action("intel", "heukpung")
-	_check(gm.story_flags.get("spy_mission_complete", false), "정보 %d회: 스파이 임무 완료" % _Balance.SPY_MISSION_INTEL)
+	_check(gm.story_flags.get("spy_mission_complete", false), "정보 %d회: 간자 임무 완료" % _Balance.SPY_MISSION_INTEL)
 	gm.advance_turn()
 	var disciples: int = gm.get_world_sect("cheonma").disciple_count
 	gm.do_role_action("sabotage", "cheonma")
@@ -146,9 +146,9 @@ func _test_role_actions() -> void:
 	_check(gm.role_state["exposure"] == exposure - _Balance.EXPOSURE_DECAY, "노출도는 계절마다 조금씩 줄어듦")
 	gm.role_state["exposure"] = _Balance.EXPOSURE_MAX - 5
 	gm.do_role_action("sabotage", "namgung")
-	_check(gm.story_flags.get("spy_exposed", false) and gm.current_ending_id == "tragic_execution", "노출도 100: 처형 엔딩")
+	_check(gm.story_flags.get("spy_exposed", false) and gm.current_ending_id == "tragic_execution", "노출도 100: 처형 결말")
 
-	# ── 암살자: 표적 의뢰·현상금·은신 ──
+	# ── 자객: 표적 의뢰·현상금·은신 ──
 	_new_quiet_game(gm, "young_disciple")
 	gm.apply_role_transition(CharacterData.Role.SPY)
 	gm.apply_role_transition(CharacterData.Role.ASSASSIN)
@@ -170,9 +170,9 @@ func _test_role_actions() -> void:
 	gm.pending_event.clear()
 	_check(choice.has("combat") and choice["combat"].id == "bounty_hunters", "추격 기연: 추격 전투로 이어짐")
 
-	# ── 의뢰인: 계약 수주·이행·위반·기한 ──
+	# ── 청부객: 계약 수주·이행·위반·기한 ──
 	_new_quiet_game(gm, "mercenary")
-	_check(gm.player_character.role == CharacterData.Role.MERCENARY, "의뢰인으로 시작")
+	_check(gm.player_character.role == CharacterData.Role.MERCENARY, "청부객으로 시작")
 	gold_before = gm.get_wallet().gold
 	_check(gm.do_role_action("contract", "namgung")["success"], "계약 수주")
 	var contract: Dictionary = gm.role_state["contract"]
@@ -188,7 +188,7 @@ func _test_role_actions() -> void:
 	gm.advance_turn()
 	gold_before = gm.get_wallet().gold
 	attitude = gm.get_world_sect("heukpung").attitude
-	_check(gm.do_role_action("breach")["success"] and gm.get_wallet().gold == gold_before + _Balance.CONTRACT_BREACH_GOLD, "계약 위반: 금화 획득")
+	_check(gm.do_role_action("breach")["success"] and gm.get_wallet().gold == gold_before + _Balance.CONTRACT_BREACH_GOLD, "계약 위반: 은자 획득")
 	_check(RoleActions.get_credit(gm.role_state, "heukpung") == -_Balance.CONTRACT_BREACH_CREDIT and gm.get_world_sect("heukpung").attitude < attitude, "계약 위반: 신용·태도 하락")
 	gm.advance_turn()
 	gm.do_role_action("contract", "cheonma")
@@ -199,16 +199,16 @@ func _test_role_actions() -> void:
 	var contract_targets: Array = RoleActions.get_targets(gm, "contract").map(func(t: Dictionary) -> String: return t["id"])
 	_check(not contract_targets.has("namgung"), "신용이 너무 낮은 세력은 계약을 주지 않음")
 
-	# ── 세이브: 역할 자원 저장·복원 ──
+	# ── 저장본: 신분 자원 저장·복원 ──
 	gm.role_state["bounty"] = 33
 	var restored: Dictionary = RoleActions.restore_state(JSON.parse_string(JSON.stringify(gm.role_state)))
-	_check(restored["bounty"] == 33 and restored["bounty"] is int and restored["credit"]["cheonma"] is int, "역할 자원 JSON 왕복 (정수 유지)")
-	_check(RoleActions.restore_state({})["trust"] == _Balance.MANAGER_START_TRUST, "구버전 세이브: 역할 자원 기본값")
+	_check(restored["bounty"] == 33 and restored["bounty"] is int and restored["credit"]["cheonma"] is int, "신분 자원 JSON 왕복 (정수 유지)")
+	_check(RoleActions.restore_state({})["trust"] == _Balance.MANAGER_START_TRUST, "구버전 저장본: 신분 자원 기본값")
 
 	# ── 기연 문법: role_state ──
 	var errors: PackedStringArray = []
 	EventManager.validate_conditions([{"type": "role_state", "field": "no_such", "op": ">=", "value": 1}], errors)
-	_check(not errors.is_empty(), "알 수 없는 역할 자원 조건 거부")
+	_check(not errors.is_empty(), "알 수 없는 신분 자원 조건 거부")
 	errors = EventManager.validate_event_dict({
 		"id": "x", "title": "x", "description": "x", "conditions": [],
 		"choices": [{"label": "a", "message": "b", "effects": [{"type": "role_state", "field": "exposure", "add": 5}]}],
@@ -225,15 +225,15 @@ func _test_role_actions() -> void:
 func _test_role_transitions_extended() -> void:
 	var gm: Node = root.get_node("GameManager")
 
-	# 낭인 → 의뢰인 → 낭인
+	# 낭인 → 청부객 → 낭인
 	_new_quiet_game(gm, "wanderer")
 	gm.player_character.gain_experience(CharacterData.get_experience_for_level(_Balance.MERCENARY_LEVEL_REQ))
 	gm.refresh_role_transitions()
 	var roles: Array = gm.pending_role_transitions.map(func(o: Dictionary) -> int: return o["role"])
-	_check(roles.has(CharacterData.Role.MERCENARY), "낭인 → 의뢰인 전환 경로")
+	_check(roles.has(CharacterData.Role.MERCENARY), "낭인 → 청부객 전환 경로")
 	gm.apply_role_transition(CharacterData.Role.MERCENARY)
 	roles = gm.pending_role_transitions.map(func(o: Dictionary) -> int: return o["role"])
-	_check(roles.has(CharacterData.Role.WANDERER), "의뢰인 → 낭인 전환 경로")
+	_check(roles.has(CharacterData.Role.WANDERER), "청부객 → 낭인 전환 경로")
 
 	# 이적: 신용을 쌓은 세력에 객경으로
 	RoleActions.change_credit(gm.role_state, "namgung", _Balance.DEFECT_CREDIT_REQ)
@@ -243,14 +243,14 @@ func _test_role_transitions_extended() -> void:
 		if option.get("kind") == "defect" and option["sect_id"] == "namgung":
 			defect = option
 	_check(not defect.is_empty(), "신용 %d 이상: 이적 경로" % _Balance.DEFECT_CREDIT_REQ)
-	_check(gm.player_sect.id == "none", "낭인 출신 의뢰인은 무소속")
+	_check(gm.player_sect.id == "none", "낭인 출신 청부객은 무소속")
 	var gold_before: int = gm.player_sect.gold
 	gm.apply_role_transition(defect["role"], defect)
-	_check(gm.player_sect.id == "namgung" and gm.player_character.role == CharacterData.Role.MANAGER, "이적: 남궁세가의 중간관리자")
+	_check(gm.player_sect.id == "namgung" and gm.player_character.role == CharacterData.Role.MANAGER, "이적: 남궁세가의 총관")
 	_check(gm.get_world_sect("none") == null, "무소속에서 이적: 무소속은 강호 세력이 되지 않음")
-	_check(gm.player_sect.gold >= gold_before, "무소속에서 이적: 개인 금화를 가지고 감")
+	_check(gm.player_sect.gold >= gold_before, "무소속에서 이적: 개인 은자를 가지고 감")
 
-	# 문파에 몸담은 의뢰인의 이적: 옛 문파는 강호 세력이 된다
+	# 문파에 몸담은 청부객의 이적: 옛 문파는 강호 세력이 된다
 	_new_quiet_game(gm, "mercenary")
 	RoleActions.change_credit(gm.role_state, "namgung", _Balance.DEFECT_CREDIT_REQ)
 	var old_id: String = gm.player_sect.id
@@ -260,7 +260,7 @@ func _test_role_transitions_extended() -> void:
 	_check(gm.get_world_sect("namgung") == null and gm.story_flags.get("defected", false), "이적: 새 문파는 강호 세력 목록에서 빠짐")
 	_check(gm.get_war_targets().has(old_sect), "옛 문파도 문파전 대상")
 
-	# 배신: 스파이가 잠입한 세력으로 전향
+	# 배신: 간자가 잠입한 세력으로 전향
 	_new_quiet_game(gm, "young_disciple")
 	gm.apply_role_transition(CharacterData.Role.SPY)
 	gm.do_role_action("intel", "heukpung")
@@ -268,7 +268,7 @@ func _test_role_transitions_extended() -> void:
 	for option in gm.pending_role_transitions:
 		if option.get("kind") == "betray":
 			betray = option
-	_check(betray.get("sect_id") == "heukpung", "스파이 배신 경로: 잠입한 세력")
+	_check(betray.get("sect_id") == "heukpung", "간자 배신 경로: 잠입한 세력")
 	var morality: int = gm.player_character.morality
 	gm.apply_role_transition(betray["role"], betray)
 	_check(gm.player_sect.id == "heukpung" and gm.player_character.morality == morality - _Balance.BETRAY_MORALITY_LOSS, "배신: 흑풍채로 전향, 도덕 하락")
@@ -310,26 +310,26 @@ func _test_role_actions_hub() -> void:
 	var all_touch_size: bool = true
 	for button in hub.role_action_box.get_children():
 		all_touch_size = all_touch_size and button.custom_minimum_size.y >= 48
-	_check(all_touch_size, "역할 행동 버튼 높이 48px 이상")
-	_check(hub.role_resource_label.text.contains("거처"), "낭인 역할 자원 표시")
+	_check(all_touch_size, "신분 행동 버튼 높이 48px 이상")
+	_check(hub.role_resource_label.text.contains("거처"), "낭인 신분 자원 표시")
 	hub._on_role_action_pressed("job_board")
 	await process_frame
-	_check(hub.choice_popup.visible and hub.choice_popup.get_option_count() == RoleActions.JOBS.size(), "의뢰 게시판: 의뢰 고르기 팝업")
+	_check(hub.choice_popup.visible and hub.choice_popup.get_option_count() == RoleActions.JOBS.size(), "의뢰 게시판: 의뢰 고르기 창")
 	hub.choice_popup._on_option_pressed("search")
 	_check(not hub.choice_popup.visible and hub.log_label.text.contains("수색"), "수색 의뢰 실행")
-	_check(hub.role_action_box.get_child(0).disabled, "행동 후 이번 계절 역할 버튼 비활성")
+	_check(hub.role_action_box.get_child(0).disabled, "행동 후 이번 계절 신분 버튼 비활성")
 	hub._on_advance_turn_pressed()
 	await process_frame
-	_check(not hub.role_action_box.get_child(0).disabled, "다음 계절 역할 버튼 다시 활성")
+	_check(not hub.role_action_box.get_child(0).disabled, "다음 계절 신분 버튼 다시 활성")
 
-	# 역할이 바뀌면 버튼도 바뀐다
+	# 신분이 바뀌면 버튼도 바뀐다
 	gm.player_character.gain_experience(CharacterData.get_experience_for_level(_Balance.MERCENARY_LEVEL_REQ))
 	gm.apply_role_transition(CharacterData.Role.MERCENARY)
 	await process_frame
 	var titles: Array = hub.role_action_box.get_children().map(func(b: Button) -> String: return b.text)
-	_check(titles.has("계약 수주") and titles.size() == 3, "의뢰인 고유 행동 버튼 3개")
+	_check(titles.has("계약 수주") and titles.size() == 3, "청부객 고유 행동 버튼 3개")
 
-	# 막내 제자: 시설 확장 버튼 비활성
+	# 막내 제자: 전각 확장 버튼 비활성
 	_new_quiet_game(gm, "young_disciple")
 	hub._refresh_all()
 	hub._on_facility_pressed()
@@ -337,7 +337,7 @@ func _test_role_actions_hub() -> void:
 	var any_enabled: bool = false
 	for row in hub.facility_popup._rows.get_children():
 		any_enabled = any_enabled or not row.get_child(1).disabled
-	_check(not any_enabled, "막내 제자: 시설 확장 버튼 모두 비활성")
+	_check(not any_enabled, "막내 제자: 전각 확장 버튼 모두 비활성")
 	hub.facility_popup.visible = false
 
 	# 표적 의뢰는 전투 화면으로 이어진다
@@ -395,7 +395,7 @@ func _test_disciple_roster() -> void:
 	_new_quiet_game(gm, "leader")
 	var sect: SectData = gm.player_sect
 
-	# 새 게임: 제자 수만큼 이름·능력치를 가진 제자
+	# 새 게임: 제자 수만큼 이름·자질을 가진 제자
 	_check(_roster_matches(sect) and sect.disciple_count == 12, "새 게임: 제자 명단 12명")
 	var ids: Dictionary = {}
 	var stats_ok: bool = true
@@ -404,7 +404,7 @@ func _test_disciple_roster() -> void:
 		for value in [disciple.strength, disciple.agility, disciple.wisdom]:
 			stats_ok = stats_ok and value >= _Balance.DISCIPLE_STAT_MIN and value <= _Balance.DISCIPLE_STAT_MAX
 		stats_ok = stats_ok and disciple.display_name.length() >= 2 and disciple.level == 1
-	_check(ids.size() == 12 and stats_ok, "제자마다 고유 id·이름·능력치")
+	_check(ids.size() == 12 and stats_ok, "제자마다 고유 id·이름·자질")
 	_check(not gm.world_sects[0].use_roster and gm.world_sects[0].disciples.is_empty(), "강호 세력은 제자 수만 씀")
 
 	# 제자 수가 바뀌면 명단도 맞춰진다 (맡은 일이 있는 제자는 나중에 떠난다)
@@ -430,7 +430,7 @@ func _test_disciple_roster() -> void:
 	SectManager.pay_upkeep(sect)
 	_check(_roster_matches(sect) and sect.disciple_count < 12, "식량 부족 이탈도 명단에 반영")
 
-	# 배치: 시설 레벨만큼 자리, 수입 보너스
+	# 배치: 전각 단계만큼 자리, 수입 가산
 	_new_quiet_game(gm, "leader")
 	sect = gm.player_sect
 	var a: DiscipleData = sect.disciples[0]
@@ -438,29 +438,29 @@ func _test_disciple_roster() -> void:
 	var research_before: int = gm.estimate_next_season()["gold"]
 	var plain: Dictionary = SectManager.compute_seasonal_income(sect, gm.player_character, "봄")
 	_check(DiscipleRoster.assign(sect, a.id, "treasury")["success"], "금고에 제자 배치")
-	_check(not DiscipleRoster.assign(sect, b.id, "treasury")["success"], "금고 Lv.1은 한 자리")
+	_check(not DiscipleRoster.assign(sect, b.id, "treasury")["success"], "금고 경지 1은 한 자리")
 	var with_bonus: Dictionary = SectManager.compute_seasonal_income(sect, gm.player_character, "봄")
-	_check(with_bonus["gold"] == plain["gold"] + a.wisdom / _Balance.DISCIPLE_TREASURY_WISDOM_PER_GOLD, "금고 담당: 지혜만큼 금화 수입")
-	_check(gm.estimate_next_season()["gold"] >= research_before, "예상 수지에 배치 보너스 반영")
+	_check(with_bonus["gold"] == plain["gold"] + a.wisdom / _Balance.DISCIPLE_TREASURY_WISDOM_PER_GOLD, "금고 담당: 지혜만큼 은자 수입")
+	_check(gm.estimate_next_season()["gold"] >= research_before, "예상 수지에 배치 가산 반영")
 	DiscipleRoster.assign(sect, b.id, "library")
 	with_bonus = SectManager.compute_seasonal_income(sect, gm.player_character, "봄")
-	_check(with_bonus["research"] == plain["research"] + b.wisdom / _Balance.DISCIPLE_LIBRARY_WISDOM_PER_POINT, "서고 담당: 지혜만큼 연구점")
+	_check(with_bonus["research"] == plain["research"] + b.wisdom / _Balance.DISCIPLE_LIBRARY_WISDOM_PER_POINT, "서고 담당: 지혜만큼 깨달음")
 	sect.treasury_level = 2
 	_check(DiscipleRoster.assign(sect, sect.disciples[2].id, "treasury")["success"], "금고를 확장하면 자리가 늘어남")
 	_check(DiscipleRoster.cycle_assignment(sect, a.id)["success"] and a.assignment == "", "배치 돌리기: 금고 → 없음")
-	_check(DiscipleRoster.cycle_assignment(sect, a.id)["success"] and a.assignment == "training_ground", "배치 돌리기: 서고가 차 있으면 무술장")
+	_check(DiscipleRoster.cycle_assignment(sect, a.id)["success"] and a.assignment == "training_ground", "배치 돌리기: 서고가 차 있으면 연무장")
 	var exp_before: int = a.experience
-	_check(DiscipleRoster.on_season(sect).contains("무술장") and a.experience == exp_before + _Balance.DISCIPLE_TRAINING_GROUND_EXP, "무술장 담당: 계절 수련")
+	_check(DiscipleRoster.on_season(sect).contains("연무장") and a.experience == exp_before + _Balance.DISCIPLE_TRAINING_GROUND_EXP, "연무장 담당: 계절 수련")
 
 	# 개별 수련과 경지
 	var gold_before: int = sect.gold
 	var turn: int = gm._get_turn_index()
-	_check(DiscipleRoster.train(sect, b.id, turn)["success"] and sect.gold == gold_before - _Balance.DISCIPLE_TRAIN_GOLD, "개별 수련: 금화 소모")
+	_check(DiscipleRoster.train(sect, b.id, turn)["success"] and sect.gold == gold_before - _Balance.DISCIPLE_TRAIN_GOLD, "개별 수련: 은자 소모")
 	_check(not DiscipleRoster.train(sect, b.id, turn)["success"], "개별 수련은 계절에 한 번")
 	var strength: int = b.strength
-	_check(b.gain_experience(_Balance.DISCIPLE_EXP_PER_LEVEL * 3) >= 1 and b.strength > strength, "경지가 오르면 능력치 상승")
+	_check(b.gain_experience(_Balance.DISCIPLE_EXP_PER_LEVEL * 3) >= 1 and b.strength > strength, "경지가 오르면 자질 상승")
 
-	# 일괄 수련: 이미 수련한 제자는 빼고, 최적은 출전 지정·경지 오를 제자를 먼저, 유지비만큼 금화를 남긴다
+	# 일괄 수련: 이미 수련한 제자는 빼고, 최적은 출전 지정·경지 오를 제자를 먼저, 씀씀이만큼 은자를 남긴다
 	var deployed: DiscipleData = sect.disciples[3]
 	deployed.deployed = true
 	var near: DiscipleData = sect.disciples[4]
@@ -476,12 +476,12 @@ func _test_disciple_roster() -> void:
 	_check(DiscipleRoster.plan_batch_train(sect, turn, "deployed").all(func(d: DiscipleData) -> bool: return d.deployed), "출전 지정 제자만")
 	var reserve: int = DiscipleRoster.get_batch_reserve(sect, "best")
 	sect.gold = reserve + _Balance.DISCIPLE_TRAIN_GOLD * 2 + 5
-	_check(DiscipleRoster.plan_batch_train(sect, turn, "best").size() == 2 and DiscipleRoster.plan_batch_train(sect, turn, "all").size() > 2, "최적 수련은 유지비만큼 남기고, 모두 수련은 금화를 다 씀")
+	_check(DiscipleRoster.plan_batch_train(sect, turn, "best").size() == 2 and DiscipleRoster.plan_batch_train(sect, turn, "all").size() > 2, "최적 수련은 씀씀이만큼 남기고, 모두 수련은 은자를 다 씀")
 	var level_before: int = near.level
 	var batch: Dictionary = DiscipleRoster.batch_train(sect, turn, "best")
 	_check(batch["success"] and batch["count"] == 2 and sect.gold == reserve + 5 and near.level == level_before + 1 and deployed.last_train_turn == turn, "일괄 수련 실행 (%s)" % batch["message"])
 	sect.gold = reserve
-	_check(not DiscipleRoster.batch_train(sect, turn, "best")["success"], "일괄 수련: 금화가 모자라면 실패와 까닭")
+	_check(not DiscipleRoster.batch_train(sect, turn, "best")["success"], "일괄 수련: 은자가 모자라면 실패와 까닭")
 	sect.gold = 100000
 	DiscipleRoster.batch_train(sect, turn, "all")
 	_check(DiscipleRoster.get_trainable(sect, turn).is_empty() and DiscipleRoster.batch_train(sect, turn, "all")["message"].contains("없습니다"), "모두 수련 뒤에는 이번 계절 수련할 제자가 없음")
@@ -510,7 +510,7 @@ func _test_disciple_roster() -> void:
 	sect.disciples[0].level += 2
 	_check(SectWarManager.get_military_power(sect, gm.player_character) == power + 2 * _Balance.DISCIPLE_LEVEL_WAR_POWER, "제자 경지가 문파전 전력에 반영")
 
-	# 세이브 왕복과 구버전 변환
+	# 저장본 왕복과 구버전 변환
 	var restored: SectData = _SaveManager.deserialize_sect(JSON.parse_string(JSON.stringify(_SaveManager.serialize_sect(sect))))
 	var same: bool = _roster_matches(restored) and restored.disciples.size() == sect.disciples.size()
 	for i in sect.disciples.size():
@@ -526,7 +526,7 @@ func _test_disciple_roster() -> void:
 		"character": _SaveManager.serialize_character(gm.player_character),
 		"sect": old_sect,
 	})))
-	_check(_roster_matches(gm.player_sect) and gm.player_sect.disciple_count == 9, "구버전 세이브: 제자 수만큼 무작위 제자")
+	_check(_roster_matches(gm.player_sect) and gm.player_sect.disciple_count == 9, "구버전 저장본: 제자 수만큼 무작위 제자")
 
 	# 다른 세력으로 옮겨 가면 그 세력의 명단을 만든다
 	_new_quiet_game(gm, "mercenary")
@@ -548,7 +548,7 @@ func _test_disciple_roster_flow() -> void:
 	hub._on_disciple_pressed()
 	await process_frame
 	var popup: Node = hub.disciple_popup
-	_check(popup.visible and popup.get_row_count() == gm.player_sect.disciple_count, "제자 명단 팝업: 제자마다 한 줄")
+	_check(popup.visible and popup.get_row_count() == gm.player_sect.disciple_count, "제자 명단 창: 제자마다 한 줄")
 	var row: HBoxContainer = popup._rows.get_child(0)
 	var touch_ok: bool = true
 	for i in range(1, row.get_child_count()):
@@ -557,11 +557,11 @@ func _test_disciple_roster_flow() -> void:
 	var first_id: String = popup._rows.get_child(0).get_child(1).pressed.get_connections()[0]["callable"].get_bound_arguments()[0]
 	row.get_child(1).pressed.emit()
 	await process_frame
-	_check(DiscipleRoster.get_disciple(gm.player_sect, first_id).assignment == "library", "팝업에서 배치 (서고)")
+	_check(DiscipleRoster.get_disciple(gm.player_sect, first_id).assignment == "library", "창에서 배치 (서고)")
 	_check(hub.log_label.text.contains("서고"), "배치 결과 알림")
 	popup._rows.get_child(0).get_child(3).pressed.emit()
 	await process_frame
-	_check(hub.log_label.text.contains("수련"), "팝업에서 개별 수련")
+	_check(hub.log_label.text.contains("수련"), "창에서 개별 수련")
 	popup.visible = false
 
 	# 실제 전투: 출전 제자가 쓰러지면 명단에서 빠진다
@@ -618,7 +618,7 @@ func _test_bond_evolution() -> void:
 	_check(NpcAgent.likes("npc_master", "talk") and not NpcAgent.likes("npc_master", "gift"), "인물 취향: 청운검선은 담소")
 	_check(talk["success"] and master.bond_strength == bond_before + talk_gain and talk["message"].contains("반깁니다"), "대화: 좋아하는 일이면 유대 +%d" % talk_gain)
 	var gold_before: int = gm.player_sect.gold
-	_check(gm.interact_with("npc_master", "gift")["success"] and gm.player_sect.gold == gold_before - _Balance.GIFT_GOLD, "선물: 금화 소모")
+	_check(gm.interact_with("npc_master", "gift")["success"] and gm.player_sect.gold == gold_before - _Balance.GIFT_GOLD, "선물: 은자 소모")
 	_check(master.bond_strength == bond_before + talk_gain + _Balance.GIFT_BOND, "선물: 유대 +%d" % _Balance.GIFT_BOND)
 	_check(not gm.interact_with("npc_master", "talk")["success"], "상호작용은 계절마다 %d번" % _Balance.INTERACTIONS_PER_SEASON)
 	gm.advance_turn()
@@ -717,12 +717,12 @@ func _test_bond_flow() -> void:
 	hub._on_bond_pressed()
 	await process_frame
 	var popup: Node = hub.bond_popup
-	_check(popup.visible and popup.get_row_count() == gm.player_relationships.size(), "인연 팝업: 관계마다 한 줄")
+	_check(popup.visible and popup.get_row_count() == gm.player_relationships.size(), "인연 창: 관계마다 한 줄")
 	var bond_before: int = _rel(gm, "npc_master").bond_strength
-	_check(popup._rows.get_child(0).get_child(0) is TextureRect, "인연 팝업: 줄마다 초상화")
+	_check(popup._rows.get_child(0).get_child(0) is TextureRect, "인연 창: 줄마다 초상화")
 	popup._rows.get_child(0).get_child(2).pressed.emit()
 	await process_frame
-	_check(_rel(gm, "npc_master").bond_strength > bond_before and hub.log_label.text.contains("이야기"), "팝업에서 대화")
+	_check(_rel(gm, "npc_master").bond_strength > bond_before and hub.log_label.text.contains("이야기"), "창에서 대화")
 	popup.visible = false
 
 	# 경영 화면은 인연이 많아도 세 줄까지만
@@ -765,7 +765,7 @@ func _test_bond_flow() -> void:
 ## 인물 AI: 직책 인물이 성향·처지에 맞게 계절의 일을 하고, 그 일을 동향·연대기에 남긴다.
 func _test_npc_agents() -> void:
 	var gm: Node = root.get_node("GameManager")
-	# 성향·취향: 데이터가 있으면 그것, 없으면 능력치에서
+	# 성향·취향: 데이터가 있으면 그것, 없으면 자질에서
 	var all_ok: bool = NpcRoster.get_all().all(func(npc: Dictionary) -> bool:
 		var traits: Dictionary = NpcAgent.get_traits(npc["id"])
 		return traits.size() == NpcAgent.TRAIT_NAMES.size() and traits.values().all(func(v: int) -> bool: return v >= 0 and v <= 100) \
@@ -797,12 +797,12 @@ func _test_npc_agents() -> void:
 	_check(exp_after > exp_before, "교두가 제자를 가르침")
 	_check(gm.last_npc_report[2]["action"] == "치료" and gm.player_character.internal_energy_current > 10, "의원이 내공을 돌봄")
 	var leader_action: String = gm.last_npc_report[0]["action"]
-	_check(leader_action in ["제자 모집", "시설 확장", "문파 연회", "땅 평정", "사절 파견", "재물 아끼기"], "문주의 결정: %s" % leader_action)
+	_check(leader_action in ["제자 모집", "전각 확장", "문파 연회", "땅 평정", "사절 파견", "재물 아끼기"], "문주의 결정: %s" % leader_action)
 	var state_after: Array = [gm.player_sect.disciple_count, gm.player_sect.reputation, gm.player_sect.gold, WorldMap.count(gm.map_state, gm.player_sect.id)]
 	_check(leader_action == "재물 아끼기" or state_after != state_before, "문주의 결정이 문파에 반영됨")
 	_check(gm.chronicle.any(func(e: Dictionary) -> bool: return e["kind"] == "인물" and Array(e["lines"]).size() == 3), "인물 동향이 연대기에 남음")
 
-	# 성향대로: 야망이 크면 땅을 넓히고, 신중하면 재물을 아끼거나 시설을 넓힌다
+	# 성향대로: 야망이 크면 땅을 넓히고, 신중하면 재물을 아끼거나 전각을 넓힌다
 	# (새 게임을 시작하면 인물 데이터를 다시 읽으므로 시작한 뒤에 성향을 바꾼다)
 	var counts: Dictionary = {}
 	for temper in ["bold", "careful"]:
@@ -816,7 +816,7 @@ func _test_npc_agents() -> void:
 			var outcome: Dictionary = NpcAgent._lead(gm, "npc_master")
 			counts[temper][outcome["action"]] = counts[temper].get(outcome["action"], 0) + 1
 	_check(counts["bold"].get("땅 평정", 0) > counts["careful"].get("땅 평정", 0), "야망 큰 문주는 땅을 더 넓힘 %s / %s" % [counts["bold"], counts["careful"]])
-	_check(counts["careful"].get("시설 확장", 0) + counts["careful"].get("재물 아끼기", 0) > counts["bold"].get("시설 확장", 0) + counts["bold"].get("재물 아끼기", 0), "신중한 문주는 시설·저축")
+	_check(counts["careful"].get("전각 확장", 0) + counts["careful"].get("재물 아끼기", 0) > counts["bold"].get("전각 확장", 0) + counts["bold"].get("재물 아끼기", 0), "신중한 문주는 전각·저축")
 	# 금고가 비면 아낀다
 	_new_quiet_game(gm, "young_disciple")
 	gm.player_sect.gold = 50
@@ -917,10 +917,10 @@ func _test_bond_system() -> void:
 
 func _test_manuals() -> void:
 	var gm: Node = root.get_node("GameManager")
-	# 강호의 비급 전체가 아니라, 소속 문파 서고의 비급과 가진 비급만 연구할 수 있다
+	# 강호의 비급 전체가 아니라, 소속 문파 서고의 비급과 가진 비급만 참오할 수 있다
 	_new_quiet_game(gm, "young_disciple")
 	var ids: Array = gm.get_research_manuals().map(func(entry: Dictionary) -> String: return entry["art"].id)
-	_check(ids == ["manual_qingyun_cloud_sword", "preset_earth_life_palm"], "청운검파: 서고의 비급만 연구 가능")
+	_check(ids == ["manual_qingyun_cloud_sword", "preset_earth_life_palm"], "청운검파: 서고의 비급만 참오 가능")
 	_check(not ids.has("mod_thunder_palm") and MartialArtLibrary.has_art("mod_thunder_palm"), "다른 세력의 비급은 목록에 없음")
 	gm.start_new_game("남궁", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0}, false, false, {"player_sect": "namgung"})
 	ids = gm.get_research_manuals().map(func(entry: Dictionary) -> String: return entry["art"].id)
@@ -931,7 +931,7 @@ func _test_manuals() -> void:
 	# 기연으로 비급을 얻는다
 	gm.pending_event = {"id": "manual_cliff_cave"}
 	gm.resolve_pending_event(0)
-	_check(gm.owned_manuals.size() == 1 and gm.get_research_manuals().size() == 1 and gm.get_research_manuals()[0]["source"] == "소장", "기연: 비급을 얻어 연구 가능")
+	_check(gm.owned_manuals.size() == 1 and gm.get_research_manuals().size() == 1 and gm.get_research_manuals()[0]["source"] == "소장", "기연: 비급을 얻어 참오 가능")
 	var first: String = gm.owned_manuals[0]
 	_check(gm.gain_manual(first).is_empty() and gm.owned_manuals.size() == 1, "같은 비급은 두 번 얻지 않음")
 	var art: MartialArtData = MartialArtLibrary.create_art(first)
@@ -943,7 +943,7 @@ func _test_manuals() -> void:
 			learned = true
 			break
 		gm.player_sect.research_points = 500
-	_check(learned and gm.player_character.knows_martial_art(first), "얻은 비급을 연구해 익힘")
+	_check(learned and gm.player_character.knows_martial_art(first), "얻은 비급을 참오해 익힘")
 	gm.owned_manuals.clear()
 	for i in MartialArtLibrary.get_all().size():
 		gm.gain_manual("random")
@@ -951,7 +951,7 @@ func _test_manuals() -> void:
 	var research: int = gm.player_sect.research_points
 	gm.pending_event = {"id": "manual_cliff_cave"}
 	gm.resolve_pending_event(0)
-	_check(gm.player_sect.research_points == research + EventManager.NO_MANUAL_RESEARCH, "얻을 비급이 없으면 연구점")
+	_check(gm.player_sect.research_points == research + EventManager.NO_MANUAL_RESEARCH, "얻을 비급이 없으면 깨달음")
 
 	# 저장·복원
 	gm._apply_save_data(JSON.parse_string(JSON.stringify(gm._build_save_state())))
@@ -968,33 +968,33 @@ func _test_purse() -> void:
 	gm.pending_event.clear()
 	gm.advance_turn()
 	_check(gm.purse.gold == _Balance.PURSE_START_GOLD - _Balance.LIVING_GOLD and gm.purse.food == _Balance.PURSE_START_FOOD - _Balance.LIVING_FOOD, "낭인: 계절마다 생활비만 나감 (문파 수입 없음)")
-	_check(gm.player_sect.research_points > research and gm.player_sect.gold == 0, "낭인: 홀로 수련한 연구점만 오름")
+	_check(gm.player_sect.research_points > research and gm.player_sect.gold == 0, "낭인: 홀로 수련한 깨달음만 오름")
 	_check(gm.estimate_next_season() == {"gold": -_Balance.LIVING_GOLD, "food": -_Balance.LIVING_FOOD}, "예상 수지: 생활비")
 	gm.purse.food = 0
 	gm.purse.gold = 100
 	gm.advance_turn()
-	_check(gm.purse.food == 0 and gm.purse.gold == 100 - _Balance.LIVING_GOLD - _Balance.LIVING_FOOD * _Balance.LIVING_FOOD_PRICE, "식량이 없으면 금화로 사 먹음")
+	_check(gm.purse.food == 0 and gm.purse.gold == 100 - _Balance.LIVING_GOLD - _Balance.LIVING_FOOD * _Balance.LIVING_FOOD_PRICE, "식량이 없으면 은자로 사 먹음")
 	gm.purse.gold = 0
 	gm.player_character.internal_energy_current = gm.player_character.internal_energy_max
 	gm.advance_turn()
 	_check(gm.player_character.internal_energy_current == gm.player_character.internal_energy_max - _Balance.STARVE_INTERNAL_LOSS, "노자가 떨어지면 굶주려 내공 감소")
-	# 기연·선물의 금화도 개인 재산에서
+	# 기연·선물의 은자도 개인 재산에서
 	gm.purse.gold = 200
 	gm.pending_event = {"id": "manual_book_peddler"}
 	gm.resolve_pending_event(0)
-	_check(gm.purse.gold == 140 and gm.player_sect.gold == 0, "기연의 금화는 개인 재산에서")
+	_check(gm.purse.gold == 140 and gm.player_sect.gold == 0, "기연의 은자는 개인 재산에서")
 	gm.player_relationships.append(RelationshipManager.make_relationship("npc_swallow", "ACQUAINTANCE", 20))
 	gm.interact_with("npc_swallow", "gift")
 	_check(gm.purse.gold == 140 - _Balance.GIFT_GOLD, "선물도 개인 재산에서")
 	gm._apply_save_data(JSON.parse_string(JSON.stringify(gm._build_save_state())))
 	_check(gm.purse.gold == 140 - _Balance.GIFT_GOLD, "개인 재산 저장·복원")
 
-	# 의뢰인(문파에 몸담음): 계약 금화는 내 몫, 문파 금고는 따로
+	# 청부객(문파에 몸담음): 계약 은자는 내 몫, 문파 금고는 따로
 	_new_quiet_game(gm, "mercenary")
 	var sect_gold: int = gm.player_sect.gold
 	RoleActions.change_credit(gm.role_state, "namgung", 50)
 	gm.do_role_action("contract", "namgung")
-	_check(gm.purse.gold > _Balance.PURSE_START_GOLD and gm.player_sect.gold == sect_gold, "의뢰인: 선금은 내 재산, 문파 금고는 그대로")
+	_check(gm.purse.gold > _Balance.PURSE_START_GOLD and gm.player_sect.gold == sect_gold, "청부객: 선금은 내 재산, 문파 금고는 그대로")
 	# 문파 일을 맡게 되면 재산을 문파에 보태고, 떠돌게 되면 노자를 챙긴다
 	var purse_gold: int = gm.purse.gold
 	gm.apply_role_transition(CharacterData.Role.MANAGER)

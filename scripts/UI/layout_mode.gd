@@ -108,7 +108,7 @@ static func _swap_to_vbox(box: BoxContainer) -> VBoxContainer:
 	return column
 
 
-## 팝업 판의 폭: 원하는 폭과 화면 폭(양옆 여백 12) 중 작은 쪽
+## 창 판의 폭: 원하는 폭과 화면 폭(양옆 여백 12) 중 작은 쪽
 static func fit_width(control: Control, desired: float) -> void:
 	var view: float = control.get_viewport_rect().size.x if control.is_inside_tree() else float(PORTRAIT_SIZE.x if portrait else LANDSCAPE_SIZE.x)
 	control.custom_minimum_size.x = minf(desired, view - 24.0)

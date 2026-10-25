@@ -5,14 +5,14 @@ extends RefCounted
 const TRAIN_GOLD := 30
 const TRAIN_FOOD := 20
 
-# 계절 수입 (역할 보정·시나리오 수입 배율을 곱하기 전)
+# 계절 수입 (신분 보정·시나리오 수입 배율을 곱하기 전)
 const BASE_GOLD_INCOME := 15
 const TREASURY_GOLD_PER_LEVEL := 10
 const BASE_FOOD_INCOME := 30
 const TRAINING_FOOD_PER_LEVEL := 5
 const LIBRARY_RESEARCH_PER_LEVEL := 3
 const WISDOM_RESEARCH_RATIO := 0.5
-## 계절별 보정: { 계절: [금화, 식량, 연구점] }
+## 계절별 보정: { 계절: [은자, 식량, 깨달음] }
 const SEASON_INCOME_BONUS: Dictionary = {
 	"봄": [0, 15, 0],
 	"여름": [10, 0, 0],
@@ -28,8 +28,8 @@ const GOLD_LOSS_RATE := 0.15
 const FOOD_SAFE_AMOUNT := 300
 const FOOD_SPOIL_RATE := 0.2
 
-# 시설: 확장 비용 = base + step × (현재 레벨 - 시작 레벨). 유지비는 시작 레벨을 넘는 단계마다
-## { 시설 id: [시작 레벨, 최대 레벨, base 비용, step 비용] }
+# 전각: 확장 비용 = base + step × (현재 단계 - 시작 단계). 씀씀이는 시작 단계를 넘는 단계마다
+## { 전각 id: [시작 단계, 최대 단계, base 비용, step 비용] }
 const FACILITIES: Dictionary = {
 	"library": [1, 5, 80, 40],
 	"training_ground": [1, 5, 60, 30],
@@ -37,33 +37,33 @@ const FACILITIES: Dictionary = {
 	"apothecary": [0, 3, 90, 45],
 	"meditation_hall": [0, 3, 100, 50],
 }
-## 약방: 레벨마다 계절 내공 회복 (최대 내공 대비)
+## 약방: 단계마다 계절 내공 회복 (최대 내공 대비)
 const APOTHECARY_INTERNAL_REGEN := 0.15
-## 연공실: 레벨마다 계절 수련 경험치
+## 연공실: 단계마다 계절 수련
 const MEDITATION_EXP_PER_LEVEL := 8
 
 # 제자 명단 (플레이어 문파)
 ## 새 제자의 무력·신법·지혜 범위
 const DISCIPLE_STAT_MIN := 8
 const DISCIPLE_STAT_MAX := 12
-## 다음 레벨까지 필요한 경험치 = 이 값 × 현재 레벨
+## 다음 경지까지 필요한 수련 = 이 값 × 현재 단계
 const DISCIPLE_EXP_PER_LEVEL := 40
 const DISCIPLE_MAX_LEVEL := 10
 const DISCIPLE_BASE_INTERNAL := 60
 const DISCIPLE_INTERNAL_PER_LEVEL := 10
-## 개별 수련: 금화를 내고 경험치를 얻는다 (제자마다 계절에 한 번)
+## 개별 수련: 은자를 내고 수련을 얻는다 (제자마다 계절에 한 번)
 const DISCIPLE_TRAIN_GOLD := 20
 const DISCIPLE_TRAIN_EXP := 30
-## 방어전에서 살아남은 참전 제자의 경험치
+## 방어전에서 살아남은 참전 제자의 수련
 const DISCIPLE_BATTLE_EXP := 25
-## 배치: 시설 레벨마다 담당 자리 하나
+## 배치: 전각 단계마다 담당 자리 하나
 const DISCIPLE_SLOTS_PER_LEVEL := 1
-## 서고 담당: 지혜 이만큼마다 계절 연구점 +1 / 금고 담당: 지혜 이만큼마다 계절 금화 +1
+## 서고 담당: 지혜 이만큼마다 계절 깨달음 +1 / 금고 담당: 지혜 이만큼마다 계절 은자 +1
 const DISCIPLE_LIBRARY_WISDOM_PER_POINT := 5
 const DISCIPLE_TREASURY_WISDOM_PER_GOLD := 4
-## 무술장 담당: 계절마다 수련 경험치
+## 연무장 담당: 계절마다 수련
 const DISCIPLE_TRAINING_GROUND_EXP := 15
-## 문파전 전력: 제자 레벨 1을 넘는 단계마다
+## 문파전 전력: 제자 경지 1을 넘는 단계마다
 const DISCIPLE_LEVEL_WAR_POWER := 1
 
 # 계절 행동 (계절마다 한 번)
@@ -73,14 +73,14 @@ const FEAST_GOLD := 60
 const FEAST_FOOD := 40
 const FEAST_REPUTATION := 4
 
-# 유지비 (계절마다)
+# 씀씀이 (계절마다)
 const FOOD_PER_DISCIPLE := 2
 const GOLD_PER_DISCIPLE := 1
-## 시설이 시작 레벨을 넘는 단계마다 드는 금화
+## 전각이 시작 단계를 넘는 단계마다 드는 은자
 const FACILITY_UPKEEP_GOLD := 4
 ## 식량이 모자라면 모자란 식량 이 값마다 제자 1명이 떠난다 (최소 1명)
 const DESERTION_FOOD_PER_DISCIPLE := 6
-## 금화가 모자라면 명성이 떨어진다
+## 은자가 모자라면 명성이 떨어진다
 const GOLD_SHORTAGE_REPUTATION_LOSS := 3
 
 # 문파전 / 강호 세력
@@ -99,10 +99,10 @@ const WAR_REPEAT_PENALTY := 0.85
 const WAR_LUCK := 0.1
 ## 적은 지난 문파전에서 본 아군 명령을 기억하고, 라운드마다 이 확률로 그 명령을 이기는 수를 준비한다
 const WAR_ADAPT_CHANCE := 0.4
-## 정찰 비용 (한 번 할 때마다 STEP씩 비싸짐). 스파이·암살자는 절반
+## 정찰 비용 (한 번 할 때마다 STEP씩 비싸짐). 간자·자객은 절반
 const WAR_SCOUT_COST := 40
 const WAR_SCOUT_COST_STEP := 20
-## 장수: 유대가 이 이상인 사제·혈맹 인물이 참전. 전투력의 일부와 특기 명령 보너스
+## 장수: 유대가 이 이상인 사제·혈맹 인물이 참전. 전투력의 일부와 특기 명령 가산
 const WAR_GENERAL_MIN_BOND := 50
 const WAR_GENERAL_POWER_RATIO := 0.5
 const WAR_GENERAL_SPECIALTY_BONUS := 1.1
@@ -137,7 +137,7 @@ const SUBJUGATE_REPUTATION_BONUS := 15
 const SUBJUGATE_GOLD_BONUS := 100
 const WORLD_SECT_YEARLY_GROWTH := 2
 
-# 판 평가 (시대 종결·엔딩 화면)
+# 판 평가 (시대 종결·결말 화면)
 const SCORE_PER_LEVEL := 10
 const SCORE_PER_ART := 15
 const SCORE_PER_SUBJUGATION := 60
@@ -156,7 +156,7 @@ const SCORE_GRADES: Array = [
 # 게임오버
 const SHORTAGE_GAME_OVER_SEASONS := 3
 
-# 무공 연구
+# 무공 참오
 const BASE_RESEARCH_COST := 20
 const RESEARCH_COST_PER_COMPLEXITY := 8
 const BASE_SUCCESS_RATE := 50
@@ -177,7 +177,7 @@ const AI_WEIGHTS: Dictionary = {
 const AI_GROWTH_DISCIPLES := 1
 const AI_GROWTH_DISCIPLES_SMALL := 2
 const AI_GROWTH_REPUTATION := 1
-## 세력끼리의 전쟁: 전력에 ±운, 지키는 쪽에 보너스. 진 쪽은 제자를 잃고(최소 AI_MIN_DISCIPLES), 이긴 쪽은 일부를 흡수한다
+## 세력끼리의 전쟁: 전력에 ±운, 지키는 쪽에 가산. 진 쪽은 제자를 잃고(최소 AI_MIN_DISCIPLES), 이긴 쪽은 일부를 흡수한다
 const AI_WAR_LUCK := 0.2
 const AI_WAR_DEFENDER_BONUS := 1.2
 const AI_WAR_LOSS := 2
@@ -193,7 +193,7 @@ const AI_INVASION_MAX_ATTITUDE := -20
 const AI_INVASION_COOLDOWN := 4
 ## 첫해에는 침공하지 않는다
 const AI_INVASION_GRACE_YEARS := 1
-## 침공 대응: 금화로 물리기, 산문을 내주기 (방치하면 다음 계절에 산문을 내준 것으로 처리)
+## 침공 대응: 은자로 물리기, 산문을 내주기 (방치하면 다음 계절에 산문을 내준 것으로 처리)
 const INVASION_BRIBE_GOLD := 120
 const INVASION_YIELD_DISCIPLES := 3
 const INVASION_YIELD_REPUTATION := 6
@@ -202,17 +202,17 @@ const INVASION_REPEL_LOSS := 4
 ## 외교: 태도가 이 이상인 세력은 플레이어에게 사절을 보내 태도를 올린다
 const AI_DIPLOMACY_MIN_ATTITUDE := -50
 const AI_DIPLOMACY_ATTITUDE := 5
-## 확장(주인 없는 땅 차지)·내실(무술장 확장) 기본 가중치. 세력 전략(FactionStrategy) 배율을 곱한다
+## 확장(주인 없는 땅 차지)·내실(연무장 확장) 기본 가중치. 세력 전략(FactionStrategy) 배율을 곱한다
 const AI_EXPAND_WEIGHT := 0.12
 const AI_FORTIFY_WEIGHT := 0.15
-## 내실: 무술장을 한 단계 넓히는 금화와 최대 단계 (확장은 세력 전력이 그 땅의 주둔 병력 이상이어야 한다)
+## 내실: 연무장을 한 단계 넓히는 은자와 최대 단계 (확장은 세력 전력이 그 땅의 주둔 병력 이상이어야 한다)
 const AI_FORTIFY_GOLD := 150
 const AI_FORTIFY_MAX_LEVEL := 5
 
 # 강호 지도
 ## 땅 하나마다 늘어나는 제자 정원
 const REGION_MAX_DISCIPLES := 3
-## 주인 없는 땅 평정 비용: 금화 = 이 값 + 주둔 병력 / 2, 식량
+## 주인 없는 땅 평정 비용: 은자 = 이 값 + 주둔 병력 / 2, 식량
 const REGION_PACIFY_GOLD := 60
 const REGION_PACIFY_FOOD := 30
 ## 강호 소식은 최근 이만큼 보관한다
@@ -244,19 +244,19 @@ const TRIBUTE_ATTITUDE_PER_SEASON := 2
 const TRIBUTE_REVOLT_ATTITUDE := -80
 const TRIBUTE_RELEASE_ATTITUDE := 20
 
-# 개인 재산 (낭인·의뢰인·간자·자객): 문파 금고와 따로인 내 금화·식량
+# 개인 재산 (낭인·청부객·간자·자객): 문파 금고와 따로인 내 은자·식량
 const PURSE_START_GOLD := 150
 const PURSE_START_FOOD := 80
 ## 문파 일을 떠나 떠돌게 될 때 문파 금고에서 챙기는 노자 (금고에 있는 만큼까지)
 const PURSE_ALLOWANCE_GOLD := 100
 const PURSE_ALLOWANCE_FOOD := 50
-## 계절마다 생활비: 식량을 먹고 금화를 쓴다. 식량이 모자라면 식량 1당 금화 LIVING_FOOD_PRICE로 사 먹는다
+## 계절마다 생활비: 식량을 먹고 은자를 쓴다. 식량이 모자라면 식량 1당 은자 LIVING_FOOD_PRICE로 사 먹는다
 const LIVING_GOLD := 5
 const LIVING_FOOD := 10
 const LIVING_FOOD_PRICE := 1
-## 금화마저 떨어져 굶으면 내공이 이만큼 준다
+## 은자마저 떨어져 굶으면 내공이 이만큼 준다
 const STARVE_INTERNAL_LOSS := 30
-## 이동: 개인 재산을 쓰는 역할(낭인·의뢰인·간자·자객)은 계절에 한 번 지도에서 다른 지역으로 옮긴다. 여비는 한 걸음에 이만큼
+## 이동: 개인 재산을 쓰는 신분(낭인·청부객·간자·자객)은 계절에 한 번 지도에서 다른 지역으로 옮긴다. 여비는 한 걸음에 이만큼
 const TRAVEL_GOLD_PER_STEP := 5
 ## 무소속으로 시작할 때 있는 지역 (지도 한가운데)
 const START_REGION := "luoyang"
@@ -292,13 +292,13 @@ const BOND_ALLY_COUNT := 1
 const BETRAY_HATRED_MIN := 30
 
 # 전수·강화·비전·분석 (M7-2)
-## 전수 비용(연구점) = BASE + 복잡도 × PER_COMPLEXITY. 문파 비전은 SECRET_SCALE 배
+## 전수 비용(깨달음) = BASE + 복잡도 × PER_COMPLEXITY. 문파 비전은 SECRET_SCALE 배
 const TRANSMIT_RESEARCH_BASE := 10
 const TRANSMIT_RESEARCH_PER_COMPLEXITY := 5
 const TRANSMIT_SECRET_SCALE := 0.5
-## 전수받을 제자의 레벨 요구 = 복잡도 ÷ 이 값 (올림)
+## 전수받을 제자의 경지 요구 = 복잡도 ÷ 이 값 (올림)
 const TRANSMIT_COMPLEXITY_PER_LEVEL := 2
-## 강화: 문파 공동 연구. 비용 = BASE + 현재 강화 단계 × STEP
+## 강화: 문파 공동 참오. 비용 = BASE + 현재 강화 단계 × STEP
 const ENHANCE_MAX_LEVEL := 3
 const ENHANCE_RESEARCH_BASE := 30
 const ENHANCE_RESEARCH_STEP := 20
@@ -307,18 +307,18 @@ const ENHANCE_HEAL := 4
 const ENHANCE_INTERNAL_COST_REDUCTION := 1
 ## 비전으로 지정하려면 이 단계 이상 강화해야 한다
 const SECRET_ART_MIN_ENHANCE := 1
-## 상대 무공 분석: 분석한 속성을 이기는 속성의 무공을 창조할 때 성공률 보너스
+## 상대 무공 분석: 분석한 속성을 이기는 속성의 무공을 창안할 때 성공률 가산
 const ANALYZE_RESEARCH := 25
 const COUNTER_SUCCESS_BONUS := 15
 
-# 역할 전환
+# 신분 전환
 const MANAGER_LEVEL_REQ := 3
 const MANAGER_WISDOM_REQ := 18
 const MANAGER_REPUTATION_REQ := 55
 const LEADER_LEVEL_REQ := 5
 const LEADER_REPUTATION_REQ := 75
 const LEADER_DISCIPLE_REQ := 18
-## 의뢰인으로 전환할 수 있는 낭인 레벨
+## 청부객으로 전환할 수 있는 낭인 경지
 const MERCENARY_LEVEL_REQ := 3
 ## 입문: 무소속이 그 세력과 신용 JOIN_CREDIT_REQ 이상이거나, 그 세력 인물과 유대 JOIN_BOND_REQ 이상(연줄)이면 제자로 들어간다
 const JOIN_CREDIT_REQ := 15
@@ -327,7 +327,7 @@ const JOIN_BOND_REQ := 30
 const JOIN_RIGHTEOUS_MORALITY := 40
 ## 입문하면 그 세력 문주와 사부 인연 (이미 인연이 없을 때)
 const JOIN_MASTER_BOND := 25
-## 문파를 떠나기: 막내 제자는 이 레벨부터. 사부 유대가 LEAVE_BLESSING_BOND 이상이면 허락받은 하산
+## 문파를 떠나기: 막내 제자는 이 경지부터. 사부 유대가 LEAVE_BLESSING_BOND 이상이면 허락받은 하산
 const LEAVE_LEVEL_REQ := 2
 const LEAVE_BLESSING_BOND := 40
 const LEAVE_BLESSED_ATTITUDE := 10
@@ -344,10 +344,10 @@ const BETRAY_MORALITY_LOSS := 15
 ## 떠나온 문파의 태도 (이적·배신)
 const DEFECT_OLD_SECT_ATTITUDE := -20
 const BETRAY_OLD_SECT_ATTITUDE := -70
-## 강등: 역할 행동 실패가 이만큼 쌓이면 중간관리자는 막내 제자로 내려간다
+## 강등: 신분 행동 실패가 이만큼 쌓이면 총관은 막내 제자로 내려간다
 const DEMOTION_FAILURES := 3
 
-# 역할 고유 행동 (계절마다 ROLE_ACTIONS_PER_SEASON번, 역할 행동끼리 공유)
+# 신분 고유 행동 (계절마다 ROLE_ACTIONS_PER_SEASON번, 신분 행동끼리 공유)
 const ROLE_ACTIONS_PER_SEASON := 1
 ## 문주: 내부 불만도. 계절마다 오르고, 회의·연회로 낮춘다. 100이면 축출
 const DISCONTENT_PER_SEASON := 3
@@ -359,7 +359,7 @@ const COUNCIL_GOLD := 40
 const COUNCIL_DISCONTENT_RELIEF := 20
 const ENVOY_GOLD := 60
 const ENVOY_ATTITUDE := 12
-## 중간관리자: 문주 신임도와 부서
+## 총관: 문주 신임도와 부서
 const MANAGER_START_TRUST := 50
 ## 문주 승계에 필요한 신임도
 const MANAGER_TRUST_FOR_LEADER := 50
@@ -388,17 +388,17 @@ const JOB_HUNT_GOLD := 80
 const JOB_AWAY_REWARD_SCALE := 1.5
 const JOB_AWAY_RISK := 15
 const JOB_CREDIT_GAIN := 5
-## 스파이: 노출도. 100이면 정체가 드러난다
+## 간자: 노출도. 100이면 정체가 드러난다
 const EXPOSURE_INTEL := 12
 const EXPOSURE_SABOTAGE := 25
 const EXPOSURE_DECAY := 5
 const EXPOSURE_MAX := 100
 const INTEL_RESEARCH := 10
-## 정보 수집을 이만큼 하면 스파이 임무 완료
+## 정보 수집을 이만큼 하면 간자 임무 완료
 const SPY_MISSION_INTEL := 3
 const SABOTAGE_DISCIPLES := 3
 const SABOTAGE_GOLD := 60
-## 암살자: 현상금. 표적 의뢰마다 오르고 계절마다 조금씩 잊힌다
+## 자객: 현상금. 표적 의뢰마다 오르고 계절마다 조금씩 잊힌다
 const BOUNTY_PER_CONTRACT := 20
 const BOUNTY_DECAY := 2
 const BOUNTY_PURSUIT := 50
@@ -406,7 +406,7 @@ const ASSASSINATION_GOLD := 120
 const ASSASSINATION_EXP := 40
 const LIE_LOW_GOLD := 50
 const LIE_LOW_BOUNTY := 20
-## 의뢰인: 세력별 계약. 선금을 받고 기한 안에 이행한다
+## 청부객: 세력별 계약. 선금을 받고 기한 안에 이행한다
 const CONTRACT_REWARD := 120
 const CONTRACT_ADVANCE_RATIO := 0.3
 const CONTRACT_SEASONS := 2
@@ -423,7 +423,7 @@ const CONTRACT_MIN_CREDIT := -30
 const CREDIT_LIMIT := 100
 
 # 성장
-const EXP_PER_LEVEL_STEP := 25  # 누적 경험치 요구량: 25 * L * (L - 1)
+const EXP_PER_LEVEL_STEP := 25  # 누적 수련 요구량: 25 * L * (L - 1)
 const MAX_LEVEL := 20
 const YEARLY_TRAINING_EXP := 40
 const LEVEL_UP_STAT_GAIN := 1
@@ -443,7 +443,7 @@ const ELEMENT_DISADVANTAGE := 0.85
 # 전투 — 아군 제자
 ## 문파 방어 전투에 함께 나서는 제자 수 (보유 제자 수를 넘지 않음)
 const DEFENSE_ALLY_COUNT := 2
-## 무술장 레벨 1을 넘는 단계마다 제자의 무력·신법 증가
+## 연무장 1단계를 넘는 단계마다 제자의 무력·신법 증가
 const ALLY_TRAINING_STAT_BONUS := 1
 
 # 전투 — 초식 배치 대결 (DuelRules·DuelEngine)
@@ -552,10 +552,10 @@ const RATING_FLAWLESS := 0.7
 const RATING_NARROW := 0.25
 const DUEL_CHALLENGE_REPUTATION := 2
 const DUEL_CHALLENGE_RESEARCH := 3
-## 상대 절초를 받아 내면 얻는 연구점
+## 상대 절초를 받아 내면 얻는 깨달음
 const STUDY_RESEARCH := 1
 
-# 레거시
+# 후대
 const RETIRE_AGE := 55
 const RETIRE_LEVEL := 10
 

@@ -1,6 +1,6 @@
 extends "res://scripts/Tests/test_base.gd"
 
-## 스모크 테스트 — 기본: 씬 로드, 성장, 세이브 기초, 계절 진행, 유지비·게임오버, 경제
+## 스모크 테스트 — 기본: 씬 로드, 성장, 저장본 기초, 계절 진행, 씀씀이·게임오버, 경제
 ## 실행 순서는 smoke_test.gd의 INIT_SEQUENCE·RUNTIME_SEQUENCE가 정한다.
 
 
@@ -24,9 +24,9 @@ func _test_scenes_load() -> void:
 
 
 func _test_level_curve() -> void:
-	_check(CharacterData.get_experience_for_level(1) == 0, "Lv.1 요구 경험치 0")
-	_check(CharacterData.get_experience_for_level(2) == 50, "Lv.2 요구 경험치 50")
-	_check(CharacterData.get_experience_for_level(5) == 500, "Lv.5 요구 경험치 500")
+	_check(CharacterData.get_experience_for_level(1) == 0, "경지 1 요구 수련 0")
+	_check(CharacterData.get_experience_for_level(2) == 50, "경지 2 요구 수련 50")
+	_check(CharacterData.get_experience_for_level(5) == 500, "경지 5 요구 수련 500")
 	_completed["_test_level_curve"] = true
 
 
@@ -37,22 +37,22 @@ func _test_gain_experience() -> void:
 	var signal_levels: Array[int] = []
 	character.leveled_up.connect(func(new_level: int) -> void: signal_levels.append(new_level))
 
-	_check(character.gain_experience(49) == 0 and character.level == 1, "경험치 49: 레벨 유지")
-	_check(character.gain_experience(1) == 1 and character.level == 2, "경험치 50: Lv.2 도달")
-	_check(character.gain_experience(450) == 3 and character.level == 5, "누적 500: Lv.5 도달 (한 번에 여러 레벨)")
-	_check(signal_levels == [2, 3, 4, 5], "leveled_up 시그널이 레벨마다 발생")
+	_check(character.gain_experience(49) == 0 and character.level == 1, "수련 49: 경지 유지")
+	_check(character.gain_experience(1) == 1 and character.level == 2, "수련 50: 경지 2 도달")
+	_check(character.gain_experience(450) == 3 and character.level == 5, "누적 500: 경지 5 도달 (한 번에 여러 경지)")
+	_check(signal_levels == [2, 3, 4, 5], "leveled_up 시그널이 경지마다 발생")
 	_check(
 		character.strength == base_strength + 4 * _Balance.LEVEL_UP_STAT_GAIN,
-		"레벨업 능력치 보너스 적용"
+		"경지업 자질 가산 적용"
 	)
 	_check(
 		character.internal_energy_max == base_internal + 4 * _Balance.LEVEL_UP_INTERNAL_GAIN,
-		"레벨업 내공 보너스 적용"
+		"경지업 내공 가산 적용"
 	)
-	_check(character.gain_experience(0) == 0 and character.gain_experience(-5) == 0, "0/음수 경험치 무시")
+	_check(character.gain_experience(0) == 0 and character.gain_experience(-5) == 0, "0/음수 수련 무시")
 
 	character.gain_experience(1_000_000)
-	_check(character.level == _Balance.MAX_LEVEL, "최대 레벨 제한")
+	_check(character.level == _Balance.MAX_LEVEL, "최대 단계 제한")
 	_completed["_test_gain_experience"] = true
 
 
@@ -71,11 +71,11 @@ func _test_martial_art_round_trip() -> void:
 	custom.damage = 0
 	character.learn_martial_art(custom)
 
-	# JSON 문자열을 거쳐 실제 세이브 파일과 같은 경로로 검증
+	# JSON 문자열을 거쳐 실제 저장본 파일과 같은 경로로 검증
 	var json_text: String = JSON.stringify(_SaveManager.serialize_character(character))
 	var restored: CharacterData = _SaveManager.deserialize_character(JSON.parse_string(json_text))
 
-	_check(restored.martial_arts.size() == 2, "세이브/로드 후 무공 2개 유지")
+	_check(restored.martial_arts.size() == 2, "저장본/로드 후 무공 2개 유지")
 	if restored.martial_arts.size() != 2:
 		return
 	var a: MartialArtData = restored.martial_arts[0]
@@ -90,7 +90,7 @@ func _test_martial_art_round_trip() -> void:
 	_check(
 		b.category == MartialArtData.Category.PALM and b.heal_amount == 21
 		and b.special_effects == [MartialArtData.SpecialEffect.HEAL],
-		"창조 무공 필드 복원"
+		"창안 무공 필드 복원"
 	)
 	_check(restored.knows_martial_art("custom_heal"), "복원된 무공 조회")
 	_completed["_test_martial_art_round_trip"] = true
@@ -98,7 +98,7 @@ func _test_martial_art_round_trip() -> void:
 
 func _test_old_save_without_martial_arts() -> void:
 	var restored: CharacterData = _SaveManager.deserialize_character({"display_name": "구버전"})
-	_check(restored.martial_arts.is_empty(), "구버전 세이브(무공 필드 없음) 호환")
+	_check(restored.martial_arts.is_empty(), "구버전 저장본(무공 필드 없음) 호환")
 	_completed["_test_old_save_without_martial_arts"] = true
 
 
@@ -109,14 +109,14 @@ func _test_starting_roles() -> void:
 			character.role == entry["role"]
 			and character.display_name == entry["default_name"]
 			and character.internal_energy_current == character.internal_energy_max,
-			"시작 역할 생성: %s" % entry["title"]
+			"시작 신분 생성: %s" % entry["title"]
 		)
 	var named: CharacterData = StartingRoles.create_character("wanderer", "  연남천 ")
 	_check(named.display_name == "연남천", "입력한 이름 사용 (앞뒤 공백 제거)")
 	var unknown: CharacterData = StartingRoles.create_character("no_such_role", "")
-	_check(unknown.role == CharacterData.Role.YOUNG_DISCIPLE, "알 수 없는 역할 id는 기본 역할")
+	_check(unknown.role == CharacterData.Role.YOUNG_DISCIPLE, "알 수 없는 신분 id는 기본 신분")
 	var leader: CharacterData = StartingRoles.create_character("leader", "")
-	_check(leader.level > 1, "문주는 경험치를 갖고 시작")
+	_check(leader.level > 1, "문주는 수련을 갖고 시작")
 	_completed["_test_starting_roles"] = true
 
 
@@ -132,7 +132,7 @@ func _test_turn_loop() -> void:
 		if not game_manager.pending_event.is_empty():
 			game_manager.resolve_pending_event(0)
 	_check(game_manager.current_year == 3, "8턴 진행 후 3년차")
-	_check(game_manager.player_character.level > start_level, "연간 수련으로 레벨 상승")
+	_check(game_manager.player_character.level > start_level, "연간 수련으로 경지 상승")
 	_completed["_test_turn_loop"] = true
 
 
@@ -144,9 +144,9 @@ func _test_start_new_game() -> void:
 	game_manager.start_new_game("백리운", "leader")
 	_check(game_manager.is_game_active, "새 게임 시작 후 진행 중 상태")
 	_check(game_manager.player_character.display_name == "백리운", "새 게임 이름 적용")
-	_check(game_manager.player_character.role == CharacterData.Role.LEADER, "새 게임 역할 적용")
+	_check(game_manager.player_character.role == CharacterData.Role.LEADER, "새 게임 신분 적용")
 	_check(game_manager.player_sect.leader_name == "백리운", "문주 시작 시 문파 문주 이름 갱신")
-	_check(game_manager.player_sect.gold == 400, "역할별 문파 초기 자원 적용")
+	_check(game_manager.player_sect.gold == 400, "신분별 문파 초기 자원 적용")
 	_check(
 		game_manager.current_year == 1 and game_manager.current_season_index == 0
 		and game_manager.story_flags.is_empty() and game_manager.triggered_event_ids.is_empty(),
@@ -186,10 +186,10 @@ func _test_upkeep() -> void:
 	sect.disciple_count = 10
 	sect.library_level = 2
 	sect.treasury_level = 3
-	_check(sect.get_food_upkeep() == 10 * _Balance.FOOD_PER_DISCIPLE, "식량 유지비 = 제자 수 × 단가")
+	_check(sect.get_food_upkeep() == 10 * _Balance.FOOD_PER_DISCIPLE, "식량 씀씀이 = 제자 수 × 단가")
 	_check(
 		sect.get_gold_upkeep() == 10 * _Balance.GOLD_PER_DISCIPLE + 3 * _Balance.FACILITY_UPKEEP_GOLD,
-		"금화 유지비 = 제자 + 시설 단계"
+		"은자 씀씀이 = 제자 + 전각 단계"
 	)
 
 	# 정상 납부: 차감, 연속 부족 초기화
@@ -200,11 +200,11 @@ func _test_upkeep() -> void:
 	_check(
 		not result["shortage"] and sect.food == 80 and sect.gold == 100 - sect.get_gold_upkeep()
 		and sect.shortage_seasons == 0,
-		"유지비 정상 납부"
+		"씀씀이 정상 납부"
 	)
 
 	# 식량 부족: 식량 0, 부족분에 비례한 제자 이탈
-	sect.food = 2  # 유지비 20 → 18 부족 → 18/6 = 3명 이탈
+	sect.food = 2  # 씀씀이 20 → 18 부족 → 18/6 = 3명 이탈
 	sect.gold = 100
 	result = SectManager.pay_upkeep(sect)
 	_check(
@@ -213,7 +213,7 @@ func _test_upkeep() -> void:
 		"식량 부족: 제자 3명 이탈, 연속 부족 1"
 	)
 
-	# 금화 부족: 금화 0, 명성 하락
+	# 은자 부족: 은자 0, 명성 하락
 	sect.food = 1000
 	sect.gold = 0
 	var rep_before: int = sect.reputation
@@ -222,7 +222,7 @@ func _test_upkeep() -> void:
 		result["shortage"] and sect.gold == 0
 		and sect.reputation == rep_before - _Balance.GOLD_SHORTAGE_REPUTATION_LOSS
 		and sect.shortage_seasons == 2,
-		"금화 부족: 명성 하락, 연속 부족 2"
+		"은자 부족: 명성 하락, 연속 부족 2"
 	)
 
 	# 저장/불러오기에 연속 부족 계절 유지
@@ -255,7 +255,7 @@ func _test_game_over_flow() -> void:
 	await process_frame
 
 	# 이미 2계절 연속 부족인 상태에서 식량이 바닥난 채 여름을 맞는다
-	# (여름 식량 수입 ~35 < 제자 30명 유지비 60 → 세 번째 부족)
+	# (여름 식량 수입 ~35 < 제자 30명 씀씀이 60 → 세 번째 부족)
 	var signalled: Array[String] = []
 	var on_over := func(id: String) -> void: signalled.append(id)
 	var bus: Node = root.get_node("EventBus")
@@ -271,7 +271,7 @@ func _test_game_over_flow() -> void:
 	_check(gm.is_game_over() and gm.game_over_id == "famine_collapse", "3계절 연속 부족 시 게임오버")
 	_check(signalled == ["famine_collapse"], "game_over 시그널 1회 발생")
 	_check(not gm.is_game_active, "게임오버 후 진행 중 상태 해제")
-	_check(gm.last_turn_report.contains("유지비"), "계절 보고에 유지비 표시")
+	_check(gm.last_turn_report.contains("씀씀이"), "계절 보고에 씀씀이 표시")
 
 	var year: int = gm.current_year
 	var season: int = gm.current_season_index
@@ -281,21 +281,21 @@ func _test_game_over_flow() -> void:
 
 	await process_frame
 	await process_frame
-	_check(current_scene.scene_file_path == SceneRouter.ENDING, "게임오버 시 엔딩 화면으로 이동")
+	_check(current_scene.scene_file_path == SceneRouter.ENDING, "게임오버 시 결말 화면으로 이동")
 	_check(
 		not current_scene.get_node("%SuccessionButton").visible
-		and current_scene.get_node("%BackButton").text == "메인 메뉴로",
-		"게임오버 화면: 전승 버튼 숨김, 메인 메뉴로 이동"
+		and current_scene.get_node("%BackButton").text == "첫 화면으로",
+		"게임오버 화면: 전승 버튼 숨김, 첫 화면으로 이동"
 	)
 
-	# 경영 화면으로 돌아가려 해도 엔딩 화면으로 되돌린다
+	# 경영 화면으로 돌아가려 해도 결말 화면으로 되돌린다
 	SceneRouter.goto(tree, SceneRouter.HUB)
 	await process_frame
 	await process_frame
 	await process_frame
 	_check(current_scene.scene_file_path == SceneRouter.ENDING, "게임오버 상태에서 경영 화면 진입 차단")
 
-	# 세이브에도 게임오버가 남는다
+	# 저장본에도 게임오버가 남는다
 	gm._apply_save_data(JSON.parse_string(JSON.stringify({
 		"game_over_id": gm.game_over_id,
 		"character": _SaveManager.serialize_character(gm.player_character),
@@ -322,7 +322,7 @@ func _test_economy_rules() -> void:
 		"봄 수입 계산 %s" % [spring]
 	)
 	var summer: Dictionary = SectManager.compute_seasonal_income(sect, character, "여름")
-	_check(summer["gold"] == spring["gold"] + 10, "여름 금화 보너스")
+	_check(summer["gold"] == spring["gold"] + 10, "여름 은자 가산")
 	character.role = CharacterData.Role.LEADER
 	_check(SectManager.compute_seasonal_income(sect, character, "봄")["gold"] == int(spring["gold"] * 1.2), "문주 경영 보정")
 
@@ -339,7 +339,7 @@ func _test_economy_rules() -> void:
 	var rep_before: int = sect.reputation
 	_check(SectManager.apply_yearly_reputation(sect) == 2 and sect.reputation == rep_before + 2, "제자 12명: 해마다 명성 +2")
 
-	# 시설
+	# 전각
 	sect = SectData.new()
 	_check(SectManager.get_upgrade_cost(sect, "library") == 80, "서고 첫 확장 80")
 	sect.gold = 10000
@@ -349,29 +349,29 @@ func _test_economy_rules() -> void:
 	var upkeep_before: int = sect.get_gold_upkeep()
 	var result: Dictionary = SectManager.upgrade_facility(sect, "apothecary")
 	_check(result["success"] and sect.apothecary_level == 1 and result["message"].contains("지었습니다"), "약방 짓기")
-	_check(sect.get_gold_upkeep() == upkeep_before + _Balance.FACILITY_UPKEEP_GOLD, "새 시설도 유지비 증가")
+	_check(sect.get_gold_upkeep() == upkeep_before + _Balance.FACILITY_UPKEEP_GOLD, "새 전각도 씀씀이 증가")
 	for i in 5:
 		SectManager.upgrade_facility(sect, "apothecary")
-	_check(sect.apothecary_level == 3 and SectManager.get_upgrade_cost(sect, "apothecary") == -1, "약방 최대 Lv.3")
+	_check(sect.apothecary_level == 3 and SectManager.get_upgrade_cost(sect, "apothecary") == -1, "약방 최대 단계 3")
 	_check(not SectManager.upgrade_facility(sect, "apothecary")["success"], "최고 수준이면 확장 불가")
 	sect.gold = 10
-	_check(not SectManager.upgrade_facility(sect, "treasury")["success"], "금화 부족이면 확장 불가")
+	_check(not SectManager.upgrade_facility(sect, "treasury")["success"], "은자 부족이면 확장 불가")
 
 	var restored: SectData = _SaveManager.deserialize_sect(JSON.parse_string(JSON.stringify(_SaveManager.serialize_sect(sect))))
-	_check(restored.apothecary_level == 3 and restored.library_level == 2, "새 시설 저장/복원")
+	_check(restored.apothecary_level == 3 and restored.library_level == 2, "새 전각 저장/복원")
 	_completed["_test_economy_rules"] = true
 
 
 func _test_economy_flow() -> void:
 	var gm: Node = root.get_node("GameManager")
 
-	# 무행동 10년: 금화가 시작값의 2배를 넘지 않는다
+	# 무행동 10년: 은자가 시작값의 2배를 넘지 않는다
 	gm.start_new_game("무위", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
 	var start_gold: int = gm.player_sect.gold
 	for i in 40:
 		gm.advance_turn()
 		gm.pending_combat = null
-	_check(gm.player_sect.gold <= start_gold * 2, "무행동 10년 금화 %d (시작 %d의 2배 이하)" % [gm.player_sect.gold, start_gold])
+	_check(gm.player_sect.gold <= start_gold * 2, "무행동 10년 은자 %d (시작 %d의 2배 이하)" % [gm.player_sect.gold, start_gold])
 	_check(gm.player_sect.food <= 1000 and gm.player_sect.food > 0, "무행동 10년 식량 %d (부족도 과잉도 아님)" % gm.player_sect.food)
 
 	# 예상 수지가 실제와 같다 (해가 바뀌지 않는 계절)
@@ -395,9 +395,9 @@ func _test_economy_flow() -> void:
 	var exp_before: int = gm.player_character.experience
 	gm.advance_turn()
 	var regen: int = int(gm.player_character.internal_energy_max * _Balance.APOTHECARY_INTERNAL_REGEN * 2)
-	_check(gm.player_character.internal_energy_current == regen, "약방 Lv.2: 계절 내공 회복 %d" % regen)
-	_check(gm.player_character.experience >= exp_before + _Balance.MEDITATION_EXP_PER_LEVEL, "연공실: 계절 수련 경험치")
-	_check(gm.last_turn_report.contains("약방") and gm.last_turn_report.contains("연공실"), "계절 보고에 시설 효과")
+	_check(gm.player_character.internal_energy_current == regen, "약방 경지 2: 계절 내공 회복 %d" % regen)
+	_check(gm.player_character.experience >= exp_before + _Balance.MEDITATION_EXP_PER_LEVEL, "연공실: 계절 수련")
+	_check(gm.last_turn_report.contains("약방") and gm.last_turn_report.contains("연공실"), "계절 보고에 전각 효과")
 
 	# 영약·연회: 계절마다 한 번
 	gm.player_sect.gold = 1000
@@ -411,17 +411,17 @@ func _test_economy_flow() -> void:
 	gm.advance_turn()
 	_check(gm.can_do_seasonal("last_feast_turn") and gm.can_do_seasonal("last_elixir_turn"), "다음 계절에는 다시 가능")
 	gm.player_sect.gold = 10
-	_check(not gm.buy_elixir()["success"], "금화가 부족하면 영약 불가")
+	_check(not gm.buy_elixir()["success"], "은자가 부족하면 영약 불가")
 
 	# 해가 바뀌면 정산 문구
 	gm.start_new_game("정산", "young_disciple", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
 	gm.player_sect.gold = 2000
 	for i in 4:
 		gm.advance_turn()
-	_check(gm.last_turn_report.contains("새해 정산") and gm.last_turn_report.contains("금화 -"), "새해 정산 보고")
+	_check(gm.last_turn_report.contains("새해 정산") and gm.last_turn_report.contains("은자 -"), "새해 정산 보고")
 
-	# 경영 화면: 시설 관리 팝업 (막내 제자는 시설을 확장할 수 없으므로 문주로 시험)
-	gm.start_new_game("시설", "leader", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
+	# 경영 화면: 전각 관리 창 (막내 제자는 전각을 확장할 수 없으므로 문주로 시험)
+	gm.start_new_game("전각", "leader", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
 	SceneRouter.goto(tree, SceneRouter.HUB)
 	await process_frame
 	await process_frame
@@ -430,11 +430,11 @@ func _test_economy_flow() -> void:
 	hub._on_facility_pressed()
 	await process_frame
 	var popup: Node = hub.facility_popup
-	_check(popup.visible and popup._rows.get_child_count() == SectManager.get_facility_ids().size(), "시설 관리 팝업: 시설 5종")
+	_check(popup.visible and popup._rows.get_child_count() == SectManager.get_facility_ids().size(), "전각 관리 창: 전각 5종")
 	var gold_before_build: int = gm.player_sect.gold
 	popup._on_upgrade_pressed("meditation_hall")
-	_check(gm.player_sect.meditation_hall_level == 1 and gm.player_sect.gold == gold_before_build - 100, "팝업에서 연공실 짓기")
-	_check(hub.facilities_label.text.contains("연공실 Lv.1"), "경영 화면 시설 표시 갱신")
+	_check(gm.player_sect.meditation_hall_level == 1 and gm.player_sect.gold == gold_before_build - 100, "창에서 연공실 짓기")
+	_check(hub.facilities_label.text.contains("연공실 1단계"), "경영 화면 전각 표시 갱신")
 	gm.start_new_game("정리", "young_disciple")
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
 	await process_frame
