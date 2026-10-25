@@ -4,6 +4,7 @@
   "title": "하오문주",
   "sect_id": "haomun",
   "role": "LEADER",
+  "combat_style": "sword",
   "description": "옛 이름은 비연검 연소화. 피난민을 이끌던 여협은 이제 강호의 모든 비밀을 쥔 하오문주가 되었다.",
   "level": 9,
   "named": true,

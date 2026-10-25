@@ -4,6 +4,7 @@
   "title": "천마신교 성녀",
   "sect_id": "cheonma",
   "role": "LEADER",
+  "combat_style": "fist",
   "description": "천마 위무량의 손녀. 늙은 혈영의 손에 자랐다. 신교를 되살리려 하지만 피를 원하지 않는다.",
   "level": 6,
   "named": true,

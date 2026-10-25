@@ -30,7 +30,8 @@
         12,
         3
       ],
-      "name": "반란 제자 갑"
+      "name": "반란 제자 갑",
+      "mook": true
     },
     {
       "npc": "npc_disciple",
@@ -38,7 +39,8 @@
         12,
         7
       ],
-      "name": "반란 제자 을"
+      "name": "반란 제자 을",
+      "mook": true
     },
     {
       "npc": "npc_bandit",
@@ -46,7 +48,8 @@
         14,
         5
       ],
-      "name": "흑풍채 무사"
+      "name": "흑풍채 무사",
+      "mook": true
     }
   ],
   "blocked": [
@@ -91,5 +94,7 @@
     "injury_ratio": 0.3
   },
   "victory_flag": "arc_succession_won",
-  "defeat_flag": "arc_succession_lost"
+  "defeat_flag": "arc_succession_lost",
+  "format": "formation",
+  "stage": "burning"
 }

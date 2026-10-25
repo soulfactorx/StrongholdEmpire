@@ -19,7 +19,8 @@
         13,
         3
       ],
-      "name": "귀영의 수하"
+      "name": "귀영의 수하",
+      "mook": true
     }
   ],
   "allies": [
@@ -72,5 +73,6 @@
     "injury_ratio": 0.3
   },
   "victory_flag": "arc_revenge_won",
-  "defeat_flag": "arc_revenge_lost"
+  "defeat_flag": "arc_revenge_lost",
+  "format": "formation"
 }

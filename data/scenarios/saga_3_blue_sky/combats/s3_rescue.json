@@ -1,21 +1,7 @@
 {
   "battlefield": "town",
   "objective": {
-    "type": "escape",
-    "tiles": [
-      [
-        0,
-        2
-      ],
-      [
-        0,
-        5
-      ],
-      [
-        0,
-        8
-      ]
-    ]
+    "type": "escape"
   },
   "id": "s3_rescue",
   "title": "처형장의 첫 검 — 사람들을 데리고 빠져나가라",
@@ -30,7 +16,8 @@
         4,
         4
       ],
-      "name": "길목의 형리"
+      "name": "길목의 형리",
+      "mook": true
     },
     {
       "npc": "npc_bandit",
@@ -38,7 +25,8 @@
         12,
         3
       ],
-      "name": "흑련 형리 갑"
+      "name": "흑련 형리 갑",
+      "mook": true
     },
     {
       "npc": "npc_bandit",
@@ -46,7 +34,8 @@
         12,
         7
       ],
-      "name": "흑련 형리 을"
+      "name": "흑련 형리 을",
+      "mook": true
     },
     {
       "npc": "npc_shadow_blade",
@@ -68,5 +57,10 @@
     "injury_ratio": 0.4
   },
   "victory_flag": "s3_ch_rescued",
-  "defeat_flag": "s3_ch_captured"
+  "defeat_flag": "s3_ch_captured",
+  "format": "chase",
+  "stage": "rooftop",
+  "conditions": [
+    "poisoned"
+  ]
 }

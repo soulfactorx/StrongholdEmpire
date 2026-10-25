@@ -27,5 +27,11 @@
     "injury_ratio": 0.4
   },
   "victory_flag": "s3_dg_caught_hwarin",
-  "defeat_flag": "s3_dg_lost_hwarin"
+  "defeat_flag": "s3_dg_lost_hwarin",
+  "format": "chase",
+  "objective": {
+    "type": "catch",
+    "target": "s3_ma_hwarin"
+  },
+  "stage": "bamboo"
 }

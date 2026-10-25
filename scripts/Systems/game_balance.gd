@@ -484,6 +484,77 @@ const DUEL_COMBO_BOND := 40
 const DUEL_COMBO_POWER := 18
 const DUEL_COMBO_MOMENTUM := 2
 
+# 전투 — 다양화: 형식 (docs/전투_다양화_설계.md)
+## 포위: 한꺼번에 나서는 우리 쪽·상대 쪽 수, 졸개의 칸 수, 압박(살아 있는 적이 이 수 이상이면 칸마다 주인공 기세 +1)
+const SIEGE_FRIENDS := 2
+const SIEGE_FOES := 3
+const MOOK_SLOTS := 2
+## 포위·진형의 졸개는 체력·피해가 더 약하다 (여럿이 한꺼번에 덤비므로)
+const MOOK_HP := 0.75
+const MOOK_DAMAGE := 0.7
+const SIEGE_PRESSURE_FOES := 3
+## 휩쓸기: 고른 상대 말고 나머지에게 주는 피해 비율
+const SWEEP_SPLASH := 0.6
+## 진형: 한꺼번에 나서는 수(앞 2·뒤 1), 협공 추가 피해, 엄호가 대신 받는 비율
+const FORMATION_SIZE := 3
+const FORMATION_FRONT := 2
+const FLANK_BONUS := 0.3
+const COVER_SHARE := 0.5
+## 추격: 거리(0이면 붙잡힘, 끝이면 놓침)와 칸마다 변화
+const CHASE_START := 5
+const CHASE_END := 10
+const CHASE_RUNNER_WIN := 2
+const CHASE_RUNNER_HIT := 1
+const CHASE_HUNTER_HEAVY := 2
+const CHASE_FOCUS := 1
+## 잠입: 발각 게이지 상한(경보), 첫 합 기습 배율
+const STEALTH_ALARM := 5
+const STEALTH_AMBUSH := 2.0
+## 대치: 이기는 기세, 합 수, 위압(매력) 기준, 이긴 뒤 이어지는 대결의 첫 기세
+const STANDOFF_GOAL := 5
+const STANDOFF_BOUTS := 3
+const STANDOFF_PRESENCE_CHARISMA := 15
+const STANDOFF_CARRY := 3
+## 비무대회: 판 사이 회복(체력·내공 비율), 판마다 상대가 내 수를 읽는 확률 증가
+const TOURNEY_HP_RECOVER := 0.3
+const TOURNEY_ENERGY_RECOVER := 0.5
+const TOURNEY_READ_STEP := 0.1
+
+# 전투 — 다양화: 목표·전장·조건·특성
+## 생포: 상대 체력이 이 비율 이하일 때 막기 반격·기절로 사로잡는다
+const CAPTURE_RATIO := 0.25
+## 전장: 다리에서 떨어지는 체력 비율, 배의 흔들림, 불길(합마다 체력 감소), 대숲의 술, 비무대 장외
+const BRIDGE_FALL_RATIO := 0.2
+const BOAT_SWAY := 0.7
+const FIRE_BURN := 0.05
+const BAMBOO_TRICK := 1.3
+const RING_OUT_RATIO := 0.2
+## 조건: 중독(합마다 내공), 부상(시작 체력), 지침(시작 내공)
+const POISON_DRAIN := 10
+const WOUNDED_HP := 0.7
+const EXHAUSTED_ENERGY := 0.5
+## 상대 특성: 광폭 기준·기세, 예고 절초 주기·위력, 독무, 금강불괴, 단계 전환
+const ENRAGE_RATIO := 0.5
+const ENRAGE_MOMENTUM := 2
+const TELEGRAPH_EVERY := 3
+const TELEGRAPH_POWER := 1.3
+const POISON_MIST := 0.1
+const IRON_BODY_QUICK := 0.5
+const SECOND_PHASE_HP := 0.4
+const SECOND_PHASE_POWER := 1.2
+## 사건: 인연의 개입(받는 피해 감소·기세), 결단(목숨을 건다)
+const INTERVENE_BOND := 40
+const INTERVENE_MOMENTUM := 2
+const ALL_IN_HP_COST := 0.3
+const PARLEY_CHARISMA := 14
+## 평가: 완승·신승 기준(주인공 남은 체력 비율), 도전 보상
+const RATING_FLAWLESS := 0.7
+const RATING_NARROW := 0.25
+const DUEL_CHALLENGE_REPUTATION := 2
+const DUEL_CHALLENGE_RESEARCH := 3
+## 상대 절초를 받아 내면 얻는 연구점
+const STUDY_RESEARCH := 1
+
 # 레거시
 const RETIRE_AGE := 55
 const RETIRE_LEVEL := 10

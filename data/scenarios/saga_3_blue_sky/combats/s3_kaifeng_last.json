@@ -3,7 +3,7 @@
   "battlefield": "town",
   "objective": {
     "type": "survive",
-    "rounds": 4
+    "rounds": 3
   },
   "id": "s3_kaifeng_last",
   "title": "개봉 대전 — 마지막 성루",
@@ -32,7 +32,8 @@
         14,
         5
       ],
-      "name": "무림맹 검수"
+      "name": "무림맹 검수",
+      "mook": true
     }
   ],
   "enemy_hp_scale": 0.55,
@@ -45,5 +46,18 @@
     "injury_ratio": 0.2
   },
   "victory_flag": "s3_dg_last_won",
-  "defeat_flag": "s3_dg_last_lost"
+  "defeat_flag": "s3_dg_last_lost",
+  "format": "siege",
+  "events": [
+    {
+      "type": "decision",
+      "title": "개봉의 마지막 밤",
+      "when": {
+        "bout": 2
+      },
+      "lines": [
+        "성문이 무너진다. 어떻게 하겠는가?"
+      ]
+    }
+  ]
 }

@@ -4,6 +4,7 @@
   "title": "남궁세가 가주",
   "sect_id": "namgung",
   "role": "LEADER",
+  "combat_style": "sword",
   "description": "혈월의 밤에 아버지를 잃고 불탄 가문을 다시 세운 가주. 스물다섯 해 동안 단 한 번도 무릎 꿇지 않았다.",
   "level": 10,
   "named": true,

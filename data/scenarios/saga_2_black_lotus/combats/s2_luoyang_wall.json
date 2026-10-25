@@ -1,7 +1,7 @@
 {
   "battlefield": "town",
   "objective": {
-    "type": "survive",
+    "type": "hold_line",
     "rounds": 4
   },
   "reinforcements": [
@@ -28,7 +28,8 @@
         12,
         3
       ],
-      "name": "흑련 무사 갑"
+      "name": "흑련 무사 갑",
+      "mook": true
     },
     {
       "npc": "npc_bandit",
@@ -36,7 +37,8 @@
         12,
         7
       ],
-      "name": "흑련 무사 을"
+      "name": "흑련 무사 을",
+      "mook": true
     },
     {
       "npc": "npc_tang_poisoner",
@@ -68,5 +70,6 @@
     "injury_ratio": 0.3
   },
   "victory_flag": "s2_luoyang_held",
-  "defeat_flag": "s2_luoyang_broken"
+  "defeat_flag": "s2_luoyang_broken",
+  "format": "formation"
 }

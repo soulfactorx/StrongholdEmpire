@@ -911,6 +911,15 @@ static func _compare(actual: float, op: String, expected: float) -> bool:
 	return false
 
 
+## 효과 목록을 바로 반영한다 (전투 중 사건의 선택지 등). 결과 사전(message 등)을 돌려준다
+static func apply_effects(effects: Array, character: CharacterData, sect: SectData, relationships: Array[RelationshipData], story_flags: Dictionary) -> Dictionary:
+	var result: Dictionary = {"success": true, "message": ""}
+	for effect in effects:
+		if effect is Dictionary and effect.has("type"):
+			_apply_effect(effect, character, sect, relationships, story_flags, result)
+	return result
+
+
 static func _apply_effect(
 	e: Dictionary,
 	character: CharacterData,

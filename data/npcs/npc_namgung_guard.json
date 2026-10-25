@@ -4,6 +4,7 @@
   "title": "남궁세가 호위무사",
   "sect_id": "namgung",
   "role": "WANDERER",
+  "combat_style": "mook",
   "description": "남궁세가를 지키는 무사. 여럿이 함께 움직인다.",
   "level": 1,
   "stats": {

@@ -4,6 +4,7 @@
   "title": "흑련맹주",
   "sect_id": "heukpung",
   "role": "LEADER",
+  "combat_style": "poison",
   "description": "흑풍채·하오문·당가를 하나로 묶은 사파의 패자. 웃으며 계산하고, 계산이 끝나면 벤다.",
   "level": 12,
   "named": true,

@@ -27,6 +27,9 @@
       "position": [
         13,
         5
+      ],
+      "traits": [
+        "enrage"
       ]
     },
     {
@@ -35,7 +38,8 @@
         12,
         3
       ],
-      "name": "흑련 무사 갑"
+      "name": "흑련 무사 갑",
+      "mook": true
     },
     {
       "npc": "npc_bandit",
@@ -43,7 +47,8 @@
         12,
         7
       ],
-      "name": "흑련 무사 을"
+      "name": "흑련 무사 을",
+      "mook": true
     }
   ],
   "disciple_allies": [
@@ -67,5 +72,6 @@
     "injury_ratio": 0.3
   },
   "victory_flag": "s3_kaifeng_won",
-  "defeat_flag": "s3_kaifeng_lost"
+  "defeat_flag": "s3_kaifeng_lost",
+  "format": "formation"
 }

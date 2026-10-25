@@ -4,6 +4,7 @@
   "title": "남궁세가 가주",
   "sect_id": "namgung",
   "role": "LEADER",
+  "combat_style": "sword",
   "description": "정파의 맹주를 꿈꾸는 남궁세가의 가주. 청운검파의 성장을 경계한다.",
   "level": 9,
   "stats": {

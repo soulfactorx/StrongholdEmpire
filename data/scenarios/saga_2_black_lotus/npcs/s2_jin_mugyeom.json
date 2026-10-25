@@ -4,6 +4,7 @@
   "title": "천마신교 중원 총관",
   "sect_id": "cheonma",
   "role": "MANAGER",
+  "combat_style": "sword",
   "description": "혈월의 밤 사부를 배신하고 마교의 중원 총관이 된 사내. 이제 천마의 자리를 노린다.",
   "level": 11,
   "named": true,

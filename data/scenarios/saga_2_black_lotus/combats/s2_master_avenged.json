@@ -16,7 +16,10 @@
       ],
       "stats": {
         "internal_energy_max": -60
-      }
+      },
+      "traits": [
+        "enrage"
+      ]
     }
   ],
   "relationship_target": "s2_jin_mugyeom",
@@ -31,5 +34,6 @@
     "injury_ratio": 0.3
   },
   "victory_flag": "s2_su_avenged",
-  "defeat_flag": "s2_su_revenge_failed"
+  "defeat_flag": "s2_su_revenge_failed",
+  "format": "duel"
 }

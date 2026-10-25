@@ -4,6 +4,7 @@
   "title": "비연검 여협",
   "sect_id": "none",
   "role": "WANDERER",
+  "combat_style": "sword",
   "named": true,
   "description": "제비처럼 날랜 검을 쓰는 여협. 불의를 보면 참지 못해 늘 일에 휘말린다.",
   "level": 3,

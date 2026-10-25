@@ -21,6 +21,7 @@
   새 기연은 코드가 아니라 JSON으로 추가한다. 스토리 아크는 `data/events/arcs/<아크>/`에 묶고,
   스모크 테스트 `_test_story_arcs`에 선택지를 고정한 진행 경로를 함께 추가한다.
 - 기연에서 이어지는 전투는 `data/combats/*.json`으로 정의한다. 형식은 `docs/전투_데이터_형식.md` 참고.
+  전투의 형식(연전·포위·진형·추격·잠입·대치·비무대회)·전장·조건·특성·사건은 `docs/전투_다양화_설계.md`.
 - 인물은 `data/npcs/*.json`, 문파는 `data/sects/*.json`으로 정의한다.
   형식은 `docs/NPC_문파_데이터_형식.md` 참고.
 - 강호 지도는 `data/map/regions.json`으로 정의한다. 형식은 `docs/지도_데이터_형식.md` 참고.

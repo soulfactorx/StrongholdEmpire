@@ -4,6 +4,7 @@
   "title": "술 취한 거지 노인",
   "sect_id": "none",
   "role": "WANDERER",
+  "combat_style": "fist",
   "named": true,
   "description": "늘 술병을 끼고 다니는 거지 노인. 가끔 보여 주는 손놀림이 예사롭지 않다.",
   "level": 6,

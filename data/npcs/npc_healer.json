@@ -4,6 +4,7 @@
   "title": "청운검파 약방 의녀",
   "sect_id": "qingyun",
   "role": "YOUNG_DISCIPLE",
+  "combat_style": "taoist",
   "named": true,
   "description": "약방을 맡은 의녀. 다친 제자를 밤새 돌보며, 검보다 침이 빠르다는 말을 듣는다.",
   "level": 2,

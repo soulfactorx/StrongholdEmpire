@@ -70,5 +70,14 @@
     "injury_ratio": 0.4
   },
   "victory_flag": "arc_love_trial_won",
-  "defeat_flag": "arc_love_captured"
+  "defeat_flag": "arc_love_captured",
+  "format": "standoff",
+  "standoff_then": "duel",
+  "stage": "arena",
+  "conditions": [
+    "honor"
+  ],
+  "challenge": {
+    "type": "no_gap"
+  }
 }

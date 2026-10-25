@@ -5,6 +5,7 @@
   "sect_id": "qingyun",
   "named": true,
   "role": "LEADER",
+  "combat_style": "sword",
   "description": "청운검파를 일으킨 노검객. 엄하지만 제자를 아끼며, 무에서 창조하는 무공을 강조한다.",
   "level": 8,
   "stats": {

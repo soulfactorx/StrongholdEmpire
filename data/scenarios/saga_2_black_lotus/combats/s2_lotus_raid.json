@@ -29,7 +29,8 @@
         12,
         3
       ],
-      "name": "흑련 무사 갑"
+      "name": "흑련 무사 갑",
+      "mook": true
     },
     {
       "npc": "npc_bandit",
@@ -37,7 +38,8 @@
         12,
         7
       ],
-      "name": "흑련 무사 을"
+      "name": "흑련 무사 을",
+      "mook": true
     },
     {
       "npc": "npc_shadow_blade",
@@ -69,5 +71,7 @@
     "injury_ratio": 0.3
   },
   "victory_flag": "s2_su_raid_won",
-  "defeat_flag": "s2_su_raid_lost"
+  "defeat_flag": "s2_su_raid_lost",
+  "format": "siege",
+  "stage": "alley"
 }

@@ -485,6 +485,464 @@ func _test_duel_engine() -> void:
 	_completed["_test_duel_engine"] = true
 
 
+## 전투 다양화 시험용 구성: 도적 n명 (format·stage·조건은 부른 쪽에서)
+func _bandit_setup(hero: CharacterData, count: int, format: String = "duel") -> CombatSetup:
+	var setup := CombatSetup.new()
+	setup.title = "시험"
+	setup.format = format
+	for i in count:
+		var bandit: CharacterData = NpcRoster.create_character("npc_bandit", hero)
+		bandit.id = "npc_bandit_%d" % i
+		bandit.display_name = "도적 %d" % i
+		setup.add_enemy(bandit, Vector2i(12, i))
+	return setup
+
+
+func _cards(type: DuelCard.Type, count: int, power: int = 20) -> Array[DuelCard]:
+	var result: Array[DuelCard] = []
+	for i in count:
+		result.append(_card(type, power))
+	return result
+
+
+## 형식: 포위·진형·추격·잠입·대치·비무대회
+func _test_duel_formats() -> void:
+	var T := DuelCard.Type
+	var gm: Node = root.get_node("GameManager")
+	_new_quiet_game(gm, "young_disciple")
+	var hero: CharacterData = gm.player_character
+	hero.restore_internal_energy()
+
+	# 포위: 적 여럿이 한꺼번에, 졸개는 2칸, 휩쓸기, 압박
+	var setup: CombatSetup = _bandit_setup(hero, 5, "siege")
+	for enemy in setup.enemies:
+		setup.mooks[enemy.id] = true
+	var engine := DuelEngine.new(setup, hero)
+	_check(engine.active_foes().size() == _Balance.SIEGE_FOES and engine.active_friends().size() == 1 and engine.controlled().is_player, "포위: 적 셋이 한꺼번에, 주인공 선봉")
+	_check(engine.active_foes()[0].slot_count() == _Balance.MOOK_SLOTS, "포위: 졸개는 %d칸" % _Balance.MOOK_SLOTS)
+	_check(engine.get_player().cards.any(func(c: DuelCard) -> bool: return c.effects.has("sweep")), "포위: 휩쓸기 초식")
+	engine.prepare_bout()
+	for foe in engine.active_foes():
+		if foe == engine.current_foe():
+			engine.enemy_plan.assign(_cards(T.GUARD, 2))
+		else:
+			engine.plans[foe] = _cards(T.GUARD, 2)
+	var aimed: CombatUnit = engine.active_foes()[2]
+	engine.set_target(0, aimed)
+	var sweep: DuelCard = engine.get_player().cards.filter(func(c: DuelCard) -> bool: return c.effects.has("sweep"))[0]
+	engine.run_bout([sweep, null, null])
+	var lost: Array = engine.active_foes().map(func(u: CombatUnit) -> int: return u.max_hp - u.hp)
+	_check(lost.all(func(x: int) -> bool: return x > 0) and aimed.max_hp - aimed.hp == lost.max(), "휩쓸기: 고른 상대는 온전히, 나머지도 맞음 %s" % [lost])
+	_check(engine.get_player().momentum >= 2, "포위 압박: 둘러싸인 주인공의 기세가 빨리 오름 (%d)" % engine.get_player().momentum)
+	setup = _bandit_setup(hero, 4, "siege")
+	setup.stage = "alley"
+	_check(DuelEngine.new(setup, hero).active_foes().size() == 2, "좁은 골목: 한꺼번에 둘까지")
+
+	# 진형: 앞·뒷줄, 뒷줄은 술로만, 앞줄이 가로막음, 협공, 엄호
+	var front_a := _duel_unit("갑", 10, true)
+	var front_b := _duel_unit("을")
+	var back_b := _duel_unit("병")
+	back_b.front = false
+	var ctx: Dictionary = {"format": "formation"}
+	var result: Dictionary = DuelRules.resolve_multi(0, [
+		{"unit": front_a, "card": _card(T.QUICK), "target": back_b, "side": 0},
+		{"unit": front_b, "card": _card(T.GUARD), "target": front_a, "side": 1},
+		{"unit": back_b, "card": _card(T.STRIKE), "target": front_a, "side": 1},
+	], ctx)
+	_check(back_b.hp == back_b.max_hp and front_b.hp < front_b.max_hp, "진형: 앞줄이 뒷줄을 가로막음")
+	_check(front_a.hp == front_a.max_hp - int(result["taken"][front_a]) and "닿지 않음" in "\n".join(result["lines"]), "진형: 뒷줄의 강공은 닿지 않음 (술만)")
+	var ally_a := _duel_unit("정", 10, true)
+	var lone := _duel_unit("무")
+	var a1 := _duel_unit("기", 10, true)
+	result = DuelRules.resolve_multi(0, [
+		{"unit": a1, "card": _card(T.STRIKE), "target": lone, "side": 0},
+		{"unit": ally_a, "card": _card(T.STRIKE), "target": lone, "side": 0},
+		{"unit": lone, "card": _card(T.GUARD), "target": a1, "side": 1},
+	], {"format": "formation"})
+	_check("협공" in "\n".join(result["lines"]), "진형: 같은 적을 함께 치면 협공")
+	var hitter := _duel_unit("경")
+	var ward_u := _duel_unit("신", 10, true)
+	var cover := _duel_unit("임", 10, true)
+	cover.order = "cover"
+	result = DuelRules.resolve_multi(0, [
+		{"unit": hitter, "card": _card(T.STRIKE, 30), "target": ward_u, "side": 1},
+		{"unit": ward_u, "card": _card(T.QUICK), "target": hitter, "side": 0},
+		{"unit": cover, "card": _card(T.GUARD), "target": hitter, "side": 0},
+	], {"format": "formation"})
+	_check(cover.hp < cover.max_hp and "대신 받음" in "\n".join(result["lines"]), "진형: 엄호 동료가 피해를 나눠 받음")
+	setup = _bandit_setup(hero, 3, "formation")
+	setup.add_ally(NpcRoster.create_character("npc_disciple", hero), Vector2i(2, 4))
+	setup.add_ally(NpcRoster.create_character("npc_disciple", hero), Vector2i(2, 6))
+	setup.allies[1].id = "npc_disciple_b"
+	setup.orders[setup.allies[1].id] = "cover"
+	engine = DuelEngine.new(setup, hero)
+	_check(engine.active_friends().size() == 3 and engine.active_foes().size() == 3 and not engine.active_foes()[2].front, "진형: 셋 대 셋, 셋째는 뒷줄")
+	engine.set_order(engine.friends[1], "defend")
+	_check(engine.friends[1].order == "defend", "진형: 동료 지시 바꾸기")
+
+	# 추격 (쫓기기): 회피로 흘리면 멀어지고, 끝까지 벌리면 따돌림
+	setup = _bandit_setup(hero, 1, "chase")
+	setup.objective = "escape"
+	engine = DuelEngine.new(setup, hero)
+	hero.agility = 60
+	engine.prepare_bout()
+	engine.enemy_plan.assign(_cards(T.STRIKE, 3))
+	engine.run_bout(_cards(T.EVADE, 3).map(func(c: DuelCard) -> DuelCard: return DuelCard.basic_cards()[3]))
+	_check(engine.over and engine.outcome == CombatManager.Outcome.VICTORY and engine.distance == _Balance.CHASE_END, "추격: 흘릴수록 멀어져 따돌림 (거리 %d)" % engine.distance)
+	# 추격 (쫓기): 강공으로 맞히면 좁혀 붙잡고, 연전으로 바뀐다
+	setup = _bandit_setup(hero, 1, "chase")
+	setup.objective = "catch"
+	engine = DuelEngine.new(setup, hero)
+	engine.prepare_bout()
+	engine.enemy_plan.assign(_cards(T.GUARD, 3))
+	engine.run_bout([DuelCard.basic_cards()[1], DuelCard.basic_cards()[1], DuelCard.basic_cards()[1]])
+	_check(engine.distance == 0 and engine.format == "duel" and not engine.over, "추격: 따라잡으면 그 자리에서 겨룸 (거리 %d)" % engine.distance)
+	hero.agility = 10
+
+	# 잠입: 첫 합 상대는 막기·운기뿐, 기습 2배, 강공은 소리가 나 경보와 숨은 증원
+	setup = _bandit_setup(hero, 1, "stealth")
+	var lurker: CharacterData = NpcRoster.create_character("npc_bandit", hero)
+	lurker.id = "npc_bandit_hidden"
+	setup.hidden_foes.append(lurker)
+	engine = DuelEngine.new(setup, hero)
+	engine.prepare_bout()
+	_check(engine.enemy_plan.all(func(c: DuelCard) -> bool: return c.type in [T.GUARD, T.FOCUS]), "잠입: 경계 전 상대는 막기·운기뿐")
+	engine.enemy_plan.assign(_cards(T.FOCUS, 3, 0))
+	engine.current_foe().max_hp = 9999
+	engine.current_foe().hp = 9999
+	engine.run_bout([DuelCard.basic_cards()[1], DuelCard.basic_cards()[1], DuelCard.basic_cards()[1]])
+	_check(engine.detection == 3 and "암습" in "\n".join(engine.history), "잠입: 첫 합 암습, 강공 셋에 발각 3")
+	engine.prepare_bout()
+	engine.enemy_plan.assign(_cards(T.GUARD, 3))
+	engine.run_bout([DuelCard.basic_cards()[1], DuelCard.basic_cards()[1], DuelCard.basic_cards()[1]])
+	_check(engine.alarm and engine.foes.any(func(u: CombatUnit) -> bool: return u.character.id == "npc_bandit_hidden"), "잠입: 발각 %d에 경보, 숨은 자가 나타남" % _Balance.STEALTH_ALARM)
+
+	# 대치: 피해 없이 기세, 먼저 5면 이김. 이어지는 연전이면 기세를 안고 시작
+	setup = _bandit_setup(hero, 1, "standoff")
+	engine = DuelEngine.new(setup, hero)
+	var hp_before: int = engine.current_foe().hp
+	for i in 2:
+		engine.prepare_bout()
+		engine.enemy_plan.assign(_cards(T.GUARD, 3))
+		engine.run_bout([DuelCard.basic_cards()[1], DuelCard.basic_cards()[1], DuelCard.basic_cards()[1]])
+	_check(engine.over and engine.outcome == CombatManager.Outcome.VICTORY and engine.current_foe().hp == hp_before, "대치: 피해 없이 기세 %d에 먼저 닿으면 이김" % _Balance.STANDOFF_GOAL)
+	setup = _bandit_setup(hero, 1, "standoff")
+	setup.standoff_then = "duel"
+	engine = DuelEngine.new(setup, hero)
+	for i in 2:
+		engine.prepare_bout()
+		engine.enemy_plan.assign(_cards(T.GUARD, 3))
+		engine.run_bout([DuelCard.basic_cards()[1], DuelCard.basic_cards()[1], DuelCard.basic_cards()[1]])
+	_check(not engine.over and engine.format == "duel" and engine.get_player().momentum == _Balance.STANDOFF_CARRY, "대치 뒤 연전: 이긴 쪽이 기세 %d로 시작" % _Balance.STANDOFF_CARRY)
+
+	# 비무대회: 혼자 연달아, 판 사이 조금 회복, 다음 상대 관전, 성적 플래그
+	setup = _bandit_setup(hero, 2, "tournament")
+	setup.add_ally(NpcRoster.create_character("npc_disciple", hero), Vector2i(2, 4))
+	setup.placement_flags = {"1": "tourney_one", "2": "tourney_won"}
+	engine = DuelEngine.new(setup, hero)
+	_check(engine.friends.size() == 1 and not engine.habit_text(engine.current_foe()).is_empty(), "비무대회: 혼자 나서고 첫 상대를 관전")
+	engine.get_player().take_damage(50)
+	var hurt: int = engine.get_player().hp
+	engine.current_foe().take_damage(engine.current_foe().hp - 1)
+	engine.prepare_bout()
+	engine.enemy_plan.assign(_cards(T.FOCUS, 3, 0))
+	engine.run_bout([DuelCard.basic_cards()[0], DuelCard.basic_cards()[0], DuelCard.basic_cards()[0]])
+	_check(engine.tournament_round == 1 and engine.get_player().hp > hurt and engine.foe_index == 1, "비무대회: 이기면 조금 쉬고 다음 판")
+	engine.retreat()
+	_check(engine.summary()["placement_flag"] == "tourney_one", "비무대회: 이긴 판 수로 성적 플래그")
+	_completed["_test_duel_formats"] = true
+
+
+## 전장·조건·특성·목표·사건·평가
+func _test_duel_variety_rules() -> void:
+	var T := DuelCard.Type
+	var gm: Node = root.get_node("GameManager")
+	_new_quiet_game(gm, "young_disciple")
+	var hero: CharacterData = gm.player_character
+	hero.restore_internal_energy()
+
+	# 전장
+	var a := _duel_unit("갑", 20)
+	var b := _duel_unit("을")
+	var result: Dictionary = DuelRules.resolve_slot(0, a, _card(T.STRIKE), b, _card(T.EVADE), {"stage": "bridge"})
+	_check(result["damage"]["b"] > 0 and "피할 곳이 없다" in "\n".join(result["lines"]), "외나무다리: 회피는 헛디딤")
+	b.hp = int(b.max_hp * 0.4)
+	result = DuelRules.resolve_slot(0, a, _card(T.STRIKE), b, null, {"stage": "bridge"})
+	_check(b in result["fallen_off"], "외나무다리: 강공에 몰린 쪽이 떨어짐")
+	a = _duel_unit("갑")
+	_check(DuelRules._speed(a, _card(T.QUICK), {"stage": "rooftop"}) == DuelRules._speed(a, _card(T.QUICK)) + 10 and DuelRules._speed(a, _card(T.STRIKE), {"stage": "rooftop"}) == DuelRules._speed(a, _card(T.STRIKE)) - 10, "지붕 위: 속공 +1, 강공 -1")
+	var steady: int = DuelRules._hit(a, _card(T.STRIKE), b, null, {"stage": "boat", "slot": 0})["damage"]
+	var sway: int = DuelRules._hit(a, _card(T.STRIKE), b, null, {"stage": "boat", "slot": 1})["damage"]
+	_check(sway < steady, "배 위: 둘째 칸 강공이 흔들림 (%d → %d)" % [steady, sway])
+	_check(DuelRules._hit(a, _card(T.TRICK), b, null, {"stage": "bamboo"})["damage"] > DuelRules._hit(a, _card(T.TRICK), b, null)["damage"], "대숲: 술 강화")
+	_check(not DuelRules.banned_reason(_card(T.FOCUS), {"stage": "burning"}).is_empty() and not DuelRules.banned_reason(_card(T.TRICK), {"stage": "arena"}).is_empty(), "불타는 장원 운기 불가, 비무대 술 금지")
+	a = _duel_unit("갑", 5)
+	b = _duel_unit("을", 30)
+	DuelRules.resolve_slot(0, a, _card(T.QUICK), b, _card(T.EVADE), {"stage": "ice"})
+	_check(a.has_status("slipped"), "빙판: 흘려진 쪽이 미끄러짐")
+	var setup: CombatSetup = _bandit_setup(hero, 1)
+	setup.stage = "shrine"
+	hero.wisdom = 30
+	var engine := DuelEngine.new(setup, hero)
+	_check(engine.reveal_level() == 0, "밤의 사당: 첫 합은 안 보임")
+	setup = _bandit_setup(hero, 1)
+	setup.stage = "burning"
+	engine = DuelEngine.new(setup, hero)
+	engine.prepare_bout()
+	engine.enemy_plan.assign(_cards(T.GUARD, 3))
+	engine.run_bout(_cards(T.GUARD, 3))
+	_check(engine.get_player().hp < engine.get_player().max_hp and engine.current_foe().hp < engine.current_foe().max_hp, "불타는 장원: 합마다 모두 체력 감소")
+	setup = _bandit_setup(hero, 1)
+	setup.stage = "arena"
+	engine = DuelEngine.new(setup, hero)
+	engine.current_foe().hp = int(engine.current_foe().max_hp * 0.3)
+	engine.prepare_bout()
+	engine.enemy_plan.assign(_cards(T.FOCUS, 3, 0))
+	engine.run_bout([DuelCard.basic_cards()[0], null, null])
+	_check(engine.over and engine.outcome == CombatManager.Outcome.VICTORY and "장외" in "\n".join(engine.history), "비무대: 밀려난 쪽 장외")
+	hero.wisdom = 16
+
+	# 조건
+	var sword := MartialArtData.new()
+	sword.id = "t_cond_sword"
+	sword.category = MartialArtData.Category.SWORD
+	sword.damage = 12
+	hero.learn_martial_art(sword)
+	setup = _bandit_setup(hero, 1)
+	setup.conditions = PackedStringArray(["unarmed", "wounded", "exhausted", "poisoned"])
+	hero.restore_internal_energy()
+	engine = DuelEngine.new(setup, hero)
+	var me: CombatUnit = engine.get_player()
+	_check(not me.cards.any(func(c: DuelCard) -> bool: return c.art_id == "t_cond_sword"), "맨손: 검법 초식이 빠짐")
+	_check(me.hp == int(me.max_hp * _Balance.WOUNDED_HP) and me.slot_count() == 2, "부상: 체력 70%, 칸 -1")
+	_check(hero.internal_energy_current <= int(hero.internal_energy_max * _Balance.EXHAUSTED_ENERGY), "지침: 내공 절반")
+	var energy: int = hero.internal_energy_current
+	engine.prepare_bout()
+	engine.enemy_plan.assign(_cards(T.GUARD, 3))
+	engine.run_bout(_cards(T.GUARD, 2))
+	_check(hero.internal_energy_current == energy - _Balance.POISON_DRAIN, "중독: 합마다 내공 감소")
+	_check(not DuelRules.banned_reason(_card(T.TRICK), {"conditions": PackedStringArray(["honor"])}).is_empty(), "정정당당: 술 금지")
+
+	# 상대 특성
+	a = _duel_unit("갑")
+	b = _duel_unit("을")
+	b.traits = ["enrage"]
+	b.hp = int(b.max_hp * 0.55)
+	DuelRules.resolve_slot(0, a, _card(T.STRIKE, 30), b, null)
+	_check(b.enraged and b.slot_bonus == 1 and b.momentum >= _Balance.ENRAGE_MOMENTUM - 1, "광폭: 절반 아래에서 칸 +1·기세 (진 칸의 -1 뒤 %d)" % b.momentum)
+	b = _duel_unit("을")
+	b.traits = ["iron_body"]
+	_check(DuelRules._hit(a, _card(T.QUICK), b, null)["damage"] < DuelRules._hit(a, _card(T.QUICK), _duel_unit("병"), null)["damage"], "금강불괴: 속공 반감")
+	b = _duel_unit("을")
+	b.traits = ["poison_mist"]
+	a = _duel_unit("갑")
+	DuelRules.resolve_slot(0, a, _card(T.FOCUS, 0), b, _card(T.GUARD))
+	_check(a.hp < a.max_hp, "독무: 운기하면 다침")
+	b = _duel_unit("을")
+	b.traits = ["two_phase"]
+	b.hp = 1
+	DuelRules.resolve_slot(0, _duel_unit("갑"), _card(T.STRIKE), b, null)
+	_check(b.is_alive() and b.second_phase and b.hp == int(b.max_hp * _Balance.SECOND_PHASE_HP), "단계 전환: 한 번 다시 일어남")
+	setup = _bandit_setup(hero, 1)
+	setup.traits = {"npc_bandit_0": ["telegraph"]}
+	engine = DuelEngine.new(setup, hero)
+	for i in 3:
+		engine.prepare_bout()
+		if i == 2:
+			_check(engine.enemy_plan[-1].effects.has("telegraph") and engine.revealed_plan()[-1].contains(engine.enemy_plan[-1].display_name), "예고 절초: 셋째 합 마지막 칸, 늘 보임")
+		engine.run_bout(_cards(T.GUARD, 3))
+	_check("다음 합 마지막 칸" in "\n".join(engine.history), "예고 절초: 한 합 전에 예고")
+	setup = _bandit_setup(hero, 1)
+	setup.traits = {"npc_bandit_0": ["mirror"]}
+	engine = DuelEngine.new(setup, hero)
+	engine.last_types = {"friend": [T.EVADE, T.EVADE, T.EVADE], "foe": []}
+	engine.prepare_bout()
+	_check(engine.enemy_plan.all(func(c: DuelCard) -> bool: return c.type == T.EVADE), "모방: 내가 낸 유형을 따라 냄")
+
+	# 목표: 생포 (몰아붙인 뒤 막기 반격), 죽이면 실패
+	setup = _bandit_setup(hero, 1)
+	setup.objective = "capture"
+	setup.objective_target = "npc_bandit_0"
+	engine = DuelEngine.new(setup, hero)
+	engine.current_foe().hp = int(engine.current_foe().max_hp * 0.2)
+	engine.prepare_bout()
+	engine.enemy_plan.assign(_cards(T.QUICK, 3, 2))
+	engine.run_bout(_cards(T.GUARD, 3).map(func(c: DuelCard) -> DuelCard: return DuelCard.basic_cards()[2]))
+	_check(engine.over and engine.outcome == CombatManager.Outcome.VICTORY and engine.captured, "생포: 막기 반격으로 사로잡음")
+	engine = DuelEngine.new(setup, hero)
+	engine.current_foe().hp = 1
+	engine.prepare_bout()
+	engine.enemy_plan.assign(_cards(T.FOCUS, 3, 0))
+	engine.run_bout([DuelCard.basic_cards()[1], null, null])
+	_check(engine.over and engine.outcome == CombatManager.Outcome.DEFEAT, "생포: 죽이면 실패")
+	setup = _bandit_setup(hero, 1)
+	setup.objective = "timed"
+	setup.objective_rounds = 2
+	engine = DuelEngine.new(setup, hero)
+	for i in 2:
+		engine.prepare_bout()
+		engine.enemy_plan.assign(_cards(T.GUARD, 3))
+		engine.run_bout(_cards(T.GUARD, 3))
+	_check(engine.over and engine.outcome == CombatManager.Outcome.DEFEAT, "시간 안에: 넘기면 패배")
+	setup = _bandit_setup(hero, 1)
+	setup.objective = "endure"
+	setup.objective_rounds = 2
+	setup.objective_count = 5
+	engine = DuelEngine.new(setup, hero)
+	engine.prepare_bout()
+	engine.enemy_plan.assign(_cards(T.STRIKE, 3, 30))
+	engine.run_bout([null, null, null])
+	_check(engine.over and engine.outcome == CombatManager.Outcome.DEFEAT, "버텨 내기: 피해 한도를 넘으면 패배")
+	setup = _bandit_setup(hero, 1)
+	setup.objective = "disarm"
+	setup.objective_count = 2
+	engine = DuelEngine.new(setup, hero)
+	hero.agility = 60
+	engine.prepare_bout()
+	var finisher_card: DuelCard = _card(T.STRIKE, 40)
+	finisher_card.momentum_cost = 0
+	finisher_card.effects.append("telegraph")
+	engine.enemy_plan.assign([finisher_card, finisher_card, finisher_card])
+	engine.run_bout([DuelCard.basic_cards()[3], DuelCard.basic_cards()[3], DuelCard.basic_cards()[3]])
+	_check(engine.over and engine.outcome == CombatManager.Outcome.VICTORY and engine.nullified >= 2, "무기 떨구기: 절초를 흘려 무산")
+	hero.agility = 10
+	setup = _bandit_setup(hero, 3, "formation")
+	setup.objective = "hold_line"
+	setup.objective_rounds = 1
+	engine = DuelEngine.new(setup, hero)
+	engine.get_player().max_hp = 9999
+	engine.get_player().hp = 9999
+	engine.prepare_bout()
+	engine.run_bout(_cards(T.GUARD, 3))
+	_check(engine.over and engine.outcome == CombatManager.Outcome.VICTORY, "진지 사수: 앞줄을 지키며 버팀")
+
+	# 사건: 증원, 배신, 인연의 개입, 설득(선택), 결단
+	setup = _bandit_setup(hero, 1)
+	setup.add_ally(NpcRoster.create_character("npc_senior_brother", hero), Vector2i(2, 4))
+	setup.events = [
+		{"type": "reinforce", "when": {"bout": 1}, "npc": "npc_bandit", "name": "도적 증원"},
+		{"type": "betrayal", "when": {"bout": 1}, "npc": "npc_senior_brother", "lines": ["대사형: 미안하다."]},
+	]
+	engine = DuelEngine.new(setup, hero)
+	var foes_before: int = engine.foes.size()
+	engine.prepare_bout()
+	engine.run_bout(_cards(T.GUARD, 3))
+	_check(engine.foes.size() == foes_before + 2 and engine.foes.any(func(u: CombatUnit) -> bool: return u.character.id == "npc_senior_brother") and engine.event_lines.size() >= 2, "사건: 증원과 배신")
+	var master: RelationshipData = RelationshipManager.get_bond_with(gm.player_relationships, "npc_master")
+	master.bond_strength = 80
+	setup = _bandit_setup(hero, 1)
+	setup.events = [{"type": "bond_intervene", "when": {"player_hp_below": 0.5}, "npc": "npc_master"}]
+	engine = DuelEngine.new(setup, hero, {}, {}, gm.player_relationships)
+	engine.get_player().hp = int(engine.get_player().max_hp * 0.3)
+	var low: int = engine.get_player().hp
+	engine.prepare_bout()
+	engine.enemy_plan.assign(_cards(T.GUARD, 3))
+	engine.run_bout(_cards(T.GUARD, 3))
+	_check(engine.get_player().hp > low and engine.get_player().momentum >= _Balance.INTERVENE_MOMENTUM, "사건: 인연의 개입 (회복·기세)")
+	setup = _bandit_setup(hero, 1)
+	setup.events = [{"type": "parley", "when": {"bout": 1}, "lines": ["도적: 잠깐!"]}]
+	engine = DuelEngine.new(setup, hero)
+	engine.prepare_bout()
+	engine.run_bout(_cards(T.GUARD, 3))
+	_check(not engine.pending_choice.is_empty() and engine.pending_choice["options"].size() == 2 and engine.run_bout(_cards(T.GUARD, 3)).is_empty(), "사건: 설득 선택을 기다림 (그동안 겨루지 않음)")
+	hero.charisma = 20
+	engine.choose(0)
+	_check(engine.over and engine.outcome == CombatManager.Outcome.VICTORY and not engine.choice_effects.is_empty(), "설득 성공: 상대가 물러나고 효과가 남음")
+	setup = _bandit_setup(hero, 1)
+	setup.events = [{"type": "decision", "when": {"bout": 1}}]
+	engine = DuelEngine.new(setup, hero)
+	engine.prepare_bout()
+	engine.run_bout(_cards(T.GUARD, 3))
+	engine.choose(0)
+	_check(engine.get_player().momentum == DuelRules.MAX_MOMENTUM and engine.get_player().hp < engine.get_player().max_hp, "결단: 목숨을 걸면 기세 최고조")
+	engine.play_to_end()
+	_check(engine.over, "자동: 사건 선택도 스스로 고르며 끝까지")
+	hero.charisma = 10
+
+	# 평가와 도전
+	setup = _bandit_setup(hero, 1)
+	setup.challenge = {"type": "no_trick"}
+	engine = DuelEngine.new(setup, hero)
+	engine.current_foe().hp = 1
+	engine.prepare_bout()
+	engine.enemy_plan.assign(_cards(T.FOCUS, 3, 0))
+	engine.run_bout([DuelCard.basic_cards()[0], null, null])
+	var summary: Dictionary = engine.summary()
+	_check(engine.rating() == "완승" and summary["challenge_met"] and summary["challenge"].contains("술"), "평가 완승·도전 달성")
+	setup.challenge = {"type": "within_bouts", "value": 0}
+	_check(not engine.challenge_met(), "도전: 이루지 못하면 실패")
+
+	# 무인의 성격과 지시
+	_check(DuelAI.style_of(NpcRoster.create_character("npc_bandit", hero)) == "mook", "인물 데이터의 무인 성격")
+	var unit: CombatUnit = CombatUnit.new(NpcRoster.create_character("npc_disciple", hero), false, true)
+	unit.cards = DuelCard.cards_for(unit.character)
+	unit.order = "cover"
+	var rng := RandomNumberGenerator.new()
+	var guards: int = 0
+	for i in 20:
+		rng.seed = i
+		guards += DuelAI.plan(unit, [], {}, 0.0, rng).filter(func(c: DuelCard) -> bool: return c.type == T.GUARD).size()
+	_check(guards > 25, "엄호 지시: 막기 위주 (%d/60)" % guards)
+
+	# 데이터 검증
+	var bad: Dictionary = {"id": "x", "title": "x", "enemies": [{"npc": "npc_bandit", "traits": ["flying"]}], "format": "space", "stage": "moon",
+		"conditions": ["drunk"], "events": [{"type": "explode", "when": {"bout": 1}}], "challenge": {"type": "dance"}}
+	var errors: PackedStringArray = CombatLibrary.validate_combat_dict(bad)
+	_check(errors.size() == 6, "다양화 데이터 검증: 형식·전장·조건·특성·사건·도전 (%s)" % "; ".join(errors))
+	_completed["_test_duel_variety_rules"] = true
+
+
+## 대결 화면 (여럿·사건): 상대 고르기, 동료 지시, 게이지, 사건 선택, 평가
+func _test_duel_screen_formats() -> void:
+	var gm: Node = root.get_node("GameManager")
+	_new_quiet_game(gm, "young_disciple")
+	var hero: CharacterData = gm.player_character
+	var setup: CombatSetup = _bandit_setup(hero, 3, "formation")
+	setup.add_ally(NpcRoster.create_character("npc_disciple", hero), Vector2i(2, 4))
+	setup.events = [{"type": "decision", "when": {"bout": 1}, "lines": ["적이 몰려온다!"]}]
+	setup.challenge = {"type": "no_trick"}
+	gm.start_combat(setup)
+	await process_frame
+	await process_frame
+	var c: Node = current_scene
+	_check(c.squad_box.visible and not c.versus_row.visible and c.squad_box.has_node("Foe_2"), "여럿: 사람 목록과 상대 버튼")
+	_check(c.goal_label.text.contains("진형") and c.goal_label.text.contains("도전"), "형식·도전 안내")
+	var small: Array = c.find_children("*", "Button", true, false).filter(func(b: Button) -> bool: return b.visible and b.get_combined_minimum_size().y < 48)
+	_check(small.is_empty(), "여럿 화면 버튼도 48px 이상")
+	c.select_slot(1)
+	var foe: CombatUnit = c.engine.active_foes()[1]
+	c.squad_box.get_node("Foe_1").pressed.emit()
+	_check(c.engine.target_of(1) == foe and c.slot_row.get_node("Slot1").text.contains(foe.display_name), "상대를 눌러 고른 칸의 상대로")
+	var ally: CombatUnit = c.engine.active_friends().filter(func(u: CombatUnit) -> bool: return not u.is_player)[0]
+	var order_button: Button = c.squad_box.find_child("Order_*", true, false)
+	order_button.pressed.emit()
+	_check(ally.order == "defend" and c.squad_box.find_child("Order_*", true, false).text.contains("수비"), "동료 지시 바꾸기 (공세 → 수비)")
+	c.auto_fill()
+	c.fight()
+	await process_frame
+	_check(c.choice_popup != null and c.choice_popup.visible and c.fight_button.disabled, "사건: 결단을 고를 때까지 겨루지 않음")
+	c.choice_popup._on_option_pressed("1")
+	await process_frame
+	_check(c.engine.pending_choice.is_empty() and not c.fight_button.disabled and c.engine.history[-1].contains("버틴다"), "결단을 고르면 다음 합")
+	await c.skip_to_result()
+	_check(c.result_label.text.contains("평가") and c.result_label.text.contains("도전"), "결과: 평가와 도전")
+	SceneRouter.goto(tree, SceneRouter.HUB)
+	await process_frame
+
+	# 추격 게이지
+	setup = _bandit_setup(hero, 1, "chase")
+	setup.objective = "escape"
+	gm.start_combat(setup)
+	await process_frame
+	await process_frame
+	c = current_scene
+	_check(c.versus_row.visible and c.intent_label.text.contains("거리 %d/%d" % [_Balance.CHASE_START, _Balance.CHASE_END]), "추격: 거리 게이지")
+	c.leave_combat()
+	await process_frame
+	await process_frame
+	_completed["_test_duel_screen_formats"] = true
+
+
 ## 대결 화면: 칸 고르기·초식 놓기·겨루기·자동 배치·자동 전투·결과만 보기·후퇴
 func _test_duel_screen() -> void:
 	var gm: Node = root.get_node("GameManager")
@@ -993,5 +1451,39 @@ func _test_combat_variety() -> void:
 	_check(objectives.size() >= 2, "코드 전투: 토벌 의뢰의 여러 목표 (%s)" % [objectives.keys()])
 	var hit: CombatSetup = CombatManager.create_assassination(gm.player_character)
 	_check(hit.objective == "defeat_target" and hit.weather == "night" and hit.battlefield == "town", "코드 전투: 표적 의뢰는 밤 거리에서 표적만")
+	# 형식: 야습은 포위, 표적은 잠입(숨은 순찰), 추격대는 추격·포위, 침공은 진형, 결투는 대치 뒤 연전, 비무는 비무대
+	_check(bandits.format == "siege" and bandits.mooks.size() >= 3 and not bandits.challenge.is_empty(), "코드 전투: 야습은 포위, 도적은 졸개, 도전")
+	_check(hit.format == "stealth" and hit.hidden_foes.size() == 1 and hit.stage in ["shrine", "rooftop"], "코드 전투: 표적 의뢰는 잠입")
+	var hunter_formats: Dictionary = {}
+	for i in 20:
+		hunter_formats[CombatManager.create_bounty_hunters(gm.player_character).format] = true
+	_check(hunter_formats.has("chase") and hunter_formats.has("siege"), "코드 전투: 추격대는 추격 또는 포위")
+	var invasion: CombatSetup = CombatManager.create_invasion(gm.get_world_sect("heukpung"), gm.player_character, gm.player_sect)
+	_check(invasion.format == "formation" and not invasion.mooks.is_empty(), "코드 전투: 침공은 진형")
+	var rival: CombatSetup = CombatManager.create_rival_duel(gm.player_character)
+	_check(rival.format == "standoff" and rival.standoff_then == "duel", "코드 전투: 라이벌 결투는 대치 뒤 연전")
+	var spar: CombatSetup = CombatManager.create_sparring(gm.player_character)
+	_check(spar.stage == "arena" and spar.has_condition("honor"), "코드 전투: 비무는 비무대에서 정정당당")
+	var hunt_objectives: Dictionary = {}
+	for i in 40:
+		hunt_objectives[CombatManager.create_bandit_hunt(gm.player_character).objective] = true
+	_check(hunt_objectives.has("capture"), "코드 전투: 토벌 의뢰에 현상수배범 생포")
 	CombatManager.varied = false
+
+	# 데이터 전투의 형식 (설계 문서 8절)
+	var expected_formats: Dictionary = {
+		"arc_love_trial": "standoff", "arc_love_pursuit": "chase", "arc_spy_rescue": "stealth", "arc_revenge_chief": "siege",
+		"arc_cheonma_siege": "formation", "martial_tournament": "tournament",
+	}
+	var wrong: PackedStringArray = []
+	for combat_id in expected_formats:
+		if CombatLibrary.create(combat_id, gm.player_character).format != expected_formats[combat_id]:
+			wrong.append(combat_id)
+	_check(wrong.is_empty(), "데이터 전투 형식 (%s)" % ", ".join(wrong))
+	var final: CombatSetup = CombatLibrary.create("arc_cheonma_final", gm.player_character)
+	_check(final.traits_of("npc_cheonma").has("telegraph") and final.traits_of("npc_cheonma").has("two_phase") and final.events.size() == 2, "천마 결전: 예고 절초·단계 전환·사건")
+	var rescue: CombatSetup = CombatLibrary.create("arc_spy_rescue", gm.player_character)
+	_check(rescue.hidden_foes.size() == 2, "잠입 전투: 숨은 자")
+	var tourney: CombatSetup = CombatLibrary.create("martial_tournament", gm.player_character)
+	_check(tourney.enemies.size() == 4 and tourney.placement_flags.has("3") and EventManager.get_event("martial_tournament") != null, "무림대회: 네 판과 성적 플래그, 기연")
 	_completed["_test_combat_variety"] = true

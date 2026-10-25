@@ -1,0 +1,43 @@
+{
+  "id": "martial_tournament_result",
+  "title": "무림대회의 뒷이야기",
+  "description": "결승에서 아쉽게 졌지만, 강호는 당신의 이름을 기억하기 시작했습니다. 준우승자에게 문파들의 초청장이 날아듭니다.",
+  "can_repeat": false,
+  "priority": true,
+  "conditions": [
+    {
+      "type": "flag",
+      "flag": "tourney_runner_up",
+      "value": true
+    },
+    {
+      "type": "flag",
+      "flag": "tourney_champion",
+      "value": false
+    }
+  ],
+  "choices": [
+    {
+      "label": "초청을 받아들인다",
+      "message": "명성 +6",
+      "effects": [
+        {
+          "type": "sect",
+          "field": "reputation",
+          "add": 6
+        }
+      ]
+    },
+    {
+      "label": "다음 대회를 기약한다",
+      "message": "무력 +1",
+      "effects": [
+        {
+          "type": "character",
+          "field": "strength",
+          "add": 1
+        }
+      ]
+    }
+  ]
+}

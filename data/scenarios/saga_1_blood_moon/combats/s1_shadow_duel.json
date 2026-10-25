@@ -13,6 +13,9 @@
       "position": [
         12,
         5
+      ],
+      "traits": [
+        "telegraph"
       ]
     }
   ],
@@ -28,5 +31,7 @@
     "injury_ratio": 0.3
   },
   "victory_flag": "s1_hwi_beat_shadow",
-  "defeat_flag": "s1_hwi_lost_shadow"
+  "defeat_flag": "s1_hwi_lost_shadow",
+  "format": "duel",
+  "stage": "rooftop"
 }

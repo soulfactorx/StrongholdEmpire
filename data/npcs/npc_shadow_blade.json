@@ -4,6 +4,7 @@
   "title": "흑의 자객",
   "sect_id": "heukpung",
   "role": "ASSASSIN",
+  "combat_style": "hidden",
   "description": "돈만 주면 누구든 벤다는 흑의 자객. 병든 누이를 홀로 돌본다는 소문이 있다.",
   "level": 3,
   "stats": {

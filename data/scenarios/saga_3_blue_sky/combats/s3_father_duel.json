@@ -15,7 +15,10 @@
       ],
       "stats": {
         "internal_energy_max": -80
-      }
+      },
+      "traits": [
+        "poison_mist"
+      ]
     }
   ],
   "relationship_target": "s3_dokgo_cheon",
@@ -29,5 +32,20 @@
     "injury_ratio": 0.2
   },
   "victory_flag": "s3_dg_father_won",
-  "defeat_flag": "s3_dg_father_lost"
+  "defeat_flag": "s3_dg_father_lost",
+  "format": "standoff",
+  "standoff_then": "duel",
+  "stage": "arena",
+  "events": [
+    {
+      "type": "parley",
+      "title": "아버지와 아들",
+      "when": {
+        "enemy_hp_below": 0.5
+      },
+      "lines": [
+        "독고천: 네가 나를 넘으면, 흑련은 누구의 것이 되느냐."
+      ]
+    }
+  ]
 }

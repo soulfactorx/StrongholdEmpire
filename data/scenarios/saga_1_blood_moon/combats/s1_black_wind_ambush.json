@@ -27,6 +27,9 @@
       "position": [
         12,
         5
+      ],
+      "traits": [
+        "poison_mist"
       ]
     },
     {
@@ -35,7 +38,8 @@
         13,
         3
       ],
-      "name": "흑풍 도적 갑"
+      "name": "흑풍 도적 갑",
+      "mook": true
     },
     {
       "npc": "npc_bandit",
@@ -43,7 +47,8 @@
         13,
         7
       ],
-      "name": "흑풍 도적 을"
+      "name": "흑풍 도적 을",
+      "mook": true
     }
   ],
   "enemy_hp_scale": 0.6,
@@ -57,5 +62,7 @@
     "injury_ratio": 0.4
   },
   "victory_flag": "s1_so_ambush_won",
-  "defeat_flag": "s1_so_ambush_lost"
+  "defeat_flag": "s1_so_ambush_lost",
+  "format": "siege",
+  "stage": "bamboo"
 }

@@ -13,6 +13,10 @@
       "position": [
         12,
         5
+      ],
+      "traits": [
+        "poison_mist",
+        "mirror"
       ]
     }
   ],
@@ -27,5 +31,7 @@
     "injury_ratio": 0.1
   },
   "victory_flag": "s2_hr_dokgo_won",
-  "defeat_flag": "s2_hr_dokgo_lost"
+  "defeat_flag": "s2_hr_dokgo_lost",
+  "format": "standoff",
+  "standoff_then": "duel"
 }

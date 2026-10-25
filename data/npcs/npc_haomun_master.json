@@ -4,6 +4,7 @@
   "title": "하오문주",
   "sect_id": "haomun",
   "role": "LEADER",
+  "combat_style": "hidden",
   "description": "저잣거리의 눈과 귀를 모두 쥔 하오문의 주인. 칼보다 소문으로 싸운다.",
   "level": 6,
   "stats": {

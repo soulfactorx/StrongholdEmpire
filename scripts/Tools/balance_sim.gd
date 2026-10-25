@@ -1,7 +1,7 @@
 extends SceneTree
 
 ## 밸런스 시뮬레이터: 전투 자동 플레이, 세력 AI, 장기 경제를 한 번에 돌려 수치를 출력한다.
-## 실행: godot --headless --path . -s res://scripts/Tools/balance_sim.gd [-- combat|world|economy] [runs=N] [only=전투,전투]
+## 실행: godot --headless --path . -s res://scripts/Tools/balance_sim.gd [-- combat|world|economy] [runs=N] [only=전투,전투] [levels=1,3,6]
 ## 영역을 주지 않으면 모두 돌린다. 수치를 바꾸면 결과를 구현 계획(M9-5)에 함께 기록한다.
 
 const _EconomySim = preload("res://scripts/Tools/economy_sim.gd")
@@ -11,12 +11,15 @@ const COMBATS: Array[String] = [
 	"sparring", "rival_duel", "night_bandits", "bandit_hunt", "assassination", "bounty_hunters", "invasion",
 	"arc_love_trial", "arc_love_pursuit", "arc_revenge_duel", "arc_revenge_duel_allied", "arc_revenge_chief",
 	"arc_spy_rescue", "arc_spy_enforcer", "arc_succession_coup", "arc_succession_coup_traitor",
-	"arc_cheonma_blood_shadow", "arc_cheonma_siege", "arc_cheonma_siege_allied", "arc_cheonma_final",
+	"arc_cheonma_blood_shadow", "arc_cheonma_siege", "arc_cheonma_siege_allied", "arc_cheonma_final", "martial_tournament",
 	# 메인 시나리오 전투: "시나리오:전투"
 	"saga_1_blood_moon:s1_blood_night_gate", "saga_1_blood_moon:s1_guard_the_master", "saga_1_blood_moon:s1_heaven_duel",
-	"saga_2_black_lotus:s2_civil_war", "saga_2_black_lotus:s2_lotus_raid", "saga_3_blue_sky:s3_rescue", "saga_3_blue_sky:s3_kaifeng_last",
+	"saga_1_blood_moon:s1_black_wind_ambush", "saga_1_blood_moon:s1_duel_mugyeom",
+	"saga_2_black_lotus:s2_civil_war", "saga_2_black_lotus:s2_lotus_raid", "saga_2_black_lotus:s2_luoyang_wall", "saga_2_black_lotus:s2_dokgo_duel",
+	"saga_3_blue_sky:s3_rescue", "saga_3_blue_sky:s3_kaifeng_last", "saga_3_blue_sky:s3_hunt_hwarin", "saga_3_blue_sky:s3_father_duel",
 ]
-const LEVELS: Array[int] = [1, 3, 6]
+## 인자 levels=1,3,6으로 바꿀 수 있다
+var levels: Array[int] = [1, 3, 6]
 ## 판 수는 인자 runs=N으로 바꿀 수 있다.
 var combat_runs: int = 30
 ## 인자 only=a,b로 시험할 전투를 고른다 (비우면 모두)
@@ -37,6 +40,8 @@ func _run() -> void:
 	for arg in args:
 		if arg.begins_with("runs="):
 			combat_runs = maxi(1, arg.trim_prefix("runs=").to_int())
+		elif arg.begins_with("levels="):
+			levels.assign(Array(arg.trim_prefix("levels=").split(",")).map(func(x: String) -> int: return x.to_int()))
 		elif arg.begins_with("only="):
 			only_combats = arg.trim_prefix("only=").split(",")
 	var all: bool = not (args.has("combat") or args.has("world") or args.has("economy"))
@@ -57,13 +62,14 @@ func _run() -> void:
 func _run_combat() -> void:
 	var gm: Node = root.get_node("GameManager")
 	print("[전투 자동 플레이] %d판씩. 초식 배치 대결을 양쪽 모두 자동 배치로 치른다" % combat_runs)
-	print("  자동 배치: 상대가 지난 합에 낸 유형을 읽어 맞받고(주인공 60%, 적 45%), 기세가 차면 절초를 낸다")
+	print("  자동 배치: 상대가 지난 합에 낸 유형을 읽어 맞받고(주인공 60%, 적 45%), 기세가 차면 절초를 낸다. 사건 선택도 자동")
+	print("  코드 전투는 판마다 형식·전장·목표가 바뀐다 (CombatManager.varied)")
 	print("전투 / 주인공 레벨: 승률 · 이긴 판의 남은 체력 평균 · 평균 합 수 · 판당 전사한 동료")
 	for combat_id in COMBATS:
 		if not only_combats.is_empty() and not only_combats.has(combat_id):
 			continue
 		var line: String = "%-16s" % combat_id.get_slice(":", combat_id.count(":"))
-		for level in LEVELS:
+		for level in levels:
 			var wins: int = 0
 			var hp_sum: float = 0.0
 			var rounds_sum: int = 0

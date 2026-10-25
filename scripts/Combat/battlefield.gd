@@ -42,7 +42,101 @@ const OBJECTIVES: Dictionary = {
 	"survive": "버텨라",
 	"escape": "탈출하라",
 	"protect": "지켜라",
+	"capture": "사로잡아라",
+	"catch": "쫓아가 붙잡아라",
+	"timed": "시간 안에 이겨라",
+	"endure": "버텨 내라",
+	"disarm": "절초를 무산시켜라",
+	"hold_line": "진지를 지켜라",
 }
+
+## 전투 형식: 이름과 한 줄 설명 (docs/전투_다양화_설계.md)
+const FORMATS: Dictionary = {
+	"duel": {"name": "연전", "rule": "양쪽 줄에서 한 사람씩 나와 1대1로 겨룬다"},
+	"siege": {"name": "포위", "rule": "적이 한꺼번에 덤빈다. 칸마다 겨룰 상대를 고르고, 나머지 공격은 막기·회피·휩쓸기로 받는다"},
+	"formation": {"name": "진형", "rule": "앞줄이 서 있으면 뒷줄은 술로만 치고 맞는다. 같은 적을 함께 치면 협공, 엄호가 피해를 나눠 받는다"},
+	"chase": {"name": "추격", "rule": "거리를 겨룬다. 쫓기는 쪽은 회피·속공으로 벌리고, 쫓는 쪽은 강공·술로 좁힌다"},
+	"stealth": {"name": "잠입", "rule": "첫 합은 기습(피해 2배). 강공은 소리가 나고, 막기에 막혀도 들킨다. 들키면 경보와 증원"},
+	"standoff": {"name": "대치", "rule": "칼을 뽑기 전 기세 싸움. 피해 없이 칸을 이긴 쪽 기세가 오르고, 먼저 기세 5에 닿으면 이긴다"},
+	"tournament": {"name": "비무대회", "rule": "대진표대로 연달아 겨룬다. 판 사이 회복은 조금, 다음 상대의 버릇은 관전으로 미리 본다"},
+}
+
+## 전장 규칙: 이름과 규칙 한 줄
+const STAGES: Dictionary = {
+	"bridge": {"name": "외나무다리", "rule": "회피 불가(헛디딤). 강공에 맞아 체력 20% 아래가 되면 떨어진다"},
+	"rooftop": {"name": "지붕 위", "rule": "회피·속공 속도 +1, 강공 속도 -1"},
+	"boat": {"name": "배 위", "rule": "흔들림: 둘째·넷째·여섯째 칸의 강공 위력 -30%"},
+	"burning": {"name": "불타는 장원", "rule": "합마다 모두 체력 -5%, 연기 때문에 운기 불가"},
+	"bamboo": {"name": "대숲", "rule": "술 피해 +30%, 상대 배치가 한 단계 덜 보임"},
+	"arena": {"name": "비무대", "rule": "술 금지. 체력 20% 아래로 밀리면 장외"},
+	"ice": {"name": "빙판", "rule": "강공 속도 -1. 회피에 흘려진 쪽은 미끄러져 다음 칸 속도 -1"},
+	"alley": {"name": "좁은 골목", "rule": "한꺼번에 덤빌 수 있는 적은 둘까지"},
+	"shrine": {"name": "밤의 사당", "rule": "첫 합에는 양쪽 모두 상대 배치가 안 보인다"},
+}
+
+## 우리 쪽 처지: 이름과 규칙
+const CONDITIONS: Dictionary = {
+	"poisoned": {"name": "중독", "rule": "합마다 내공 -10, 운기의 내공 회복 절반"},
+	"unarmed": {"name": "맨손", "rule": "검법 초식을 쓸 수 없다"},
+	"wounded": {"name": "부상", "rule": "칸 -1, 체력 70%로 시작"},
+	"exhausted": {"name": "지침", "rule": "내공 50%로 시작"},
+	"honor": {"name": "정정당당", "rule": "술 금지, 빈 칸 금지 (양쪽 모두)"},
+}
+
+## 상대 특성 (우두머리 패턴): 이름과 규칙
+const TRAITS: Dictionary = {
+	"enrage": {"name": "광폭", "rule": "체력 절반 아래면 칸 +1, 기세 +2, 막기를 버린다"},
+	"telegraph": {"name": "예고 절초", "rule": "세 합마다 마지막 칸에 큰 절초. 한 합 전에 예고한다"},
+	"poison_mist": {"name": "독무", "rule": "이 상대 앞에서 운기하면 독에 다친다"},
+	"iron_body": {"name": "금강불괴", "rule": "속공 피해 절반"},
+	"mirror": {"name": "모방", "rule": "내가 지난 합에 낸 유형을 그대로 따라 낸다"},
+	"two_phase": {"name": "단계 전환", "rule": "쓰러지면 한 번 다시 일어나 더 사나워진다"},
+}
+
+## 싸우는 중의 사건 종류
+const EVENT_TYPES: PackedStringArray = ["reinforce", "betrayal", "bond_intervene", "parley", "decision", "line"]
+## 사건이 일어나는 때
+const EVENT_WHEN: PackedStringArray = ["bout", "player_hp_below", "enemy_hp_below"]
+## 사건 선택지의 결과
+const CHOICE_ACTIONS: PackedStringArray = ["fight", "withdraw_foe", "all_in", "retreat", "hold"]
+
+## 선택 도전: 설명 (value를 넣는다)
+const CHALLENGES: Dictionary = {
+	"within_bouts": "%d합 안에 이기기",
+	"damage_below": "받는 피해 %d 미만으로 이기기",
+	"no_trick": "술 없이 이기기",
+	"no_focus": "운기 없이 이기기",
+	"no_gap": "빈틈 없이 이기기",
+}
+
+## 전장 모양 → 코드 전투가 고를 수 있는 전장 규칙
+const KIND_STAGES: Dictionary = {
+	"plain": [""], "forest": ["bamboo", ""], "river": ["boat", "bridge"], "mountain": ["bridge", ""],
+	"town": ["alley", "rooftop"], "snow": ["ice"], "courtyard": ["arena"],
+}
+
+
+## 전장 모양에 맞는 전장 규칙 하나 (무작위, 없을 수도 있음)
+static func random_stage(kind: String) -> String:
+	var options: Array = KIND_STAGES.get(kind, [""])
+	return str(options[randi() % options.size()])
+
+
+static func challenge_text(challenge: Dictionary) -> String:
+	var text: String = str(CHALLENGES.get(str(challenge.get("type", "")), ""))
+	return text % int(challenge.get("value", 0)) if text.contains("%d") else text
+
+
+## 코드 전투의 선택 도전 하나 (무작위)
+static func random_challenge(bouts_hint: int) -> Dictionary:
+	match randi() % 4:
+		0:
+			return {"type": "within_bouts", "value": maxi(2, bouts_hint)}
+		1:
+			return {"type": "no_gap"}
+		2:
+			return {"type": "no_focus"}
+	return {"type": "no_trick"}
 
 
 static func kind_for_region(region_id: String) -> String:
@@ -159,10 +253,29 @@ static func describe(setup: CombatSetup) -> String:
 		"survive":
 			goal = "%d합 동안 버텨라" % setup.objective_rounds
 		"escape":
-			goal = "공격을 %d번 흘려 빠져나가라 (주인공)" % DuelEngine.ESCAPE_EVADES
+			goal = "멀리 달아나라" if setup.format == "chase" else "공격을 %d번 흘려 빠져나가라 (주인공)" % DuelEngine.ESCAPE_EVADES
 		"protect":
 			goal = "%s이(가) 쓰러지지 않게 적을 물리쳐라" % setup.objective_target_name
+		"capture":
+			goal = "%s을(를) 몰아붙인 뒤(체력 %d%% 이하) 막기 반격·기절로 사로잡아라 (죽이면 실패)" % [setup.objective_target_name, roundi(DuelEngine.CAPTURE_RATIO * 100)]
+		"catch":
+			goal = "%s을(를) 쫓아가 붙잡아라" % (setup.objective_target_name if not setup.objective_target_name.is_empty() else "상대")
+		"timed":
+			goal = "%d합 안에 적을 모두 쓰러뜨려라" % setup.objective_rounds
+		"endure":
+			goal = "%d합 동안 받는 피해를 %d 미만으로 버텨 내라" % [setup.objective_rounds, setup.objective_count]
+		"disarm":
+			goal = "상대의 절초를 회피·상성으로 %d번 무산시켜라" % setup.objective_count
+		"hold_line":
+			goal = "앞줄을 지키며 %d합을 버텨라" % setup.objective_rounds
 	var parts: PackedStringArray = ["목표: " + goal]
+	if setup.format != "duel" and FORMATS.has(setup.format):
+		parts.insert(0, "%s — %s" % [FORMATS[setup.format]["name"], FORMATS[setup.format]["rule"]])
+	if STAGES.has(setup.stage):
+		parts.append("%s — %s" % [STAGES[setup.stage]["name"], STAGES[setup.stage]["rule"]])
+	for condition in setup.conditions:
+		if CONDITIONS.has(condition):
+			parts.append("%s — %s" % [CONDITIONS[condition]["name"], CONDITIONS[condition]["rule"]])
 	if setup.battlefield in KINDS:
 		parts.append(str(KINDS[setup.battlefield]))
 	var info: Dictionary = WEATHERS.get(setup.weather, WEATHERS["clear"])
@@ -170,4 +283,6 @@ static func describe(setup: CombatSetup) -> String:
 		parts.append("%s — %s" % [info["name"], info["effect"]])
 	if not setup.reinforcements.is_empty():
 		parts.append("적 증원 %d명이 뒤를 받침" % setup.reinforcements.size())
-	return " · ".join(parts)
+	if not setup.challenge.is_empty():
+		parts.append("도전: " + challenge_text(setup.challenge))
+	return "\n".join(parts)

@@ -31,7 +31,8 @@ var cost: int = 0
 var momentum_cost: int = 0
 var element: MartialArtData.FiveElement = MartialArtData.FiveElement.NONE
 ## 효과: stun(맞으면 상대의 다음 칸이 막힘), pierce(막기를 무시), ambush(상대 체력이 가득하면 1.5배),
-## momentum(맞히면 기세 +1 더), heal(기 유형: power만큼 회복), combo(합격: 인연 깊은 동료와 함께 펼침)
+## momentum(맞히면 기세 +1 더), heal(기 유형: power만큼 회복), combo(합격: 인연 깊은 동료와 함께 펼침),
+## sweep(휩쓸기: 그 칸의 적 모두), telegraph(예고 절초: 기세 없이 나온다)
 var effects: Array[String] = []
 ## 바뀌기 전 무공 id (기본 동작은 "")
 var art_id: String = ""
@@ -79,6 +80,12 @@ static func make(card_id: String, card_name: String, card_type: Type, card_power
 	card.cost = card_cost
 	card.effects = card_effects
 	return card
+
+
+## 휩쓸기: 여럿과 싸울 때(포위·진형)만 쓰는 기본 동작. 그 칸의 적 모두를 친다 (고른 상대는 온전히, 나머지는 일부)
+static func sweep_card() -> DuelCard:
+	var effects: Array[String] = ["sweep"]
+	return make("basic_sweep", "휩쓸기", Type.STRIKE, 10, 10, effects)
 
 
 ## 누구나 가진 기본 동작

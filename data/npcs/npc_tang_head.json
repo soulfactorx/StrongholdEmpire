@@ -4,6 +4,7 @@
   "title": "사천당가 가주",
   "sect_id": "tang",
   "role": "LEADER",
+  "combat_style": "poison",
   "description": "독과 암기로 이름난 사천당가의 가주. 이익이 되는 쪽이면 누구와도 손을 잡는다.",
   "level": 7,
   "stats": {

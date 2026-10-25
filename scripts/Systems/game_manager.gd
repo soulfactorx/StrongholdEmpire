@@ -1819,10 +1819,12 @@ func start_sparring() -> Dictionary:
 
 
 ## 전투 결과를 반영하고 결과(message, outcome 포함)를 돌려준다.
-func finish_combat(outcome: CombatManager.Outcome, fallen_allies: int = 0, fallen_ids: Array = []) -> Dictionary:
+## summary: DuelEngine.summary() — 평가·도전·사건 선택 효과·받아 낸 상대 무공·비무대회 성적
+func finish_combat(outcome: CombatManager.Outcome, fallen_allies: int = 0, fallen_ids: Array = [], summary: Dictionary = {}) -> Dictionary:
 	if pending_combat == null:
 		return {"success": false, "message": "진행 중인 전투가 없습니다."}
 	_record_observed_arts(pending_combat)
+	var extra: PackedStringArray = _apply_combat_summary(summary)
 	# 침공 방어전: 막아 내면 침략 세력이 제자를 잃는다.
 	if not pending_combat.invader_id.is_empty():
 		var invader: SectData = get_world_sect(pending_combat.invader_id)
@@ -1843,6 +1845,8 @@ func finish_combat(outcome: CombatManager.Outcome, fallen_allies: int = 0, falle
 		fallen_ids,
 		get_wallet()
 	)
+	if not extra.is_empty():
+		result["message"] = "%s\n%s" % [result.get("message", ""), " · ".join(extra)]
 	add_chronicle("전투", str(result.get("message", "")), last_combat_history.slice(maxi(0, last_combat_history.size() - 6)))
 	pending_combat = null
 	EventBus.combat_finished.emit(result)
@@ -1856,6 +1860,33 @@ func finish_combat(outcome: CombatManager.Outcome, fallen_allies: int = 0, falle
 	else:
 		AudioManager.play_failure()
 	return result
+
+
+## 대결 요약을 반영하고 결과 문장 조각을 돌려준다: 평가, 도전 보상, 받아 낸 절초(연구점), 사건 선택 효과, 비무대회 성적 플래그
+func _apply_combat_summary(summary: Dictionary) -> PackedStringArray:
+	var parts: PackedStringArray = []
+	if summary.is_empty():
+		return parts
+	parts.append("평가: %s" % summary.get("rating", ""))
+	var challenge: String = str(summary.get("challenge", ""))
+	if not challenge.is_empty():
+		if summary.get("challenge_met", false):
+			player_sect.reputation += _Balance.DUEL_CHALLENGE_REPUTATION
+			player_sect.research_points += _Balance.DUEL_CHALLENGE_RESEARCH
+			parts.append("도전 달성 「%s」 명성 +%d, 연구점 +%d" % [challenge, _Balance.DUEL_CHALLENGE_REPUTATION, _Balance.DUEL_CHALLENGE_RESEARCH])
+		else:
+			parts.append("도전 실패 「%s」" % challenge)
+	var studied: Array = summary.get("studied_arts", [])
+	if not studied.is_empty():
+		player_sect.research_points += _Balance.STUDY_RESEARCH * studied.size()
+		parts.append("상대 절초를 받아 내며 깨달음 (연구점 +%d)" % (_Balance.STUDY_RESEARCH * studied.size()))
+	var effects: Array = summary.get("effects", [])
+	if not effects.is_empty():
+		EventManager.apply_effects(effects, player_character, player_sect, player_relationships, story_flags)
+	var flag: String = str(summary.get("placement_flag", ""))
+	if not flag.is_empty():
+		EventManager.set_flag(story_flags, flag)
+	return parts
 
 
 ## 전투에서 상대가 지닌 무공을 기록한다.

@@ -17,6 +17,9 @@
       "position": [
         12,
         5
+      ],
+      "traits": [
+        "poison_mist"
       ]
     },
     {
@@ -25,7 +28,8 @@
         13,
         3
       ],
-      "name": "혈영대원 갑"
+      "name": "혈영대원 갑",
+      "mook": true
     },
     {
       "npc": "npc_cheonma_cultist",
@@ -33,7 +37,8 @@
         13,
         7
       ],
-      "name": "혈영대원 을"
+      "name": "혈영대원 을",
+      "mook": true
     }
   ],
   "allies": [
@@ -56,5 +61,6 @@
     "injury_ratio": 0.3
   },
   "victory_flag": "s1_mu_guarded",
-  "defeat_flag": "s1_mu_guard_failed"
+  "defeat_flag": "s1_mu_guard_failed",
+  "format": "formation"
 }

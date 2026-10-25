@@ -24,6 +24,16 @@ var cards: Array[DuelCard] = []
 ## 인연 배율: 지금 상대에게 주는 피해(원한·연모 등), 받는 피해를 나누는 가호(함께 싸우는 깊은 인연)
 var bond_attack: float = 1.0
 var bond_guard: float = 1.0
+## 전투 다양화: 특성(광폭·예고 절초 등, Battlefield.TRAITS), 진형 앞줄 여부, 동료 지시(DuelAI.ORDERS)
+var traits: Array = []
+var front: bool = true
+var order: String = "attack"
+## 칸 수 보정(부상 -1, 광폭 +1)과 상한(졸개 2, 0이면 없음)
+var slot_bonus: int = 0
+var slot_cap: int = 0
+## 광폭이 시작됐는지, 단계 전환으로 다시 일어났는지
+var enraged: bool = false
+var second_phase: bool = false
 
 
 func _init(char: CharacterData, player: bool = false, ally: bool = false) -> void:
@@ -61,7 +71,14 @@ func get_status_text() -> String:
 ## 한 합에 놓을 수 있는 칸 수: 경지에 따라 3~6
 func slot_count() -> int:
 	var level: int = character.level
-	return 3 + (1 if level >= 5 else 0) + (1 if level >= 10 else 0) + (1 if level >= 15 else 0)
+	var count: int = 3 + (1 if level >= 5 else 0) + (1 if level >= 10 else 0) + (1 if level >= 15 else 0) + slot_bonus
+	if slot_cap > 0:
+		count = mini(count, slot_cap)
+	return clampi(count, 1, 7)
+
+
+func has_trait(trait_name: String) -> bool:
+	return trait_name in traits
 
 
 func take_damage(amount: int) -> void:

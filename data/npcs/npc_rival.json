@@ -5,6 +5,7 @@
   "sect_id": "namgung",
   "named": true,
   "role": "YOUNG_DISCIPLE",
+  "combat_style": "sword",
   "description": "남궁세가의 젊은 후계자. 주인공을 라이벌로 여기며 함께 성장한다.",
   "level": 2,
   "stats": {
