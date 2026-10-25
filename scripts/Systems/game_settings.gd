@@ -114,6 +114,8 @@ static func set_and_save(key: String, value: Variant, tree: SceneTree = null) ->
 
 
 ## 이름으로 버스 번호를 찾는다. 없으면 새로 만든다.
+## 버스는 default_bus_layout.tres에 미리 정해 둔다. 웹(샘플 재생)은 시작할 때의 버스 구성만 브라우저 쪽에 만들기 때문에
+## 실행 중에 add_bus로 만든 버스로 보낸 소리는 들리지 않는다. 아래는 레이아웃 파일이 없을 때를 위한 대비다.
 static func bus_index(bus_name: String) -> int:
 	var index: int = AudioServer.get_bus_index(bus_name)
 	if index < 0:
