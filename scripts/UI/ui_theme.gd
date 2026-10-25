@@ -252,6 +252,9 @@ static func _style_recursive(node: Node) -> void:
 	elif node is ItemList:
 		# 목록은 끌어서 스크롤한다 (휴대폰에서 스크롤바를 잡지 않아도 되게)
 		DragScroll.attach(node as ItemList)
+	elif node is ScrollContainer:
+		# 버튼·판 위에서 끌어도 스크롤되게 한다 (휴대폰)
+		TouchScroll.attach(node as ScrollContainer)
 	elif node is PanelContainer:
 		(node as PanelContainer).add_theme_stylebox_override("panel", create_panel_style())
 	elif node is Label:

@@ -919,6 +919,30 @@ func _test_role_guide() -> void:
 	_completed["_test_role_guide"] = true
 
 
+## 창으로 실제 누름 → 끌기(4번에 나눠) → 떼기를 보낸다. delta가 0이면 그 자리에서 눌렀다 뗀다.
+func _drag(to_window: Transform2D, origin: Vector2, delta: Vector2) -> void:
+	var press: InputEventMouseButton = _mouse(true)
+	press.position = to_window * origin
+	press.global_position = press.position
+	root.push_input(press)
+	await process_frame
+	for step in 4:
+		if delta == Vector2.ZERO:
+			break
+		var move := InputEventMouseMotion.new()
+		move.button_mask = MOUSE_BUTTON_MASK_LEFT
+		move.position = to_window * (origin + delta * (step + 1) / 4.0)
+		move.global_position = move.position
+		move.relative = to_window.basis_xform(delta / 4.0)
+		root.push_input(move)
+	var release: InputEventMouseButton = _mouse(false)
+	release.position = to_window * (origin + delta)
+	release.global_position = release.position
+	root.push_input(release)
+	await process_frame
+	await process_frame
+
+
 func _test_list_drag_scroll() -> void:
 	SceneRouter.goto(tree, SceneRouter.NEW_GAME)
 	await process_frame
@@ -977,6 +1001,41 @@ func _test_list_drag_scroll() -> void:
 	root.push_input(real_release)
 	await process_frame
 	_check(bar.value > 0 and list.get_selected_items()[0] == now, "목록 끌어 스크롤: 실제 입력으로 끌기 (%.0f)" % bar.value)
+	# 스크롤 칸: 버튼·판 위에서 끌어도 화면이 움직이고, 끄는 동안 누른 버튼은 눌리지 않는다 (문파전 화면)
+	root.get_node("GameManager").start_new_game("끌기", "leader", ScenarioManager.DEFAULT_ID, {"event_rate": 0.0})
+	SceneRouter.goto(tree, SceneRouter.SECT_WAR)
+	await process_frame
+	await process_frame
+	var war: Node = current_scene
+	var node: Node = war.target_box
+	while not node is ScrollContainer:
+		node = node.get_parent()
+	var scroll: ScrollContainer = node
+	_check(scroll.has_node("TouchScroll"), "스크롤 칸에 끌기 도우미")
+	# 헤드리스 창은 커서 내용이 다 들어가므로 칸을 줄여 스크롤이 생기게 한다
+	scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	scroll.custom_minimum_size.y = 300
+	await process_frame
+	await process_frame
+	scroll.scroll_vertical = 0
+	var button: Button = war.round_rows[0]["buttons"][0]
+	var start: Vector2 = button.get_global_rect().get_center()
+	if not scroll.get_global_rect().has_point(start):
+		start = scroll.get_global_rect().get_center()
+	await _drag(to_window, start, Vector2(0, -120))
+	_check(scroll.scroll_vertical > 0 and war.get_commands().is_empty(), "스크롤 칸 끌기: 버튼 위에서 끌면 스크롤되고 버튼은 안 눌림 (%d)" % scroll.scroll_vertical)
+	# 칸 안에 보이는 고르기 버튼(상대·진형·명령) 하나를 그대로 누른다
+	var candidates: Array = war.target_buttons + war.formation_buttons
+	for row in war.round_rows:
+		candidates.append_array(row["buttons"])
+	var visible_button: Button = null
+	for candidate in candidates:
+		if visible_button == null and not candidate.text.begins_with("▶") and scroll.get_global_rect().grow(-4).encloses(candidate.get_global_rect()):
+			visible_button = candidate
+	_check(visible_button != null, "스크롤한 칸 안에 고르기 버튼이 보임")
+	if visible_button:
+		await _drag(to_window, visible_button.get_global_rect().get_center(), Vector2.ZERO)
+		_check(visible_button.text.begins_with("▶"), "스크롤 칸 끌기: 그대로 누르면 버튼이 눌림")
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
 	await process_frame
 	ScenarioManager.activate(ScenarioManager.DEFAULT_ID)

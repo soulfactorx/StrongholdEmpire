@@ -232,7 +232,7 @@ static func resolve_round(
 		"player_score": player_score,
 		"enemy_score": enemy_score,
 		"outcome": outcome,
-		"log": "라운드 %d: %s vs 적 %s | 전력 %d vs %d — %s" % [
+		"log": "%d합: %s vs 적 %s | 전력 %d vs %d — %s" % [
 			round_index + 1,
 			COMMAND_NAMES[player_command],
 			COMMAND_NAMES[enemy_command],

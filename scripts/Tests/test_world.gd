@@ -401,7 +401,7 @@ func _test_war_flow() -> void:
 	screen._add_command(C.CHARGE)
 	_check(not screen.execute_button.disabled and screen.execute_button.text.contains(target.sect_name), "명령 3개를 고르면 전투 개시 가능")
 	screen._on_execute_pressed()
-	_check(screen.log_label.text.contains("라운드 3") and not gm.can_wage_war(), "전투 결과 표시와 계절당 1회 제한")
+	_check(screen.log_label.text.contains("3합:") and not gm.can_wage_war(), "전투 결과 표시와 계절당 1회 제한")
 	_check(screen.result_overlay.visible and screen.result_headline.text in ["승리", "패배"] and screen.result_body.text.contains("3합"), "결과 판: 승패와 합마다 결과")
 	gm.start_new_game("정리", "young_disciple")
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
