@@ -905,13 +905,13 @@ func _test_duel_screen_formats() -> void:
 	await process_frame
 	await process_frame
 	var c: Node = current_scene
-	_check(c.squad_box.visible and not c.versus_row.visible and c.squad_box.has_node("Foe_2"), "여럿: 사람 목록과 상대 버튼")
+	_check(c.squad_box.visible and not c.versus_row.visible and c.squad_box.find_child("Foe_2", true, false) != null, "여럿: 사람 목록과 상대 버튼")
 	_check(c.goal_label.text.contains("진형") and c.goal_label.text.contains("도전"), "형식·도전 안내")
 	var small: Array = c.find_children("*", "Button", true, false).filter(func(b: Button) -> bool: return b.visible and b.get_combined_minimum_size().y < 48)
 	_check(small.is_empty(), "여럿 화면 버튼도 48px 이상")
 	c.select_slot(1)
 	var foe: CombatUnit = c.engine.active_foes()[1]
-	c.squad_box.get_node("Foe_1").pressed.emit()
+	c.squad_box.find_child("Foe_1", true, false).pressed.emit()
 	_check(c.engine.target_of(1) == foe and c.slot_row.get_node("Slot1").text.contains(foe.display_name), "상대를 눌러 고른 칸의 상대로")
 	var ally: CombatUnit = c.engine.active_friends().filter(func(u: CombatUnit) -> bool: return not u.is_player)[0]
 	var order_button: Button = c.squad_box.find_child("Order_*", true, false)

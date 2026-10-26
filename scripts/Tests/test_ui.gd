@@ -566,11 +566,27 @@ func _test_portrait_layout() -> void:
 	var c: Node = current_scene
 	_check(c.hand_grid.columns == 2, "세로 대결: 손패 두 줄")
 	_check(c.hand_grid.get_combined_minimum_size().x <= LayoutMode.PORTRAIT_SIZE.x and c.slot_row.get_combined_minimum_size().x <= LayoutMode.PORTRAIT_SIZE.x, "세로 대결: 칸·손패가 화면 폭 안")
+	_check(c.find_child("Columns", true, false) == null, "세로 대결: 한 줄로 쌓음")
 	c.leave_combat()
 	await process_frame
 	await process_frame
 	GameSettings.set_and_save("layout_mode", LayoutMode.Mode.AUTO, tree)
 	_check(not LayoutMode.is_portrait() and root.content_scale_size == LayoutMode.LANDSCAPE_SIZE, "자동으로 돌리면 가로")
+	# 가로 대결: 왼쪽은 상황, 오른쪽은 조작. 한 사람과 겨룰 때는 스크롤 없이 한 화면에 보인다
+	gm.start_combat(CombatManager.create_sparring(gm.player_character))
+	await process_frame
+	await process_frame
+	await process_frame
+	c = current_scene
+	var control_column: Node = c.find_child("ControlColumn", true, false)
+	_check(control_column != null and control_column.is_ancestor_of(c.hand_grid) and control_column.is_ancestor_of(c.fight_button)
+		and control_column.is_ancestor_of(c.log_scroll) and not control_column.is_ancestor_of(c.stage), "가로 대결: 배치·손패·버튼·기록은 오른쪽, 무대는 왼쪽")
+	var screen := Rect2(Vector2.ZERO, Vector2(LayoutMode.LANDSCAPE_SIZE))
+	_check(screen.encloses(c.fight_button.get_global_rect()) and screen.encloses(c.hand_grid.get_global_rect())
+		and screen.encloses(c.intent_label.get_global_rect()) and c.log_scroll.size.y >= 100, "가로 대결: 겨루기·손패·상대 배치·기록이 스크롤 없이 한 화면에")
+	c.leave_combat()
+	await process_frame
+	await process_frame
 	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
 	await process_frame
 	_completed["_test_portrait_layout"] = true
