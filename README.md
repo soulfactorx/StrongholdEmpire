@@ -80,6 +80,7 @@
 | Android | 릴리스의 `…-android.apk` (arm64). 개발 중 빌드는 Actions → **내보내기** → `android-apk` 아티팩트 |
 | Windows / Linux | 릴리스의 `…-windows.zip` / `…-linux.zip` |
 
+한 번 설치한 Android·Windows·Linux 앱은 새 버전이 나오면 시작할 때 알려 주고, [업데이트]를 누르면 앱 안에서 받아 바꿉니다 ([앱 안 업데이트](docs/릴리스_안내.md#3-앱-안-업데이트-androidwindowslinux)).
 자세한 설치와 기기 시험은 [기기 테스트 안내](docs/기기_테스트_안내.md)를 보세요.
 휴대폰이 먼저입니다. 모든 기능을 터치만으로 쓸 수 있고, 휴대폰에서는 세로 화면으로 열립니다 ([설정]에서 가로로 바꿀 수 있음).
 

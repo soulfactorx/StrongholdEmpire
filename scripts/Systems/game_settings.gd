@@ -28,6 +28,8 @@ static var action_scenes: bool = true
 static var combat_effects: bool = true
 ## 화면 배치: LayoutMode.Mode (자동·가로·세로)
 static var layout_mode: int = 0
+## 설치형 앱(Android·Windows·Linux)이 시작할 때 새 버전이 있는지 확인한다 (AppUpdater)
+static var check_updates: bool = true
 
 
 static func load_settings() -> void:
@@ -43,6 +45,7 @@ static func load_settings() -> void:
 		action_scenes = config.get_value("game", "action_scenes", true) == true
 		combat_effects = config.get_value("combat", "effects", true) == true
 		layout_mode = clampi(int(config.get_value("display", "layout_mode", 0)), 0, 2)
+		check_updates = config.get_value("game", "check_updates", true) == true
 	if not TEXT_SCALES.any(func(entry: Array) -> bool: return is_equal_approx(entry[1], text_scale)):
 		text_scale = 1.0
 	if not COMBAT_DELAYS.any(func(entry: Array) -> bool: return is_equal_approx(entry[1], combat_delay)):
@@ -61,6 +64,7 @@ static func save_settings() -> void:
 	config.set_value("game", "action_scenes", action_scenes)
 	config.set_value("combat", "effects", combat_effects)
 	config.set_value("display", "layout_mode", layout_mode)
+	config.set_value("game", "check_updates", check_updates)
 	config.save(settings_path)
 
 
@@ -109,6 +113,8 @@ static func set_and_save(key: String, value: Variant, tree: SceneTree = null) ->
 			combat_effects = value == true
 		"layout_mode":
 			layout_mode = clampi(int(value), 0, 2)
+		"check_updates":
+			check_updates = value == true
 	save_settings()
 	apply(tree)
 

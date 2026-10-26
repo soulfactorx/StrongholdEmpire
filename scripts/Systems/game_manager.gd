@@ -92,6 +92,9 @@ const ART_BLUEPRINT_LIMIT := 10
 var map_state: Dictionary = {}
 ## 지난 계절 세력마다 한 일: [{sect_id, sect_name, strategy, action, detail}] (SectAI.run_season의 reports)
 var last_faction_report: Array[Dictionary] = []
+## 설치형 앱의 새 버전 확인·업데이트 (AppUpdater). 장면이 바뀌어도 남도록 GameManager 아래에 둔다.
+var updater: AppUpdater
+
 ## 지난 계절 우리 문파 직책 인물이 한 일: [{npc_id, name, post, action, detail}] (NpcAgent.run_season)
 var last_npc_report: Array[Dictionary] = []
 
@@ -104,6 +107,9 @@ func _ready() -> void:
 	_initialize_new_game()
 	if SelfCheck.requested():
 		_run_self_check.call_deferred()
+	updater = AppUpdater.new()
+	updater.name = "AppUpdater"
+	add_child(updater)
 	# 웹(설치형 앱)은 서비스 워커가 옛 파일을 보관하므로, 새 버전이 배포되면 알리고 바로 바꿀 수 있게 한다.
 	if OS.has_feature("web"):
 		JavaScriptBridge.pwa_update_available.connect(_on_web_update_available)

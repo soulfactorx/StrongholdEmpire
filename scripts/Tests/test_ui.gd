@@ -1101,3 +1101,119 @@ func _test_list_drag_scroll() -> void:
 	await process_frame
 	ScenarioManager.activate(ScenarioManager.DEFAULT_ID)
 	_completed["_test_list_drag_scroll"] = true
+
+
+func _test_app_updater() -> void:
+	var gm: Node = root.get_node("GameManager")
+	var updater: AppUpdater = gm.updater
+	_check(updater != null and updater.get_parent() == gm, "업데이트: GameManager 아래에 있음")
+	_check(not AppUpdater.supported(), "업데이트: 내보내지 않은 실행(편집기·시험)에서는 쓰지 않음")
+	# 버전 비교
+	_check(AppUpdater.compare_versions("v0.9.2", "0.9.1") == 1 and AppUpdater.compare_versions("0.9.1", "v0.9.1") == 0, "버전 비교: 끝자리")
+	_check(AppUpdater.compare_versions("0.10.0", "0.9.9") == 1 and AppUpdater.compare_versions("1.0.0", "0.99.99") == 1, "버전 비교: 자리마다 숫자로")
+	_check(AppUpdater.compare_versions("1.0.0-beta", "1.0.0") == -1 and AppUpdater.compare_versions("1.0.0", "0.9.9-beta") == 1, "버전 비교: 꼬리표 없는 정식판이 새로움")
+	# 릴리스에서 플랫폼 파일 고르기
+	var release: Dictionary = {"tag_name": "v9.9.9", "html_url": "https://example.com/r", "assets": [
+		{"name": "StrongholdEmpire-9.9.9-android.apk", "browser_download_url": "https://example.com/a.apk", "size": 100},
+		{"name": "StrongholdEmpire-9.9.9-windows.zip", "browser_download_url": "https://example.com/w.zip", "size": 200},
+		{"name": "StrongholdEmpire-9.9.9-linux.zip", "browser_download_url": "https://example.com/l.zip", "size": 300},
+		{"name": "SHA256SUMS.txt", "browser_download_url": "https://example.com/s.txt", "size": 10},
+	]}
+	var info: Dictionary = AppUpdater.parse_release(release, "android")
+	_check(info["version"] == "9.9.9" and info["asset_url"].ends_with("a.apk") and info["sums_url"].ends_with("s.txt"), "릴리스: Android는 APK")
+	_check(AppUpdater.parse_release(release, "windows")["asset_name"].ends_with("windows.zip") and AppUpdater.parse_release(release, "linux")["size"] == 300, "릴리스: 윈도우·리눅스는 zip")
+	_check(AppUpdater.parse_release(release, "").is_empty() and AppUpdater.parse_release({"tag_name": "v1.0.0", "assets": []}, "linux").is_empty(), "릴리스: 맞는 파일이 없으면 빈 값")
+	var sums: Dictionary = AppUpdater.parse_sums("abc123  StrongholdEmpire-9.9.9-linux.zip\nDEF456 *a.apk\n")
+	_check(sums.get("StrongholdEmpire-9.9.9-linux.zip") == "abc123" and sums.get("a.apk") == "def456", "SHA256SUMS 읽기")
+
+	# 받은 파일 검증
+	var dir: String = ProjectSettings.globalize_path(TEST_SAVE_DIR.path_join("update_test"))
+	DirAccess.make_dir_recursive_absolute(dir)
+	for old_file in DirAccess.get_files_at(dir):
+		DirAccess.remove_absolute(dir.path_join(old_file))
+	var sample: String = dir.path_join("sample.bin")
+	var file := FileAccess.open(sample, FileAccess.WRITE)
+	file.store_string("강호제패")
+	file.close()
+	var sha: String = FileAccess.get_sha256(sample)
+	_check(AppUpdater.verify_download(sample, sha)["success"], "검증: 해시가 맞으면 통과")
+	_check(not AppUpdater.verify_download(sample, "0".repeat(64))["success"] and not AppUpdater.verify_download(sample, "")["success"]
+		and not AppUpdater.verify_download(dir.path_join("none.bin"), sha)["success"], "검증: 해시가 다르거나·없거나·파일이 없으면 거부")
+
+	# 데스크톱 교체: 실행 파일 이름이 달라도 zip의 실행 파일이 그 자리에 들어가고, 옛 파일은 .old로
+	var exe: String = dir.path_join("game.x86_64")
+	_write_text(exe, "old")
+	var zip_path: String = dir.path_join("new.zip")
+	var packer := ZIPPacker.new()
+	packer.open(zip_path)
+	packer.start_file("StrongholdEmpire.x86_64")
+	packer.write_file("new".to_utf8_buffer())
+	packer.close_file()
+	packer.start_file("readme.txt")
+	packer.write_file("note".to_utf8_buffer())
+	packer.close_file()
+	packer.close()
+	var applied: Dictionary = AppUpdater.apply_desktop(zip_path, exe)
+	_check(applied["success"] and FileAccess.get_file_as_string(exe) == "new" and FileAccess.get_file_as_string(exe + ".old") == "old"
+		and FileAccess.file_exists(dir.path_join("readme.txt")), "교체: 새 실행 파일을 넣고 옛 파일은 .old로")
+	var removed: int = AppUpdater.cleanup_old(dir)
+	_check(removed == 1 and not FileAccess.file_exists(exe + ".old"), "다음 실행: 옛 파일 지우기")
+	# 실행 파일이 없는 zip이면 되돌린다
+	packer = ZIPPacker.new()
+	packer.open(zip_path)
+	packer.start_file("readme.txt")
+	packer.write_file("other".to_utf8_buffer())
+	packer.close_file()
+	packer.close()
+	applied = AppUpdater.apply_desktop(zip_path, exe)
+	_check(not applied["success"] and FileAccess.get_file_as_string(exe) == "new" and FileAccess.get_file_as_string(dir.path_join("readme.txt")) == "note"
+		and not FileAccess.file_exists(dir.path_join("readme.txt.old")), "교체 실패: 원래 파일 그대로 되돌림")
+	_check(not AppUpdater.apply_desktop(dir.path_join("none.zip"), exe)["success"], "교체: 받은 파일을 못 열면 실패")
+	# 내보내지 않은 실행에서는 받은 뒤에도 설치(실행 파일 교체)를 하지 않는다
+	var engine_exe: String = OS.get_executable_path()
+	var engine_size: int = FileAccess.open(engine_exe, FileAccess.READ).get_length()
+	updater.found = {"version": "9.9.9"}
+	updater.downloaded_path = zip_path
+	updater._set_state(AppUpdater.State.READY)
+	updater.install()
+	_check(updater.state == AppUpdater.State.READY and FileAccess.open(engine_exe, FileAccess.READ).get_length() == engine_size
+		and not FileAccess.file_exists(engine_exe + AppUpdater.OLD_SUFFIX), "시험 실행: 설치 단계는 엔진을 건드리지 않음")
+	updater._set_state(AppUpdater.State.IDLE)
+
+	# 알림 창: 새 버전이면 [업데이트]·[나중에], 같으면 직접 확인할 때만 "최신"
+	updater._manual = false
+	updater.handle_release(release)
+	_check(updater.popup_visible() and updater.popup_text().contains("v9.9.9") and updater.state == AppUpdater.State.FOUND
+		and updater._yes.visible and updater._yes.text == "업데이트" and updater._no.text == "나중에", "새 버전 알림 창")
+	_check(updater._yes.custom_minimum_size.y >= 48 and updater._no.custom_minimum_size.y >= 48, "알림 창 버튼: 터치하기 좋은 크기")
+	updater._no.pressed.emit()
+	_check(not updater.popup_visible(), "[나중에]로 닫기")
+	updater._manual = true
+	release["tag_name"] = "v" + AppUpdater.current_version()
+	updater.handle_release(release)
+	_check(updater.popup_visible() and updater.popup_text().contains("최신 버전"), "직접 확인: 최신이면 알림")
+	updater._no.pressed.emit()
+	updater._manual = false
+	updater.found = {}
+	updater._set_state(AppUpdater.State.IDLE)
+	updater.handle_release(release)
+	_check(not updater.popup_visible(), "시작할 때 확인: 최신이면 아무것도 띄우지 않음")
+	# 설정: 확인 켜고 끄기, [지금 확인]은 이 빌드에선 쓸 수 없다고 알림
+	var options: Control = load("res://scripts/UI/options_popup.gd").new()
+	root.add_child(options)
+	options.open()
+	_check(options.check_updates_check.button_pressed == GameSettings.check_updates and options.update_button.text.contains(AppUpdater.current_version()), "설정: 새 버전 확인 항목과 지금 버전")
+	options.check_updates_check.button_pressed = false
+	_check(not GameSettings.check_updates, "설정: 새 버전 확인 끄기")
+	options.check_updates_check.button_pressed = true
+	options.update_button.pressed.emit()
+	_check(not options.visible and updater.popup_visible() and updater.popup_text().contains("쓸 수 없습니다"), "설정: [지금 확인] — 내보내지 않은 실행은 안내")
+	updater._no.pressed.emit()
+	options.queue_free()
+	_completed["_test_app_updater"] = true
+
+
+func _write_text(path: String, text: String) -> void:
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	file.store_string(text)
+	file.close()
