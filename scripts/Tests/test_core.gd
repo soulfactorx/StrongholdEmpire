@@ -19,7 +19,8 @@ func _test_scenes_load() -> void:
 	_check(icon_keys.size() >= 8, "안드로이드·웹·윈도우 아이콘 지정 (%d개)" % icon_keys.size())
 	# 앱 안 업데이트(AppUpdater): Android는 릴리스 확인·받기에 인터넷, 받은 APK 설치 화면에 설치 요청 권한이 필요하다
 	_check(presets.get_value("preset.0", "platform") == "Android" and presets.get_value("preset.0.options", "permissions/internet", false) == true
-		and presets.get_value("preset.0.options", "permissions/request_install_packages", false) == true, "Android 권한: 인터넷·앱 설치 요청 (업데이트)")
+		and "android.permission.REQUEST_INSTALL_PACKAGES" in presets.get_value("preset.0.options", "permissions/custom_permissions", PackedStringArray()),
+		"Android 권한: 인터넷·앱 설치 요청 (업데이트, 설치 요청은 Godot 목록에 없어 custom_permissions로)")
 	for path in MAIN_SCENES:
 		var scene: PackedScene = load(path)
 		_check(scene != null and scene.can_instantiate(), "씬 로드: %s" % path)
