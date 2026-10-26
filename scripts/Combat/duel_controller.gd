@@ -91,14 +91,22 @@ func _build_ui() -> void:
 	for side in ["left", "right", "top", "bottom"]:
 		margin.add_theme_constant_override("margin_" + side, 10)
 	add_child(margin)
-	var scroll := ScrollContainer.new()
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	margin.add_child(scroll)
-	_main_scroll = scroll
-	var root := VBoxContainer.new()
-	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	root.add_theme_constant_override("separation", 8)
-	scroll.add_child(root)
+	# 세로(휴대폰)는 한 줄로 쌓아 스크롤한다. 가로(PC)는 한눈에 보이게 두 칸으로 나눈다:
+	# 왼쪽은 상황(머리말·무대·상대), 오른쪽은 조작(배치·손패·버튼·기록). 칸마다 따로 스크롤된다.
+	var root: VBoxContainer
+	var side: VBoxContainer
+	if LayoutMode.is_portrait():
+		root = _column(margin)
+		side = root
+	else:
+		var columns := HBoxContainer.new()
+		columns.name = "Columns"
+		columns.add_theme_constant_override("separation", 10)
+		margin.add_child(columns)
+		root = _column(columns, 1.1)
+		side = _column(columns, 1.0)
+		side.name = "ControlColumn"
+	_main_scroll = root.get_parent()
 
 	# 결과는 맨 위 패널에 (끝나면 보인다)
 	var result_box := _panel(root)
@@ -144,17 +152,18 @@ func _build_ui() -> void:
 	foe_portrait = _portrait(right)
 	foe_label = _label(right, 15)
 	foe_bar = _bar(right)
+	# 게이지·예고는 사람 목록보다 먼저 (여럿일 때 목록이 길어도 보이게)
+	intent_label = _label(versus, 15)
 	squad_box = VBoxContainer.new()
 	squad_box.name = "SquadBox"
 	squad_box.add_theme_constant_override("separation", 6)
 	versus.add_child(squad_box)
-	intent_label = _label(versus, 15)
 	event_label = _label(versus, 16)
 	event_label.name = "EventLabel"
 	event_label.add_theme_color_override("font_color", Color("#8a5a12"))
 
 	# 내 칸과 손패
-	var board := _panel(root)
+	var board := _panel(side)
 	var slot_title := _label(board, 16)
 	slot_title.text = "내 배치 — 칸을 눌러 고르고, 아래 초식을 눌러 놓습니다 (고른 칸을 다시 누르면 비움)"
 	if not engine.is_single():
@@ -178,7 +187,7 @@ func _build_ui() -> void:
 	actions.columns = 2 if LayoutMode.is_portrait() else 3
 	actions.add_theme_constant_override("h_separation", 6)
 	actions.add_theme_constant_override("v_separation", 6)
-	root.add_child(actions)
+	side.add_child(actions)
 	fight_button = _button(actions, "겨루기 ▶", _on_fight_pressed)
 	fight_button.name = "FightButton"
 	auto_fill_button = _button(actions, "자동 배치", auto_fill)
@@ -193,12 +202,18 @@ func _build_ui() -> void:
 	back_button = _button(actions, "후퇴", _on_back_pressed)
 	back_button.name = "BackButton"
 
-	var log_panel := _panel(root)
+	var log_panel := _panel(side)
 	var log_title := _label(log_panel, 15)
 	log_title.text = "전투 기록"
 	log_scroll = ScrollContainer.new()
 	log_scroll.custom_minimum_size = Vector2(0, 260)
 	log_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	if side != root:
+		# 오른쪽 칸에서는 남는 높이를 기록이 채운다
+		log_scroll.custom_minimum_size = Vector2(0, 120)
+		log_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		log_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		log_panel.get_parent().size_flags_vertical = Control.SIZE_EXPAND_FILL
 	log_panel.add_child(log_scroll)
 	log_label = Label.new()
 	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -311,6 +326,22 @@ func _show_result(message: String) -> void:
 	pulse.tween_interval(0.35)
 	pulse.tween_property(result_title, "scale", Vector2(1.15, 1.15), 0.15)
 	pulse.tween_property(result_title, "scale", Vector2.ONE, 0.2)
+
+
+## 세로로 스크롤되는 칸 하나 (ScrollContainer 안의 VBox). ratio는 가로로 나눌 때의 폭 비율
+func _column(parent: Control, ratio: float = 1.0) -> VBoxContainer:
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_stretch_ratio = ratio
+	parent.add_child(scroll)
+	var box := VBoxContainer.new()
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# 내용이 짧으면 칸 높이만큼 늘어나 마지막 판(기록)이 남는 자리를 채운다
+	box.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_theme_constant_override("separation", 8)
+	scroll.add_child(box)
+	return box
 
 
 func _panel(parent: Control) -> VBoxContainer:
@@ -476,6 +507,8 @@ func _fill_squad() -> void:
 	var target: CombatUnit = engine.target_of(maxi(0, selected_slot))
 	var title := _label(squad_box, 15)
 	title.text = "상대 — 눌러서 %d칸의 상대로 정하기" % (maxi(0, selected_slot) + 1)
+	# 가로 화면에서는 두 사람씩 나란히 놓아 왼쪽 칸이 길어지지 않게 한다
+	var foe_grid := _squad_grid()
 	var foes: Array[CombatUnit] = engine.active_foes()
 	for i in foes.size():
 		var foe: CombatUnit = foes[i]
@@ -484,6 +517,7 @@ func _fill_squad() -> void:
 		button.toggle_mode = true
 		button.set_pressed_no_signal(foe == target)
 		button.custom_minimum_size = Vector2(0, 64)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		button.icon = _portrait_of(foe)
@@ -497,15 +531,17 @@ func _fill_squad() -> void:
 		button.disabled = not engine.is_standing(foe) or engine.over
 		button.pressed.connect(choose_target.bind(foe))
 		_UiTheme.style_button(button)
-		squad_box.add_child(button)
+		foe_grid.add_child(button)
 	var ours := _label(squad_box, 15)
 	ours.text = "우리 쪽"
+	var friend_grid := _squad_grid()
 	var friends: Array[CombatUnit] = engine.active_friends()
 	for i in friends.size():
 		var unit: CombatUnit = friends[i]
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 6)
-		squad_box.add_child(row)
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		friend_grid.add_child(row)
 		_portrait(row, Vector2(44, 56)).texture = _portrait_of(unit)
 		var label := _label(row, 14)
 		label.text = _unit_text(unit) + ("" if unit.front or engine.format != "formation" else " (뒷줄)")
@@ -518,6 +554,15 @@ func _fill_squad() -> void:
 			order.pressed.connect(cycle_order.bind(unit))
 			_UiTheme.style_button(order)
 			row.add_child(order)
+
+
+func _squad_grid() -> GridContainer:
+	var grid := GridContainer.new()
+	grid.columns = 1 if LayoutMode.is_portrait() else 2
+	grid.add_theme_constant_override("h_separation", 6)
+	grid.add_theme_constant_override("v_separation", 6)
+	squad_box.add_child(grid)
+	return grid
 
 
 ## 초상화: 주인공은 주인공 초상화, 인물은 그 인물, 그림이 없는 제자 등은 신분 초상화

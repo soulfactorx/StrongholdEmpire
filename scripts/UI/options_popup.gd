@@ -16,6 +16,8 @@ var faction_report_check: CheckButton
 var action_scenes_check: CheckButton
 var combat_effects_check: CheckButton
 var layout_option: OptionButton
+var check_updates_check: CheckButton
+var update_button: Button
 
 
 func _ready() -> void:
@@ -139,7 +141,25 @@ func _ready() -> void:
 	combat_effects_check.custom_minimum_size = Vector2(0, 48)
 	combat_effects_check.toggled.connect(func(on: bool) -> void: GameSettings.set_and_save("combat_effects", on, get_tree()))
 	box.add_child(combat_effects_check)
-	for check in [fullscreen_check, action_preview_check, faction_report_check, action_scenes_check, combat_effects_check]:
+	# 설치형 앱의 새 버전 확인 (웹은 서비스 워커가 따로 알린다)
+	check_updates_check = CheckButton.new()
+	check_updates_check.name = "CheckUpdatesCheck"
+	check_updates_check.text = "시작할 때 새 버전 확인 (Android·Windows·Linux 앱)"
+	check_updates_check.custom_minimum_size = Vector2(0, 48)
+	check_updates_check.toggled.connect(func(on: bool) -> void: GameSettings.set_and_save("check_updates", on, get_tree()))
+	check_updates_check.visible = not OS.has_feature("web")
+	box.add_child(check_updates_check)
+	update_button = Button.new()
+	update_button.name = "UpdateButton"
+	update_button.text = "지금 새 버전 확인 (지금 v%s)" % AppUpdater.current_version()
+	update_button.custom_minimum_size = Vector2(0, 48)
+	update_button.pressed.connect(func() -> void:
+		visible = false
+		get_node("/root/GameManager").updater.check(true)
+	)
+	update_button.visible = not OS.has_feature("web")
+	box.add_child(update_button)
+	for check in [fullscreen_check, action_preview_check, faction_report_check, action_scenes_check, combat_effects_check, check_updates_check]:
 		check.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var note := Label.new()
 	note.text = "글자 크기는 다음에 여는 화면부터 적용됩니다."
@@ -163,6 +183,7 @@ func open() -> void:
 	faction_report_check.set_pressed_no_signal(GameSettings.faction_report)
 	action_scenes_check.set_pressed_no_signal(GameSettings.action_scenes)
 	combat_effects_check.set_pressed_no_signal(GameSettings.combat_effects)
+	check_updates_check.set_pressed_no_signal(GameSettings.check_updates)
 	layout_option.select(GameSettings.layout_mode)
 	for i in GameSettings.TEXT_SCALES.size():
 		if is_equal_approx(GameSettings.TEXT_SCALES[i][1], GameSettings.text_scale):
