@@ -100,6 +100,11 @@ func _on_help_pressed() -> void:
 	SceneRouter.goto(get_tree(), SceneRouter.HELP)
 
 
+func _on_credits_pressed() -> void:
+	AudioManager.play_click()
+	SceneRouter.goto(get_tree(), SceneRouter.CREDITS)
+
+
 func _on_quit_pressed() -> void:
 	AudioManager.play_click()
 	get_tree().quit()

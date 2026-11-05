@@ -18,6 +18,7 @@ const SCREEN_BACKGROUNDS: Dictionary = {
 	"ending_screen": "ending",
 	"martial_art_screen": "study",
 	"help_screen": "scroll",
+	"credits_screen": "scroll",
 	"new_game_screen": "scroll",
 	"combat_scene": "combat",
 }
@@ -25,6 +26,7 @@ const SCREEN_BACKGROUNDS: Dictionary = {
 ## 글이 배경 위에 바로 놓이는 화면은 한지 색 막을 덮어 그림을 옅게 한다. (막의 불투명도)
 const SCREEN_VEILS: Dictionary = {
 	"help_screen": 0.8,
+	"credits_screen": 0.8,
 	"martial_art_screen": 0.7,
 }
 

@@ -16,6 +16,7 @@ const SCREEN_MUSIC: Dictionary = {
 	"main": "main",
 	"new_game_screen": "main",
 	"help_screen": "main",
+	"credits_screen": "main",
 	"management_screen": "hub",
 	"world_screen": "hub",
 	"martial_art_screen": "hub",

@@ -144,4 +144,14 @@ docs/         기획·데이터 형식·구현 계획
 ## 출처
 
 글꼴은 나눔명조·나눔손글씨 붓(SIL OFL 1.1), 배경음악과 효과음·앱 아이콘은 저장소 안의 생성기로 만든 것입니다.
-자세한 출처는 [assets/CREDITS.md](assets/CREDITS.md)에 있습니다.
+자세한 출처는 [assets/CREDITS.md](assets/CREDITS.md)에 있습니다. 게임 안에서는 첫 화면의 [만든 이들]에서
+게임·글꼴·Godot 엔진과 그 구성 요소의 저작권과 라이선스를 볼 수 있습니다.
+
+## 라이선스
+
+- **코드**(`scripts/`·`scenes/`·`tools/`·설정 파일): [MIT 라이선스](LICENSE)
+- **자산**(그림·음악·효과음·아이콘, `data/`·`resources/`의 이야기와 데이터, `docs/` 기획 문서, 게임 제목과 로고):
+  **All Rights Reserved** — [LICENSE-ASSETS.md](LICENSE-ASSETS.md)
+- 글꼴(SIL OFL 1.1)과 Godot 엔진(MIT 외)은 각자의 라이선스를 따릅니다.
+
+© 2026 이준혁 (soulfactorx)

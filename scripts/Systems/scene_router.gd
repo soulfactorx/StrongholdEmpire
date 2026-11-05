@@ -13,6 +13,7 @@ const WORLD := "res://scenes/UI/world_screen.tscn"
 const ENDING := "res://scenes/UI/ending_screen.tscn"
 const HELP := "res://scenes/UI/help_screen.tscn"
 const MAP := "res://scenes/UI/map_screen.tscn"
+const CREDITS := "res://scenes/UI/credits_screen.tscn"
 
 static var _return_path: String = ""
 

@@ -35,6 +35,12 @@
   장마다 등장인물(`playables`)을 골라 플레이하고, 기연은 선택지 조건·장면 대사(`scene`)로 인물마다 달라진다.
   장의 기연·결말을 바꾸면 스모크 테스트 `_test_main_saga_paths`의 진행 경로도 함께 고친다.
 
+## 라이선스
+
+- 코드는 MIT(`LICENSE`), 자산(그림·소리·아이콘·`data/`·`resources/`·`docs/`·게임 제목)은 All Rights Reserved(`LICENSE-ASSETS.md`).
+- 서드파티 자산(글꼴·그림·소리·코드)을 넣으면 라이선스를 확인해 `assets/CREDITS.md`와 「만든 이들」 화면(`credits_screen.gd`)에 적고,
+  라이선스 전문 파일이 필요하면 `export_presets.cfg`의 include_filter와 `SelfCheck.LICENSE_FILES`에 더한다.
+
 ## 플랫폼
 
 - 모든 플랫폼 대상이며 우선순위는 모바일 → 웹 → PC → Mac → 콘솔이다.
