@@ -16,6 +16,7 @@ const MAIN_SCENES: Array[String] = [
 	"res://scenes/UI/sect_war_screen.tscn",
 	"res://scenes/UI/ending_screen.tscn",
 	"res://scenes/UI/help_screen.tscn",
+	"res://scenes/UI/credits_screen.tscn",
 	"res://scenes/UI/new_game_screen.tscn",
 ]
 

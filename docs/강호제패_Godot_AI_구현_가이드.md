@@ -3,7 +3,7 @@
 **목적**: 이 문서를 AI(Claude, GPT, Grok 등)에게 제공하여 **Godot 4**로 게임을 단계적으로 제작할 수 있게 하는 종합 프롬프트 문서입니다.  
 **엔진**: Godot 4.3 이상 (GDScript 중심)  
 **버전**: 1.1 (2026년 6월 24일)  
-**라이선스**: 자유 사용 및 수정 가능
+**라이선스**: All Rights Reserved (저장소의 `LICENSE-ASSETS.md`. 코드는 `LICENSE`의 MIT)
 
 ---
 

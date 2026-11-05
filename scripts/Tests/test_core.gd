@@ -21,6 +21,12 @@ func _test_scenes_load() -> void:
 	_check(presets.get_value("preset.0", "platform") == "Android" and presets.get_value("preset.0.options", "permissions/internet", false) == true
 		and "android.permission.REQUEST_INSTALL_PACKAGES" in presets.get_value("preset.0.options", "permissions/custom_permissions", PackedStringArray()),
 		"Android 권한: 인터넷·앱 설치 요청 (업데이트, 설치 요청은 Godot 목록에 없어 custom_permissions로)")
+	# 라이선스 고지 파일이 모든 내보내기 프리셋에 들어간다
+	for section in presets.get_sections():
+		if presets.has_section_key(section, "include_filter"):
+			var filters: String = str(presets.get_value(section, "include_filter"))
+			for license_file in SelfCheck.LICENSE_FILES:
+				_check(license_file.trim_prefix("res://") in filters, "내보내기에 라이선스 파일 포함: %s %s" % [section, license_file.get_file()])
 	for path in MAIN_SCENES:
 		var scene: PackedScene = load(path)
 		_check(scene != null and scene.can_instantiate(), "씬 로드: %s" % path)
@@ -164,7 +170,7 @@ func _test_scene_navigation() -> void:
 	for path in [
 		SceneRouter.MAIN_MENU, SceneRouter.NEW_GAME, SceneRouter.HUB,
 		SceneRouter.MARTIAL_ART, SceneRouter.SECT_WAR, SceneRouter.ENDING,
-		SceneRouter.HELP, SceneRouter.WORLD, SceneRouter.COMBAT,
+		SceneRouter.HELP, SceneRouter.WORLD, SceneRouter.COMBAT, SceneRouter.CREDITS,
 	]:
 		SceneRouter.goto(tree, path)
 		await process_frame

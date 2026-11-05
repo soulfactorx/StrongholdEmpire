@@ -1,5 +1,13 @@
 # 그림·글꼴·소리 출처
 
+라이선스: 코드는 MIT(`LICENSE`), 이 폴더의 그림·소리·아이콘은 All Rights Reserved(`LICENSE-ASSETS.md`)다.
+아래에서 따로 적은 글꼴(OFL)과 shan-shui-inf(MIT)만 각자의 라이선스를 따른다.
+새 서드파티 자산을 넣으면 이 파일과 게임 안 「만든 이들」 화면(`scripts/UI/credits_screen.gd`)에 함께 적는다.
+
+## 엔진
+- **Godot Engine** — MIT, 그 안의 구성 요소는 각자의 라이선스. 내보낸 빌드에 고지가 들어가야 하므로
+  「만든 이들」 화면이 `Engine.get_license_text()`·`get_copyright_info()`·`get_license_info()`를 그대로 보인다.
+
 ## 글꼴 (`assets/fonts/`)
 - **나눔명조** (본문), **나눔손글씨 붓** (제목·장기말 글자) — NAVER, SIL Open Font License 1.1.
   Google Fonts 저장소에서 받았다. 라이선스 전문: `assets/fonts/OFL.txt`

@@ -1217,3 +1217,44 @@ func _write_text(path: String, text: String) -> void:
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	file.store_string(text)
 	file.close()
+
+
+## 만든 이들 화면: 게임 저작권·라이선스, 나눔 글꼴 OFL, Godot 엔진과 구성 요소의 고지를 탭으로 보인다.
+func _test_credits_screen() -> void:
+	SceneRouter.goto(tree, SceneRouter.MAIN_MENU)
+	await process_frame
+	await process_frame
+	var menu_button: Button = current_scene.find_child("CreditsButton", true, false)
+	_check(menu_button != null and menu_button.custom_minimum_size.y >= 48, "첫 화면에 [만든 이들] 버튼")
+	menu_button.pressed.emit()
+	await process_frame
+	await process_frame
+	var screen: Control = current_scene
+	_check(screen.scene_file_path == SceneRouter.CREDITS, "[만든 이들]로 화면 이동")
+	var body: Label = screen.body_label
+	_check(screen.current_tab == "game" and body.text.contains("MIT") and body.text.contains("All Rights Reserved")
+		and body.text.contains("Permission is hereby granted"), "첫 탭: 코드 MIT 전문과 자산 All Rights Reserved")
+	_check(not screen.license_bar.visible, "첫 탭에는 라이선스 이름 줄을 숨김")
+	screen._tab_buttons["fonts"].pressed.emit()
+	_check(body.text.contains("SIL OPEN FONT LICENSE") and body.text.contains("NAVER"), "글꼴 탭: 나눔 글꼴 OFL 전문")
+	screen._tab_buttons["engine"].pressed.emit()
+	_check(body.text.contains(Engine.get_license_text().strip_edges().get_slice("\n", 0)) and body.text.contains("FreeType")
+		and not body.text.contains("thirdparty/"), "엔진 탭: Godot 라이선스와 구성 요소 저작권 (파일 목록은 뺌)")
+	screen._tab_buttons["licenses"].pressed.emit()
+	var names: Array = screen.license_names()
+	_check(screen.license_bar.visible and screen._license_buttons.size() == names.size() and names.size() == Engine.get_license_info().size(),
+		"라이선스 전문 탭: 엔진이 쓰는 라이선스마다 버튼")
+	_check(body.text.begins_with("■ " + str(names[0])), "라이선스 전문 탭: 첫 라이선스부터 보임")
+	screen._license_buttons["Zlib"].pressed.emit()
+	_check(screen.current_license == "Zlib" and body.text.contains(str(Engine.get_license_info()["Zlib"]).strip_edges().get_slice("\n", 0)), "라이선스 이름을 누르면 그 전문")
+	var small: Array = []
+	for button in screen.find_children("*", "Button", true, false):
+		if button.visible and button.custom_minimum_size.y < 48:
+			small.append(button.text)
+	_check(small.is_empty(), "만든 이들 화면 버튼은 모두 48px 이상 %s" % str(small))
+	_check(screen.scroll.has_node("TouchScroll"), "만든 이들 화면 스크롤에 끌기 도우미")
+	screen._on_back_pressed()
+	await process_frame
+	await process_frame
+	_check(current_scene.scene_file_path == SceneRouter.MAIN_MENU, "만든 이들에서 첫 화면으로 돌아감")
+	_completed["_test_credits_screen"] = true

@@ -19,6 +19,13 @@ const MINIMUMS: Dictionary = {
 	"지도 지역": 18,
 }
 
+## 내보낸 빌드에 함께 들어가야 하는 라이선스 파일 (export_presets.cfg의 include_filter)
+const LICENSE_FILES: Array[String] = [
+	"res://LICENSE",
+	"res://LICENSE-ASSETS.md",
+	"res://assets/fonts/OFL.txt",
+]
+
 
 ## 명령줄에 --self-check가 있는지
 static func requested() -> bool:
@@ -53,6 +60,17 @@ static func run() -> Dictionary:
 	}
 	for key in assets:
 		var passed: bool = assets[key] != null
+		ok = ok and passed
+		lines.append("%s %s" % ["통과" if passed else "실패", key])
+	# 라이선스 고지: 「만든 이들」 화면이 읽는 파일과 엔진 고지가 빌드에 들어 있어야 한다.
+	var notices: Dictionary = {
+		"코드 라이선스 (LICENSE)": FileAccess.file_exists(LICENSE_FILES[0]),
+		"자산 라이선스 (LICENSE-ASSETS.md)": FileAccess.file_exists(LICENSE_FILES[1]),
+		"글꼴 라이선스 (OFL.txt)": FileAccess.file_exists(LICENSE_FILES[2]),
+		"Godot 엔진 고지": not Engine.get_license_text().is_empty() and not Engine.get_copyright_info().is_empty(),
+	}
+	for key in notices:
+		var passed: bool = notices[key]
 		ok = ok and passed
 		lines.append("%s %s" % ["통과" if passed else "실패", key])
 	return {"ok": ok, "lines": lines}
