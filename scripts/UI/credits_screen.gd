@@ -7,7 +7,7 @@ extends Control
 
 const _UiTheme = preload("res://scripts/UI/ui_theme.gd")
 
-const COPYRIGHT_HOLDER := "soulfactorx"
+const COPYRIGHT_HOLDER := "이준혁 (soulfactorx)"
 const COPYRIGHT_YEAR := "2026"
 ## 내보낸 빌드에도 들어가는 라이선스 파일 (export_presets.cfg의 include_filter)
 const CODE_LICENSE_PATH := "res://LICENSE"

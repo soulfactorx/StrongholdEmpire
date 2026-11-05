@@ -154,4 +154,4 @@ docs/         기획·데이터 형식·구현 계획
   **All Rights Reserved** — [LICENSE-ASSETS.md](LICENSE-ASSETS.md)
 - 글꼴(SIL OFL 1.1)과 Godot 엔진(MIT 외)은 각자의 라이선스를 따릅니다.
 
-© 2026 soulfactorx
+© 2026 이준혁 (soulfactorx)

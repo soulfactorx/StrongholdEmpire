@@ -1,6 +1,6 @@
 # 자산 라이선스
 
-Copyright (c) 2026 soulfactorx. All Rights Reserved.
+Copyright (c) 2026 이준혁 (soulfactorx). All Rights Reserved.
 
 이 저장소의 **코드**는 MIT 라이선스(`LICENSE`)를 따릅니다.
 하지만 아래 **자산**은 MIT 라이선스에 포함되지 않으며, 저작권자가 모든 권리를 가집니다.
@@ -43,7 +43,7 @@ Copyright (c) 2026 soulfactorx. All Rights Reserved.
 
 ## Asset License (English summary)
 
-Copyright (c) 2026 soulfactorx. All Rights Reserved.
+Copyright (c) 2026 이준혁 (soulfactorx). All Rights Reserved.
 
 The **source code** in this repository is licensed under the MIT License (see `LICENSE`).
 The **assets** listed above — artwork, audio, icons, game data and story content (`data/`, `resources/`),
