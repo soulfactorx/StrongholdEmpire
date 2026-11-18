@@ -473,6 +473,8 @@ func _test_role_dashboard() -> void:
 	_check(not hub.facility_panel.visible and hub.sect_name_label.text.contains("내 재산") and hub.gold_label.text.begins_with("내 은자"), "자객: 전각 칸 숨김, 개인 재산")
 	_check(hub.role_resource_label.text.contains("표적") and hub.role_action_box.get_child_count() == 2, "자객: 신분 안내와 고유 행동")
 	_check(hub.get_node("Margin/RootHBox/LeftPanelScroll/LeftPanel") != null and hub.get_node("Margin/RootHBox").get_combined_minimum_size().y <= LayoutMode.LANDSCAPE_SIZE.y - 48, "가로 경영 화면: 두 칸을 스크롤에 넣어 화면 높이 안에 (위쪽 잘림 없음)")
+	var hub_margin: MarginContainer = hub.get_node("Margin")
+	_check(OS.has_feature("mobile") or (hub_margin.get_theme_constant("margin_top") == 24 and hub_margin.get_theme_constant("margin_bottom") == 24 and hub_margin.get_theme_constant("margin_right") == 24), "PC·웹: 안전 영역 여백을 더하지 않음 (작업표시줄·창 위치로 여백이 틀어지지 않게)")
 	var key := InputEventKey.new()
 	key.keycode = KEY_F
 	key.pressed = true
