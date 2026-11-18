@@ -470,8 +470,9 @@ func _test_role_dashboard() -> void:
 	var hub: Node = current_scene
 	var grid: Node = hub.action_grid
 	_check(not grid.get_node("TrainButton").visible and not grid.get_node("SectWarButton").visible and grid.get_node("ElixirButton").visible, "자객: 문파 운영 버튼 숨김")
-	_check(not hub.get_node("Margin/RootHBox/LeftPanel/FacilityPanel").visible and hub.sect_name_label.text.contains("내 재산") and hub.gold_label.text.begins_with("내 은자"), "자객: 전각 칸 숨김, 개인 재산")
+	_check(not hub.facility_panel.visible and hub.sect_name_label.text.contains("내 재산") and hub.gold_label.text.begins_with("내 은자"), "자객: 전각 칸 숨김, 개인 재산")
 	_check(hub.role_resource_label.text.contains("표적") and hub.role_action_box.get_child_count() == 2, "자객: 신분 안내와 고유 행동")
+	_check(hub.get_node("Margin/RootHBox/LeftPanelScroll/LeftPanel") != null and hub.get_node("Margin/RootHBox").get_combined_minimum_size().y <= LayoutMode.LANDSCAPE_SIZE.y - 48, "가로 경영 화면: 두 칸을 스크롤에 넣어 화면 높이 안에 (위쪽 잘림 없음)")
 	var key := InputEventKey.new()
 	key.keycode = KEY_F
 	key.pressed = true
@@ -480,7 +481,7 @@ func _test_role_dashboard() -> void:
 	# 신분이 바뀌면 화면도 바뀐다
 	gm.apply_role_transition(CharacterData.Role.LEADER)
 	await process_frame
-	_check(grid.get_node("TrainButton").visible and grid.get_node("SectWarButton").visible and hub.get_node("Margin/RootHBox/LeftPanel/FacilityPanel").visible, "문주가 되면 모든 버튼")
+	_check(grid.get_node("TrainButton").visible and grid.get_node("SectWarButton").visible and hub.facility_panel.visible, "문주가 되면 모든 버튼")
 	hub._unhandled_key_input(key)
 	_check(hub.facility_popup.visible, "문주: 전각 단축키")
 	hub.facility_popup.visible = false

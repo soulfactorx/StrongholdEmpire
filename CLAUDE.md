@@ -68,6 +68,8 @@ godot --headless --path . -s res://scripts/Tests/smoke_test.gd
 내보내기 프리셋은 `export_presets.cfg`(Android·웹·윈도우·리눅스). 내보낸 빌드 자체 점검: `<실행 파일> --headless -- --self-check`.
 `.github/workflows/export.yml`이 푸시마다 네 플랫폼을 내보내고 APK·웹·윈도우 빌드를 아티팩트로 올린다. `main`이면 웹 빌드를 GitHub Pages에 배포한다. 기기 시험은 `docs/기기_테스트_안내.md`.
 `main`에 머지되면 같은 워크플로가 GitHub 릴리스를 자동으로 만들고 네 플랫폼 파일을 붙인다 (`v*` 태그 푸시도 같다, `docs/릴리스_안내.md`).
+**변경을 마치면 릴리스까지 끝낸다** (사용자 요청): 스모크 테스트 통과 → 작업 브랜치 푸시 → PR 생성 → `main`에 머지 →
+내보내기 워크플로가 GitHub 릴리스를 만들었는지 확인하고 릴리스 링크를 알린다. 워크플로가 실패하면 고쳐서 다시 낸다.
 게임 버전은 `project.godot`의 `config/version`이고, 그 버전이 이미 나갔으면 끝자리를 올려 낸다. 큰 변화는 `config/version`을 올려 머지한다.
 설치형 앱(Android·Windows·Linux)은 `AppUpdater`가 시작할 때 최신 릴리스를 확인해 앱 안에서 받아 바꾼다. 릴리스 파일 이름(`-android.apk`·`-windows.zip`·`-linux.zip`·`SHA256SUMS.txt`)을 바꾸면 `AppUpdater.ASSET_SUFFIX`도 함께 고친다.
 
