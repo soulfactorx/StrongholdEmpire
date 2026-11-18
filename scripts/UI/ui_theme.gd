@@ -92,7 +92,11 @@ static func apply_root_theme(theme: Theme) -> void:
 
 
 ## 휴대폰 노치·홈 바를 피하도록 화면의 바깥 여백(Margin)에 안전 영역을 더한다.
+## 휴대폰 앱(안드로이드·iOS)에서만 한다. PC는 안전 영역이 작업표시줄을 뺀 화면이고, 웹은 브라우저 창 위치까지 섞여
+## 창과 상관없는 여백이 생기고(아래가 비는데 스크롤), 창 크기를 바꾸면 내용이 한쪽으로 밀려 잘린다.
 static func apply_safe_area(root: Control) -> void:
+	if not OS.has_feature("mobile"):
+		return
 	var margin: MarginContainer = root.get_node_or_null("Margin") as MarginContainer
 	if margin == null or margin.has_meta("safe_area_applied"):
 		return
