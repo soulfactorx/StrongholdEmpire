@@ -117,6 +117,8 @@ func _ready() -> void:
 	_build_journal()
 	if LayoutMode.is_portrait():
 		_build_portrait_layout()
+	else:
+		_wrap_landscape_columns()
 	_refresh_all()
 	_attach_tips()
 	if not GameManager.pending_event.is_empty():
@@ -867,6 +869,27 @@ const STEP_HANDLERS: Dictionary = {
 }
 ## 쪽 이름과 탭 글자
 const PAGES: Array = [["todo", "할 일"], ["sect", "문파"], ["hero", "인물"], ["world", "강호"], ["menu", "메뉴"]]
+
+
+## 가로 화면: 칸 내용이 화면 높이(720)보다 길면 두 칸이 위아래로 함께 넘쳐 위쪽이 잘린다 (PC 웹 등).
+## 왼쪽·오른쪽 칸을 각각 스크롤 칸에 넣어 화면 안에 두고, 넘치는 칸만 휠이나 끌기로 움직인다.
+func _wrap_landscape_columns() -> void:
+	var root_box: HBoxContainer = $Margin/RootHBox
+	for column_name in ["LeftPanel", "RightPanel"]:
+		var column: Control = root_box.get_node(column_name)
+		var scroll := ScrollContainer.new()
+		scroll.name = column_name + "Scroll"
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		scroll.follow_focus = true
+		scroll.size_flags_horizontal = column.size_flags_horizontal
+		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		scroll.size_flags_stretch_ratio = column.size_flags_stretch_ratio
+		root_box.add_child(scroll)
+		root_box.move_child(scroll, column.get_index())
+		column.reparent(scroll)
+		column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		TouchScroll.attach(scroll)
 
 
 ## 세로 화면: 위에 날짜·자원 한 줄, 가운데 쪽(할 일·문파·인물·강호·메뉴), 아래에 [계절 넘기기]와 탭.
