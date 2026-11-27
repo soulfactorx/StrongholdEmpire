@@ -1242,6 +1242,8 @@ func _test_credits_screen() -> void:
 	var body: Label = screen.body_label
 	_check(screen.current_tab == "game" and body.text.contains("MIT") and body.text.contains("All Rights Reserved")
 		and body.text.contains("Permission is hereby granted"), "첫 탭: 코드 MIT 전문과 자산 All Rights Reserved")
+	_check(body.text.contains("HitCtrl") and body.text.contains("Dan Knoflicek") and body.text.contains("Viktor Kraus") and body.text.contains("CC-BY"),
+		"첫 탭: 배경음악 CC-BY 출처 (곡·만든 이·라이선스)")
 	_check(not screen.license_bar.visible, "첫 탭에는 라이선스 이름 줄을 숨김")
 	screen._tab_buttons["fonts"].pressed.emit()
 	_check(body.text.contains("SIL OPEN FONT LICENSE") and body.text.contains("NAVER"), "글꼴 탭: 나눔 글꼴 OFL 전문")

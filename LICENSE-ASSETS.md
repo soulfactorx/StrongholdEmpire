@@ -9,7 +9,7 @@ Copyright (c) 2026 이준혁 (soulfactorx). All Rights Reserved.
 ## 자산 (All Rights Reserved)
 
 - `assets/art/` — 그림 (배경·지역 배경·초상화·세력 문장·지형 타일·장기말·UI 텍스처)
-- `assets/audio/` — 배경음악·효과음
+- `assets/audio/` — 효과음 (아래 "다른 라이선스를 따르는 것"의 배경음악·녹음 원본 제외)
 - `assets/icon/` — 앱 아이콘
 - `data/` — 기연·스토리 아크·전투·인물·문파·지도·결말·시나리오·행동 장면·대화·무공 데이터 (이야기와 설정)
 - `resources/` — 인물·문파·무공 데이터 리소스
@@ -30,6 +30,8 @@ Copyright (c) 2026 이준혁 (soulfactorx). All Rights Reserved.
 |---|---|---|
 | 나눔명조·나눔손글씨 붓 (NAVER) | `assets/fonts/` | SIL Open Font License 1.1 (`assets/fonts/OFL.txt`) |
 | Godot 엔진과 그 구성 요소 | 내보낸 빌드 | MIT 외 (게임 안 「만든 이들」 화면) |
+| 배경음악 4곡 (HitCtrl, Dan Knoflicek, Viktor Kraus) | `assets/audio/music/` | CC-BY 3.0 / 4.0 (곡별 출처는 `assets/CREDITS.md`) |
+| 전투 효과음의 녹음 원본 (StarNinjas, artisticdude, rubberduck, Kenney) | `assets/audio/sfx/` | CC0 (가공한 결과물은 이 문서를 따름) |
 | shan-shui-inf (Lingdong Huang) | `tools/art/`의 예전 생성 도구에서만 씀 | MIT (`assets/art/LICENSE_shan-shui-inf.txt`) |
 
 ## 허락 없이 할 수 있는 것

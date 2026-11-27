@@ -31,7 +31,17 @@
   - `generate_portraits.py`: 초상화·문장
 
 ## 소리 (`assets/audio/`)
-- 배경음악 4곡·효과음 10종 모두 `tools/audio/generate_audio.py`로 합성했다. (이 저장소 소유)
+- **배경음악 4곡**은 OpenGameArt의 CC-BY 곡이다. 각 저작자의 라이선스를 따르며 출처 표기가 필요하다 (「만든 이들」 화면에도 적음).
+  `tools/audio/fetch_music.py`가 받아서 앞뒤 빈 소리를 자르고, 크기를 맞추고, 처음·끝을 서서히 키우고 줄였다 (그 밖의 변경은 없다).
+  | 파일 | 곡 | 만든 이 | 라이선스 | 출처 |
+  |---|---|---|---|---|
+  | `music/main.ogg` (첫 화면) | RPG - Misty Mountains | HitCtrl | CC-BY 3.0 | https://opengameart.org/content/rpg-misty-mountains |
+  | `music/hub.ogg` (경영 화면) | Views From Atop the Jade Kings Throne | HitCtrl | CC-BY 3.0 | https://opengameart.org/content/views-from-atop-the-jade-kings-throne |
+  | `music/combat.ogg` (전투) | Most Critical | Dan Knoflicek (Macro) | CC-BY 4.0 | https://opengameart.org/content/most-critical |
+  | `music/ending.ogg` (결말) | The Pilgrimage | Viktor Kraus | CC-BY 3.0 | https://opengameart.org/content/the-pilgrimage-0 |
+  - CC-BY 3.0: https://creativecommons.org/licenses/by/3.0/ · CC-BY 4.0: https://creativecommons.org/licenses/by/4.0/
+- 효과음 중 음악적인 소리(누름·성공·실패·기연·운기·돌파·승리·패배)는 `tools/audio/generate_audio.py`로 합성했다. (이 저장소 소유)
+  이 스크립트를 전부 다시 돌리면 배경음악·전투 효과음도 합성음으로 덮이므로, 그 뒤에 `fetch_music.py`·`build_cc0_sfx.py`를 다시 돌린다.
   다시 만들기: `python3 tools/audio/generate_audio.py` (numpy, libvorbis가 든 ffmpeg 필요)
 - **전투 효과음**(`hit`·`block`·`evade`·`art`·`fall`·`battle_start`와 `_2`·`_3` 벌)은 아래 CC0 녹음을 잘라 겹치고 크기를 맞춘 것이다.
   다시 만들기: `python3 tools/audio/build_cc0_sfx.py` (인터넷·ffmpeg 필요). `generate_audio.py`를 전부 다시 돌리면
