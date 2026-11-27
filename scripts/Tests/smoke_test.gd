@@ -120,6 +120,7 @@ const RUNTIME_SEQUENCE: Array = [
 	["ui", "_test_portrait_layout"],
 	["ui", "_test_app_updater"],
 	["ui", "_test_credits_screen"],
+	["ui", "_test_ink_fx"],
 	["ui", "_test_art_assets"],
 	["ui", "_test_audio"],
 	["core", "_test_self_check"],

@@ -13,6 +13,8 @@ var desc_scroll: ScrollContainer
 const DESC_MAX_HEIGHT_RATIO := 0.5
 ## 지금 보이는 것이 경영 행동 뒤의 대화 장면인지 (고르면 GameManager.resolve_action_scene)
 var _action_scene: bool = false
+## 기연 창의 판 (펼침 연출)
+var _panel: Control
 
 
 ## 내용 왼쪽에 초상화 자리를 만든다. (한 번만)
@@ -22,6 +24,7 @@ func _ensure_portrait() -> void:
 		return
 	var content: Control = title_label.get_parent()
 	var panel: Node = content.get_parent()
+	_panel = panel as Control
 	var narrow: bool = LayoutMode.is_portrait()
 	var row: BoxContainer = VBoxContainer.new() if narrow else HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8 if narrow else 16)
@@ -84,7 +87,12 @@ func show_event(event_data: Dictionary) -> void:
 		button.custom_minimum_size = Vector2(0, 48)
 		button.pressed.connect(_on_choice_pressed.bind(i))
 		choice_box.add_child(button)
+	var was_visible: bool = visible
 	visible = true
+	# 두루마리가 펼쳐지듯 열리고 글이 차례로 드러난다 (이미 떠 있던 창이 다음 장면으로 넘어갈 때는 글만)
+	if not was_visible:
+		InkFx.unroll(_panel)
+	InkFx.reveal_text(desc_label)
 	# 키보드·게임패드로 바로 고를 수 있게 첫 선택지에 포커스를 둔다.
 	if choice_box.get_child_count() > 0:
 		(choice_box.get_child(0) as Button).grab_focus()

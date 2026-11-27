@@ -24,6 +24,7 @@ static func goto(tree: SceneTree, path: String) -> void:
 		return
 	var current: Node = tree.current_scene
 	_return_path = current.scene_file_path if current else ""
+	InkFx.transition(tree)
 	tree.change_scene_to_file(path)
 
 
@@ -31,4 +32,5 @@ static func goto(tree: SceneTree, path: String) -> void:
 static func back(tree: SceneTree, fallback: String) -> void:
 	var target: String = _return_path if not _return_path.is_empty() else fallback
 	_return_path = ""
+	InkFx.transition(tree)
 	tree.change_scene_to_file(target)

@@ -195,6 +195,7 @@ static func style_button(button: Button) -> void:
 	button.add_theme_color_override("font_hover_color", COLORS["accent_gold"])
 	button.add_theme_color_override("font_pressed_color", COLORS["text_primary"])
 	button.add_theme_color_override("font_hover_pressed_color", COLORS["text_primary"])
+	InkFx.attach_press(button)
 
 
 static func style_label_title(label: Label, size: int = 24) -> void:

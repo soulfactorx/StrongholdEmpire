@@ -26,6 +26,8 @@ static var faction_report: bool = true
 static var action_scenes: bool = true
 ## 전투에서 합마다 무대 연출(달려들기·피해 숫자·흔들림)을 보여 준다 (DuelStage)
 static var combat_effects: bool = true
+## 화면 연출: 먹물 화면 전환·계절 입자·버튼 눌림·창 펼침 (InkFx)
+static var screen_effects: bool = true
 ## 화면 배치: LayoutMode.Mode (자동·가로·세로)
 static var layout_mode: int = 0
 ## 설치형 앱(Android·Windows·Linux)이 시작할 때 새 버전이 있는지 확인한다 (AppUpdater)
@@ -44,6 +46,7 @@ static func load_settings() -> void:
 		faction_report = config.get_value("game", "faction_report", true) == true
 		action_scenes = config.get_value("game", "action_scenes", true) == true
 		combat_effects = config.get_value("combat", "effects", true) == true
+		screen_effects = config.get_value("display", "screen_effects", true) == true
 		layout_mode = clampi(int(config.get_value("display", "layout_mode", 0)), 0, 2)
 		check_updates = config.get_value("game", "check_updates", true) == true
 	if not TEXT_SCALES.any(func(entry: Array) -> bool: return is_equal_approx(entry[1], text_scale)):
@@ -63,6 +66,7 @@ static func save_settings() -> void:
 	config.set_value("game", "faction_report", faction_report)
 	config.set_value("game", "action_scenes", action_scenes)
 	config.set_value("combat", "effects", combat_effects)
+	config.set_value("display", "screen_effects", screen_effects)
 	config.set_value("display", "layout_mode", layout_mode)
 	config.set_value("game", "check_updates", check_updates)
 	config.save(settings_path)
@@ -111,6 +115,8 @@ static func set_and_save(key: String, value: Variant, tree: SceneTree = null) ->
 			action_scenes = value == true
 		"combat_effects":
 			combat_effects = value == true
+		"screen_effects":
+			screen_effects = value == true
 		"layout_mode":
 			layout_mode = clampi(int(value), 0, 2)
 		"check_updates":

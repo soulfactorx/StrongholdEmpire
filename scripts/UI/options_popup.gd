@@ -15,6 +15,7 @@ var action_preview_check: CheckButton
 var faction_report_check: CheckButton
 var action_scenes_check: CheckButton
 var combat_effects_check: CheckButton
+var screen_effects_check: CheckButton
 var layout_option: OptionButton
 var check_updates_check: CheckButton
 var update_button: Button
@@ -141,6 +142,12 @@ func _ready() -> void:
 	combat_effects_check.custom_minimum_size = Vector2(0, 48)
 	combat_effects_check.toggled.connect(func(on: bool) -> void: GameSettings.set_and_save("combat_effects", on, get_tree()))
 	box.add_child(combat_effects_check)
+	screen_effects_check = CheckButton.new()
+	screen_effects_check.name = "ScreenEffectsCheck"
+	screen_effects_check.text = "화면 연출 (먹물 화면 전환·계절 꽃잎·눈·버튼 반응)"
+	screen_effects_check.custom_minimum_size = Vector2(0, 48)
+	screen_effects_check.toggled.connect(func(on: bool) -> void: GameSettings.set_and_save("screen_effects", on, get_tree()))
+	box.add_child(screen_effects_check)
 	# 설치형 앱의 새 버전 확인 (웹은 서비스 워커가 따로 알린다)
 	check_updates_check = CheckButton.new()
 	check_updates_check.name = "CheckUpdatesCheck"
@@ -159,7 +166,7 @@ func _ready() -> void:
 	)
 	update_button.visible = not OS.has_feature("web")
 	box.add_child(update_button)
-	for check in [fullscreen_check, action_preview_check, faction_report_check, action_scenes_check, combat_effects_check, check_updates_check]:
+	for check in [fullscreen_check, action_preview_check, faction_report_check, action_scenes_check, combat_effects_check, screen_effects_check, check_updates_check]:
 		check.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var note := Label.new()
 	note.text = "글자 크기는 다음에 여는 화면부터 적용됩니다."
@@ -183,6 +190,7 @@ func open() -> void:
 	faction_report_check.set_pressed_no_signal(GameSettings.faction_report)
 	action_scenes_check.set_pressed_no_signal(GameSettings.action_scenes)
 	combat_effects_check.set_pressed_no_signal(GameSettings.combat_effects)
+	screen_effects_check.set_pressed_no_signal(GameSettings.screen_effects)
 	check_updates_check.set_pressed_no_signal(GameSettings.check_updates)
 	layout_option.select(GameSettings.layout_mode)
 	for i in GameSettings.TEXT_SCALES.size():

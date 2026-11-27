@@ -36,6 +36,7 @@ func _ready() -> void:
 	dev_toggle_button.visible = OS.is_debug_build()
 	dev_panel.visible = false
 	status_label.text = _build_status_text()
+	InkFx.add_season_particles(self, get_node_or_null("CenterContainer"), 0)
 
 
 func _build_status_text() -> String:
