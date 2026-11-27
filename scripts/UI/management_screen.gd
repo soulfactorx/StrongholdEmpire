@@ -121,6 +121,7 @@ func _ready() -> void:
 		_wrap_landscape_columns()
 	_refresh_all()
 	_attach_tips()
+	InkFx.add_season_particles(self, $Margin, GameManager.current_season_index)
 	if not GameManager.pending_event.is_empty():
 		event_popup.show_event(GameManager.pending_event)
 	elif not GameManager.pending_action_scene.is_empty():
@@ -553,6 +554,7 @@ func _update_relationships_display(relationships: Array[RelationshipData]) -> vo
 
 
 func _on_turn_advanced(_year: int, _season: String) -> void:
+	InkFx.add_season_particles(self, $Margin, GameManager.current_season_index)
 	_update_time_display()
 	_update_role_actions()
 	_on_action_message(GameManager.last_turn_report)

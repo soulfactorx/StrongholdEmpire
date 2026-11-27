@@ -175,4 +175,6 @@ func _release_button() -> void:
 		if _held.toggle_mode:
 			_held.set_pressed_no_signal(_held_pressed)
 		_held.set_block_signals(false)
+		# 신호를 막아 둔 사이 놓친 "뗌" 대신 눌림 연출(InkFx.attach_press)을 되돌린다
+		_held.scale = Vector2.ONE
 	_held = null

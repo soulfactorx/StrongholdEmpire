@@ -283,6 +283,8 @@ func _play_hit(hit: Dictionary, event: Dictionary, speed: float) -> void:
 	var toward: Vector2 = (_tokens[target]["home"] - home)
 	var lunge: Vector2 = home + toward * (0.42 if not hit["counter"] else 0.25)
 	if art:
+		# 절초 이름 뒤에 굵은 먹 획을 그어 띠처럼 깐다
+		InkFx.brush_slash(_world, Vector2(size.x / 2.0, 54), 0.0, minf(size.x * 0.6, 420.0), Color(0.1, 0.08, 0.07, 0.8), 40.0, speed * 1.6)
 		_float(Vector2(size.x / 2.0, 34), "「%s」" % card.display_name, _UiTheme.COLORS["accent_gold"], 30, speed)
 		await _wait(0.25 * speed)
 	# 달려든다
@@ -312,9 +314,13 @@ func _play_hit(hit: Dictionary, event: Dictionary, speed: float) -> void:
 		else:
 			_sound("hit")
 		_flash(defender, speed)
+		_strike_marks(defender, toward, art, blocked, dealt, speed)
 		_shake_token(defender, _tokens[target]["home"], 7.0 if art or dealt >= 15 else 4.0, speed)
 		if art or dealt >= 20:
-			_shake_stage(speed)
+			_shake_stage(speed, 9.0 if art else 5.0)
+		# 묵직한 한 방은 잠깐 멈춘다 (타격감)
+		if art or dealt >= 15:
+			await _wait(0.06 * speed)
 		_float(_center_of(defender) + Vector2(0, -34), "-%d" % dealt, Color("#b23a2b"), 30 if art else 24, speed)
 		var note: String = str(hit.get("note", ""))
 		if not note.is_empty() and not hit["counter"]:
@@ -332,6 +338,27 @@ func _play_hit(hit: Dictionary, event: Dictionary, speed: float) -> void:
 	await _wait(0.24 * speed)
 	if hit.get("fell", false):
 		_set_fallen(target, true, speed)
+
+
+## 맞은 자리에 붓 베기 획과 먹물 방울을 남긴다. 막아 내면 짧은 비취빛 획만, 절초는 굵은 붉은 획을 두 번 긋는다.
+func _strike_marks(defender: Control, toward: Vector2, art: bool, blocked: bool, dealt: int, speed: float) -> void:
+	var at: Vector2 = _center_of(defender)
+	var angle: float = toward.angle() + (-0.9 if toward.x >= 0.0 else 0.9)
+	var reach: float = defender.size.x * 1.5
+	if blocked:
+		InkFx.brush_slash(_world, at, angle, reach * 0.6, Color(_UiTheme.COLORS["accent_jade"], 0.85), 8.0, speed)
+		InkFx.ink_splash(_world, at, Color(_UiTheme.COLORS["accent_jade"], 0.8), 8, 0.6, speed)
+		return
+	var ink := Color(0.1, 0.08, 0.07, 0.92)
+	var blood := Color("#9b2c1f")
+	if art:
+		InkFx.brush_slash(_world, at, angle, reach * 1.4, Color(blood, 0.95), 22.0, speed)
+		InkFx.brush_slash(_world, at, angle + 1.2, reach * 1.1, ink, 16.0, speed)
+		InkFx.ink_splash(_world, at, ink, 28, 1.4, speed)
+		InkFx.ink_splash(_world, at, Color(blood, 0.9), 14, 1.1, speed)
+	else:
+		InkFx.brush_slash(_world, at, angle, reach, ink, 10.0 + minf(dealt, 20.0) * 0.4, speed)
+		InkFx.ink_splash(_world, at, Color(blood, 0.85) if dealt >= 10 else ink, 10 + mini(dealt, 20), 1.0, speed)
 
 
 func _play_focus(unit: CombatUnit, speed: float) -> void:
@@ -378,13 +405,15 @@ func _shake_token(control: Control, home: Vector2, strength: float, speed: float
 	tween.tween_property(control, "position", home, 0.04 * speed)
 
 
-func _shake_stage(speed: float) -> void:
+func _shake_stage(speed: float, strength: float = 5.0) -> void:
 	if _shake_tween and _shake_tween.is_valid():
 		_shake_tween.kill()
 	_shake_tween = create_tween()
-	for i in 4:
-		_shake_tween.tween_property(_world, "position:y", 5.0 if i % 2 == 0 else -5.0, 0.04 * speed)
-	_shake_tween.tween_property(_world, "position:y", 0.0, 0.05 * speed)
+	for i in 5:
+		# 흔들림이 점점 잦아든다
+		var amount: float = strength * (1.0 - i * 0.18)
+		_shake_tween.tween_property(_world, "position", Vector2(amount * 0.5 * (1 if i % 2 else -1), amount if i % 2 == 0 else -amount), 0.035 * speed)
+	_shake_tween.tween_property(_world, "position", Vector2.ZERO, 0.05 * speed)
 
 
 ## 솟아오르며 사라지는 글자 (피해 숫자·흘려 냄·초식 이름)

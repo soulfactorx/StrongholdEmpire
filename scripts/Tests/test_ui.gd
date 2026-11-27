@@ -1261,3 +1261,74 @@ func _test_credits_screen() -> void:
 	await process_frame
 	_check(current_scene.scene_file_path == SceneRouter.MAIN_MENU, "만든 이들에서 첫 화면으로 돌아감")
 	_completed["_test_credits_screen"] = true
+
+
+## 화면 연출(InkFx): 설정 저장, 계절 입자, 붓 베기·먹물 튐, 버튼 눌림, 기연 창 글 드러내기
+func _test_ink_fx() -> void:
+	var gm: Node = root.get_node("GameManager")
+	GameSettings.set_and_save("screen_effects", false, tree)
+	GameSettings.screen_effects = true
+	GameSettings.load_settings()
+	_check(not GameSettings.screen_effects, "화면 연출 설정 저장·불러오기")
+	GameSettings.set_and_save("screen_effects", true, tree)
+	GameSettings.combat_delay = 0.0
+	GameSettings.action_preview = false
+	GameSettings.faction_report = false
+	GameSettings.action_scenes = false
+
+	_new_quiet_game(gm, "leader")
+	gm.current_season_index = 3
+	SceneRouter.goto(tree, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	var hub: Control = current_scene
+	var particles: CPUParticles2D = hub.get_node_or_null("SeasonParticles")
+	_check(particles != null and particles.emitting and particles.get_index() == hub.get_node("Margin").get_index() + 1,
+		"경영 화면: 판 바로 위에 계절 입자 (창보다 아래)")
+	_check(particles != null and particles.texture == InkFx.snow_texture(), "겨울에는 눈")
+	gm.advance_turn()
+	await process_frame
+	var spring: CPUParticles2D = hub.get_node_or_null("SeasonParticles")
+	_check(spring != null and spring != particles and spring.texture == InkFx.petal_texture(), "계절이 바뀌면 입자도 바뀜 (봄: 꽃잎)")
+
+	# 붓 베기·먹물 튐은 노드를 만들었다가 스스로 치운다
+	var canvas := Control.new()
+	hub.add_child(canvas)
+	InkFx.brush_slash(canvas, Vector2(100, 100), 0.5, 120.0, Color.BLACK)
+	InkFx.ink_splash(canvas, Vector2(100, 100), Color.BLACK, 12)
+	_check(canvas.get_children().filter(func(n: Node) -> bool: return n is Line2D).size() == 2
+		and canvas.get_children().any(func(n: Node) -> bool: return n is CPUParticles2D), "붓 베기 두 획과 먹물 방울")
+	await create_timer(1.0).timeout
+	_check(canvas.get_child_count() == 0, "연출이 끝나면 노드를 치움")
+	canvas.queue_free()
+
+	# 버튼 눌림: 누르면 작아지고 떼면 돌아온다
+	var button: Button = hub.action_grid.get_node("AdvanceTurnButton")
+	_check(button.has_meta("ink_press"), "버튼에 눌림 연출이 붙음")
+	button.button_down.emit()
+	await create_timer(0.12).timeout
+	var pressed_scale: float = button.scale.x
+	button.button_up.emit()
+	await create_timer(0.3).timeout
+	_check(pressed_scale < 0.99 and is_equal_approx(button.scale.x, 1.0), "누르면 살짝 눌렸다가 돌아옴 (%.2f)" % pressed_scale)
+
+	# 기연 창: 글이 차례로 드러나도 줄 수(설명 칸 높이)는 처음부터 전체 글 기준
+	var popup: Control = hub.event_popup
+	var event := {"title": "시험", "description": "가나다라마바사 ".repeat(40), "choices": ["확인"]}
+	popup.show_event(event)
+	await process_frame
+	await process_frame
+	var desc: Label = popup.desc_label
+	_check(desc.visible_ratio < 1.0 and desc.visible_characters_behavior == TextServer.VC_CHARS_AFTER_SHAPING, "기연 글이 차례로 드러남")
+	_check(desc.get_line_count() >= 3 and popup.desc_scroll.custom_minimum_size.y >= desc.get_line_height() * 3,
+		"드러나는 중에도 설명 칸은 전체 글 높이 (%d줄)" % desc.get_line_count())
+	popup.visible = false
+
+	# 연출을 끄면 입자·눌림이 없다
+	GameSettings.screen_effects = false
+	SceneRouter.goto(tree, SceneRouter.HUB)
+	await process_frame
+	await process_frame
+	_check(current_scene.get_node_or_null("SeasonParticles") == null, "화면 연출을 끄면 계절 입자 없음")
+	GameSettings.screen_effects = true
+	_completed["_test_ink_fx"] = true
