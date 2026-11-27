@@ -836,6 +836,11 @@ func _test_audio() -> void:
 	_check(layout_text.contains('"%s"' % GameSettings.MUSIC_BUS) and layout_text.contains('"%s"' % GameSettings.SFX_BUS), "버스 레이아웃에 음악·효과음 버스 (웹에서 소리가 나려면)")
 	for sfx in ["click", "success", "failure", "event", "hit", "art", "level_up", "battle_start", "victory", "defeat", "block", "evade", "fall", "focus"]:
 		_check(load(audio.SFX_DIR + sfx + ".ogg") is AudioStreamOggVorbis, "효과음 %s" % sfx)
+	_check(audio._variants("hit").size() == 3 and audio._variants("block").size() == 3 and audio._variants("click").size() == 1,
+		"효과음 여러 벌: 타격·막기는 3벌, 누름은 1벌")
+	_check(audio._variants("없는소리").is_empty(), "없는 효과음은 조용히 넘어감")
+	audio.play_sfx("hit")
+	_check(audio.last_sfx == "hit", "여러 벌 효과음 재생")
 	_check(AudioServer.get_bus_index(GameSettings.MUSIC_BUS) > 0 and AudioServer.get_bus_index(GameSettings.SFX_BUS) > 0, "배경음악·효과음 버스")
 	_check(audio._sfx_players[0].bus == GameSettings.SFX_BUS and audio._music_players[0].bus == GameSettings.MUSIC_BUS, "재생기가 각자의 버스로")
 
@@ -1323,6 +1328,42 @@ func _test_ink_fx() -> void:
 	_check(desc.get_line_count() >= 3 and popup.desc_scroll.custom_minimum_size.y >= desc.get_line_height() * 3,
 		"드러나는 중에도 설명 칸은 전체 글 높이 (%d줄)" % desc.get_line_count())
 	popup.visible = false
+
+	# 전장 날씨: 비·눈은 입자, 안개는 막, 맑음은 없음 (다시 부르면 바꿔 끼움)
+	var field := Control.new()
+	hub.add_child(field)
+	_check(InkFx.add_weather(field, "rain") is CPUParticles2D and InkFx.add_weather(field, "fog") is ColorRect
+		and field.get_children().filter(func(n: Node) -> bool: return not n.is_queued_for_deletion()).size() == 1, "전장 날씨: 비 입자 → 안개 막으로 바꿔 끼움")
+	_check(InkFx.add_weather(field, "clear") == null, "맑으면 날씨 연출 없음")
+	field.queue_free()
+
+	# 숫자 세어 올리기: 글은 바로 최종 값, 화면에서는 이전 값부터 올라간다
+	var number := Label.new()
+	hub.add_child(number)
+	InkFx.count_up(number, 10, 50, func(v: int) -> String: return "은자: %d" % v, 0.3, true)
+	_check(number.text == "은자: 50" or number.text == "은자: 10", "세어 올리기 시작")
+	await process_frame
+	await process_frame
+	var mid_text: String = number.text
+	await create_timer(0.45).timeout
+	_check(number.text == "은자: 50" and mid_text != "", "세어 올리기 끝은 최종 값 (%s → %s)" % [mid_text, number.text])
+	var tag: Label = InkFx.float_delta(number, 40, true)
+	_check(tag != null and tag.text == "+40", "변화량 띄우기 (+40)")
+	number.queue_free()
+	# 경영 화면 자원 글은 바로 최종 값
+	gm.player_sect.gold += 77
+	root.get_node("EventBus").resources_changed.emit(gm.player_sect)
+	_check(hub.gold_label.text.begins_with("은자: %d" % gm.player_sect.gold), "자원이 바뀌면 글은 바로 새 값")
+
+	# 경지 돌파 연출
+	gm.player_character.level += 1
+	root.get_node("EventBus").character_updated.emit(gm.player_character)
+	_check(hub.breakthrough_layer != null and is_instance_valid(hub.breakthrough_layer), "경지가 오르면 돌파 연출")
+	root.get_node("EventBus").character_updated.emit(gm.player_character)
+	var layers: int = hub.get_children().filter(func(n: Node) -> bool: return n.name.begins_with("Breakthrough")).size()
+	_check(layers == 1, "같은 경지로 다시 그려도 돌파 연출은 한 번")
+	await create_timer(3.0).timeout
+	_check(not is_instance_valid(hub.breakthrough_layer), "돌파 연출은 스스로 닫힘")
 
 	# 연출을 끄면 입자·눌림이 없다
 	GameSettings.screen_effects = false

@@ -136,7 +136,9 @@ static func game_text() -> String:
 ■ 만든 이들
   기획·제작: %s
   그림: 수묵담채 그림 세트 — %s
-  음악·효과음: 직접 합성
+  음악·효과음: 직접 합성 (국악풍 배경음악·효과음)
+  전투 효과음 녹음 원본 (CC0, OpenGameArt): StarNinjas — 칼 휘두름·칼 부딪힘·타격,
+    artisticdude — 바람 소리·칼 뽑기, rubberduck — 징, Kenney — 옷자락
   글꼴: 나눔명조·나눔손글씨 붓 — NAVER (SIL Open Font License 1.1)
   엔진: Godot Engine (MIT) — Godot Engine contributors
 

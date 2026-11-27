@@ -16,7 +16,7 @@
 - `scripts/Combat/`, `scenes/Combat/` — 초식 배치 대결 (판정 `DuelRules`·`DuelEngine`, 화면 `duel_controller.gd`)
 - `scripts/UI/`, `scenes/UI/` — 화면. 문파 경영 화면(`management_screen`)이 게임 허브다.
 - 씬 전환은 `SceneRouter`를 통해서만 한다. 씬 경로 상수도 거기에 있다.
-- 화면 연출(먹물 화면 전환·붓 베기·먹물 튐·계절 입자·버튼 눌림·창 펼침)은 `InkFx`에 모은다. 그림 파일 없이 셰이더·입자·트윈으로 만들고,
+- 화면 연출(먹물 화면 전환·붓 베기·먹물 튐·계절·날씨 입자·버튼 눌림·창 펼침·숫자 세어 올리기·경지 돌파)은 `InkFx`에 모은다. 그림 파일 없이 셰이더·입자·트윈으로 만들고,
   설정의 "화면 연출"(`GameSettings.screen_effects`)을 끄면 모두 건너뛴다.
 - 밸런스 수치는 `GameBalance`에 모은다.
 - 기연은 `data/events/*.json` 데이터로 정의한다. 형식은 `docs/기연_데이터_형식.md` 참고.
