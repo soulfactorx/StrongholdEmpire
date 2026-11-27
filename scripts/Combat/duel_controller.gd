@@ -29,6 +29,10 @@ var _finished: bool = false
 
 var title_label: Label
 var goal_label: Label
+## 가로 화면에서 전장 설명을 접고 펴는 버튼
+var goal_toggle: Button
+## 가로 화면의 무대 말 초상화 (세로는 DuelStage.PORTRAIT_SIZE)
+const STAGE_PORTRAIT_LANDSCAPE := Vector2(104, 122)
 var lineup_label: Label
 var friend_label: Label
 var foe_label: Label
@@ -121,13 +125,23 @@ func _build_ui() -> void:
 	goal_label = _label(head, 14)
 	goal_label.text = Battlefield.describe(engine.setup) + "\n상성: 강공 > 막기 > 속공 > 강공 · 회피는 강공·속공을 흘리고 술에 약함 · 기(운기)는 무방비"
 	lineup_label = _label(head, 14)
+	# 가로 화면: 긴 전장 설명은 접어 두고 무대를 크게 쓴다 (버튼으로 펼침)
+	if not LayoutMode.is_portrait():
+		goal_toggle = _button(head, "", _toggle_goal)
+		goal_toggle.name = "GoalToggle"
+		head.move_child(goal_toggle, goal_label.get_index())
+		_set_goal_open(false)
 
 	# 합 무대
 	var stage_box := _panel(root)
 	stage_panel = stage_box.get_parent()
 	stage = DuelStage.new()
 	stage.name = "DuelStage"
+	if not LayoutMode.is_portrait():
+		stage.portrait_size = STAGE_PORTRAIT_LANDSCAPE
 	stage_box.add_child(stage)
+	var region: String = engine.setup.region_id
+	stage.set_backdrop(ArtAssets.region_background(region) if not region.is_empty() else ArtAssets.background("combat"), engine.setup.weather)
 	stage_panel.visible = GameSettings.combat_effects
 
 	# 지금 겨루는 사람들
@@ -221,6 +235,15 @@ func _build_ui() -> void:
 	_UiTheme.set_font_size(log_label, 14)
 	log_scroll.add_child(log_label)
 	_build_result_overlay()
+
+
+func _toggle_goal() -> void:
+	_set_goal_open(not goal_label.visible)
+
+
+func _set_goal_open(open: bool) -> void:
+	goal_label.visible = open
+	goal_toggle.text = ("전장·상성 접기 ▲" if open else "전장·상성 보기 ▼ — %s" % Battlefield.weather_name(engine.setup.weather))
 
 
 ## 결과 판: 어두운 막 위에 큰 글씨의 결과, 평가·특기 한 줄, 보상·손실, [돌아가기]·[기록 보기]

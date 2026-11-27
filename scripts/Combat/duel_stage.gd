@@ -24,6 +24,10 @@ var _banner: Label
 var _world: Control
 var _shake_tween: Tween
 var playing: bool = false
+## 말 초상화 크기 (가로 화면은 전투 화면이 크게 잡는다)
+var portrait_size: Vector2 = PORTRAIT_SIZE
+## 무대 뒤 배경 (전장 지역 그림, 날씨 색)
+var _backdrop: TextureRect
 ## 켜면 남은 연출을 기다리지 않고 바로 끝낸다 ([결과만 보기]·화면 나가기)
 var hurry: bool = false
 
@@ -61,6 +65,47 @@ func _ready() -> void:
 	_world.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_world)
 	resized.connect(_place_tokens)
+
+
+## 무대 뒤에 전장 그림을 깐다. 날씨에 따라 색을 바꾸고 비·눈을 내린다. 바닥 선과 글자보다 뒤에 놓인다.
+func set_backdrop(tex: Texture2D, weather: String = "clear") -> void:
+	if _backdrop == null:
+		_backdrop = TextureRect.new()
+		_backdrop.name = "Backdrop"
+		_backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		_backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		_backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		_backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_backdrop)
+		move_child(_backdrop, 0)
+		# 아래쪽을 한지 빛으로 덮어 말과 글자가 잘 보이게
+		var veil := TextureRect.new()
+		var gradient := Gradient.new()
+		gradient.set_color(0, Color(0.95, 0.92, 0.85, 0.15))
+		gradient.set_color(1, Color(0.95, 0.92, 0.85, 0.7))
+		var fill := GradientTexture2D.new()
+		fill.gradient = gradient
+		fill.fill_from = Vector2(0, 0)
+		fill.fill_to = Vector2(0, 1)
+		veil.texture = fill
+		veil.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		veil.stretch_mode = TextureRect.STRETCH_SCALE
+		veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_backdrop.add_child(veil)
+	_backdrop.texture = tex
+	_backdrop.modulate = WEATHER_TINTS.get(weather, Color.WHITE)
+	InkFx.add_weather(self, weather, 1)
+
+
+## 날씨별 배경 색 (밤은 푸르고 어둡게, 안개는 흐리게)
+const WEATHER_TINTS: Dictionary = {
+	"clear": Color(1, 1, 1, 0.9),
+	"night": Color(0.62, 0.67, 0.8, 0.95),
+	"rain": Color(0.78, 0.82, 0.86, 0.9),
+	"fog": Color(1, 1, 1, 0.45),
+	"snow": Color(0.92, 0.95, 1.0, 0.9),
+}
 
 
 ## 무대에 설 사람들을 정한다. 사람이 바뀌었을 때만 말을 새로 만든다.
@@ -128,7 +173,7 @@ func _make_token(unit: CombatUnit, foe: bool) -> Dictionary:
 	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	body.add_child(frame)
 	var portrait := TextureRect.new()
-	portrait.custom_minimum_size = PORTRAIT_SIZE
+	portrait.custom_minimum_size = portrait_size
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	portrait.texture = _portrait_of.call(unit) if _portrait_of.is_valid() else null
@@ -136,7 +181,7 @@ func _make_token(unit: CombatUnit, foe: bool) -> Dictionary:
 	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	frame.add_child(portrait)
 	var bar := ProgressBar.new()
-	bar.custom_minimum_size = Vector2(PORTRAIT_SIZE.x + 6, 8)
+	bar.custom_minimum_size = Vector2(portrait_size.x + 6, 8)
 	bar.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	bar.show_percentage = false
 	var fill := StyleBoxFlat.new()
@@ -152,6 +197,9 @@ func _make_token(unit: CombatUnit, foe: bool) -> Dictionary:
 	name.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_UiTheme.set_font_size(name, 14)
 	name.add_theme_color_override("font_color", _UiTheme.COLORS["text_primary"])
+	# 배경 그림 위에서도 읽히게 한지 빛 테두리
+	name.add_theme_color_override("font_outline_color", Color(0.97, 0.94, 0.87))
+	name.add_theme_constant_override("outline_size", 6)
 	name.text = "%s\n%d/%d" % [unit.display_name, unit.max_hp, unit.max_hp]
 	body.add_child(name)
 	return {"root": root, "body": body, "portrait": portrait, "name": name, "bar": bar, "card": card, "home": Vector2.ZERO}
@@ -163,7 +211,7 @@ func _measure(token: Dictionary) -> Vector2:
 	var card: Label = token["card"]
 	var card_h: float = card.get_theme_font("font").get_height(card.get_theme_font_size("font_size")) + 4.0
 	var body_size: Vector2 = body.get_combined_minimum_size()
-	var width: float = maxf(body_size.x, PORTRAIT_SIZE.x + 6)
+	var width: float = maxf(body_size.x, portrait_size.x + 6)
 	body.position = Vector2(0, card_h)
 	body.size = Vector2(width, body_size.y)
 	card.position = Vector2(-50, 0)

@@ -33,4 +33,13 @@
 ## 소리 (`assets/audio/`)
 - 배경음악 4곡·효과음 10종 모두 `tools/audio/generate_audio.py`로 합성했다. (이 저장소 소유)
   다시 만들기: `python3 tools/audio/generate_audio.py` (numpy, libvorbis가 든 ffmpeg 필요)
+- **전투 효과음**(`hit`·`block`·`evade`·`art`·`fall`·`battle_start`와 `_2`·`_3` 벌)은 아래 CC0 녹음을 잘라 겹치고 크기를 맞춘 것이다.
+  다시 만들기: `python3 tools/audio/build_cc0_sfx.py` (인터넷·ffmpeg 필요). `generate_audio.py`를 전부 다시 돌리면
+  이 소리들이 합성음으로 덮이므로, 그 뒤에 이 스크립트를 다시 돌린다.
+  - StarNinjas — "20 Sword Sound Effects (Attacks and Clashes)", "10 Impact/Shield Blocks" (CC0)
+  - artisticdude — "Swishes Sound Pack", "RPG Sound Pack" (CC0)
+  - rubberduck — "100 CC0 SFX" (징, CC0)
+  - Kenney — "50 RPG sound effects" (옷자락, CC0)
+  - 모두 https://opengameart.org 에서 받았다. CC0라 출처 표기 의무는 없지만 적어 둔다.
+- 같은 이름의 소리를 여러 벌(`hit.ogg`, `hit_2.ogg`, …) 두면 `AudioManager`가 번갈아 고르고 높낮이를 살짝 흔든다.
 - 같은 이름의 OGG로 덮어쓰면 코드 수정 없이 바뀐다. 배경음악은 반복 재생된다.

@@ -281,6 +281,82 @@ static func _fit_particles(particles: CPUParticles2D, background: Control) -> vo
 		particles.emission_rect_extents = Vector2(area.x * 0.6, 10)
 
 
+## 전장 날씨: 비는 비스듬한 빗줄기, 눈은 눈송이, 안개는 흰 막. 다른 날씨면 아무것도 넣지 않는다.
+## parent의 index 자리에 넣어 배경 바로 위·말 아래에 둔다. 화면 연출을 꺼도 날씨는 전장 정보라 보여 준다(입자 수만 줄인다).
+static func add_weather(parent: Control, weather: String, index: int = -1) -> Node:
+	if parent == null:
+		return null
+	var old: Node = parent.get_node_or_null("Weather")
+	if old:
+		parent.remove_child(old)
+		old.queue_free()
+	var node: Node = null
+	match weather:
+		"rain", "snow":
+			var particles := CPUParticles2D.new()
+			particles.local_coords = false
+			particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+			particles.preprocess = 3.0
+			if weather == "rain":
+				particles.texture = _streak_texture()
+				particles.amount = 90 if enabled() else 30
+				particles.lifetime = 0.6
+				particles.gravity = Vector2(120, 900)
+				particles.initial_velocity_min = 300.0
+				particles.initial_velocity_max = 420.0
+				particles.direction = Vector2(0.25, 1.0)
+				particles.spread = 3.0
+				particles.particle_flag_align_y = true
+				particles.color = Color(0.35, 0.42, 0.5, 0.45)
+			else:
+				particles.texture = snow_texture()
+				particles.amount = 70 if enabled() else 25
+				particles.lifetime = 4.0
+				particles.gravity = Vector2(10, 30)
+				particles.initial_velocity_min = 15.0
+				particles.initial_velocity_max = 40.0
+				particles.direction = Vector2(0.2, 1.0)
+				particles.spread = 20.0
+				particles.scale_amount_min = 0.12
+				particles.scale_amount_max = 0.3
+				particles.color = Color(1, 1, 1, 0.9)
+			node = particles
+			var refit := func() -> void:
+				if is_instance_valid(particles):
+					particles.position = Vector2(parent.size.x / 2.0, -10)
+					particles.emission_rect_extents = Vector2(parent.size.x * 0.6, 4)
+			parent.resized.connect(refit)
+			refit.call()
+		"fog":
+			var fog := ColorRect.new()
+			fog.color = Color(0.96, 0.96, 0.94, 0.35)
+			fog.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+			fog.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			node = fog
+	if node == null:
+		return null
+	node.name = "Weather"
+	parent.add_child(node)
+	if index >= 0:
+		parent.move_child(node, mini(index, parent.get_child_count() - 1))
+	return node
+
+
+static var _streak: Texture2D
+
+
+## 빗줄기 (가늘고 긴 막대, 끝이 흐림)
+static func _streak_texture() -> Texture2D:
+	if _streak == null:
+		var image := Image.create(3, 24, false, Image.FORMAT_RGBA8)
+		for y in 24:
+			var a: float = sin(float(y) / 23.0 * PI)
+			for x in 3:
+				image.set_pixel(x, y, Color(1, 1, 1, a * (1.0 if x == 1 else 0.4)))
+		_streak = ImageTexture.create_from_image(image)
+	return _streak
+
+
 # ── 버튼·창 ────────────────────────────────────────────
 
 ## 누르는 동안 살짝 눌려 들어가고 떼면 튕겨 돌아온다. UiTheme.style_button이 붙인다.
@@ -326,6 +402,143 @@ static func reveal_text(label: Label, chars_per_second: float = 90.0) -> void:
 	label.visible_ratio = 0.0
 	var time: float = clampf(count / chars_per_second, 0.2, 1.2)
 	label.create_tween().tween_property(label, "visible_ratio", 1.0, time)
+
+
+# ── 숫자·돌파 ─────────────────────────────────────────
+
+## 숫자가 이전 값에서 새 값으로 차르르 올라가거나 내려간다. text_for(값)이 라벨 글을 만든다.
+## 글은 먼저 최종 값으로 두고(바로 읽는 코드·테스트용), 실제 화면에서만 다시 세어 올린다.
+static func count_up(label: Label, from: int, to: int, text_for: Callable, time: float = 0.6, force: bool = false) -> void:
+	if label == null:
+		return
+	label.text = text_for.call(to)
+	if from == to or not label.is_inside_tree():
+		return
+	if not force and not (enabled() and can_capture()):
+		return
+	var old: Variant = label.get_meta("count_tween") if label.has_meta("count_tween") else null
+	if old is Tween and (old as Tween).is_valid():
+		(old as Tween).kill()
+	var tween: Tween = label.create_tween()
+	label.set_meta("count_tween", tween)
+	tween.tween_method(func(v: float) -> void: label.text = text_for.call(roundi(v)), float(from), float(to), time) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+
+## 라벨 오른쪽에서 "+28"·"-12" 같은 변화량이 솟았다 사라진다. 늘면 금빛, 줄면 붉은빛.
+static func float_delta(label: Control, delta: int, force: bool = false) -> Label:
+	if label == null or delta == 0 or not label.is_inside_tree():
+		return null
+	if not force and not enabled():
+		return null
+	var tag := Label.new()
+	tag.name = "DeltaTag"
+	tag.text = "%+d" % delta
+	tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	UiTheme.set_font_size(tag, 18)
+	tag.add_theme_color_override("font_color", UiTheme.COLORS["accent_gold"] if delta > 0 else Color("#9b2c1f"))
+	tag.add_theme_color_override("font_outline_color", Color(0.98, 0.95, 0.88))
+	tag.add_theme_constant_override("outline_size", 6)
+	# 화면 맨 위(창)에 띄운다. 라벨 안에 넣으면 그 칸의 글줄로 섞인다
+	label.get_tree().root.add_child(tag)
+	var text_width: float = label.get_theme_font("font").get_string_size(label.text if label is Label else "", HORIZONTAL_ALIGNMENT_LEFT, -1, label.get_theme_font_size("font_size")).x
+	tag.position = label.global_position + Vector2(minf(text_width + 12.0, label.size.x - 40.0), (label.size.y - 26.0) / 2.0)
+	var tween: Tween = tag.create_tween()
+	tween.tween_property(tag, "position:y", tag.position.y - 14.0, 0.9).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(tag, "modulate:a", 0.0, 0.9).set_delay(0.35)
+	tween.tween_callback(tag.queue_free)
+	return tag
+
+
+## 경지 돌파: 화면이 먹빛으로 가라앉고, 금빛 기운이 터지며 큰 붓글씨가 떠오른다. 누르면 바로 닫힌다.
+## 만든 층(CanvasLayer)을 돌려준다. 화면 연출을 끄면 아무것도 하지 않는다.
+static func breakthrough(host: Node, title: String, subtitle: String = "") -> CanvasLayer:
+	if host == null or not host.is_inside_tree() or not enabled():
+		return null
+	var layer := CanvasLayer.new()
+	layer.name = "Breakthrough"
+	layer.layer = 60
+	host.add_child(layer)
+	var view: Vector2 = host.get_viewport().get_visible_rect().size
+	var root := Control.new()
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_STOP
+	layer.add_child(root)
+	var shade := ColorRect.new()
+	shade.color = Color(0.06, 0.05, 0.04, 0.0)
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(shade)
+	var center: Vector2 = view / 2.0
+	# 먹 획 두 번으로 글자 뒤 띠
+	var band := Control.new()
+	band.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	band.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(band)
+	# 금빛 기운
+	var burst := CPUParticles2D.new()
+	burst.position = center
+	burst.texture = dot_texture()
+	burst.amount = 90
+	burst.one_shot = true
+	burst.explosiveness = 0.9
+	burst.lifetime = 1.6
+	burst.spread = 180.0
+	burst.gravity = Vector2(0, -30)
+	burst.initial_velocity_min = 120.0
+	burst.initial_velocity_max = 420.0
+	burst.damping_min = 80.0
+	burst.damping_max = 160.0
+	burst.scale_amount_min = 0.15
+	burst.scale_amount_max = 0.55
+	var glow := Gradient.new()
+	glow.set_color(0, Color(1.0, 0.86, 0.45, 1.0))
+	glow.set_color(1, Color(0.9, 0.55, 0.2, 0.0))
+	burst.color_ramp = glow
+	root.add_child(burst)
+	var title_label := Label.new()
+	title_label.text = title
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	UiTheme.style_label_title(title_label, 76)
+	title_label.add_theme_color_override("font_color", UiTheme.COLORS["accent_gold"])
+	title_label.add_theme_color_override("font_outline_color", Color(0.08, 0.06, 0.05))
+	title_label.add_theme_constant_override("outline_size", 10)
+	title_label.size = Vector2(view.x, 100)
+	title_label.position = Vector2(0, center.y - 80)
+	title_label.pivot_offset = title_label.size / 2.0
+	root.add_child(title_label)
+	var sub := Label.new()
+	sub.text = subtitle
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sub.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	UiTheme.set_font_size(sub, 22)
+	sub.add_theme_color_override("font_color", Color(0.97, 0.94, 0.87))
+	sub.add_theme_color_override("font_outline_color", Color(0.08, 0.06, 0.05))
+	sub.add_theme_constant_override("outline_size", 8)
+	sub.size = Vector2(view.x, 40)
+	sub.position = Vector2(0, center.y + 34)
+	root.add_child(sub)
+	title_label.modulate.a = 0.0
+	title_label.scale = Vector2(1.6, 1.6)
+	sub.modulate.a = 0.0
+	var tween: Tween = layer.create_tween()
+	tween.tween_property(shade, "color:a", 0.8, 0.25)
+	tween.tween_callback(func() -> void:
+		brush_slash(band, center + Vector2(0, -30), 0.0, minf(view.x * 0.7, 640.0), Color(0.08, 0.06, 0.05, 0.9), 90.0, 3.5)
+		burst.emitting = true)
+	tween.tween_property(title_label, "modulate:a", 1.0, 0.18)
+	tween.parallel().tween_property(title_label, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(sub, "modulate:a", 1.0, 0.25)
+	tween.tween_interval(1.4)
+	tween.tween_property(root, "modulate:a", 0.0, 0.45)
+	tween.tween_callback(layer.queue_free)
+	root.gui_input.connect(func(event: InputEvent) -> void:
+		if (event is InputEventMouseButton or event is InputEventScreenTouch) and event.pressed:
+			tween.kill()
+			layer.queue_free())
+	return layer
 
 
 # ── 그림 없이 만드는 입자 텍스처 ──────────────────────

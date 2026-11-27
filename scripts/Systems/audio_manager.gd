@@ -10,6 +10,8 @@ const SFX_DIR := "res://assets/audio/sfx/"
 const CROSSFADE := 1.2
 ## 동시에 울릴 수 있는 효과음 수
 const SFX_VOICES := 6
+## 여러 벌이 있는 효과음의 높낮이 흔들림 (비율)
+const SFX_PITCH_JITTER := 0.05
 
 ## 화면 씬 파일 이름 → 곡 이름
 const SCREEN_MUSIC: Dictionary = {
@@ -143,11 +145,13 @@ func play_defeat() -> void:
 
 
 ## 효과음을 낸다. 비어 있는 재생기를 먼저 쓰고, 모두 울리고 있으면 가장 오래된 것을 끊는다.
+## 같은 이름의 여러 벌(hit.ogg, hit_2.ogg, …)이 있으면 하나를 골라 내고, 높낮이를 살짝 흔들어 같은 소리가 되풀이되는 느낌을 줄인다.
 func play_sfx(sfx_name: String) -> void:
 	last_sfx = sfx_name
-	var stream: AudioStream = _load(SFX_DIR + sfx_name + ".ogg")
-	if stream == null:
+	var variants: Array = _variants(sfx_name)
+	if variants.is_empty():
 		return
+	var stream: AudioStream = variants[randi() % variants.size()]
 	var player: AudioStreamPlayer = null
 	for candidate in _sfx_players:
 		if not candidate.playing:
@@ -157,7 +161,25 @@ func play_sfx(sfx_name: String) -> void:
 		player = _sfx_players[_sfx_next]
 		_sfx_next = (_sfx_next + 1) % _sfx_players.size()
 	player.stream = stream
+	player.pitch_scale = randf_range(1.0 - SFX_PITCH_JITTER, 1.0 + SFX_PITCH_JITTER) if variants.size() > 1 else 1.0
 	player.play()
+
+
+## 효과음 이름의 모든 벌 (없으면 빈 배열)
+func _variants(sfx_name: String) -> Array:
+	var key: String = "variants:" + sfx_name
+	if not _cache.has(key):
+		var found: Array = []
+		var first: AudioStream = _load(SFX_DIR + sfx_name + ".ogg")
+		if first:
+			found.append(first)
+			for i in range(2, 10):
+				var more: AudioStream = _load(SFX_DIR + "%s_%d.ogg" % [sfx_name, i])
+				if more == null:
+					break
+				found.append(more)
+		_cache[key] = found
+	return _cache[key]
 
 
 func _load(path: String) -> AudioStream:

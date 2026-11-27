@@ -62,7 +62,13 @@ var report_popup: Control
 ## 대상을 고르는 중인 신분 행동 id
 var _pending_role_action: String = ""
 ## 화면에 마지막으로 보여 준 주인공 경지 (오르면 효과음)
-var _shown_level: int = -1
+## 마지막으로 본 주인공과 그 경지 (화면을 다시 열어도 이어지게 static)
+static var _seen_character: int = 0
+static var _seen_level: int = -1
+## 자원 이름 → 마지막으로 보여 준 값 (숫자 세어 올리기)
+var _shown_numbers: Dictionary = {}
+## 지금 떠 있는 경지 돌파 연출 (테스트용)
+var breakthrough_layer: CanvasLayer
 ## 주인공 초상화 (신분에 따라 바뀐다)
 var character_portrait: TextureRect
 
@@ -456,16 +462,16 @@ func _update_sect_display(sect: SectData) -> void:
 	var wallet: SectData = GameManager.get_wallet()
 	if GameManager.uses_purse():
 		# 개인 재산: 수입 없이 생활비만 나간다. 의뢰·계약·기연으로 번다.
-		gold_label.text = "내 은자: %d (다음 계절 %+d, 생활비)" % [wallet.gold, forecast["gold"]]
-		food_label.text = "내 식량: %d (다음 계절 %+d, 생활비)" % [wallet.food, forecast["food"]]
+		_show_number(gold_label, "purse_gold", wallet.gold, func(v: int) -> String: return "내 은자: %d (다음 계절 %+d, 생활비)" % [v, forecast["gold"]])
+		_show_number(food_label, "purse_food", wallet.food, func(v: int) -> String: return "내 식량: %d (다음 계절 %+d, 생활비)" % [v, forecast["food"]])
 	else:
-		gold_label.text = "은자: %d (다음 계절 %+d, 씀씀이 %d)" % [sect.gold, forecast["gold"], sect.get_gold_upkeep()]
-		food_label.text = "식량: %d (다음 계절 %+d, 씀씀이 %d)" % [sect.food, forecast["food"], sect.get_food_upkeep()]
+		_show_number(gold_label, "gold", sect.gold, func(v: int) -> String: return "은자: %d (다음 계절 %+d, 씀씀이 %d)" % [v, forecast["gold"], sect.get_gold_upkeep()])
+		_show_number(food_label, "food", sect.food, func(v: int) -> String: return "식량: %d (다음 계절 %+d, 씀씀이 %d)" % [v, forecast["food"], sect.get_food_upkeep()])
 	# 다음 계절을 넘기지 못할 것 같으면 경고 색으로 표시한다.
 	_set_warning(gold_label, wallet.gold + forecast["gold"] < 0)
 	_set_warning(food_label, wallet.food + forecast["food"] < 0)
-	reputation_label.text = "명성: %d" % sect.reputation
-	research_label.text = "깨달음: %d" % sect.research_points
+	_show_number(reputation_label, "reputation", sect.reputation, func(v: int) -> String: return "명성: %d" % v)
+	_show_number(research_label, "research", sect.research_points, func(v: int) -> String: return "깨달음: %d" % v)
 	disciple_label.text = "제자: %d / %d" % [sect.disciple_count, sect.max_disciples]
 	var facility_texts: PackedStringArray = []
 	for facility in SectManager.get_facility_ids():
@@ -503,10 +509,23 @@ func _ensure_character_portrait() -> void:
 	content.reparent(row, false)
 
 
+## 자원 숫자를 보여 준다. 바뀌었으면 이전 값에서 세어 올리고 변화량을 띄운다 (InkFx).
+func _show_number(label: Label, key: String, value: int, text_for: Callable) -> void:
+	var old: int = int(_shown_numbers.get(key, value))
+	_shown_numbers[key] = value
+	InkFx.count_up(label, old, value, text_for)
+	if old != value:
+		InkFx.float_delta(label, value - old)
+
+
 func _update_character_display(character: CharacterData) -> void:
-	if _shown_level >= 0 and character.level > _shown_level:
+	# 경지가 오르면 돌파 연출. 전투·다른 화면에서 오른 것도 돌아와서 보여 준다 (같은 인물일 때만).
+	var who: int = character.get_instance_id()
+	if who == _seen_character and character.level > _seen_level:
 		AudioManager.play_level_up()
-	_shown_level = character.level
+		breakthrough_layer = InkFx.breakthrough(self, "경지 돌파", "%s — 경지 %d에 올랐다" % [character.display_name, character.level])
+	_seen_character = who
+	_seen_level = character.level
 	_ensure_character_portrait()
 	# 등장인물로 플레이하면 그 인물의 초상화
 	character_portrait.texture = ArtAssets.player_portrait(character)
