@@ -129,14 +129,20 @@ static func game_text() -> String:
 
 ■ 라이선스
   코드: MIT 라이선스 (아래 전문)
-  그림·음악·효과음·아이콘, 이야기와 데이터, 기획 문서, 게임 제목과 로고: All Rights Reserved
+  그림·효과음·아이콘, 이야기와 데이터, 기획 문서, 게임 제목과 로고: All Rights Reserved
     저작권자의 허락 없이 복제·수정·배포·2차 창작·상업적 이용을 할 수 없습니다.
-  글꼴과 Godot 엔진은 각자의 라이선스를 따릅니다 ([글꼴]·[Godot 엔진] 탭).
+  글꼴·배경음악·Godot 엔진은 각자의 라이선스를 따릅니다 (아래 만든 이들, [글꼴]·[Godot 엔진] 탭).
 
 ■ 만든 이들
   기획·제작: %s
   그림: 수묵담채 그림 세트 — %s
-  음악·효과음: 직접 합성 (국악풍 배경음악·효과음)
+  배경음악 (CC-BY, OpenGameArt):
+    첫 화면 「RPG - Misty Mountains」 — HitCtrl (CC-BY 3.0)
+    경영 화면 「Views From Atop the Jade Kings Throne」 — HitCtrl (CC-BY 3.0)
+    전투 「Most Critical」 — Dan Knoflicek (CC-BY 4.0)
+    결말 「The Pilgrimage」 — Viktor Kraus (CC-BY 3.0)
+    길이·크기·처음과 끝의 페이드만 다듬었습니다. 라이선스: creativecommons.org/licenses/by/3.0 · /by/4.0
+  효과음: 직접 합성 (누름·성공·기연 등 국악풍 소리)
   전투 효과음 녹음 원본 (CC0, OpenGameArt): StarNinjas — 칼 휘두름·칼 부딪힘·타격,
     artisticdude — 바람 소리·칼 뽑기, rubberduck — 징, Kenney — 옷자락
   글꼴: 나눔명조·나눔손글씨 붓 — NAVER (SIL Open Font License 1.1)
